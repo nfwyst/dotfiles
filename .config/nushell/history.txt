@@ -119,3 +119,4 @@ ls
 mkdir dotfiles
 e .zshrc
 nvim .zshrc
+ls
