@@ -1,5 +1,5 @@
 local register = {
-  zp = "Preview fold",
+	zp = "Preview fold",
 }
 
 return register

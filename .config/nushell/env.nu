@@ -87,7 +87,14 @@ $env.NU_PLUGIN_DIRS = [
 
 # To add entries to PATH (on Windows you might use Path), you can use the following pattern:
 # $env.PATH = ($env.PATH | split row (char esep) | prepend '/some/path')
-$env.PATH = ($env.PATH | split row (char esep) | prepend '/opt/homebrew/bin')
+$env.GOPATH = ($env.HOME | path join "go")
+$env.PATH = (
+  $env.PATH |
+  split row (char esep) |
+  prepend '/opt/homebrew/bin' |
+  prepend ($env.GOPATH | path join "bin")
+)
+$env.EDITOR = 'nvim'
 # An alternate way to add entries to $env.PATH is to use the custom command `path add`
 # which is built into the nushell stdlib:
 # use std "path add"
@@ -99,3 +106,11 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend '/opt/homebrew/bin')
 
 # To load from a custom file you can use:
 # source ($nu.default-config-dir | path join 'custom.nu')
+
+# prepare for starship
+mkdir ~/.cache/starship
+starship init nu | save -f ~/.cache/starship/init.nu
+
+# prepare for zoxide
+mkdir ~/.cache/zoxide
+zoxide init nushell | save -f ~/.cache/zoxide/init.nu

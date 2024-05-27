@@ -1,6 +1,6 @@
 local register = {
-  ["]]"] = "Next Reference",
-  ["[["] = "Prev Reference",
+	["]]"] = "Next Reference",
+	["[["] = "Prev Reference",
 }
 
 return register

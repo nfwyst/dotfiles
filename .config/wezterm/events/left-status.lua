@@ -9,8 +9,13 @@ local GLYPH_KEY_TABLE = nf.md_table_key --[[ '󱏅' ]]
 local GLYPH_KEY = nf.md_key --[[ '󰌆' ]]
 
 local colors = {
-   glyph_semi_circle = { bg = 'rgba(0, 0, 0, 0.4)', fg = '#fab387' },
-   text = { bg = '#fab387', fg = '#1c1b19' },
+   glyph_semi_circle = {
+      bg = 'rgba(0, 0, 0, 0.4)',
+      fg1 = '#f7768e',
+      fg2 = '#7dcfff',
+      fg3 = '#bb9af7',
+   },
+   text = { bg1 = '#f7768e', bg2 = '#7dcfff', bg3 = '#bb9af7', fg = '#1c1b19' },
 }
 
 local __cells__ = {}
@@ -28,20 +33,34 @@ end
 M.setup = function()
    wezterm.on('update-right-status', function(window, _pane)
       __cells__ = {}
+      local function render(text, fg, bg, icon)
+         local g = colors.glyph_semi_circle
+         local gbg = g.bg
+         local t = colors.text
+         local tfg = t.fg
+         _push(GLYPH_SEMI_CIRCLE_LEFT, fg, gbg)
+         if icon then
+            _push(icon, tfg, bg)
+         end
+         _push(' ' .. text, tfg, bg)
+         _push(GLYPH_SEMI_CIRCLE_RIGHT, fg, gbg)
+      end
+      local active_key = window:active_key_table()
+      local is_leader = window:leader_is_active()
+      local workspace = window:active_workspace()
+      local text = colors.text
+      local gy = colors.glyph_semi_circle
 
-      local name = window:active_key_table()
-      if name then
-         _push(GLYPH_SEMI_CIRCLE_LEFT, colors.glyph_semi_circle.fg, colors.glyph_semi_circle.bg)
-         _push(GLYPH_KEY_TABLE, colors.text.fg, colors.text.bg)
-         _push(' ' .. string.upper(name), colors.text.fg, colors.text.bg)
-         _push(GLYPH_SEMI_CIRCLE_RIGHT, colors.glyph_semi_circle.fg, colors.glyph_semi_circle.bg)
+      if workspace then
+         render(workspace, gy.fg1, text.bg1)
       end
 
-      if window:leader_is_active() then
-         _push(GLYPH_SEMI_CIRCLE_LEFT, colors.glyph_semi_circle.fg, colors.glyph_semi_circle.bg)
-         _push(GLYPH_KEY, colors.text.fg, colors.text.bg)
-         _push(' ', colors.text.fg, colors.text.bg)
-         _push(GLYPH_SEMI_CIRCLE_RIGHT, colors.glyph_semi_circle.fg, colors.glyph_semi_circle.bg)
+      if active_key then
+         render(string.upper(active_key), gy.fg2, text.bg2, GLYPH_KEY_TABLE)
+      end
+
+      if is_leader then
+         render('', gy.fg3, text.bg3, GLYPH_KEY)
       end
 
       window:set_left_status(wezterm.format(__cells__))

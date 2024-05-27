@@ -1,4 +1,4 @@
 return {
-  include_filetypes = { "javascriptreact", "typescriptreact", "svelte" },
-  disabled = IS_WIN_LINUX,
+	include_filetypes = { "javascriptreact", "typescriptreact", "svelte" },
+	disabled = IS_WIN_LINUX,
 }

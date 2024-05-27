@@ -15,8 +15,10 @@ end
 
 -- stylua: ignore
 local keys = {
+   -- send c-a when press twice
+   { key = ',', mods = 'LEADER', action = act.SendKey({ key = ',', mods = mod.SUPER_REV }) },
    -- misc/useful --
-   { key = 'F1', mods = 'NONE', action = 'ActivateCopyMode' },
+   { key = 'c', mods = 'LEADER', action = act.ActivateCopyMode },
    { key = 'F2', mods = 'NONE', action = act.ActivateCommandPalette },
    { key = 'F3', mods = 'NONE', action = act.ShowLauncher },
    { key = 'F4', mods = 'NONE', action = act.ShowLauncherArgs({ flags = 'FUZZY|TABS' }) },
@@ -60,7 +62,7 @@ local keys = {
    -- tabs --
    -- tabs: spawn+close
    { key = 't',          mods = mod.SUPER,     action = act.SpawnTab('DefaultDomain') },
-   { key = 't',          mods = mod.SUPER_REV, action = act.SpawnTab({ DomainName = 'WSL:Ubuntu' }) },
+   { key = 't',          mods = mod.SUPER_REV, action = act.ShowTabNavigator },
    { key = 'w',          mods = mod.SUPER_REV, action = act.CloseCurrentTab({ confirm = false }) },
 
    -- tabs: navigation
@@ -125,6 +127,7 @@ local keys = {
 
    -- panes: zoom+close pane
    { key = 'Enter', mods = mod.SUPER,     action = act.TogglePaneZoomState },
+   { key = 's', mods = mod.SUPER_REV,     action = act.RotatePanes('Clockwise') },
    { key = 'w',     mods = mod.SUPER,     action = act.CloseCurrentPane({ confirm = false }) },
 
    -- panes: navigation
@@ -160,6 +163,15 @@ local keys = {
       }),
    },
 }
+
+-- navigate tabs with index
+for i = 1, 9 do
+   table.insert(keys, {
+      key = tostring(i),
+      mods = mod.SUPER,
+      action = act.ActivateTab(i - 1),
+   })
+end
 
 -- stylua: ignore
 local key_tables = {
@@ -207,30 +219,30 @@ local mouse_bindings = {
    {
       event = { Up = { streak = 2, button = 'Left' } },
       mods = 'NONE',
-      action = act.SelectTextAtMouseCursor ('Word'),
+      action = act.SelectTextAtMouseCursor('Word'),
    },
    {
       event = { Down = { streak = 2, button = 'Left' } },
       mods = 'NONE',
-      action = act.SelectTextAtMouseCursor ('Word'),
+      action = act.SelectTextAtMouseCursor('Word'),
    },
    -- click 3 times select one line
    {
       event = { Up = { streak = 3, button = 'Left' } },
       mods = 'NONE',
-      action = act.SelectTextAtMouseCursor ('Line'),
+      action = act.SelectTextAtMouseCursor('Line'),
    },
    {
       event = { Down = { streak = 3, button = 'Left' } },
       mods = 'NONE',
-      action = act.SelectTextAtMouseCursor ('Line'),
+      action = act.SelectTextAtMouseCursor('Line'),
    },
 }
 
 return {
    disable_default_key_bindings = true,
    disable_default_mouse_bindings = true,
-   leader = { key = 'Space', mods = mod.SUPER_REV },
+   leader = { key = ',', mods = mod.SUPER_REV, timemout_miliseconds = 1000 },
    keys = keys,
    key_tables = key_tables,
    mouse_bindings = mouse_bindings,

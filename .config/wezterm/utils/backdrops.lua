@@ -54,10 +54,10 @@ function BackDrops:_set_opt(window)
             horizontal_align = 'Center',
          },
          {
-            source = { Color = "#1f1f28" },
+            source = { Color = '#1f1f28' },
             height = '100%',
             width = '100%',
-            opacity = 0.96,
+            opacity = 0.85,
          },
       },
    }

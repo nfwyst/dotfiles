@@ -1,5 +1,5 @@
 return {
-  "famiu/bufdelete.nvim",
-  cond = not IS_VSCODE,
-  cmd = "Bdelete",
+	"famiu/bufdelete.nvim",
+	cond = not IS_VSCODE,
+	cmd = "Bdelete",
 }

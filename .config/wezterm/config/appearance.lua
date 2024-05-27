@@ -9,7 +9,7 @@ return {
    webgpu_preferred_adapter = gpu_adapters:pick_best(),
 
    -- color scheme
-   color_scheme = "Tokyo Night",
+   color_scheme = 'Tokyo Night',
 
    -- background
    background = {
@@ -18,10 +18,10 @@ return {
          horizontal_align = 'Center',
       },
       {
-         source = { Color = "#1f1f28" },
+         source = { Color = '#1f1f28' },
          height = '100%',
          width = '100%',
-         opacity = 0.96,
+         opacity = 0.85,
       },
    },
 
@@ -38,30 +38,32 @@ return {
    enable_tab_bar = true,
    hide_tab_bar_if_only_one_tab = false,
    use_fancy_tab_bar = false,
+   tab_bar_at_bottom = false,
    tab_max_width = 25,
    show_tab_index_in_tab_bar = false,
    switch_to_last_active_tab_when_closing_tab = true,
 
    -- window
-   window_decorations = 'INTEGRATED_BUTTONS|RESIZE',
+   window_decorations = 'RESIZE',
+   window_background_opacity = 0.85,
    integrated_title_button_alignment = 'Right',
    integrated_title_button_color = 'Auto',
    initial_cols = 120,
    initial_rows = 35,
    window_padding = {
-      left = 5,
-      right = 10,
-      top = 12,
-      bottom = 7,
+      left = 1,
+      right = 1,
+      top = 0,
+      bottom = 0,
    },
-   window_close_confirmation = 'NeverPrompt',
+   window_close_confirmation = 'AlwaysPrompt',
    window_frame = {
       active_titlebar_bg = '#090909',
       -- font = fonts.font,
       -- font_size = fonts.font_size,
    },
    inactive_pane_hsb = {
-      saturation = 0.9,
+      saturation = 0.35,
       brightness = 0.65,
    },
 }
