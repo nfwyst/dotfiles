@@ -22,7 +22,7 @@ return {
         },
         {
           sign = {
-            name = { "Diagnostic" },
+            namespace = { "diagnostic/signs" },
             maxwidth = 1,
             auto = true,
           },
