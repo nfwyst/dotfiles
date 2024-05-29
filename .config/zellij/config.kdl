@@ -183,14 +183,6 @@ keybinds clear-defaults=true {
     }
 }
 
-plugins {
-    tab-bar { path "tab-bar"; }
-    status-bar { path "status-bar"; }
-    strider { path "strider"; }
-    compact-bar { path "compact-bar"; }
-    session-manager { path "session-manager"; }
-}
-
 // Choose what to do when zellij receives SIGTERM, SIGINT, SIGQUIT or SIGHUP
 // eg. when terminal window with an active zellij session is closed
 // Options:
@@ -204,12 +196,12 @@ plugins {
 //    - true
 //    - false (Default)
 //
-// simplified_ui true
+simplified_ui true
 
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
 //
-default_shell "/bin/zsh"
+// default_shell "nu"
 
 // Choose the path to override cwd that zellij will use for opening new panes
 //

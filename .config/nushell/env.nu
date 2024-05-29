@@ -86,23 +86,46 @@ $env.NU_PLUGIN_DIRS = [
 ]
 
 # To add entries to PATH (on Windows you might use Path), you can use the following pattern:
-# $env.PATH = ($env.PATH | split row (char esep) | prepend '/some/path')
+$env.PATH = ($env.PATH | split row (char esep))
+$env.UNAME = (uname | get kernel-name)
 $env.GOPATH = ($env.HOME | path join "go")
+$env.CARGO_HOME = ($env.HOME | path join ".cargo")
 $env.PATH = (
   $env.PATH |
-  split row (char esep) |
-  prepend '/opt/homebrew/bin' |
-  prepend ($env.GOPATH | path join "bin")
+  prepend ($env.GOPATH | path join "bin") |
+  prepend ($env.HOME | path join ".local" "bin") |
+  prepend ($env.CARGO_HOME | path join "bin")
 )
-$env.EDITOR = 'nvim'
-# An alternate way to add entries to $env.PATH is to use the custom command `path add`
-# which is built into the nushell stdlib:
-# use std "path add"
-# $env.PATH = ($env.PATH | split row (char esep))
-# path add /some/path
-# path add ($env.CARGO_HOME | path join "bin")
-# path add ($env.HOME | path join ".local" "bin")
-# $env.PATH = ($env.PATH | uniq)
+if $env.UNAME == "Darwin" {
+  $env.PATH = (
+    $env.PATH |
+    prepend '/opt/homebrew/bin'
+  )
+}
+if $env.UNAME == "Linux" {
+  $env.PATH = (
+    $env.PATH |
+    prepend ($env.HOME | path join ".fzf" "bin") |
+    prepend ($env.HOME | path join ".nushell" "bin") |
+    prepend ($env.HOME | path join "Bundle") |
+    prepend ($env.HOME | path join ".local" "share" "fnm")
+  )
+}
+$env.EDITOR = (which nvim | get path | first)
+$env.SHELL = (which nu | get path | first)
+
+# set proxy
+def --env proxy [] {
+  let port = if $env.UNAME == "linux" { "7890" } else { "2334" }
+  let address = $"http://127.0.0.1:($port)"
+  $env.HTTP_PROXY = $address
+  $env.HTTPS_PROXY = $address
+  $env.NO_PROXY = $address
+  npm config set proxy $address --global
+}
+
+# init network proxy
+proxy
 
 # To load from a custom file you can use:
 # source ($nu.default-config-dir | path join 'custom.nu')
@@ -114,3 +137,22 @@ starship init nu | save -f ~/.cache/starship/init.nu
 # prepare for zoxide
 mkdir ~/.cache/zoxide
 zoxide init nushell | save -f ~/.cache/zoxide/init.nu
+
+# load fnm env
+if (which fnm | is-empty) {
+  let url = "https://fnm.vercel.app/install"
+  curl -fsSL $url | bash -s -- --install-dir $"($env.HOME)/.local/share/fnm" --skip-shell
+} else {
+  fnm env --shell bash | lines | str replace 'export ' '' | str replace -a '"' '' | split column = |
+    rename name value | where name != "FNM_ARCH" and name != "PATH" | reduce -f {} {|it, acc| $acc |
+    upsert $it.name $it.value } | load-env
+
+  # set fnm path
+  $env.PATH = (
+    $env.PATH |
+    prepend ($env.FNM_MULTISHELL_PATH | path join "bin")
+  )
+}
+
+# uniq path
+$env.PATH = ($env.PATH | uniq)

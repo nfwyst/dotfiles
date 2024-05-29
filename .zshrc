@@ -19,6 +19,7 @@ source "${ZINIT_HOME}/zinit.zsh"
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
+zinit light trystan2k/zsh-tab-title
 zinit light Aloxaf/fzf-tab
 
 # Add in snippets
@@ -29,7 +30,6 @@ zinit snippet OMZP::aws
 zinit snippet OMZP::kubectl
 zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
-zinit light trystan2k/zsh-tab-title
 
 # Load completions
 autoload -Uz compinit && compinit
@@ -68,19 +68,29 @@ alias vim='nvim'
 alias c='clear'
 alias e="nvim"
 alias gc-="git checkout -"
+alias ys="yarn start"
+if [[ "$uname" == "Linux" ]]; then
+  alias pbcopy = "xclip -selection clipboard"
+fi
 
 # Shell integrations
 source <(fzf --zsh)
-eval "$(zoxide init zsh)"
-eval "$(starship init zsh)"
+source <(starship init zsh)
+source <(zoxide init zsh)
+eval "`fnm env`"
 
 # env variable
 export ZSH_TAB_TITLE_PREFIX=" "
 export GOPATH="$HOME/go"
-export EDITOR="nvim"
-export PATH="$PATH:$HOME/go/bin"
+export CARGO_HOME="$HOME/.cargo"
+export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin:$CARGO_HOME/bin"
+if [[ "$(uname)" == "Linux" ]]; then
+  export PATH="$PATH:$HOME/.fzf/bin:$HOME/Bundle:$HOME/.local/share/fnm"
+fi
+export EDITOR="$(which nvim)"
+export SHELL="$(which zsh)"
 
-# tool funcs
+# into directory and list all contents
 function cx() {
   if [[ -n "$1" ]]; then
     cd "$1" && ls -als
@@ -89,23 +99,58 @@ function cx() {
   fi
 }
 
-function removeDuplicatedAppIcon ()
-{
-  defaults write com.apple.dock ResetLaunchPad -bool true;
-  killall Dock
-}
-
+# set proxy
 function proxy ()
 {
-  export {https,http}_proxy=http://127.0.0.1:2334
-  export all_proxy=socks5://127.0.0.1:2334
+  if [[ "$(uname)" == "Linux" ]]; then
+    export {https,http}_proxy=http://127.0.0.1:7890
+    export all_proxy=socks5://127.0.0.1:7890
+    npm config set proxy http://127.0.0.1:7890
+  else
+    export {https,http}_proxy=http://127.0.0.1:2334
+    export all_proxy=socks5://127.0.0.1:2334
+    npm config set proxy http://127.0.0.1:2334
+  fi
   export no_proxy=127.0.0.1,localhost,apple.com
-  npm config set proxy http://127.0.0.1:2334
 }
 
-function off-proxy()
+# unset proxy
+function unproxy()
 {
   unset {https,http,all,no}_proxy
   npm config delete proxy --global
 }
+
+if [[ "$(uname)" == "Linux" ]]; then
+  # bind keymap
+  function key() {
+    if [[ -f "~/.xmodmap" ]]; then
+      xmodmap ~/.xmodmap
+    fi
+  }
+  key
+else
+  # remove unused app icons
+  function removeDuplicatedAppIcon ()
+  {
+    defaults write com.apple.dock ResetLaunchPad -bool true;
+    killall Dock
+  }
+  # run app with sudo
+  function appSudo()
+  {
+    local name=$1
+    local appPath="/Applications/${name}.app/Contents/MacOS/${name}"
+    local appPath1="/Applications/${name}.app/Contents/MacOS/stable"
+    if [[ -f $appPath ]]; then
+      sudo $appPath
+      return
+    fi
+    if [[ -f $appPath1 ]]; then
+      sudo $appPath1
+      return
+    fi
+    echo "no path find"
+  }
+fi
 
