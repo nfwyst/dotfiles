@@ -122,7 +122,7 @@ function proxy ()
   else
     export {https,http}_proxy=http://127.0.0.1:2334
     export all_proxy=socks5://127.0.0.1:2334
-    if command_exists "pnpm"; then
+    if command_exists "npm"; then
       npm config set proxy http://127.0.0.1:2334
     fi
   fi

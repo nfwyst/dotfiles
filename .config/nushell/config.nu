@@ -881,6 +881,9 @@ use ~/.cache/starship/init.nu
 # integration with zoxide filesystem navigator
 source ~/.cache/zoxide/init.nu
 
+# load git alias
+source ./aliases/git.nu
+
 # alias
 alias e = nvim
 alias vim = nvim
