@@ -18,9 +18,9 @@ if platform.is_win then
       },
    }
 elseif platform.is_mac then
-   options.default_prog = { '/opt/homebrew/bin/nu', '-l' }
+   options.default_prog = { 'nu', '-l' }
    options.launch_menu = {
-      { label = 'Nushell', args = { '/opt/homebrew/bin/nu', '-l' } },
+      { label = 'Nushell', args = { 'nu', '-l' } },
       { label = 'Zsh', args = { 'zsh', '-l' } },
    }
 elseif platform.is_linux then

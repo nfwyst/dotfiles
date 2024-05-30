@@ -90,6 +90,8 @@ $env.PATH = ($env.PATH | split row (char esep))
 $env.UNAME = (uname | get kernel-name)
 $env.GOPATH = ($env.HOME | path join "go")
 $env.CARGO_HOME = ($env.HOME | path join ".cargo")
+$env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
+$env.XDG_DATA_HOME = ($env.HOME | path join ".local" "share")
 $env.PATH = (
   $env.PATH |
   prepend ($env.GOPATH | path join "bin") |
@@ -97,10 +99,14 @@ $env.PATH = (
   prepend ($env.CARGO_HOME | path join "bin")
 )
 if $env.UNAME == "Darwin" {
-  $env.PATH = (
-    $env.PATH |
-    prepend '/opt/homebrew/bin'
-  )
+  let brew_path = "/opt/homebrew/bin"
+  let path_exists = $brew_path | path exists
+  if $path_exists {
+    $env.PATH = (
+      $env.PATH |
+      prepend $brew_path
+    )
+  }
 }
 if $env.UNAME == "Linux" {
   $env.PATH = (
@@ -121,7 +127,10 @@ def --env proxy [] {
   $env.HTTP_PROXY = $address
   $env.HTTPS_PROXY = $address
   $env.NO_PROXY = $address
-  npm config set proxy $address --global
+  let npm_exists = command -v "npm" &> /dev/null | is-not-empty
+  if $npm_exists {
+    npm config set proxy $address --global
+  }
 }
 
 # init network proxy

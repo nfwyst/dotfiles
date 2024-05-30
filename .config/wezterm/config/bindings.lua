@@ -239,6 +239,20 @@ local mouse_bindings = {
    },
 }
 
+function directory_exists(path)
+   local ok, err, code = os.rename(path, path)
+   if not ok then
+      if code == 13 then
+         return true
+      end
+      return false
+   end
+   return true
+end
+
+local brew_path = '/opt/homebrew/bin'
+local PATH = os.getenv('PATH')
+
 return {
    disable_default_key_bindings = true,
    disable_default_mouse_bindings = true,
@@ -246,4 +260,9 @@ return {
    keys = keys,
    key_tables = key_tables,
    mouse_bindings = mouse_bindings,
+   set_environment_variables = {
+      XDG_CONFIG_HOME = os.getenv('HOME') .. '/.config',
+      XDG_DATA_HOME = os.getenv('HOME') .. '/.local/share',
+      PATH = directory_exists(brew_path) and (brew_path .. ':' .. PATH) or PATH,
+   },
 }

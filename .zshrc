@@ -77,7 +77,7 @@ fi
 source <(fzf --zsh)
 source <(starship init zsh)
 source <(zoxide init zsh)
-eval "`fnm env`"
+eval "$(fnm env)"
 
 # env variable
 export ZSH_TAB_TITLE_PREFIX=" "
@@ -89,6 +89,8 @@ if [[ "$(uname)" == "Linux" ]]; then
 fi
 export EDITOR="$(which nvim)"
 export SHELL="$(which zsh)"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share",
 
 # into directory and list all contents
 function cx() {
@@ -99,20 +101,35 @@ function cx() {
   fi
 }
 
+# Function to check if a command can be executed
+command_exists() {
+  if command -v $1 &> /dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # set proxy
 function proxy ()
 {
   if [[ "$(uname)" == "Linux" ]]; then
     export {https,http}_proxy=http://127.0.0.1:7890
     export all_proxy=socks5://127.0.0.1:7890
-    npm config set proxy http://127.0.0.1:7890
+    if command_exists "npm"; then
+      npm config set proxy http://127.0.0.1:7890
+    fi
   else
     export {https,http}_proxy=http://127.0.0.1:2334
     export all_proxy=socks5://127.0.0.1:2334
-    npm config set proxy http://127.0.0.1:2334
+    if command_exists "pnpm"; then
+      npm config set proxy http://127.0.0.1:2334
+    fi
   fi
   export no_proxy=127.0.0.1,localhost,apple.com
 }
+# init proxy
+proxy
 
 # unset proxy
 function unproxy()
