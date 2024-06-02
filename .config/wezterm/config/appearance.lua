@@ -16,12 +16,13 @@ return {
       {
          source = { File = wezterm.GLOBAL.background },
          horizontal_align = 'Center',
+         opacity = 0.5,
       },
       {
          source = { Color = '#1f1f28' },
          height = '100%',
          width = '100%',
-         opacity = 0.85,
+         opacity = 0.8,
       },
    },
 
@@ -45,7 +46,6 @@ return {
 
    -- window
    window_decorations = 'RESIZE',
-   window_background_opacity = 0.85,
    integrated_title_button_alignment = 'Right',
    integrated_title_button_color = 'Auto',
    initial_cols = 120,
@@ -66,4 +66,6 @@ return {
       saturation = 0.35,
       brightness = 0.65,
    },
+   adjust_window_size_when_changing_font_size = false,
+   macos_window_background_blur = 20,
 }

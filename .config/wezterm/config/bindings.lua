@@ -255,7 +255,7 @@ local PATH = os.getenv('PATH')
 
 return {
    disable_default_key_bindings = true,
-   disable_default_mouse_bindings = true,
+   disable_default_mouse_bindings = false,
    leader = { key = ',', mods = mod.SUPER_REV, timemout_miliseconds = 1000 },
    keys = keys,
    key_tables = key_tables,

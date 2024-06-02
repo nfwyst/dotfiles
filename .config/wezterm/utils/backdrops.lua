@@ -52,12 +52,13 @@ function BackDrops:_set_opt(window)
          {
             source = { File = wezterm.GLOBAL.background },
             horizontal_align = 'Center',
+            opacity = 0.5,
          },
          {
             source = { Color = '#1f1f28' },
             height = '100%',
             width = '100%',
-            opacity = 0.85,
+            opacity = 0.8,
          },
       },
    }
