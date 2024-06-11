@@ -16,13 +16,13 @@ return {
       {
          source = { File = wezterm.GLOBAL.background },
          horizontal_align = 'Center',
-         opacity = 0.5,
+         opacity = 0.1,
       },
       {
          source = { Color = '#1f1f28' },
          height = '100%',
          width = '100%',
-         opacity = 0.8,
+         opacity = 0.9,
       },
    },
 
