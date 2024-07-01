@@ -27,6 +27,8 @@ return {
     "nvim-tree/nvim-web-devicons",
   },
   config = function()
+    local color = GET_COLOR()
+    local hl = { fg = color.bg_yellow, bold = true }
     require("barbecue").setup({
       create_autocmd = false,
       show_basename = false,
@@ -35,6 +37,10 @@ return {
       attach_navic = navic_enabled,
       modifiers = {
         dirname = ":~",
+      },
+      theme = {
+        separator = hl,
+        dirname = hl,
       },
     })
     init()

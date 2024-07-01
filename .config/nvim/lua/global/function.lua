@@ -331,9 +331,13 @@ function QUICKSORT(arr, low, high, compare)
   end
 end
 
-function INIT_HL()
+function GET_COLOR()
   local colors = require("NeoSolarized.colors")
-  local color = colors[SCHEME_BACKGROUND]
+  return colors[SCHEME_BACKGROUND]
+end
+
+function INIT_HL()
+  local color = GET_COLOR()
   local illuminate = { bg = "#B2D4FC", fg = "#4d2b03", bold = true }
   SET_HL(MERGE_TABLE(CURSOR_HILIGHT_OPTS, {
     CursorLine = { bg = color.fg1 },
@@ -349,7 +353,7 @@ function INIT_HL()
     IlluminatedWordText = illuminate,
     IlluminatedWordRead = illuminate,
     IlluminatedWordWrite = illuminate,
-    NvimTreeIndentMarker = { fg = color.fg1 },
+    NvimTreeIndentMarker = { fg = color.green },
   }))
 end
 
