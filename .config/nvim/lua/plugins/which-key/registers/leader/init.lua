@@ -28,12 +28,7 @@ local register = {
     t = require(get_path("treesitter")),
   },
   h = require(get_path("harpoon")),
-  H = {
-    function()
-      vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
-    end,
-    "Toggle inlay hint",
-  },
+  H = { TOGGLE_INLAY_HINT, "Toggle inlay hint" },
   i = require(get_path("noice")),
   j = { "<cmd>Telescope jumplist<cr>", "Jumplist" },
   n = {

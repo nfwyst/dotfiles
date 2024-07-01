@@ -44,6 +44,8 @@ local function init()
   local hd = vim.lsp.handlers
   hd["textDocument/hover"] = vim.lsp.with(hd.hover, opt)
   hd["textDocument/signatureHelp"] = vim.lsp.with(hd.signature_help, opt)
+
+  TOGGLE_INLAY_HINT()
 end
 
 local function on_attach(client)

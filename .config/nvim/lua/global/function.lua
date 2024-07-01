@@ -352,3 +352,7 @@ function INIT_HL()
     NvimTreeIndentMarker = { fg = color.fg1 },
   }))
 end
+
+function TOGGLE_INLAY_HINT()
+  vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
+end
