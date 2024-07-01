@@ -330,3 +330,25 @@ function QUICKSORT(arr, low, high, compare)
     QUICKSORT(arr, pivot + 1, high, compare)
   end
 end
+
+function INIT_HL()
+  local colors = require("NeoSolarized.colors")
+  local color = colors[SCHEME_BACKGROUND]
+  local illuminate = { bg = "#B2D4FC", fg = "#4d2b03", bold = true }
+  SET_HL(MERGE_TABLE(CURSOR_HILIGHT_OPTS, {
+    CursorLine = { bg = color.fg1 },
+    CursorLineNr = { fg = "#388bfd" },
+    ["@variable"] = { fg = color.fg0 },
+    Normal = { fg = color.fg0 },
+    Comment = { fg = color.fg2 },
+    LineNrAbove = { fg = color.fg1 },
+    LineNr = { fg = color.fg1 },
+    LineNrBelow = { fg = color.fg1 },
+    IlluminatedWord = illuminate,
+    IlluminatedCurWord = illuminate,
+    IlluminatedWordText = illuminate,
+    IlluminatedWordRead = illuminate,
+    IlluminatedWordWrite = illuminate,
+    NvimTreeIndentMarker = { fg = color.fg1 },
+  }))
+end

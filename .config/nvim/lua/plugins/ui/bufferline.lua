@@ -128,6 +128,10 @@ return {
         background = {
           fg = "#aab2c0",
         },
+        buffer_visible = {
+          fg = "#ef8f8f",
+          bold = true,
+        },
         buffer_selected = {
           fg = "#ef8f8f",
           bold = true,
