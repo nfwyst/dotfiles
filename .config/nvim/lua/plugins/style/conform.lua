@@ -17,7 +17,7 @@ local function init(conform)
   setup_eslint()
   USER_COMMAND("Format", function()
     conform.format({
-      lsp_fallback = true,
+      lsp_format = "fallback",
       async = true,
       timeout_ms = 1000,
     })

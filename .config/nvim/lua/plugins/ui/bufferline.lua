@@ -122,85 +122,32 @@ return {
         separator_style = "thin",
         truncate_names = false,
         auto_toggle_bufferline = true,
+        style_preset = bufferline.style_preset.no_italic,
       },
       highlights = {
-        fill = {
-          fg = { attribute = "fg", highlight = "Visual" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-        },
         background = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
+          fg = "#aab2c0",
         },
         buffer_selected = {
-          italic = false,
-        },
-        buffer_visible = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-          italic = false,
-        },
-        close_button = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-        },
-        close_button_visible = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
+          fg = "#ef8f8f",
+          bold = true,
         },
         tab_selected = {
-          fg = { attribute = "fg", highlight = "Normal" },
+          fg = "#ffffff",
           bg = "#268bd2",
         },
         tab = {
           fg = "#268bd2",
-          bg = { attribute = "bg", highlight = "Normal" },
-        },
-        tab_close = {
-          fg = { attribute = "fg", highlight = "TabLineSel" },
-          bg = { attribute = "bg", highlight = "Normal" },
+          bg = "#cccccc",
         },
         duplicate_selected = {
-          fg = { attribute = "fg", highlight = "Normal" },
-          bg = { attribute = "bg", highlight = "Normal" },
           underline = false,
-          italic = false,
         },
         duplicate_visible = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
           underline = false,
-          italic = false,
         },
         duplicate = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
           underline = false,
-          italic = false,
-        },
-        modified = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-        },
-        modified_selected = {
-          fg = { attribute = "fg", highlight = "Normal" },
-          bg = { attribute = "bg", highlight = "Normal" },
-        },
-        modified_visible = {
-          fg = { attribute = "fg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-        },
-        separator = {
-          fg = { attribute = "bg", highlight = "TabLine" },
-          bg = { attribute = "bg", highlight = "TabLine" },
-        },
-        separator_selected = {
-          fg = { attribute = "bg", highlight = "Normal" },
-          bg = { attribute = "bg", highlight = "Normal" },
-        },
-        indicator_selected = {
-          fg = { attribute = "fg", highlight = "LspDiagnosticsDefaultHint" },
-          bg = { attribute = "bg", highlight = "Normal" },
         },
       },
     })

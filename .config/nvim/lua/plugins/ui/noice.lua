@@ -46,7 +46,7 @@ local function init(noice, lsp)
       },
     },
   })
-  clear_hack()
+  -- clear_hack()
 end
 
 return {
