@@ -5,20 +5,20 @@ local function init_hi()
   local colors = require("NeoSolarized.colors")
   local color = colors[SCHEME_BACKGROUND]
   SET_TIMEOUT(function()
-    SET_HIGHLIGHT(MERGE_ARRAYS(CURSOR_HILIGHT_OPTS, {
-      "LineNr guifg=" .. color.fg1,
-      "CursorLineNr guifg=" .. "#388bfd",
-      "@variable guifg=" .. color.fg0,
-      "Normal guifg=" .. color.fg0,
-      "Comment guifg=" .. color.fg2,
-    }))
-    SET_HL({
+    SET_HL(MERGE_TABLE(CURSOR_HILIGHT_OPTS, {
+      CursorLineNr = { fg = "#388bfd" },
+      ["@variable"] = { fg = color.fg0 },
+      Normal = { fg = color.fg0 },
+      Comment = { fg = color.fg2 },
+      LineNrAbove = { fg = color.fg1 },
+      LineNr = { fg = color.fg1 },
+      LineNrBelow = { fg = color.fg1 },
       IlluminatedWord = illuminate,
       IlluminatedCurWord = illuminate,
       IlluminatedWordText = illuminate,
       IlluminatedWordRead = illuminate,
       IlluminatedWordWrite = illuminate,
-    })
+    }))
   end)
 end
 

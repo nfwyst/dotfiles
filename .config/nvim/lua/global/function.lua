@@ -1,4 +1,5 @@
 local cmd = vim.api.nvim_create_user_command
+local cursor = vim.opt.guicursor
 
 function MERGE_TABLE(...)
   return vim.tbl_deep_extend("force", ...)
@@ -35,15 +36,13 @@ function USER_COMMAND(name, func)
   cmd(name, func, {})
 end
 
-function SET_HIGHLIGHT(table)
-  for _, v in ipairs(table) do
-    vim.cmd.highlight({ v, bang = true })
-  end
-end
-
 function SET_HL(table)
   for group, value in pairs(table) do
-    vim.api.nvim_set_hl(0, group, value)
+    if value.force == nil then
+      value.force = true
+    end
+    local old_value = GET_HL(group)
+    vim.api.nvim_set_hl(0, group, MERGE_TABLE(old_value, value))
   end
 end
 
@@ -52,15 +51,17 @@ function GET_HL(name)
 end
 
 function SHOW_CURSOR()
-  SET_HIGHLIGHT(CURSOR_HILIGHT_OPTS)
+  SET_HL(CURSOR_HILIGHT_OPTS)
+  cursor:remove("a:Cursor/lCursor")
 end
 
 function HIDE_CURSOR()
-  SET_HIGHLIGHT({ "Cursor blend=100" })
+  SET_HL({ Cursor = { blend = 100 } })
+  cursor:append("a:Cursor/lCursor")
 end
 
 function GET_HIGHLIGHT(name, opt)
-  local ht = vim.api.nvim_get_hl(0, { name = name })
+  local ht = GET_HL(name)
   if not opt then
     return ht
   end

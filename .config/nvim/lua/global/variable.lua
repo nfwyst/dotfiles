@@ -28,9 +28,9 @@ MAJOR = VERSION.major
 MINOR = VERSION.minor
 IS_ZERO_TEN_DEV = IS_DEV and MAJOR == 0 and MINOR == 10
 CURSOR_HILIGHT_OPTS = {
-  "Cursor guibg=#5f87af ctermbg=67 blend=0",
-  "iCursor guibg=#ffffaf ctermbg=229",
-  "rCursor guibg=#d70000 ctermbg=124",
+  Cursor = { bg = "#5f87af", ctermbg = 67, blend = 0 },
+  iCursor = { bg = "#ffffaf", ctermbg = 229 },
+  rCursor = { bg = "#d70000", ctermbg = 124 },
 }
 
 --- Manual open debug from command line

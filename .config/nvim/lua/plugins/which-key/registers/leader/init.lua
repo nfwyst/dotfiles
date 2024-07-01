@@ -30,7 +30,7 @@ local register = {
   h = require(get_path("harpoon")),
   H = {
     function()
-      vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+      vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
     end,
     "Toggle inlay hint",
   },
@@ -51,6 +51,7 @@ local register = {
   x = { "<cmd>SaveThenQuit<cr>", "Save and quit" },
   q = { "<cmd>Quit<cr>", "Force quit" },
   u = { "<cmd>nohlsearch<cr>", "No highlight" },
+  U = { "<cmd>Telescope undo<cr>", "Undo history" },
   f = { "<cmd>FindFiles<cr>", "Find files" },
   F = { "<cmd>FindText<cr>", "Find text" },
   T = { "<cmd>FindTextByFileType<cr>", "Find text by filetype" },
