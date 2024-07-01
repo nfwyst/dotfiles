@@ -106,6 +106,17 @@ local function init(bufferline)
   })
 end
 
+local function get_buf_hl(no_underline)
+  local hl = {
+    fg = "#ef8f8f",
+    bold = true,
+  }
+  if no_underline then
+    hl.underline = false
+  end
+  return hl
+end
+
 return {
   "akinsho/bufferline.nvim",
   cond = not IS_VSCODE,
@@ -128,14 +139,8 @@ return {
         background = {
           fg = "#aab2c0",
         },
-        buffer_visible = {
-          fg = "#ef8f8f",
-          bold = true,
-        },
-        buffer_selected = {
-          fg = "#ef8f8f",
-          bold = true,
-        },
+        buffer_visible = get_buf_hl(),
+        buffer_selected = get_buf_hl(),
         tab_selected = {
           fg = "#ffffff",
           bg = "#268bd2",
@@ -144,15 +149,9 @@ return {
           fg = "#268bd2",
           bg = "#cccccc",
         },
-        duplicate_selected = {
-          underline = false,
-        },
-        duplicate_visible = {
-          underline = false,
-        },
-        duplicate = {
-          underline = false,
-        },
+        duplicate_selected = get_buf_hl(true),
+        duplicate_visible = get_buf_hl(true),
+        duplicate = get_buf_hl(true),
       },
     })
     init(bufferline)
