@@ -122,11 +122,12 @@ $env.SHELL = (which nu | get path | first)
 
 # set proxy
 def --env proxy [] {
-  let port = if $env.UNAME == "linux" { "7890" } else { "2334" }
-  let address = $"http://127.0.0.1:($port)"
+  let host = "http://127.0.0.1"
+  let port = if $env.UNAME == "linux" { "7890" } else { "7897" }
+  let address = $"($host):($port)"
   $env.HTTP_PROXY = $address
   $env.HTTPS_PROXY = $address
-  $env.NO_PROXY = $address
+  $env.NO_PROXY = $"($host),http://localhost,https://www.apple.com"
   let npm_exists = command -v "npm" &> /dev/null | is-not-empty
   if $npm_exists {
     npm config set proxy $address --global
@@ -162,6 +163,9 @@ if (which fnm | is-empty) {
     prepend ($env.FNM_MULTISHELL_PATH | path join "bin")
   )
 }
+
+# llm
+$env.OLLAMA_API_BASE = "http://127.0.0.1:11434"
 
 # uniq path
 $env.PATH = ($env.PATH | uniq)

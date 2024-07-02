@@ -91,6 +91,7 @@ export EDITOR="$(which nvim)"
 export SHELL="$(which zsh)"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share",
+export OLLAMA_API_BASE="http://127.0.0.1:11434"
 
 # into directory and list all contents
 function cx() {
@@ -120,10 +121,10 @@ function proxy ()
       npm config set proxy http://127.0.0.1:7890
     fi
   else
-    export {https,http}_proxy=http://127.0.0.1:2334
-    export all_proxy=socks5://127.0.0.1:2334
+    export {https,http}_proxy=http://127.0.0.1:7897
+    export all_proxy=socks5://127.0.0.1:7897
     if command_exists "npm"; then
-      npm config set proxy http://127.0.0.1:2334
+      npm config set proxy http://127.0.0.1:7897
     fi
   fi
   export no_proxy=127.0.0.1,localhost,apple.com

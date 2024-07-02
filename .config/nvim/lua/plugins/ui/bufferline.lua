@@ -106,9 +106,9 @@ local function init(bufferline)
   })
 end
 
-local function get_buf_hl(no_underline)
+local function get_buf_hl(no_underline, color)
   local hl = {
-    fg = "#ef8f8f",
+    fg = color or GET_COLOR().aqua,
     bold = true,
   }
   if no_underline then
@@ -139,8 +139,8 @@ return {
         background = {
           fg = "#aab2c0",
         },
-        buffer_visible = get_buf_hl(),
-        buffer_selected = get_buf_hl(),
+        buffer_visible = get_buf_hl(false, "#ef8f8f"),
+        buffer_selected = get_buf_hl(false, "#ef8f8f"),
         tab_selected = {
           fg = "#ffffff",
           bg = "#268bd2",
@@ -151,7 +151,7 @@ return {
         },
         duplicate_selected = get_buf_hl(true),
         duplicate_visible = get_buf_hl(true),
-        duplicate = get_buf_hl(true),
+        duplicate = get_buf_hl(true, "#a9b2c0"),
       },
     })
     init(bufferline)

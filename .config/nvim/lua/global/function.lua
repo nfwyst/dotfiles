@@ -290,7 +290,7 @@ function PCALL(f, ...)
 end
 
 function LOG_INFO(title, message, timeout)
-  vim.notify(message, vim.log.levels.INFO, {
+  vim.notify(message or "", vim.log.levels.INFO, {
     title = title,
     timeout = timeout ~= nil and timeout or 3000,
   })
@@ -359,4 +359,8 @@ end
 
 function TOGGLE_INLAY_HINT()
   vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
+end
+
+function OPEN_LINK_OR_FILE(uri)
+  vim.fn.system({ "open", uri })
 end

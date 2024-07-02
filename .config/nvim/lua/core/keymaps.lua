@@ -1,8 +1,38 @@
+local api = vim.api
+
+local function on_link_click()
+  local linenr = vim.fn.line(".")
+  local line = vim.fn.getline(linenr)
+  local pt = { pattern = "[%w@:%%._+~#=/%-?&]*", http_pattern = "https?://" }
+  local url = line:match(pt.http_pattern .. "%w" .. pt.pattern)
+  if not url then
+    return
+  end
+  OPEN_LINK_OR_FILE(url)
+end
+
+local function on_click()
+  local ok, wezterm = pcall(require, "wezterm")
+  if ok then
+    local _, panel = pcall(wezterm.get_current_pane)
+    if panel ~= nil then
+      return on_link_click()
+    end
+  end
+  local key = "c-LeftMouse"
+  key = api.nvim_replace_termcodes(key, true, true, true)
+  return api.nvim_feedkeys(key, "mnx", false)
+end
+
 --   command_mode = "c",
 SET_KEY_MAPS({
   -- rewrite space to nop
   [""] = {
     { lhs = "<Space>", rhs = "<Nop>" },
+    {
+      lhs = "<c-LeftMouse>",
+      rhs = on_click,
+    },
   },
   -- normal mode
   n = {
