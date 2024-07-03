@@ -10,9 +10,9 @@ local hint_opt = {
   includeInlayParameterNameHints = "all",
   includeInlayParameterNameHintsWhenArgumentMatchesName = true,
   includeInlayFunctionParameterTypeHints = true,
-  includeInlayVariableTypeHints = false,
-  includeInlayPropertyDeclarationTypeHints = false,
-  includeInlayFunctionLikeReturnTypeHints = false,
+  includeInlayVariableTypeHints = true,
+  includeInlayPropertyDeclarationTypeHints = true,
+  includeInlayFunctionLikeReturnTypeHints = true,
   includeInlayEnumMemberValueHints = true,
 }
 

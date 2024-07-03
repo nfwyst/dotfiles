@@ -69,8 +69,9 @@ local function init()
     end
     inlay_hint_handler(err, result, ctx, config)
   end
-
-  TOGGLE_INLAY_HINT()
+  -- FIXME: wait for tsserver fix hint issue
+  -- FIXME replace tsserver with typeScript-tools
+  -- TOGGLE_INLAY_HINT()
 end
 
 local function on_attach(client)
