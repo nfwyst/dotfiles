@@ -8,11 +8,11 @@ end
 
 local hint_opt = {
   includeInlayParameterNameHints = "all",
-  includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+  includeInlayParameterNameHintsWhenArgumentMatchesName = true,
   includeInlayFunctionParameterTypeHints = true,
-  includeInlayVariableTypeHints = true,
+  includeInlayVariableTypeHints = false,
   includeInlayPropertyDeclarationTypeHints = false,
-  includeInlayFunctionLikeReturnTypeHints = true,
+  includeInlayFunctionLikeReturnTypeHints = false,
   includeInlayEnumMemberValueHints = true,
 }
 

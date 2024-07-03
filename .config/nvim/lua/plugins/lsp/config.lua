@@ -1,7 +1,16 @@
-local function setup_diagnostic(active)
+local st = vim.diagnostic.severity
+
+local function setup_diagnostic()
   local config = {
     virtual_text = false,
-    signs = { active = active },
+    signs = {
+      text = {
+        [st.ERROR] = " ",
+        [st.WARN] = " ",
+        [st.HINT] = " ",
+        [st.INFO] = " ",
+      },
+    },
     update_in_insert = true,
     underline = false,
     severity_sort = true,
@@ -20,30 +29,46 @@ local function setup_diagnostic(active)
   end
 end
 
-local function init()
-  local signs = {
-    DiagnosticSignError = { text = " ", texthl = "DiagnosticSignError" },
-    DiagnosticSignWarn = { text = " ", texthl = "DiagnosticSignWarn" },
-    DiagnosticSignHint = { text = " ", texthl = "DiagnosticSignHint" },
-    DiagnosticSignInfo = { text = " ", texthl = "DiagnosticSignInfo" },
-  }
-  DEFINE_SIGNS(signs)
-  local active = {}
-  for name, value in pairs(signs) do
-    table.insert(active, { name = name, text = value.text })
-  end
-  setup_diagnostic(active)
+local function filter_hints_result(result)
+  return FILTER_TABLE(result, function(hint)
+    local label = hint.label
+    if not label then
+      return false
+    end
+    local labels = ""
+    for _, segment in pairs(label) do
+      labels = labels .. segment.value
+    end
+    if labels:len() >= 40 then
+      return false
+    end
+    return true
+  end)
+end
 
+local function init()
+  setup_diagnostic()
+  local lsp = vim.lsp
+  local methods = lsp.protocol.Methods
+  local hd = lsp.handlers
   local opt = {
     border = "rounded",
     width = LSP_DOC_WIDTH,
     max_width = GET_MAX_WIDTH(),
     silent = true,
   }
-
-  local hd = vim.lsp.handlers
-  hd["textDocument/hover"] = vim.lsp.with(hd.hover, opt)
-  hd["textDocument/signatureHelp"] = vim.lsp.with(hd.signature_help, opt)
+  hd[methods.textDocument_hover] = lsp.with(hd.hover, opt)
+  hd[methods.textDocument_signatureHelp] = lsp.with(hd.signature_help, opt)
+  -- Workaround for hide long TypeScript inlay hints.
+  local method = methods.textDocument_inlayHint
+  local inlay_hint_handler = hd[method]
+  hd[method] = function(err, result, ctx, config)
+    local client = lsp.get_client_by_id(ctx.client_id)
+    if client and client.name == "tsserver" and result then
+      result = filter_hints_result(result)
+    end
+    inlay_hint_handler(err, result, ctx, config)
+  end
 
   TOGGLE_INLAY_HINT()
 end

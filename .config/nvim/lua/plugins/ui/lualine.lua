@@ -7,8 +7,7 @@ local diagnostics = {
   update_in_insert = false,
   always_visible = true,
   cond = function()
-    local is_disabled = vim.diagnostic.is_disabled()
-    return not is_disabled
+    return vim.diagnostic.is_enabled()
   end,
 }
 
@@ -113,16 +112,16 @@ end
 
 local noice_mode = {
   function()
-    return require("noice").api.statusline.mode.get()
+    return require("noice").api.status.mode.get()
   end,
   cond = function()
-    return require("noice").api.statusline.mode.has()
+    return require("noice").api.status.mode.has()
   end,
   color = { fg = "#ffffff" },
 }
 
 local lsps = function()
-  local clients = vim.lsp.buf_get_clients(GET_CURRENT_BUFFER())
+  local clients = vim.lsp.get_clients({ bufnr = GET_CURRENT_BUFFER() })
   local width = vim.o.columns
   if next(clients) == nil or width < 66 then
     return ""

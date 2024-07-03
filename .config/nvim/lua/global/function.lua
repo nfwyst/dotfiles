@@ -5,6 +5,17 @@ function MERGE_TABLE(...)
   return vim.tbl_deep_extend("force", ...)
 end
 
+function FILTER_TABLE(table, filter)
+  local tb = {}
+  for key, value in pairs(table) do
+    local ok = filter(value, key)
+    if ok then
+      tb[key] = value
+    end
+  end
+  return tb
+end
+
 function MERGE_ARRAYS(...)
   local arr = {}
   for _, array in ipairs({ ... }) do
@@ -119,6 +130,7 @@ end
 function KEY_MAP(mode, lhs, rhs, opts)
   local has_key = key_exists(mode, lhs)
   if has_key then
+    LOG_ERROR("key map error", "key" .. lhs .. "already exists")
     return
   end
   opts = opts or {}
@@ -290,22 +302,31 @@ function PCALL(f, ...)
 end
 
 function LOG_INFO(title, message, timeout)
-  vim.notify(message or "", vim.log.levels.INFO, {
-    title = title,
-    timeout = timeout ~= nil and timeout or 3000,
-  })
+  -- fix that vim.notify has not rewrite by noice
+  SET_TIMEOUT(function()
+    vim.notify(message or "", vim.log.levels.INFO, {
+      title = title,
+      timeout = timeout ~= nil and timeout or 3000,
+    })
+  end)
 end
 
 function LOG_ERROR(title, message)
-  vim.notify(message, vim.log.levels.ERROR, {
-    title = title,
-  })
+  -- fix that vim.notify has not rewrite by noice
+  SET_TIMEOUT(function()
+    vim.notify(message, vim.log.levels.ERROR, {
+      title = title,
+    })
+  end)
 end
 
 function LOG_WARN(title, message)
-  vim.notify(message, vim.log.levels.WARN, {
-    title = title,
-  })
+  -- fix that vim.notify has not rewrite by noice
+  SET_TIMEOUT(function()
+    vim.notify(message, vim.log.levels.WARN, {
+      title = title,
+    })
+  end)
 end
 
 local function PARTITION(arr, low, high, compare)

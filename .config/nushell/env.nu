@@ -99,12 +99,15 @@ $env.PATH = (
   prepend ($env.CARGO_HOME | path join "bin")
 )
 if $env.UNAME == "Darwin" {
-  let brew_path = "/opt/homebrew/bin"
+  let brew = "/opt/homebrew"
+  let brew_path = $"($brew)/bin"
+  let brew_sbin = $"($brew)/sbin"
   let path_exists = $brew_path | path exists
   if $path_exists {
     $env.PATH = (
       $env.PATH |
-      prepend $brew_path
+      prepend $brew_path |
+      prepend $brew_sbin
     )
   }
 }
