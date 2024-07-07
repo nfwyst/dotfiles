@@ -68,7 +68,6 @@ LSP_SERVERS = {
   "cssls",
   "gopls",
   "html",
-  "tsserver",
   "yamlls",
   "tailwindcss",
   "marksman",

@@ -19,31 +19,12 @@ local function setup_diagnostic()
       style = "minimal",
       border = "rounded",
       source = "always",
-      header = "",
-      prefix = "",
     },
   }
   vim.diagnostic.config(config)
   if IS_LEET_CODE then
     vim.diagnostic.enable(false)
   end
-end
-
-local function filter_hints_result(result)
-  return FILTER_TABLE(result, function(hint)
-    local label = hint.label
-    if not label then
-      return false
-    end
-    local labels = ""
-    for _, segment in pairs(label) do
-      labels = labels .. segment.value
-    end
-    if labels:len() >= 40 then
-      return false
-    end
-    return true
-  end)
 end
 
 local function init()
@@ -59,31 +40,10 @@ local function init()
   }
   hd[methods.textDocument_hover] = lsp.with(hd.hover, opt)
   hd[methods.textDocument_signatureHelp] = lsp.with(hd.signature_help, opt)
-  -- Workaround for hide long TypeScript inlay hints.
-  local method = methods.textDocument_inlayHint
-  local inlay_hint_handler = hd[method]
-  hd[method] = function(err, result, ctx, config)
-    local client = lsp.get_client_by_id(ctx.client_id)
-    if client and client.name == "tsserver" and result then
-      result = filter_hints_result(result)
-    end
-    inlay_hint_handler(err, result, ctx, config)
-  end
-  -- FIXME: wait for tsserver fix hint issue
-  -- FIXME replace tsserver with typeScript-tools
-  -- TOGGLE_INLAY_HINT()
-end
-
-local function on_attach(client)
-  if client.name == "tsserver" then
-    client.server_capabilities.documentFormattingProvider = false
-    client.server_capabilities.documentRangeFormattingProvider = false
-  end
 end
 
 local function get_options(cmp_nvim_lsp, server)
   local opts = {
-    on_attach = on_attach,
     capabilities = cmp_nvim_lsp.default_capabilities(),
   }
   local has_custom_opts, server_custom_opts =

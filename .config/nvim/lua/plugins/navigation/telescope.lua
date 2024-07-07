@@ -1,8 +1,33 @@
-local fnw = 9999
-local file_layout = { width = 0.85, height = 0.75 }
-local text_layout = { width = 9999, height = 0.6, preview_width = 0.35 }
-local other_layout = { width = 9999, height = 9999, preview_width = 0.35 }
-local picker_opt = { fname_width = fnw }
+local style = { padding = 0 }
+local preview_size = 0.5
+local blend = 3
+local size = { width = style, height = style }
+local layout_config = MERGE_TABLE(size, { preview_cutoff = 0 })
+local dropdown_config = { layout_config = layout_config, winblend = blend }
+
+local function flash(prompt_bufnr)
+  if not IS_PACKAGE_LOADED("flash") then
+    return
+  end
+  require("flash").jump({
+    pattern = "^",
+    label = { after = { 0, 0 } },
+    search = {
+      mode = "search",
+      exclude = {
+        function(win)
+          return vim.bo[vim.api.nvim_win_get_buf(win)].filetype
+            ~= "TelescopeResults"
+        end,
+      },
+    },
+    action = function(match)
+      local picker =
+        require("telescope.actions.state").get_current_picker(prompt_bufnr)
+      picker:set_selection(match.pos[1] - 1)
+    end,
+  })
+end
 
 local function get_symbols(on_done)
   vim.ui.select(
@@ -23,7 +48,11 @@ end
 
 local function find_text(builtin, themes, path, undercursor, extra)
   local theme = themes.get_ivy({
-    layout_config = text_layout,
+    winblend = blend,
+    layout_config = MERGE_TABLE(layout_config, {
+      preview_width = preview_size,
+      height = 0.6,
+    }),
   })
   theme.cwd = WORKSPACE_PATH
   if path then
@@ -37,8 +66,7 @@ local function find_text(builtin, themes, path, undercursor, extra)
 end
 
 local function find_files(builtin, themes, config)
-  local theme =
-    themes.get_dropdown({ previewer = false, layout_config = file_layout })
+  local theme = themes.get_dropdown(dropdown_config)
   theme.cwd = WORKSPACE_PATH
   if config ~= nil then
     theme = MERGE_TABLE(theme, config)
@@ -73,12 +101,11 @@ local function init(builtin, themes)
     FindFiles = function()
       find_files(builtin, themes)
     end,
-    FindGitHiddenFiles = function()
+    FindIgnoredFiles = function()
       find_files(builtin, themes, { no_ignore = true })
     end,
-    FindFilesWithGit = function()
-      local theme =
-        themes.get_dropdown({ previewer = false, layout_config = file_layout })
+    FindRepoFiles = function()
+      local theme = themes.get_dropdown(dropdown_config)
       theme.cwd = WORKSPACE_PATH
       builtin.git_files(theme)
     end,
@@ -127,6 +154,24 @@ local function init(builtin, themes)
   })
 end
 
+local function get_maps(act)
+  return {
+    ["<c-q>"] = act.send_selected_to_qflist + act.open_qflist,
+    ["<cr>"] = act.select_default,
+    ["<c-x>"] = act.select_horizontal,
+    ["<c-v>"] = act.select_vertical,
+    ["<c-t>"] = act.select_tab,
+    ["<c-u>"] = act.preview_scrolling_up,
+    ["<c-d>"] = act.preview_scrolling_down,
+    ["<c-h>"] = act.preview_scrolling_left,
+    ["<c-l>"] = act.preview_scrolling_right,
+    ["<tab>"] = act.toggle_selection + act.move_selection_worse,
+    ["<s-tab>"] = act.toggle_selection + act.move_selection_better,
+    ["<c-a>"] = act.send_to_qflist + act.open_qflist,
+    ["<c-g>"] = act.complete_tag,
+  }
+end
+
 return {
   "nvim-telescope/telescope.nvim",
   cond = not IS_VSCODE,
@@ -136,8 +181,8 @@ return {
     "FindTextByPattern",
     "FindTextCursor",
     "FindFiles",
-    "FindGitHiddenFiles",
-    "FindFilesWithGit",
+    "FindIgnoredFiles",
+    "FindRepoFiles",
     "FindTextWithPath",
     "Telescope",
     "SetWorkspacePathGlobal",
@@ -149,139 +194,61 @@ return {
   dependencies = { "nvim-lua/plenary.nvim" },
   config = function()
     local telescope = require("telescope")
-    local actions = require("telescope.actions")
+    local act = require("telescope.actions")
     init(require("telescope.builtin"), require("telescope.themes"))
-
-    local function flash(prompt_bufnr)
-      if not IS_PACKAGE_LOADED("flash") then
-        return
-      end
-      require("flash").jump({
-        pattern = "^",
-        label = { after = { 0, 0 } },
-        search = {
-          mode = "search",
-          exclude = {
-            function(win)
-              return vim.bo[vim.api.nvim_win_get_buf(win)].filetype
-                ~= "TelescopeResults"
-            end,
-          },
-        },
-        action = function(match)
-          local picker =
-            require("telescope.actions.state").get_current_picker(prompt_bufnr)
-          picker:set_selection(match.pos[1] - 1)
-        end,
-      })
-    end
-
     telescope.setup({
       defaults = {
+        path_display = { "truncate" },
+        layout_strategy = "vertical",
+        layout_config = {
+          horizontal = layout_config,
+          vertical = MERGE_TABLE(layout_config, {
+            preview_height = preview_size,
+          }),
+        },
+        mappings = {
+          i = MERGE_TABLE(get_maps(act), {
+            ["<c-k>"] = act.move_selection_previous,
+            ["<c-j>"] = act.move_selection_next,
+            ["<c-c>"] = act.close,
+            ["<c-s>"] = flash,
+            ["<c-n>"] = act.cycle_history_next,
+            ["<c-p>"] = act.cycle_history_prev,
+          }),
+          n = MERGE_TABLE(get_maps(act), {
+            ["k"] = act.move_selection_previous,
+            ["j"] = act.move_selection_next,
+            ["q"] = act.close,
+            s = flash,
+            ["M"] = act.move_to_middle,
+            ["gg"] = act.move_to_top,
+            ["G"] = act.move_to_bottom,
+            ["?"] = act.which_key,
+          }),
+        },
         prompt_prefix = " ",
         selection_caret = " ",
-        path_display = { "truncate" },
         set_env = { ["COLORTERM"] = "truecolor" },
         wrap_results = true,
-        preview = { filesize_limit = 3 },
-        layout_config = { horizontal = other_layout },
+        preview = { filesize_limit = 5 },
         file_ignore_patterns = TELESCOPE_IGNORE_PATTERNS,
-        mappings = {
-          i = {
-            ["<c-n>"] = actions.cycle_history_next,
-            ["<c-p>"] = actions.cycle_history_prev,
-            ["<c-j>"] = actions.move_selection_next,
-            ["<c-k>"] = actions.move_selection_previous,
-            ["<c-c>"] = actions.close,
-            ["<down>"] = actions.move_selection_next,
-            ["<up>"] = actions.move_selection_previous,
-            ["<cr>"] = actions.select_default,
-            ["<c-x>"] = actions.select_horizontal,
-            ["<c-v>"] = actions.select_vertical,
-            ["<c-t>"] = actions.select_tab,
-            ["<c-u>"] = actions.preview_scrolling_up,
-            ["<c-d>"] = actions.preview_scrolling_down,
-            ["<c-h>"] = actions.preview_scrolling_left,
-            ["<c-l>"] = actions.preview_scrolling_right,
-            ["<PageUp>"] = actions.results_scrolling_up,
-            ["<PageDown>"] = actions.results_scrolling_down,
-            ["<tab>"] = actions.toggle_selection + actions.move_selection_worse,
-            ["<s-tab>"] = actions.toggle_selection
-              + actions.move_selection_better,
-            ["<c-a>"] = actions.send_to_qflist + actions.open_qflist,
-            ["<c-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
-            ["<c-g>"] = actions.complete_tag,
-            ["<c-s>"] = flash,
-          },
-          n = {
-            s = flash,
-            ["<esc>"] = actions.close,
-            ["q"] = actions.close,
-            ["<cr>"] = actions.select_default,
-            ["<c-x>"] = actions.select_horizontal,
-            ["<c-v>"] = actions.select_vertical,
-            ["<c-t>"] = actions.select_tab,
-            ["<tab>"] = actions.toggle_selection + actions.move_selection_worse,
-            ["<s-tab>"] = actions.toggle_selection
-              + actions.move_selection_better,
-            ["<c-a>"] = actions.send_to_qflist + actions.open_qflist,
-            ["<c-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
-            ["j"] = actions.move_selection_next,
-            ["k"] = actions.move_selection_previous,
-            ["H"] = actions.move_to_top,
-            ["M"] = actions.move_to_middle,
-            ["L"] = actions.move_to_bottom,
-            ["<down>"] = actions.move_selection_next,
-            ["<up>"] = actions.move_selection_previous,
-            ["gg"] = actions.move_to_top,
-            ["G"] = actions.move_to_bottom,
-            ["<c-u>"] = actions.preview_scrolling_up,
-            ["<c-d>"] = actions.preview_scrolling_down,
-            ["<c-h>"] = actions.preview_scrolling_left,
-            ["<c-l>"] = actions.preview_scrolling_right,
-            ["<PageUp>"] = actions.results_scrolling_up,
-            ["<PageDown>"] = actions.results_scrolling_down,
-            ["?"] = actions.which_key,
-          },
-        },
       },
       pickers = {
         planets = { show_pluto = true, show_moon = true },
-        current_buffer_tags = picker_opt,
-        jumplist = picker_opt,
-        loclist = picker_opt,
-        lsp_definitions = picker_opt,
-        lsp_document_symbols = picker_opt,
-        lsp_dynamic_workspace_symbols = picker_opt,
-        lsp_implementations = picker_opt,
-        lsp_incoming_calls = picker_opt,
-        lsp_outgoing_calls = picker_opt,
-        lsp_references = picker_opt,
-        lsp_type_definitions = picker_opt,
-        lsp_workspace_symbols = picker_opt,
-        quickfix = picker_opt,
-        tags = picker_opt,
-        find_files = { hidden = true, fname_width = fnw },
-        git_status = {
-          layout_config = { preview_width = 0.55 },
-          fname_width = fnw,
-        },
+        find_files = { hidden = true },
         buffers = {
           theme = "dropdown",
-          previewer = false,
           initial_mode = "normal",
-          fname_width = fnw,
           mappings = {
             i = {
-              ["<c-d>"] = actions.delete_buffer,
+              ["<c-d>"] = act.delete_buffer,
             },
             n = {
-              ["dd"] = actions.delete_buffer,
+              ["dd"] = act.delete_buffer,
             },
           },
         },
       },
-      extensions = {},
     })
   end,
 }
