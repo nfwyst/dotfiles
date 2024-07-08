@@ -12,14 +12,6 @@ return {
   c = { "<cmd>ConformInfo<cr>", "Show formatter info" },
   i = { "<cmd>LspInfo<cr>", "Info" },
   I = { "<cmd>LspInstallInfo<cr>", "Installer Info" },
-  j = {
-    "<cmd>lua vim.diagnostic.goto_next()<cr>",
-    "Next Diagnostic",
-  },
-  k = {
-    "<cmd>lua vim.diagnostic.goto_prev()<cr>",
-    "Prev Diagnostic",
-  },
   l = { "<cmd>lua vim.lsp.codelens.run()<cr>", "CodeLens Action" },
   q = { "<cmd>lua vim.diagnostic.setloclist()<cr>", "Quickfix" },
   Q = { "<cmd>lua vim.diagnostic.setqflist()<cr>", "All Quickfix" },

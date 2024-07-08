@@ -24,4 +24,13 @@ return {
   w = { "<c-i>", "Jump forward" },
   b = { "<c-t>", "Go back" },
   X = { "<cmd>OpenCurFile<cr>", "Open current file with default app" },
+  C = { "<cmd>GoToContext<cr>", "Jump to upper context" },
+  j = {
+    "<cmd>lua vim.diagnostic.goto_next()<cr>",
+    "Go to next diagnostic",
+  },
+  k = {
+    "<cmd>lua vim.diagnostic.goto_prev()<cr>",
+    "Go to prev diagnostic",
+  },
 }
