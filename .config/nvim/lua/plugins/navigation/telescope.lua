@@ -201,7 +201,9 @@ return {
         path_display = { "truncate" },
         layout_strategy = "vertical",
         layout_config = {
-          horizontal = layout_config,
+          horizontal = MERGE_TABLE(layout_config, {
+            preview_width = preview_size,
+          }),
           vertical = MERGE_TABLE(layout_config, {
             preview_height = preview_size,
           }),
