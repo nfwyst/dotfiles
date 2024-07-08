@@ -1,6 +1,5 @@
 return {
   name = "LSP",
-  a = { "<cmd>lua vim.lsp.buf.code_action()<cr>", "Code Action" },
   d = {
     "<cmd>Telescope diagnostics bufnr=0<cr>",
     "Document Diagnostics",
@@ -27,8 +26,6 @@ return {
   e = { "<cmd>lua vim.diagnostic.enable(0)<cr>", "Enable Lint Local" },
   E = { "<cmd>lua vim.diagnostic.enable()<cr>", "Enable Lint" },
   D = { "<cmd>lua vim.diagnostic.disable()<cr>", "Disable Lint" },
-  r = { "<cmd>lua vim.lsp.buf.rename()<cr>", "Rename" },
   s = { "<cmd>DocumentSymbols<cr>", "Document Symbols" },
   S = { "<cmd>WorkspaceSymbols<cr>", "Workspace Symbols" },
-  o = { "<cmd>OrganizeImports<cr>", "OrganizeImports" },
 }

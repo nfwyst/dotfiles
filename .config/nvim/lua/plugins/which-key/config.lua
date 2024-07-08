@@ -85,7 +85,7 @@ return {
         -- the presets plugin, adds help for a bunch of default keybindings in Neovim
         -- No actual key bindings are created
         presets = {
-          operators = false, -- adds help for operators like d, y, ... and registers them for motion / text object completion
+          operators = true, -- adds help for operators like d, y, ... and registers them for motion / text object completion
           motions = true, -- adds help for motions
           text_objects = true, -- help for text objects triggered after entering an operator
           windows = true, -- default bindings on <c-w>
@@ -93,16 +93,6 @@ return {
           z = true, -- bindings for folds, spelling and others prefixed with z
           g = true, -- bindings for prefixed with g
         },
-      },
-      -- add operators that will trigger motion and text object completion
-      -- to enable all native operators, set the preset / operators plugin above
-      -- operators = { gc = "Comments" },
-      key_labels = {
-        -- override the label used to display some keys. It doesn't effect WK in any other way.
-        -- For example:
-        -- ["<space>"] = "SPC",
-        -- ["<cr>"] = "RET",
-        -- ["<tab>"] = "TAB",
       },
       icons = {
         breadcrumb = "»", -- symbol used in the command line area that shows your active key combo
@@ -139,7 +129,6 @@ return {
       }, -- hide mapping boilerplate
       show_help = true, -- show help message on the command line when the popup is visible
       triggers = "auto", -- automatically setup triggers
-      -- triggers = {"<leader>"} -- or specify a list manually
       triggers_blacklist = {
         -- list of mode / prefixes that should never be hooked by WhichKey
         -- this is mostly relevant for key maps that start with a native binding

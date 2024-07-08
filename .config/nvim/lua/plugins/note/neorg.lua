@@ -1,7 +1,6 @@
 return {
   "nvim-neorg/neorg",
   cond = not IS_VSCODE_OR_LEET_CODE and not IS_LINUX,
-  dependencies = { "luarocks.nvim" },
   ft = "norg",
   cmd = "Neorg",
   config = function()

@@ -130,6 +130,6 @@ return {
     })
     -- FIXME: wait for tsserver fix hint issue
     -- FIXME replace tsserver with typeScript-tools
-    TOGGLE_INLAY_HINT()
+    -- TOGGLE_INLAY_HINT()
   end,
 }
