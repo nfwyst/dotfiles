@@ -13,6 +13,7 @@ local function init(notify)
       LOG_INFO("workspace path is", WORKSPACE_PATH)
     end,
   })
+  vim.notify = notify
 end
 
 return {
@@ -20,7 +21,6 @@ return {
   cond = not IS_VSCODE,
   config = function()
     local notify = require("notify")
-    vim.notify = notify
     notify.setup({
       timeout = 3000,
       animate = not IS_WIN_LINUX,

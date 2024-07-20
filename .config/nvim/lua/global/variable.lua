@@ -216,5 +216,3 @@ LSP_SYMBOLS = {
   "Operator",
   "TypeParameter",
 }
-
-WHICHKEY_MODE = { "x", "n", "o", "v" }

@@ -1,38 +1,23 @@
-local leader_conf = require("plugins.which-key.registers.leader")
-local g_conf = require("plugins.which-key.registers.g-conf")
-local comment_conf = require("plugins.which-key.registers.comment-conf")
-local fold_conf = require("plugins.which-key.registers.fold-conf")
-local ilconf = require("plugins.which-key.registers.illuminate-conf")
+local leader = require("plugins.which-key.maps.leader")
+local g = require("plugins.which-key.maps.g")
 
-local options = {
-  mode = "n", -- normal mode
-  buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
-  silent = true, -- use `silent` when creating keymaps
-  noremap = true, -- use `noremap` when creating keymaps
-  nowait = true, -- use `nowait` when creating keymaps
-}
+local function format(conf)
+  -- mode = { "x", "n", "o", "v" },
+  local new_conf = {}
+  for key, config in pairs(conf) do
+    table.insert(config, 1, key)
+    table.insert(
+      new_conf,
+      MERGE_TABLE(config, {
+        nowait = true,
+        remap = false,
+      })
+    )
+  end
+  return new_conf
+end
 
-local other = {
-  [">."] = "Neorg promote no recursively",
-  ["<,"] = "Neorg demote no recursively",
-  [">t"] = { "<cmd>tabNext<cr>", "Next tab" },
-  ["<t"] = { "<cmd>tabprevious<cr>", "Previous tab" },
-  [">x"] = { "<cmd>tabclose<cr>", "Close tab" },
-}
-
-local registers = {
-  {
-    leader_conf,
-    MERGE_TABLE(options, { prefix = "<leader>", mode = { "n", "v" } }),
-  },
-  { g_conf, MERGE_TABLE(options, { prefix = "g" }) },
-  { comment_conf, options },
-  { fold_conf, options },
-  { ilconf, options },
-  { other, options },
-}
-
-local function init()
+local function init(wk)
   SET_USER_COMMANDS({
     Save = function()
       PCALL(SAVE)
@@ -44,37 +29,29 @@ local function init()
       PCALL(QUIT)
     end,
   })
+
+  local add = wk.add
+  wk.add = function(config, option)
+    add(format(config), option)
+  end
+
+  g(wk)
+  leader(wk)
+
+  wk.add({
+    ["[["] = { desc = "Prev Matched Wrod" },
+    ["]]"] = { desc = "Next Matched Word" },
+    ["zp"] = { desc = "Fold Preview" },
+  })
 end
 
 return {
   "folke/which-key.nvim",
   cond = not IS_VSCODE,
-  keys = {
-    { "<leader>", mode = WHICHKEY_MODE },
-    { "<c-w>", mode = WHICHKEY_MODE },
-    { "g", mode = WHICHKEY_MODE },
-    { "]", mode = WHICHKEY_MODE },
-    { "[", mode = WHICHKEY_MODE },
-    { "y", mode = WHICHKEY_MODE },
-    { "'", mode = WHICHKEY_MODE },
-    { "z", mode = WHICHKEY_MODE },
-    { '"', mode = WHICHKEY_MODE },
-    { "`", mode = WHICHKEY_MODE },
-    { "c", mode = WHICHKEY_MODE },
-    { "v", mode = WHICHKEY_MODE },
-    { "d", mode = WHICHKEY_MODE },
-    { "!", mode = WHICHKEY_MODE },
-    { ">", mode = WHICHKEY_MODE },
-    { "<", mode = WHICHKEY_MODE },
-  },
   config = function()
-    local which_key = require("which-key")
-    for _, item in ipairs(registers) do
-      which_key.register(item[1], item[2])
-    end
-    init()
-
-    which_key.setup({
+    local wk = require("which-key")
+    init(wk)
+    wk.setup({
       plugins = {
         marks = true, -- shows a list of your marks on ' and `
         registers = true, -- shows your registers on " in NORMAL or <C-r> in INSERT mode
@@ -117,7 +94,9 @@ return {
         align = "left", -- align columns left, center or right
       },
       show_help = true, -- show help message on the command line when the popup is visible
-      triggers = "auto", -- automatically setup triggers
+      triggers = {
+        { "<auto>", mode = "nixsotc" },
+      },
     })
   end,
 }

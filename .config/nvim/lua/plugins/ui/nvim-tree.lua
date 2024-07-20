@@ -206,7 +206,7 @@ return {
           max = "35%",
           min = "1%",
         },
-        side = "right",
+        side = "left",
         signcolumn = "auto",
       },
       on_attach = on_attach,
