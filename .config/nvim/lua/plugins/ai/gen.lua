@@ -1,12 +1,3 @@
--- local function init()
---   AUTOCMD("VimLeave", {
---     group = AUTOGROUP("_gen_leave_", { clear = true }),
---     callback = function()
---       pcall(os.execute, 'pkill -f "ollama serve"')
---     end,
---   })
--- end
-
 return {
   "David-Kunz/gen.nvim",
   cond = not IS_VSCODE_OR_LEET_CODE,
@@ -18,6 +9,5 @@ return {
       retry_map = "<c-r>", -- set keymap to re-send the current prompt
       display_mode = "float", -- The display mode. Can be "float" or "split".
     })
-    -- init()
   end,
 }
