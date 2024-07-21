@@ -131,9 +131,17 @@ return {
         show_buffer_close_icons = false,
         show_close_icon = false,
         separator_style = "thin",
-        truncate_names = false,
+        truncate_names = true,
         auto_toggle_bufferline = true,
         style_preset = bufferline.style_preset.no_italic,
+        offsets = {
+          {
+            filetype = "NvimTree",
+            text = "文件浏览器",
+            highlight = "Directory",
+            separator = true,
+          },
+        },
       },
       highlights = {
         background = {
