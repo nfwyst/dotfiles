@@ -17,7 +17,7 @@ return {
             number = false,
             relativenumber = false,
             statuscolumn = "",
-            foldcolumn = "0",
+            foldcolumn = "2",
           }, true)
         end,
       },
