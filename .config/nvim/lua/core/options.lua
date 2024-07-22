@@ -80,7 +80,7 @@ SET_OPTS({
 
 SET_GLOBAL_OPTS({
   mapleader = " ",
-  maplocalleader = " ",
+  maplocalleader = "\\",
   loaded_perl_provider = 0,
   loaded_ruby_provider = 0,
   loaded_node_provider = 0,

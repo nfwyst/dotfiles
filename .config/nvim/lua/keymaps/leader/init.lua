@@ -45,7 +45,7 @@ local mappings = {
   ["<leader>ot"] = { "<cmd>Outline<cr>", desc = "Toggle outline" },
 }
 
-local prefix = "plugins.which-key.maps.leader."
+local prefix = "keymaps.leader."
 return function(wk)
   local configs = {
     mappings,

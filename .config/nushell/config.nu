@@ -933,9 +933,10 @@ def cx [param: string, ] {
 
 # unset proxy
 def --env unproxy [] {
-  hide-env HTTPS_PROXY
-  hide-env HTTP_PROXY
-  hide-env NO_PROXY
+  hide-env https_proxy
+  hide-env http_proxy
+  hide-env all_proxy
+  hide-env no_proxy
   npm config delete proxy --global
 }
 

@@ -1,5 +1,5 @@
-local leader = require("plugins.which-key.maps.leader")
-local g = require("plugins.which-key.maps.g")
+local leader = require("keymaps.leader")
+local g = require("keymaps.g")
 
 local function format(conf)
   -- mode = { "x", "n", "o", "v" },

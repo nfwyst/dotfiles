@@ -73,12 +73,6 @@ if [[ "$uname" == "Linux" ]]; then
   alias pbcopy = "xclip -selection clipboard"
 fi
 
-# Shell integrations
-source <(fzf --zsh)
-source <(starship init zsh)
-source <(zoxide init zsh)
-eval "$(fnm env)"
-
 # env variable
 export ZSH_TAB_TITLE_PREFIX=" "
 export GOPATH="$HOME/go"
@@ -92,6 +86,12 @@ export SHELL="$(which zsh)"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share",
 export OLLAMA_API_BASE="http://127.0.0.1:11434"
+
+# Shell integrations
+source <(fzf --zsh)
+source <(starship init zsh)
+source <(zoxide init zsh)
+eval "$(fnm env)"
 
 # into directory and list all contents
 function cx() {
@@ -114,18 +114,10 @@ command_exists() {
 # set proxy
 function proxy ()
 {
-  if [[ "$(uname)" == "Linux" ]]; then
-    export {https,http}_proxy=http://127.0.0.1:7890
-    export all_proxy=socks5://127.0.0.1:7890
-    if command_exists "npm"; then
-      npm config set proxy http://127.0.0.1:7890
-    fi
-  else
-    export {https,http}_proxy=http://127.0.0.1:7897
-    export all_proxy=socks5://127.0.0.1:7897
-    if command_exists "npm"; then
-      npm config set proxy http://127.0.0.1:7897
-    fi
+  export {https,http}_proxy=http://127.0.0.1:7897
+  export all_proxy=socks5://127.0.0.1:7897
+  if command_exists "npm"; then
+    npm config set proxy http://127.0.0.1:7897
   fi
   export no_proxy=127.0.0.1,localhost,apple.com
 }
@@ -172,3 +164,7 @@ else
   }
 fi
 
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
