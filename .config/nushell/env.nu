@@ -126,11 +126,13 @@ $env.SHELL = (which nu | get path | first)
 # set proxy
 def --env proxy [] {
   let host = "http://127.0.0.1"
+  let all_host = "socks5://127.0.0.1"
   let port = "7897"
   let address = $"($host):($port)"
+  let all_address = $"($all_host):($port)"
   $env.HTTP_PROXY = $address
   $env.HTTPS_PROXY = $address
-  $env.ALL_PROXY = "socks5://127.0.0.1:7897"
+  $env.ALL_PROXY = all_address
   $env.NO_PROXY = $"($host),http://localhost,https://www.apple.com"
   let npm_exists = command -v "npm" &> /dev/null | is-not-empty
   if $npm_exists {
