@@ -228,7 +228,9 @@ function GET_PROJECT_NAME()
     end
     local current_file_path = current_element.path
     local get_pattern = util.root_pattern(UNPACK(PROJECT_PATTERNS))
-    return basename(get_pattern(current_file_path))
+    local name = basename(get_pattern(current_file_path))
+    local repo_name = basename(vim.loop.cwd())
+    return name ~= repo_name and name or "文件浏览器"
   end
 end
 
