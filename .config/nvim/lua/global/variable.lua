@@ -178,7 +178,6 @@ TELESCOPE_IGNORE_PATTERNS = {
 }
 
 PROJECT_PATTERNS = {
-  ".git",
   "_darcs",
   ".hg",
   ".bzr",
@@ -186,6 +185,9 @@ PROJECT_PATTERNS = {
   "Makefile",
   "webpack.*js",
   "node_modules",
+  "stylua.toml",
+  "tsconfig.json",
+  ".git",
 }
 
 LSP_SYMBOLS = {

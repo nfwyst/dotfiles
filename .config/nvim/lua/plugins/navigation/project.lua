@@ -24,7 +24,7 @@ return {
       detection_methods = { "pattern", "lsp" },
 
       ---@usage patterns used to detect root dir, when **"pattern"** is in detection_methods
-      patterns = PROJECT_PATTERNS,
+      patterns = { ".git" },
 
       ---@ Show hidden files in telescope when searching for files in a project
       show_hidden = false,

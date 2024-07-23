@@ -187,6 +187,51 @@ function SET_WORKSPACE_PATH_GLOBAL()
   LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
 end
 
+function GET_PROJECT_NAME()
+  local cached_index = nil
+  return function()
+    local ok, util = pcall(require, "lspconfig.util")
+    if not ok then
+      LOG_ERROR("pcall error", util)
+      return
+    end
+    local bf_ok, bufferline = pcall(require, "bufferline")
+    if not bf_ok then
+      LOG_ERROR("pcall error", bufferline)
+      return
+    end
+    local lazy = require("bufferline.lazy")
+    local state = lazy.require("bufferline.state")
+    local commands = lazy.require("bufferline.commands")
+    local current_index = commands.get_current_element_index(state)
+    if current_index == nil then
+      current_index = cached_index
+    else
+      cached_index = current_index
+    end
+    local current_element = bufferline.get_elements().elements[current_index]
+    local basename = vim.fs.basename
+    if current_element == nil then
+      local find = false
+      local bufs = vim.api.nvim_list_bufs()
+      for _, bufnr in ipairs(bufs) do
+        local path_name = vim.api.nvim_buf_get_name(bufnr)
+        if IS_FILE_URI(path_name) then
+          current_element = { path = path_name }
+          find = true
+          break
+        end
+      end
+      if not find then
+        return "文件浏览器"
+      end
+    end
+    local current_file_path = current_element.path
+    local get_pattern = util.root_pattern(UNPACK(PROJECT_PATTERNS))
+    return basename(get_pattern(current_file_path))
+  end
+end
+
 function UNPACK(table)
   local up = table.unpack or unpack
   return up(table)

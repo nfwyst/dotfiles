@@ -137,7 +137,7 @@ return {
         offsets = {
           {
             filetype = "NvimTree",
-            text = "文件浏览器",
+            text = GET_PROJECT_NAME(),
             highlight = "Directory",
             separator = true,
           },
