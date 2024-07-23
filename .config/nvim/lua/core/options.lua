@@ -89,5 +89,4 @@ SET_GLOBAL_OPTS({
   skip_ts_context_commentstring_module = true,
 })
 
-vim.cmd.language("en_US")
 vim.lsp.set_log_level(vim.log.levels.OFF)
