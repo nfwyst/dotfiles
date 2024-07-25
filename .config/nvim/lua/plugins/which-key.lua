@@ -81,6 +81,8 @@ return {
         scroll_up = "<c-u>", -- binding to scroll up inside the popup
       },
       win = {
+        no_overlap = false,
+        height = { min = 4, max = 25 }, -- min and max height of the columns
         border = "rounded", -- none, single, double, shadow
         padding = { 1, 1 }, -- extra window padding [top/bottom, right/left]
         wo = {
@@ -88,10 +90,8 @@ return {
         },
       },
       layout = {
-        height = { min = 4, max = 25 }, -- min and max height of the columns
         width = { min = 20, max = 50 }, -- min and max width of the columns
-        spacing = 3, -- spacing between columns
-        align = "left", -- align columns left, center or right
+        spacing = 1, -- spacing between columns
       },
       show_help = true, -- show help message on the command line when the popup is visible
       triggers = {
