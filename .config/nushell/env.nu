@@ -115,8 +115,8 @@ if $env.UNAME == "Linux" {
   $env.PATH = (
     $env.PATH |
     prepend ($env.HOME | path join ".fzf" "bin") |
-    prepend ($env.HOME | path join ".nushell" "bin") |
-    prepend ($env.HOME | path join "Bundle") |
+    prepend ($env.HOME | path join ".nushell") |
+    prepend ($env.HOME | path join ".nvim" "bin") |
     prepend ($env.HOME | path join ".local" "share" "fnm")
   )
 }
@@ -130,10 +130,10 @@ def --env proxy [] {
   let port = "7897"
   let address = $"($host):($port)"
   let all_address = $"($all_host):($port)"
-  $env.HTTP_PROXY = $address
-  $env.HTTPS_PROXY = $address
-  $env.ALL_PROXY = all_address
-  $env.NO_PROXY = $"($host),http://localhost,https://www.apple.com"
+  $env.http_proxy = $address
+  $env.https_proxy = $address
+  $env.all_proxy = $all_address
+  $env.no_proxy = $"($host),http://localhost,https://www.apple.com"
   let npm_exists = command -v "npm" &> /dev/null | is-not-empty
   if $npm_exists {
     npm config set proxy $address --global

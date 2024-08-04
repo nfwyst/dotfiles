@@ -79,7 +79,7 @@ export GOPATH="$HOME/go"
 export CARGO_HOME="$HOME/.cargo"
 export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin:$CARGO_HOME/bin"
 if [[ "$(uname)" == "Linux" ]]; then
-  export PATH="$PATH:$HOME/.fzf/bin:$HOME/Bundle:$HOME/.local/share/fnm"
+  export PATH="$PATH:$HOME/.fzf/bin:$HOME/.nvim/bin:$HOME/.local/share/fnm"
 fi
 export EDITOR="$(which nvim)"
 export SHELL="$(which zsh)"

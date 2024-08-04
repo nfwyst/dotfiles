@@ -979,7 +979,7 @@ def start_zellij [] {
     if $auto_attach {
       zellij attach -c
     } else {
-      zellij
+      try { zellij } catch {}
     }
 
     mut auto_exit = 'ZELLIJ_AUTO_EXIT' in $envs
