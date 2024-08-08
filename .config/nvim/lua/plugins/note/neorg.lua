@@ -6,7 +6,9 @@ return {
   config = function()
     require("neorg").setup({
       logger = {
+        level = "fatal",
         use_file = false,
+        use_console = false,
       },
       load = {
         ["core.defaults"] = {},

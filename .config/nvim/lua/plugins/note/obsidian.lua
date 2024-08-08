@@ -1,6 +1,6 @@
-local function init()
+local function init(obsidian)
   KEY_MAP("n", "gf", function()
-    if require("obsidian").util.cursor_on_markdown_link() then
+    if obsidian.util.cursor_on_markdown_link() then
       return "<cmd>ObsidianFollowLink<cr>"
     else
       return "gf"
@@ -13,20 +13,6 @@ return {
   cond = not IS_VSCODE_OR_LEET_CODE,
   dependencies = { "nvim-lua/plenary.nvim" },
   ft = "markdown",
-  cmd = {
-    "ObsidianBacklinks",
-    "ObsidianToday",
-    "ObsidianYesterday",
-    "ObsidianOpen",
-    "ObsidianNew",
-    "ObsidianSearch",
-    "ObsidianQuickSwitch",
-    "ObsidianLink",
-    "ObsidianLinkNew",
-    "ObsidianFollowLink",
-    "ObsidianTemplate",
-    "ObsidianWorkspace",
-  },
   config = function()
     local obsidian = require("obsidian")
     obsidian.setup({
@@ -39,6 +25,7 @@ return {
             return assert(vim.fn.getcwd())
           end,
           overrides = {
+            log_level = vim.log.levels.OFF,
             notes_subdir = vim.NIL,
             new_notes_location = "current_dir",
             daily_notes = {
@@ -52,6 +39,7 @@ return {
         },
       },
       completion = {
+        min_chars = 2,
         nvim_cmp = true,
       },
       log_level = vim.log.levels.OFF,
@@ -68,6 +56,6 @@ return {
         },
       },
     })
-    init()
+    init(obsidian)
   end,
 }
