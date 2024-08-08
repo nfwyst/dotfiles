@@ -9,7 +9,7 @@ local config = {
     chat = 8 * 1024,
   },
   default_model = "deepseek-coder",
-  display_mode = "float",
+  display_mode = "split",
   win_config = {},
 }
 

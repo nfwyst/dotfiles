@@ -48,10 +48,8 @@ function FORMAT_PATH_BY_OS(path)
 end
 
 NOTE_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/notes")
-OBSIDIAN_DIR =
-  FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian Vault/personal")
-OBSIDIAN_WORK_DIR =
-  FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian Vault/work")
+OBSIDIAN_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian/personal")
+OBSIDIAN_WORK_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian/work")
 LAZY_PATH = DATA_PATH .. FORMAT_PATH_BY_OS("/lazy/lazy.nvim")
 SNIPPET_PATH = CONFIG_PATH .. FORMAT_PATH_BY_OS("/snippets")
 

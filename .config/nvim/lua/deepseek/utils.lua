@@ -1,7 +1,9 @@
 local config = require("deepseek.config")
+local typing = require("core.typing")
 
 local M = {}
 
+-- TODO: use
 function M.get_selected_text()
   local start_row, start_col = vim.fn.getpos("'<")[2], vim.fn.getpos("'<")[3]
   local end_row, end_col = vim.fn.getpos("'>")[2], vim.fn.getpos("'>")[3]
@@ -90,67 +92,6 @@ function M.create_window()
   -- end, { buffer = M.result_buffer })
 end
 
-local function has_exactly_two_empty_strings(array)
-  local count = 0
-  for _, value in ipairs(array) do
-    if value == "" then
-      count = count + 1
-    end
-  end
-  return count == 2
-end
-
-local function write_to_buffer(lines, str)
-  local last_line = #lines
-  if
-    not M.result_buffer
-    or not vim.api.nvim_buf_is_valid(M.result_buffer)
-    or last_line == 0
-  then
-    return
-  end
-
-  local all_lines = vim.api.nvim_buf_get_lines(M.result_buffer, 0, -1, false)
-  local last_row = #all_lines
-  local last_row_content = all_lines[last_row]
-  local last_col = string.len(last_row_content)
-
-  local text = table.concat(lines or {}, "\n")
-
-  vim.api.nvim_set_option_value("modifiable", true, { buf = M.result_buffer })
-  if has_exactly_two_empty_strings(lines) then
-    -- 获取当前光标位置
-    local cursor_pos = vim.api.nvim_win_get_cursor(0)
-    local row = cursor_pos[1] - 1
-    -- 插入一个换行符
-    vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes("i<cr>", true, false, true),
-      "mnx",
-      false
-    )
-    vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
-  else
-    vim.api.nvim_buf_set_text(
-      M.result_buffer,
-      last_row - 1,
-      last_col,
-      last_row - 1,
-      last_col,
-      vim.split(text, "\n")
-    )
-    -- Move the cursor to the end of the new lines
-    local last_line_content = lines[last_line]
-    local new_last_row = last_row + last_line - 1
-    print(vim.inspect(lines), str)
-    local new_last_col = last_line_content ~= nil
-        and string.len(last_line_content)
-      or 0
-    vim.api.nvim_win_set_cursor(M.float_win, { new_last_row, new_last_col })
-  end
-
-  -- vim.api.nvim_set_option_value("modifiable", false, { buf = M.result_buffer })
-end
-
 function M.process_response(str, _)
   if str == nil or string.len(str) == 0 then
     return
@@ -165,8 +106,8 @@ function M.process_response(str, _)
   end
 
   M.result_string = M.result_string .. str
-  local lines = vim.split(str, "\n")
-  write_to_buffer(lines, str)
+  local speed = 0.05 -- 0.05 seconds per character
+  typing.start_typing({ str }, M.result_buffer, speed)
 end
 
 return M
