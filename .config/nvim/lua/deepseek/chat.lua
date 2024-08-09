@@ -6,11 +6,12 @@ local M = {}
 local conversation_history = {}
 
 function M.display_response(response)
-  if type(response) ~= "string" then
-    response = vim.inspect(response)
+  local content = response.choices[1].delta.content
+  if type(content) ~= "string" then
+    content = vim.inspect(content)
   end
   local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(response, "\n"))
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(content, "\n"))
   local win_id = vim.api.nvim_open_win(bufnr, true, {
     relative = "editor",
     width = 80,
