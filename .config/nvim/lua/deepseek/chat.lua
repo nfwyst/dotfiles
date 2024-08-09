@@ -26,11 +26,11 @@ function M.complete()
     model = config.default_model,
     messages = conversation_history,
     max_tokens = config.max_output_length.chat,
+    stream = true,
   }
-  http.request("/chat/completions", "POST", data, function(response)
+  http.request("/chat/completions", "POST", data, function(chunk)
     print(vim.inspect(response))
-    if response and response.choices then
-      local chunk = response.choices[1].message.content
+    if chunk then
       table.insert(conversation_history, { role = "assistant", content = chunk })
       vim.schedule(function()
         M.display_response(chunk)
