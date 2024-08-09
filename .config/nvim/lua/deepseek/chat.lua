@@ -31,7 +31,10 @@ function M.complete()
     if response and response.choices then
       local chunk = response.choices[1].message.content
       table.insert(conversation_history, { role = "assistant", content = chunk })
-      M.display_response(chunk)
+      vim.schedule(function()
+        M.display_response(chunk)
+        vim.api.nvim_buf_set_lines(chat_bufnr, -1, -1, false, { chunk })
+      end)
     else
       utils.notify("Error: No response from server", "error")
     end
