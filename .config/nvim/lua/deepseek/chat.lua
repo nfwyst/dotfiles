@@ -23,9 +23,9 @@ end
 function M.complete()
   local prompt = vim.fn.getline(".")
   local data = {
-    model = config.config.default_model,
+    model = config.default_model,
     messages = conversation_history,
-    max_tokens = config.config.max_output_length.chat,
+    max_tokens = config.max_output_length.chat,
   }
   http.request("/chat/completions", "POST", data, function(chunk)
     if chunk then
