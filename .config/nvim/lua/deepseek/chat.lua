@@ -38,22 +38,24 @@ function M.complete()
 end
 
 function M.start_chat()
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(bufnr, "Copilot Chat")
-  vim.api.nvim_buf_set_option(bufnr, "buftype", "prompt")
-  vim.fn.prompt_setprompt(bufnr, "Enter your message: ")
-  vim.api.nvim_buf_attach(bufnr, false, {
+  local current_bufnr = vim.api.nvim_get_current_buf()
+  local chat_bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(chat_bufnr, "Copilot Chat")
+  vim.api.nvim_buf_set_option(chat_bufnr, "buftype", "prompt")
+  vim.fn.prompt_setprompt(chat_bufnr, "Enter your message: ")
+  vim.api.nvim_buf_attach(chat_bufnr, false, {
     on_lines = function()
-      local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+      local lines = vim.api.nvim_buf_get_lines(chat_bufnr, 0, -1, false)
       local prompt = table.concat(lines, "\n")
       if prompt:sub(-1) == "\n" then
         table.insert(conversation_history, { role = "user", content = prompt })
         M.complete()
-        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
+        vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
       end
     end,
   })
-  vim.api.nvim_win_set_buf(0, bufnr)
+  vim.api.nvim_command("vsplit")
+  vim.api.nvim_win_set_buf(0, chat_bufnr)
 end
 
 return M
