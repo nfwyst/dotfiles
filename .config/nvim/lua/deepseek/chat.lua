@@ -5,26 +5,19 @@ local utils = require("deepseek.utils")
 local M = {}
 local conversation_history = {}
 
-function M.display_response(response)
+function M.display_response(response, chat_bufnr)
   local content = response.choices[1].delta.content
   if type(content) ~= "string" then
     content = vim.inspect(content)
   end
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(content, "\n"))
-  local win_id = vim.api.nvim_open_win(bufnr, true, {
-    relative = "editor",
-    width = 80,
-    height = 10,
-    row = 2,
-    col = 2,
-    style = "minimal",
-    border = "single",
-  })
-  vim.api.nvim_win_set_option(win_id, "winhl", "Normal:Normal")
+  if vim.api.nvim_buf_is_valid(chat_bufnr) then
+    vim.api.nvim_buf_set_lines(chat_bufnr, -1, -1, false, vim.split(content, "\n"))
+  else
+    utils.notify("Error: Invalid buffer number", "error")
+  end
 end
 
-function M.complete()
+function M.complete(chat_bufnr)
   local prompt = vim.fn.getline(".")
   local data = {
     model = config.default_model,
@@ -33,12 +26,10 @@ function M.complete()
     stream = true,
   }
   http.request("/chat/completions", "POST", data, function(chunk)
-    print(vim.inspect(response))
     if chunk then
       table.insert(conversation_history, { role = "assistant", content = chunk })
       vim.schedule(function()
-        M.display_response(chunk)
-        vim.api.nvim_buf_set_lines(chat_bufnr, -1, -1, false, { chunk })
+        M.display_response(chunk, chat_bufnr)
       end)
     else
       utils.notify("Error: No response from server", "error")
@@ -59,7 +50,7 @@ function M.start_chat()
       if prompt:sub(-1) == "\n" then
         local user_input = prompt:gsub("^Enter your message: ", "")
         table.insert(conversation_history, { role = "user", content = user_input })
-        M.complete()
+        M.complete(chat_bufnr)
         vim.schedule(function()
           if vim.api.nvim_buf_is_valid(chat_bufnr) then
             vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
