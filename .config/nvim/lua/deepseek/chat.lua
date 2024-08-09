@@ -28,6 +28,7 @@ function M.complete()
     max_tokens = config.max_output_length.chat,
   }
   http.request("/chat/completions", "POST", data, function(response)
+    print(vim.inspect(response))
     if response and response.choices then
       local chunk = response.choices[1].message.content
       table.insert(conversation_history, { role = "assistant", content = chunk })
