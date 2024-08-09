@@ -87,8 +87,19 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share",
 export OLLAMA_API_BASE="http://127.0.0.1:11434"
 
+# Function to check if a command can be executed
+command_exists() {
+  if command -v $1 &> /dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Shell integrations
-source <(fzf --zsh)
+if command_exists "fzf"; then
+  source <(fzf --zsh)
+fi
 source <(starship init zsh)
 source <(zoxide init zsh)
 eval "$(fnm env)"
@@ -99,15 +110,6 @@ function cx() {
     cd "$1" && ls -als
   else
     echo "Please provide a directory name."
-  fi
-}
-
-# Function to check if a command can be executed
-command_exists() {
-  if command -v $1 &> /dev/null; then
-    return 0
-  else
-    return 1
   fi
 }
 
