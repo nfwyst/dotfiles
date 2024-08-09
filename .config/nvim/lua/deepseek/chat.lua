@@ -61,7 +61,11 @@ function M.start_chat()
         table.insert(conversation_history, { role = "user", content = user_input })
         M.complete()
         vim.schedule(function()
-          vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
+          if vim.api.nvim_buf_is_valid(chat_bufnr) then
+            vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
+          else
+            utils.notify("Error: Invalid buffer number", "error")
+          end
         end)
       end
     end,
