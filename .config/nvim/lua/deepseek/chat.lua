@@ -50,12 +50,15 @@ function M.start_chat()
       if prompt:sub(-1) == "\n" then
         table.insert(conversation_history, { role = "user", content = prompt })
         M.complete()
-        vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
+        vim.schedule(function()
+          vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
+        end)
       end
     end,
   })
   vim.api.nvim_command("vsplit")
   vim.api.nvim_win_set_buf(0, chat_bufnr)
+  vim.api.nvim_command("startinsert")
 end
 
 return M
