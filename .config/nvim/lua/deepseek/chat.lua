@@ -27,8 +27,9 @@ function M.complete()
     messages = conversation_history,
     max_tokens = config.max_output_length.chat,
   }
-  http.request("/chat/completions", "POST", data, function(chunk)
-    if chunk then
+  http.request("/chat/completions", "POST", data, function(response)
+    if response and response.choices then
+      local chunk = response.choices[1].message.content
       table.insert(conversation_history, { role = "assistant", content = chunk })
       M.display_response(chunk)
     else
