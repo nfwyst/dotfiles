@@ -916,6 +916,8 @@ alias e = nvim
 alias vim = nvim
 alias ys = yarn start
 alias c = clear
+alias python = python3
+alias pip = python3 -m pip
 if $env.UNAME == "Linux" {
   alias pbcopy = xclip -selection clipboard
 }

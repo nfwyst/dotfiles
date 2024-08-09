@@ -5,3 +5,4 @@
 /.luarocks
 .config/nushell/history.txt
 .config/zellij/plugins
+.aider*

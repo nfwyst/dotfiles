@@ -69,6 +69,8 @@ alias c='clear'
 alias e="nvim"
 alias gc-="git checkout -"
 alias ys="yarn start"
+alias python="python3"
+alias pip="python3 -m pip"
 if [[ "$uname" == "Linux" ]]; then
   alias pbcopy = "xclip -selection clipboard"
 fi
