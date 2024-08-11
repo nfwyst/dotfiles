@@ -1,6 +1,6 @@
 local http = require("deepseek.http")
 local config = require("deepseek.config")
-local utils = require("deepseek.utils")
+local utils = require("core.typing")
 
 local M = {}
 local conversation_history = {}
@@ -11,7 +11,7 @@ function M.display_response(response, chat_bufnr)
     content = vim.inspect(content)
   end
   if vim.api.nvim_buf_is_valid(chat_bufnr) then
-    vim.api.nvim_buf_set_lines(chat_bufnr, -1, -1, false, vim.split(content, "\n"))
+    utils.start_typing({ content }, chat_bufnr, 0.05)
   else
     utils.notify("Error: Invalid buffer number", "error")
   end
@@ -19,10 +19,14 @@ end
 
 function M.start_chat()
   local current_bufnr = vim.api.nvim_get_current_buf()
-  local chat_bufnr = vim.api.nvim_create_buf(false, true)
+  local chat_bufnr = vim.fn.bufnr("DeepSeek Chat", false)
+  if chat_bufnr == -1 then
+    chat_bufnr = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(chat_bufnr, "DeepSeek Chat")
+  end
   local input_bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(chat_bufnr, "DeepSeek Chat")
   vim.api.nvim_buf_set_option(chat_bufnr, "buftype", "nofile")
+  vim.api.nvim_buf_set_option(chat_bufnr, "filetype", "markdown")
   vim.api.nvim_buf_set_option(input_bufnr, "buftype", "prompt")
   vim.api.nvim_buf_set_option(input_bufnr, "filetype", "markdown")
   vim.fn.prompt_setprompt(input_bufnr, "Enter your message: ")
