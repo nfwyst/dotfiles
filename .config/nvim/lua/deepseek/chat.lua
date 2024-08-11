@@ -1,7 +1,6 @@
 local http = require("deepseek.http")
 local config = require("deepseek.config")
 local typing = require("core.typing")
-local LOG_ERROR = require("global.function").LOG_ERROR
 
 local M = {}
 local conversation_history = {}
