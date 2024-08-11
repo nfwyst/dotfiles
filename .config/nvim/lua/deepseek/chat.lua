@@ -40,20 +40,24 @@ end
 function M.start_chat()
   local current_bufnr = vim.api.nvim_get_current_buf()
   local chat_bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(chat_bufnr, "Copilot Chat")
-  vim.api.nvim_buf_set_option(chat_bufnr, "buftype", "prompt")
-  vim.fn.prompt_setprompt(chat_bufnr, "Enter your message: ")
-  vim.api.nvim_buf_attach(chat_bufnr, false, {
+  local input_bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(chat_bufnr, "DeepSeek Chat")
+  vim.api.nvim_buf_set_option(chat_bufnr, "buftype", "nofile")
+  vim.api.nvim_buf_set_option(input_bufnr, "buftype", "prompt")
+  vim.api.nvim_buf_set_option(input_bufnr, "filetype", "markdown")
+  vim.fn.prompt_setprompt(input_bufnr, "Enter your message: ")
+
+  vim.api.nvim_buf_attach(input_bufnr, false, {
     on_lines = function()
-      local lines = vim.api.nvim_buf_get_lines(chat_bufnr, 0, -1, false)
+      local lines = vim.api.nvim_buf_get_lines(input_bufnr, 0, -1, false)
       local prompt = table.concat(lines, "\n")
       if prompt:sub(-1) == "\n" then
         local user_input = prompt:gsub("^Enter your message: ", "")
         table.insert(conversation_history, { role = "user", content = user_input })
         M.complete(chat_bufnr)
         vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(chat_bufnr) then
-            vim.api.nvim_buf_set_lines(chat_bufnr, 0, -1, false, {})
+          if vim.api.nvim_buf_is_valid(input_bufnr) then
+            vim.api.nvim_buf_set_lines(input_bufnr, 0, -1, false, {})
           else
             utils.notify("Error: Invalid buffer number", "error")
           end
@@ -61,8 +65,11 @@ function M.start_chat()
       end
     end,
   })
+
   vim.api.nvim_command("vsplit")
   vim.api.nvim_win_set_buf(0, chat_bufnr)
+  vim.api.nvim_command("split")
+  vim.api.nvim_win_set_buf(0, input_bufnr)
   vim.api.nvim_command("startinsert")
 end
 

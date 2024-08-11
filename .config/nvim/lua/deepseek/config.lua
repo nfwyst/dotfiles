@@ -11,6 +11,7 @@ local config = {
   default_model = "deepseek-coder",
   display_mode = "split",
   win_config = {},
+  session_file = vim.fn.stdpath("data") .. "/deepseek_session.json",
 }
 
 local function set(conf)

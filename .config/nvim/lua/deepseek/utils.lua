@@ -93,6 +93,36 @@ function M.create_window()
   -- end, { buffer = M.result_buffer })
 end
 
+function M.select_context()
+  local context = ""
+  local files = vim.fn.getqflist()
+  for _, file in ipairs(files) do
+    if file.valid then
+      local lines = vim.fn.readfile(file.bufnr)
+      context = context .. table.concat(lines, "\n") .. "\n"
+    end
+  end
+  return context
+end
+
+function M.save_session(session)
+  local file = io.open(config.session_file, "w")
+  if file then
+    file:write(vim.json.encode(session))
+    file:close()
+  end
+end
+
+function M.load_session()
+  local file = io.open(config.session_file, "r")
+  if file then
+    local content = file:read("*a")
+    file:close()
+    return vim.json.decode(content)
+  end
+  return {}
+end
+
 function M.reponse_to_fim_chat_window(str, _)
   if str == nil or string.len(str) == 0 then
     return
