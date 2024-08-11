@@ -38,7 +38,6 @@ function M.start_chat()
 end
 
 function M.start_chat()
-function M.start_chat()
   local current_bufnr = vim.api.nvim_get_current_buf()
   local chat_bufnr = vim.api.nvim_create_buf(false, true)
   local input_bufnr = vim.api.nvim_create_buf(false, true)
