@@ -64,6 +64,7 @@ local function setup_split()
 end
 
 function M.create_window()
+  M.result_string = ""
   if config.display_mode == "float" then
     if M.result_buffer then
       vim.api.nvim_buf_delete(M.result_buffer, { force = true })
@@ -92,7 +93,7 @@ function M.create_window()
   -- end, { buffer = M.result_buffer })
 end
 
-function M.process_response(str, _)
+function M.reponse_to_fim_chat_window(str, _)
   if str == nil or string.len(str) == 0 then
     return
   end
