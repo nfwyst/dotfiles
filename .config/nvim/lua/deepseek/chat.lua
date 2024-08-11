@@ -1,6 +1,7 @@
 local http = require("deepseek.http")
 local config = require("deepseek.config")
 local typing = require("core.typing")
+local LOG_ERROR = require("global.function").LOG_ERROR
 
 local M = {}
 local conversation_history = {}
@@ -13,7 +14,7 @@ function M.display_response(response, chat_bufnr)
   if vim.api.nvim_buf_is_valid(chat_bufnr) then
     typing.start_typing({ content }, chat_bufnr, 0.05)
   else
-    typing.notify("Error: Invalid buffer number", "error")
+    LOG_ERROR("Error: Invalid buffer number")
   end
 end
 
@@ -51,7 +52,7 @@ function M.start_chat()
               M.display_response(chunk, chat_bufnr)
             end)
           else
-            vim.notify("Error: No response from server", "error")
+            LOG_ERROR("Error: No response from server")
           end
         end)
         vim.schedule(function()
