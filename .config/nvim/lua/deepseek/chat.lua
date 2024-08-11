@@ -17,7 +17,7 @@ function M.display_response(response, chat_bufnr)
   end
 end
 
-function M.complete(chat_bufnr)
+function M.start_chat()
   local prompt = vim.fn.getline(".")
   local data = {
     model = config.default_model,
@@ -37,6 +37,7 @@ function M.complete(chat_bufnr)
   end)
 end
 
+function M.start_chat()
 function M.start_chat()
   local current_bufnr = vim.api.nvim_get_current_buf()
   local chat_bufnr = vim.api.nvim_create_buf(false, true)
