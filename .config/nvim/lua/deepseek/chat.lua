@@ -13,7 +13,7 @@ function M.display_response(response, chat_bufnr)
   if vim.api.nvim_buf_is_valid(chat_bufnr) then
     typing.start_typing({ content }, chat_bufnr, 0.05)
   else
-    utils.notify("Error: Invalid buffer number", "error")
+    typing.notify("Error: Invalid buffer number", "error")
   end
 end
 
@@ -51,14 +51,14 @@ function M.start_chat()
               M.display_response(chunk, chat_bufnr)
             end)
           else
-            utils.notify("Error: No response from server", "error")
+            vim.notify("Error: No response from server", "error")
           end
         end)
         vim.schedule(function()
           if vim.api.nvim_buf_is_valid(input_bufnr) then
             vim.api.nvim_buf_set_lines(input_bufnr, 0, -1, false, {})
           else
-            utils.notify("Error: Invalid buffer number", "error")
+            vim.notify("Error: Invalid buffer number", "error")
           end
         end)
       end
