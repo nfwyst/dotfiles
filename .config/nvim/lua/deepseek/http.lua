@@ -3,7 +3,7 @@ local config = require("deepseek.config")
 
 local M = {}
 
-function M.request(url, method, data, format)
+function M.request(url, method, data, on_chunk)
   http.request({
     url = config.base_url .. url,
     method = method,
@@ -13,7 +13,7 @@ function M.request(url, method, data, format)
       ["Authorization"] = "Bearer " .. config.api_key,
     },
     body = data,
-  }, format)
+  }, on_chunk)
 end
 
 return M

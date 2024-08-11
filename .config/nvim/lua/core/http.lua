@@ -1,10 +1,9 @@
 local curl = require("plenary.curl")
-local utils = require("deepseek.utils")
 local json = vim.json
 
 local http = {}
 
-function http.request(options, format_chunk_table)
+function http.request(options, on_chunk)
   local method = options.method or "GET"
   local url = options.url
   local headers = options.headers or {}
@@ -15,7 +14,6 @@ function http.request(options, format_chunk_table)
     body = json.encode(body)
   end
 
-  utils.reset()
   curl.request({
     method = method,
     url = url,
@@ -31,10 +29,7 @@ function http.request(options, format_chunk_table)
             LOG_ERROR("core.http: decode error", json_chunk)
             return
           end
-          if format_chunk_table then
-            chunk_table = format_chunk_table(chunk_table)
-          end
-          utils.process_response(chunk_table) -- 流式输出
+          on_chunk(chunk_table)
         end
       end
     end),

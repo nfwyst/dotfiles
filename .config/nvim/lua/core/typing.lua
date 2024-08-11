@@ -145,7 +145,7 @@ M.typing_queue = {}
 local function process_queue(buffer_id, row, col)
   if #M.typing_queue[buffer_id] <= 0 then
     M.typing_queue[buffer_id].running = false
-    vim.api.nvim_set_option_value("modifiable", true, { buf = buffer_id })
+    -- vim.api.nvim_set_option_value("modifiable", true, { buf = buffer_id })
     return
   end
   local task = table.remove(M.typing_queue[buffer_id], 1)
@@ -206,7 +206,7 @@ function M.start_typing(strings, buffer_id, speed, pause)
   end
 
   M.typing_queue[buffer_id].running = true
-  vim.api.nvim_set_option_value("modifiable", false, { buf = buffer_id })
+  -- vim.api.nvim_set_option_value("modifiable", false, { buf = buffer_id })
   process_queue(buffer_id)
 end
 
