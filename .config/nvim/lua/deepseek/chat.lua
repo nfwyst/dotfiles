@@ -18,26 +18,6 @@ function M.display_response(response, chat_bufnr)
 end
 
 function M.start_chat()
-  local prompt = vim.fn.getline(".")
-  local data = {
-    model = config.default_model,
-    messages = conversation_history,
-    max_tokens = config.max_output_length.chat,
-    stream = true,
-  }
-  http.request("/chat/completions", "POST", data, function(chunk)
-    if chunk then
-      table.insert(conversation_history, { role = "assistant", content = chunk })
-      vim.schedule(function()
-        M.display_response(chunk, chat_bufnr)
-      end)
-    else
-      utils.notify("Error: No response from server", "error")
-    end
-  end)
-end
-
-function M.start_chat()
   local current_bufnr = vim.api.nvim_get_current_buf()
   local chat_bufnr = vim.api.nvim_create_buf(false, true)
   local input_bufnr = vim.api.nvim_create_buf(false, true)
@@ -54,7 +34,22 @@ function M.start_chat()
       if prompt:sub(-1) == "\n" then
         local user_input = prompt:gsub("^Enter your message: ", "")
         table.insert(conversation_history, { role = "user", content = user_input })
-        M.complete(chat_bufnr)
+        local data = {
+          model = config.default_model,
+          messages = conversation_history,
+          max_tokens = config.max_output_length.chat,
+          stream = true,
+        }
+        http.request("/chat/completions", "POST", data, function(chunk)
+          if chunk then
+            table.insert(conversation_history, { role = "assistant", content = chunk })
+            vim.schedule(function()
+              M.display_response(chunk, chat_bufnr)
+            end)
+          else
+            utils.notify("Error: No response from server", "error")
+          end
+        end)
         vim.schedule(function()
           if vim.api.nvim_buf_is_valid(input_bufnr) then
             vim.api.nvim_buf_set_lines(input_bufnr, 0, -1, false, {})
