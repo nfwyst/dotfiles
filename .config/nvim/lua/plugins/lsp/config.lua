@@ -58,7 +58,7 @@ local function get_options(cmp_nvim_lsp, server)
 end
 
 local function try_load(conf, exclude_filetypes, include_filetypes)
-  local try_add = conf.manager.try_add
+  local original_try_add = conf.manager.try_add
   conf.manager.try_add = function(config)
     local disabled = TABLE_CONTAINS(exclude_filetypes, vim.bo.filetype)
     if disabled then
@@ -70,7 +70,7 @@ local function try_load(conf, exclude_filetypes, include_filetypes)
         return
       end
     end
-    return try_add(config)
+    return original_try_add(config)
   end
 end
 
@@ -100,13 +100,11 @@ return {
     for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { "nushell" })) do
       local conf = lspconfig[server]
       local opts = get_options(cmp_nvim_lsp, server)
-      if not opts then
-        goto continue
+      if opts then
+        load_neodev(server)
+        conf.setup(opts)
+        try_load(conf, opts.exclude_filetypes or {}, opts.include_filetypes)
       end
-      load_neodev(server)
-      conf.setup(opts)
-      try_load(conf, opts.exclude_filetypes or {}, opts.include_filetypes)
-      ::continue::
     end
 
     init()

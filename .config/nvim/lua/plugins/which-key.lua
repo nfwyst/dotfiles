@@ -2,8 +2,7 @@ local leader = require("keymaps.leader")
 local g = require("keymaps.g")
 
 local function format(conf)
-  -- mode = { "x", "n", "o", "v" },
-  local new_conf = {}
+  local new_conf = { mode = { "n", "v" } }
   for key, config in pairs(conf) do
     table.insert(config, 1, key)
     table.insert(

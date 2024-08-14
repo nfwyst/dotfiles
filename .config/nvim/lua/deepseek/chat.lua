@@ -37,7 +37,10 @@ function M.start_chat()
       local prompt = table.concat(lines, "\n")
       if prompt:sub(-1) == "\n" then
         local user_input = prompt:gsub("^Enter your message: ", "")
-        table.insert(conversation_history, { role = "user", content = user_input })
+        table.insert(
+          conversation_history,
+          { role = "user", content = user_input }
+        )
         local data = {
           model = config.default_model,
           messages = conversation_history,
@@ -46,7 +49,10 @@ function M.start_chat()
         }
         http.request("/chat/completions", "POST", data, function(chunk)
           if chunk then
-            table.insert(conversation_history, { role = "assistant", content = chunk })
+            table.insert(
+              conversation_history,
+              { role = "assistant", content = chunk }
+            )
             vim.schedule(function()
               M.display_response(chunk, chat_bufnr)
             end)
