@@ -75,6 +75,7 @@ SET_OPTS({
   backspace = { "start", "eol", "indent" },
   path = vim.opt.path + "**",
   wildignore = vim.opt.wildignore + "*/node_modules/*",
+  formatexpr = "v:lua.require'conform'.formatexpr()",
   -- colorcolumn = "81", -- number of column that should be highlight
 })
 

@@ -6,6 +6,9 @@ return {
   lazy = false,
   priority = 1000,
   config = function()
+    if name ~= DEFAULT_COLORSCHEME then
+      return
+    end
     require(name).setup({
       style = SCHEME_BACKGROUND,
       transparent = true,

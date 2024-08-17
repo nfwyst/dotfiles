@@ -15,7 +15,7 @@ return {
   cond = not IS_VSCODE_OR_LEET_CODE,
   event = { "FileReadPre", "BufReadPre", "User FileOpened" },
   config = function()
-    require("bigfile").config({
+    require("bigfile").setup({
       pattern = function(bufnr, filesize_mib)
         local file_contents = vim.fn.readfile(GET_BUFFER_NAME(bufnr))
         local file_length = #file_contents
@@ -36,6 +36,7 @@ return {
         "lsp",
         "treesitter",
         "syntax",
+        "matchparen",
         "vimopts",
         "filetype",
         my_feature,

@@ -252,10 +252,7 @@ function SET_AUTOCMDS(list)
 end
 
 function SET_COLORSCHEME(scheme)
-  if scheme ~= DEFAULT_COLORSCHEME then
-    return
-  end
-  vim.cmd.colorscheme(DEFAULT_COLORSCHEME)
+  vim.cmd.colorscheme(scheme)
 end
 
 function GET_CURRENT_BUFFER()

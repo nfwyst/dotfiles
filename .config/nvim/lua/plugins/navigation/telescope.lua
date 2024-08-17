@@ -75,6 +75,7 @@ local function find_files(builtin, themes, config)
 end
 
 local function init(builtin, themes)
+  SET_HL({ TelescopePromptBorder = { link = "TelescopeBorder" } })
   SET_USER_COMMANDS({
     FindText = function()
       find_text(builtin, themes, nil, false)
@@ -236,7 +237,6 @@ return {
         file_ignore_patterns = TELESCOPE_IGNORE_PATTERNS,
       },
       pickers = {
-        planets = { show_pluto = true, show_moon = true },
         find_files = { hidden = true },
         buffers = {
           theme = "dropdown",

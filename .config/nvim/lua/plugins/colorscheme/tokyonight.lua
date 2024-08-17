@@ -6,6 +6,7 @@ local border = "#547998"
 return {
   "folke/tokyonight.nvim",
   name = name,
+  cond = name == DEFAULT_COLORSCHEME,
   lazy = false,
   priority = 1000,
   config = function()
@@ -28,5 +29,6 @@ return {
       end,
     })
     SET_COLORSCHEME(name)
+    SET_TIMEOUT(INIT_HL)
   end,
 }

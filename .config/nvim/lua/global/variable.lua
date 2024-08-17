@@ -5,8 +5,8 @@ AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
 WORKSPACE_PATH = vim.loop.cwd()
 SCHEME_BACKGROUND = "dark"
-MAX_FILE_LENGTH = 3000
-MAX_FILE_SIZE = 0.03 -- MiB
+MAX_FILE_LENGTH = 5000
+MAX_FILE_SIZE = 0.125 -- MiB
 IS_VSCODE = vim.g.vscode ~= nil
 HAS_OPENAI_KEY = vim.env.OPENAI_API_KEY ~= nil
 IS_LEET_CODE = "leetcode.nvim" == vim.fn.argv()[1]

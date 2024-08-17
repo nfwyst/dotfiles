@@ -24,15 +24,20 @@ return {
       automatic_installation = true,
     })
 
+    local other = {
+      "prettierd",
+      "eslint_d",
+      "shfmt",
+      "beautysh",
+      "js-debug-adapter",
+    }
+
+    if not IS_LINUX then
+      table.insert(other, "stylua")
+    end
+
     require("mason-tool-installer").setup({
-      ensure_installed = {
-        "prettierd",
-        "eslint_d",
-        "stylua",
-        "shfmt",
-        "beautysh",
-        "js-debug-adapter",
-      },
+      ensure_installed = other,
     })
   end,
 }
