@@ -23,7 +23,7 @@ return {
         diffview = true,
       },
       signs = {
-        hunk = {},
+        hunk = { "", "" },
         item = { "", "" },
         section = { "", "" },
       },
