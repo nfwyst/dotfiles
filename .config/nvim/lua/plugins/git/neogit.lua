@@ -13,8 +13,7 @@ return {
     require("neogit").setup({
       disable_commit_confirmation = true,
       disable_insert_on_commit = "auto",
-      disable_signs = true,
-      kind = "auto",
+      kind = "tab",
       commit_editor = kd,
       commit_select_view = kd,
       log_view = kd,
@@ -22,6 +21,11 @@ return {
       integrations = {
         telescope = true,
         diffview = true,
+      },
+      signs = {
+        hunk = {},
+        item = { "", "" },
+        section = { "", "" },
       },
     })
   end,

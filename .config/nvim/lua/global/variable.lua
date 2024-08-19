@@ -94,6 +94,8 @@ INVALID_FILETYPE = {
   "notify",
   "NeogitStatus",
   "NeogitCommitMessage",
+  "NeogitLogView",
+  "NeogitCommitView",
   "DiffviewFiles",
   "DiffviewFileHistory",
   "mason",

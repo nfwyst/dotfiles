@@ -39,7 +39,7 @@ SET_OPTS({
   ch = 0, -- automatically hide and show command line
   spell = false, -- enable builtin spell check that work with treesitter, so it can do well in comment spell checking
   laststatus = 3, -- enable global status line
-  foldcolumn = "1", -- '0' is not bad
+  foldcolumn = "1",
   foldlevel = 99, -- dont open fold at starting up
   foldlevelstart = 99,
   foldnestmax = 7, -- fold nest dont more than 7, default limit is 20

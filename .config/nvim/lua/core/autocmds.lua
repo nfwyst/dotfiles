@@ -116,6 +116,15 @@ SET_AUTOCMDS({
     },
   },
   {
+    "FileType",
+    {
+      pattern = "Neogit*",
+      callback = function()
+        SET_OPTS({ foldcolumn = "0" }, true)
+      end,
+    },
+  },
+  {
     "VimResized",
     {
       pattern = "*",

@@ -1,13 +1,6 @@
 local fe = { "eslint_d", "prettierd" }
 local c = { "clang_format" }
 
-local option = {
-  lsp_format = "fallback",
-  timeout_ms = 1000,
-}
-
-local async_option = MERGE_TABLE(option, { async = true })
-
 local function setup_eslint()
   local eslint_d = require("conform.formatters.eslint_d")
   eslint_d.cwd = require("conform.util").root_file({
@@ -22,7 +15,11 @@ end
 local function init(conform)
   setup_eslint()
   USER_COMMAND("Format", function()
-    conform.format(async_option)
+    conform.format({
+      lsp_format = "fallback",
+      timeout_ms = 1000,
+      async = true,
+    })
   end)
 end
 
@@ -69,7 +66,6 @@ return {
           }
         end,
       },
-      format_on_save = option,
     })
   end,
 }
