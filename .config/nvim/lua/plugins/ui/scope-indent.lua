@@ -5,8 +5,9 @@ return {
   config = function()
     require("indentmini").setup({
       char = "│",
-      exclude = {},
+      exclude = { "markdown" },
       minlevel = 1,
+      only_current = false,
     })
   end,
 }
