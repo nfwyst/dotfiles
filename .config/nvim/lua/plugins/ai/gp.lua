@@ -227,6 +227,7 @@ return {
           secret = os.getenv("DEEPSEEK_API_KEY"),
         },
       },
+      default_chat_agent = model.model,
       agents = {
         {
           name = "ChatGPT4o",
