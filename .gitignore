@@ -6,3 +6,4 @@
 .config/nushell/history.txt
 .config/zellij/plugins
 .aider*
+todo.md

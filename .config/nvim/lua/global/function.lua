@@ -44,7 +44,7 @@ function SET_USER_COMMANDS(table)
 end
 
 function USER_COMMAND(name, func)
-  cmd(name, func, {})
+  cmd(name, func, { range = true })
 end
 
 function SET_HL(table)

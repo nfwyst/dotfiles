@@ -1,5 +1,5 @@
-local fe = { "eslint_d", "prettierd" }
 local c = { "clang_format" }
+local is_fixing = false
 
 local function setup_eslint()
   local eslint_d = require("conform.formatters.eslint_d")
@@ -14,13 +14,30 @@ end
 
 local function init(conform)
   setup_eslint()
-  USER_COMMAND("Format", function()
+  local function run()
     conform.format({
       lsp_format = "fallback",
       timeout_ms = 1000,
       async = true,
     })
-  end)
+  end
+  SET_USER_COMMANDS({
+    Format = function()
+      is_fixing = false
+      run()
+    end,
+    FixAll = function()
+      is_fixing = true
+      run()
+    end,
+  })
+end
+
+local function fe()
+  if is_fixing then
+    return { "eslint_d" }
+  end
+  return { "prettierd" }
 end
 
 return {
@@ -43,7 +60,7 @@ return {
         html = fe,
         json = fe,
         jsonc = fe,
-        markdown = fe,
+        markdown = { "vale" },
         yaml = fe,
         graphql = fe,
         c = c,

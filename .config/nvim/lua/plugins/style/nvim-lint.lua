@@ -28,7 +28,7 @@ return {
       javascriptreact = fe,
       svelte = fe,
       sh = { "shellcheck" },
-      zsh = { "shellcheck" },
+      zsh = { "zsh" },
     }
     init(lint)
   end,

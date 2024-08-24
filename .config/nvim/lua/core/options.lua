@@ -71,7 +71,7 @@ SET_OPTS({
   winminwidth = 5, -- minimum width of window
   showcmd = false,
   ruler = false,
-  breakindent = true,
+  breakindent = true, -- add indent when wrap auto
   backspace = { "start", "eol", "indent" },
   path = vim.opt.path + "**",
   wildignore = vim.opt.wildignore + "*/node_modules/*",

@@ -24,6 +24,7 @@ return {
     desc = "Enable Lint Local",
   },
   ["<leader>lsf"] = { "<cmd>Format<cr>", desc = "Format" },
+  ["<leader>lsF"] = { "<cmd>FixAll<cr>", desc = "Fix all" },
   ["<leader>lsi"] = { "<cmd>LspInfo<cr>", desc = "Info" },
   ["<leader>lsl"] = {
     "<cmd>lua vim.lsp.codelens.run()<cr>",

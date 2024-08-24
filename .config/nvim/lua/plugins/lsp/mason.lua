@@ -27,6 +27,8 @@ return {
     local other = {
       "prettierd",
       "eslint_d",
+      "shellcheck",
+      "vale",
       "shfmt",
       "beautysh",
       "js-debug-adapter",
