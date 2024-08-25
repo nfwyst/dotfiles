@@ -35,7 +35,8 @@ return {
     init(ufo)
     ufo.setup({
       open_fold_hl_timeout = 400,
-      close_fold_kinds_for_ft = { "imports", "comment" },
+      close_fold_kinds_for_ft = { default = { "imports", "comment" } },
+      enable_get_fold_virt_text = false,
       provider_selector = function(_, filetype, buftype)
         if filetype == "git" or TABLE_CONTAINS(INVALID_FILETYPE, filetype) then
           return ""
