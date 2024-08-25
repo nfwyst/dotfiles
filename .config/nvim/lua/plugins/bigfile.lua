@@ -5,7 +5,6 @@ local my_feature = {
   },
   disable = function()
     RUN_CMD("ColorizerDetachFromBuffer", true)
-    RUN_CMD("TabnineDisable", true)
     RUN_CMD("UfoDetach", true)
   end,
 }

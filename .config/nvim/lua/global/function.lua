@@ -429,3 +429,13 @@ end
 function OPEN_LINK_OR_FILE(uri)
   vim.fn.system({ "open", uri })
 end
+
+function IS_GPT_PROMPT_CHAT()
+  local ok, gp = pcall(require, "gp")
+  if not ok then
+    return false
+  end
+  local buf = vim.api.nvim_get_current_buf()
+  local file_name = vim.api.nvim_buf_get_name(buf)
+  return gp.not_chat(buf, file_name) == nil
+end

@@ -33,23 +33,6 @@ local mode = {
   padding = { right = 0, left = 1 },
 }
 
-local tabnine = {
-  "tabnine",
-  fmt = function(str)
-    local disabeld = STR_INCLUDES(str, "disabled")
-    if disabeld then
-      return nil
-    end
-    local result = string.gsub(str, " pro", "")
-    result = string.gsub(result, "⌬ tabnine", "tn ")
-    local width = vim.o.columns
-    if width < 75 then
-      return ""
-    end
-    return result
-  end,
-}
-
 local filetype = {
   "filetype",
   icons_enabled = false,
@@ -207,7 +190,6 @@ return {
           },
         },
         lualine_y = {
-          tabnine,
           diff,
           debugger,
           spaces,

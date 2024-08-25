@@ -107,10 +107,25 @@ SET_AUTOCMDS({
     {
       pattern = { "markdown", "gitcommit", "NeogitCommitMessage" },
       callback = function()
-        SET_OPTS(
-          { tabstop = 2, softtabstop = 2, shiftwidth = 2 },
-          true
-        )
+        SET_TIMEOUT(function()
+          local opt = {
+            wrap = false,
+            tabstop = 2,
+            softtabstop = 2,
+            shiftwidth = 2,
+          }
+          if IS_GPT_PROMPT_CHAT() then
+            opt = MERGE_TABLE(opt, {
+              number = false,
+              relativenumber = false,
+              statuscolumn = "",
+              foldcolumn = "0",
+              list = false,
+              showbreak = "NONE",
+            })
+          end
+          SET_OPTS(opt, true)
+        end, 100)
       end,
       group = AUTOGROUP("_markdown_git_", { clear = true }),
     },

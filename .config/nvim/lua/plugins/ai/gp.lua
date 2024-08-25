@@ -38,21 +38,6 @@ local function inspect_log(plugin, _)
   end
 end
 
-local function implement(gp, params)
-  local template = "Having following from {{filename}}:\n\n"
-    .. "```{{filetype}}\n{{selection}}\n```\n\n"
-    .. "Please rewrite this according to the contained instructions."
-    .. "\n\nRespond exclusively with the snippet that should replace the selection above."
-  gp.Prompt(
-    params,
-    gp.Target.rewrite,
-    gp.get_command_agent(),
-    template,
-    nil, -- command will run directly without any prompting for user input
-    nil -- no predefined instructions (e.g. speech-to-text from Whisper)
-  )
-end
-
 local function buffer_chat_new(gp, _)
   vim.api.nvim_command("%" .. gp.config.cmd_prefix .. "ChatNew")
 end
@@ -98,11 +83,6 @@ local hooks = {
     selection = false,
     fn = inspect_log,
   },
-  Implement = {
-    desc = "rewrites the provided selection/range based on comments in it",
-    selection = true,
-    fn = implement,
-  },
   BufferChatNew = {
     desc = "opens new chat with the entire current buffer as a context",
     selection = false,
@@ -128,13 +108,82 @@ local hooks = {
     selection = true,
     fn = code_review,
   },
+  ChatNew = {
+    desc = "GPT prompt New Chat",
+    selection = false,
+  },
+  ChatToggle = {
+    desc = "GPT prompt Toggle Chat",
+    selection = false,
+  },
+  ChatFinder = {
+    desc = "GPT prompt Chat Finder",
+    selection = false,
+  },
+  ChatPaste = {
+    desc = "GPT prompt Visual Chat Paste",
+    selection = true,
+  },
+  ["ChatNew split"] = {
+    desc = "GPT prompt New Chat split",
+    selection = false,
+  },
+  ["ChatNew vsplit"] = {
+    desc = "GPT prompt New Chat vsplit",
+    selection = false,
+  },
+  ["ChatNew tabnew"] = {
+    desc = "GPT prompt New Chat tabnew",
+    selection = false,
+  },
+  Rewrite = {
+    desc = "GPT prompt Inline Rewrite",
+    selection = false,
+  },
+  Append = {
+    desc = "GPT prompt Append (after)",
+    selection = false,
+  },
+  Prepend = {
+    desc = "GPT prompt Append (before)",
+    selection = false,
+  },
+  Implement = {
+    desc = "GPT prompt Rewrites the provided selection/range based on comments in it",
+    selection = true,
+  },
+  Popup = {
+    desc = "GPT prompt Popup",
+    selection = false,
+  },
+  Enew = {
+    desc = "GPT prompt Enew",
+    selection = false,
+  },
+  New = {
+    desc = "GPT prompt New",
+    selection = false,
+  },
+  Vnew = {
+    desc = "GPT prompt Vnew",
+    selection = false,
+  },
+  Tabnew = {
+    desc = "GPT prompt Tabnew",
+    selection = false,
+  },
+  Context = {
+    desc = "GPT prompt Toggle Context",
+    selection = false,
+  },
+  Stop = {
+    desc = "GPT prompt Stop",
+    selection = false,
+  },
 }
 
 local function select_agent(gp)
-  local buf = vim.api.nvim_get_current_buf()
-  local file_name = vim.api.nvim_buf_get_name(buf)
-  local is_chat = gp.not_chat(buf, file_name) == nil
-
+  local is_chat = IS_GPT_PROMPT_CHAT()
   local opts = theme.get_dropdown({
     winblend = 10,
     previewer = false,
@@ -214,7 +263,9 @@ return {
   config = function()
     local _hooks = {}
     for k, v in pairs(hooks) do
-      _hooks[k] = v.fn
+      if v.fn then
+        _hooks[k] = v.fn
+      end
     end
     local gp = require("gp")
     gp.setup({

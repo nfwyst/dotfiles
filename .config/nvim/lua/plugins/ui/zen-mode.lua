@@ -30,7 +30,7 @@ return {
         },
       },
       on_open = function()
-        vim.diagnostic.disable()
+        vim.diagnostic.enable(false)
         bui.toggle(false)
         statuscolumn = vim.o.statuscolumn
         vim.o.statuscolumn = ""
