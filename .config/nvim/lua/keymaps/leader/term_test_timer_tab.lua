@@ -76,11 +76,30 @@ return {
     desc = "Test Next Failed",
     { noremap = false },
   },
-  ["<leader>teR"] = {
+  ["<leader>tej"] = {
     function()
       require("neotest").run.run({ jestCommand = "jest --watch ", suite = true })
     end,
-    desc = "Test Run Watch",
+    desc = "Test Run jest Watch",
+  },
+  ["<leader>tev"] = {
+    function()
+      require("neotest").run.run({
+        vitestCommand = "vitest --watch",
+        suite = true,
+      })
+    end,
+    desc = "Test Run Vitest Watch",
+  },
+  ["<leader>teV"] = {
+    function()
+      require("neotest").run.run({
+        vim.fn.expand("%"),
+        vitestCommand = "vitest --watch",
+        suite = true,
+      })
+    end,
+    desc = "Test Run Vitest File Watch",
   },
   ["<leader>ti"] = { group = "Timer" },
   ["<leader>tii"] = {

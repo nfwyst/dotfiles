@@ -7,7 +7,7 @@ local function get_sources(cmp, names)
   for _, name in ipairs(names) do
     table.insert(sources, { name = name, max_item_count = 10 })
   end
-  return cmp.config.sources({ sources })
+  return cmp.config.sources(sources)
 end
 
 return {
