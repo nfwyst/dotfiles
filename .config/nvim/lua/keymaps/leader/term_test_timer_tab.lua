@@ -80,7 +80,7 @@ return {
     function()
       require("neotest").run.run({ jestCommand = "jest --watch ", suite = true })
     end,
-    desc = "Test Run jest Watch",
+    desc = "Test Run Jest Watch",
   },
   ["<leader>tev"] = {
     function()
