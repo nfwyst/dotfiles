@@ -74,16 +74,6 @@ local function try_load(conf, exclude_filetypes, include_filetypes)
   end
 end
 
-local function load_neodev(server)
-  if not IS_MAC or server ~= "lua_ls" then
-    return
-  end
-  if IS_LEET_CODE then
-    return
-  end
-  require("neodev").setup()
-end
-
 return {
   "neovim/nvim-lspconfig",
   cond = not IS_VSCODE,
@@ -101,7 +91,6 @@ return {
       local conf = lspconfig[server]
       local opts = get_options(cmp_nvim_lsp, server)
       if opts then
-        load_neodev(server)
         conf.setup(opts)
         try_load(conf, opts.exclude_filetypes or {}, opts.include_filetypes)
       end

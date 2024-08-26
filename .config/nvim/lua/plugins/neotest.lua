@@ -20,6 +20,7 @@ return {
           end,
         }),
       },
+      log_level = vim.log.levels.OFF,
     })
   end,
 }

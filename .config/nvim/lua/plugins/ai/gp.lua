@@ -272,6 +272,7 @@ return {
       whisper = { disable = true },
       image = { disable = true },
       chat_assistant_prefix = { "🗨:" },
+      log_file = "",
       providers = {
         openai = {
           endpoint = "https://api.deepseek.com/beta/chat/completions",

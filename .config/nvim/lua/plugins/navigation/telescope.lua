@@ -199,6 +199,8 @@ return {
     init(require("telescope.builtin"), require("telescope.themes"))
     telescope.setup({
       defaults = {
+        history = IS_WIN_LINUX,
+        cache_picker = IS_WIN_LINUX,
         path_display = { "truncate" },
         layout_strategy = "vertical",
         layout_config = {

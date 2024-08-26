@@ -2,6 +2,14 @@ SET_OPTS({
   completeopt = { "menu", "menuone", "noselect" },
 })
 
+local function get_sources(cmp, names)
+  local sources = {}
+  for _, name in ipairs(names) do
+    table.insert(sources, { name = name, max_item_count = 10 })
+  end
+  return cmp.config.sources({ sources })
+end
+
 return {
   "hrsh7th/nvim-cmp",
   cond = not IS_VSCODE,
@@ -72,24 +80,22 @@ return {
         end, { "s", "i" }),
       }),
       formatting = {
+        expandable_indicator = true,
         fields = { "abbr", "kind", "menu" },
         format = lspkind.cmp_format({
           maxwidth = 50,
           ellipsis_char = "...",
         }),
       },
-      sources = cmp.config.sources({
-        { name = "neorg", max_item_count = 10 },
-        { name = "luasnip", max_item_count = 10 },
-        { name = "nvim_lsp", max_item_count = 10 },
-        { name = "nvim_lua", max_item_count = 10 },
-        { name = "buffer", max_item_count = 10 },
-        { name = "path", max_item_count = 10 },
+      sources = get_sources(cmp, {
+        "neorg",
+        "luasnip",
+        "nvim_lsp",
+        "nvim_lua",
+        "buffer",
+        "path",
+        "lazydev",
       }),
-      confirm_opts = {
-        behavior = cmp.ConfirmBehavior.Replace,
-        select = false,
-      },
       window = {
         completion = border,
         documentation = border,
