@@ -2,6 +2,8 @@ SET_OPTS({
   completeopt = { "menu", "menuone", "noselect" },
 })
 
+local disable_fuzzy = IS_WIN_LINUX
+
 local function get_sources(cmp, names)
   local sources = {}
   for _, name in ipairs(names) do
@@ -86,6 +88,12 @@ return {
           maxwidth = 50,
           ellipsis_char = "...",
         }),
+      },
+      matching = {
+        disallow_fuzzy_matching = disable_fuzzy,
+        disallow_fullfuzzy_matching = disable_fuzzy,
+        disallow_partial_fuzzy_matching = disable_fuzzy,
+        disallow_prefix_unmatching = disable_fuzzy,
       },
       sources = get_sources(cmp, {
         "neorg",
