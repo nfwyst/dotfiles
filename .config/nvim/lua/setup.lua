@@ -1,4 +1,4 @@
-if not (vim.uv or vim.loop).fs_stat(LAZY_PATH) then
+if not vim.uv.fs_stat(LAZY_PATH) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local out = vim.fn.system({
     "git",

@@ -183,7 +183,7 @@ function SET_WORKSPACE_PATH_GLOBAL()
     return
   end
   local get_root = util.root_pattern(UNPACK(PROJECT_PATTERNS))
-  WORKSPACE_PATH = get_root(GET_CURRENT_FILE_PATH(true)) or vim.loop.cwd()
+  WORKSPACE_PATH = get_root(GET_CURRENT_FILE_PATH(true)) or vim.uv.cwd()
   LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
 end
 
@@ -229,7 +229,7 @@ function GET_PROJECT_NAME()
     local current_file_path = current_element.path
     local get_pattern = util.root_pattern(UNPACK(PROJECT_PATTERNS))
     local name = basename(get_pattern(current_file_path))
-    local repo_name = basename(vim.loop.cwd())
+    local repo_name = basename(vim.uv.cwd())
     return name ~= repo_name and name or "文件浏览器"
   end
 end
