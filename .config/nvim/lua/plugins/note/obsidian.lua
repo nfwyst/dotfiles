@@ -55,6 +55,9 @@ return {
           end,
         },
       },
+      ui = {
+        enable = false,
+      },
     })
     init(obsidian)
   end,

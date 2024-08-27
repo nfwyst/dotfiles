@@ -29,7 +29,6 @@ SET_OPTS({
   signcolumn = "yes", -- always show the sign column, otherwise it would shift the text each time
   wrap = false, -- display lines as one long line, for performance
   linebreak = true, -- wrap by word
-  scrolloff = 999, -- minimal number of screen lines to keep above and below the cursor
   sidescrolloff = 8, -- scroll left to right
   inccommand = "split", -- show preview in split window when in %s mode to replace something
   lazyredraw = false, -- don't redraw while executing macros (good performance config), if use noice need to turn this off...

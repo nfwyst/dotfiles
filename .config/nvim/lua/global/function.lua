@@ -439,3 +439,7 @@ function IS_GPT_PROMPT_CHAT()
   local file_name = vim.api.nvim_buf_get_name(buf)
   return gp.not_chat(buf, file_name) == nil
 end
+
+function GET_CURRENT_MODE()
+  return string.lower(vim.fn.mode())
+end

@@ -19,8 +19,8 @@ return {
   ["<leader>def"] = { "<cmd>Telescope dap frames<cr>", desc = "Dap frames" },
   ["<leader>deh"] = { "<cmd>DapUiHover<cr>", desc = "Dap UI Widgets Hover" },
   ["<leader>dei"] = { "<cmd>DapStepInto<cr>", desc = "Step Into" },
-  ["<leader>dej"] = { "<cmd>DapDown<cr>zz", desc = "Dap down" },
-  ["<leader>dek"] = { "<cmd>DapUp<cr>zz", desc = "Dap Up" },
+  ["<leader>dej"] = { "<cmd>DapDown<cr>", desc = "Dap down" },
+  ["<leader>dek"] = { "<cmd>DapUp<cr>", desc = "Dap Up" },
   ["<leader>del"] = {
     "<cmd>Telescope dap list_breakpoints<cr>",
     desc = "List breakpoints",

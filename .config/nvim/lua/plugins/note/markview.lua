@@ -1,3 +1,10 @@
+local api = vim.api
+
+local function set_conceal(win, level, cursor)
+  api.nvim_set_option_value("conceallevel", level, { win = win })
+  api.nvim_set_option_value("conecalcursor", cursor, { win = win })
+end
+
 return {
   "OXY2DEV/markview.nvim",
   cond = not IS_VSCODE_OR_LEET_CODE,
@@ -8,12 +15,14 @@ return {
   },
   config = function()
     require("markview").setup({
-      modes = { "n", "no", "c" },
-      hybrid_modes = { "n" }, -- uses this feature on normal mode
+      modes = { "n", "i", "no", "c" },
+      hybrid_modes = { "i" },
       callbacks = {
         on_enable = function(_, win)
-          vim.wo[win].conceallevel = 2
-          vim.wo[win].conecalcursor = "c"
+          set_conceal(win, 2, "nc")
+        end,
+        on_disable = function(_, win)
+          set_conceal(win, 0, "")
         end,
       },
     })
