@@ -96,7 +96,6 @@ return {
         disallow_prefix_unmatching = disable_fuzzy,
       },
       sources = get_sources(cmp, {
-        "neorg",
         "luasnip",
         "nvim_lsp",
         "nvim_lua",

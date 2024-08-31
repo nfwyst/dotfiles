@@ -124,7 +124,6 @@ TREESITTER_ENSURE_INSTALL = {
   "go",
   "lua",
   "svelte",
-  "norg",
 }
 
 TELESCOPE_IGNORE_PATTERNS = {
