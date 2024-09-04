@@ -362,7 +362,7 @@ return {
         },
         {
           provider = "openai",
-          name = "coder-chat",
+          name = "coder",
           chat = true,
           command = false,
           model = MERGE_TABLE(model, { temperature = 1 }),
@@ -370,7 +370,7 @@ return {
         },
         {
           provider = "openai",
-          name = "coder",
+          name = "commander",
           chat = false,
           command = true,
           model = MERGE_TABLE(model, { temperature = 0.8 }),
