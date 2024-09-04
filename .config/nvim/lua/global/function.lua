@@ -443,3 +443,27 @@ end
 function GET_CURRENT_MODE()
   return string.lower(vim.fn.mode())
 end
+
+function IS_INDENT_WITH_TABS(path)
+  if path then
+    local file = io.open(path, "r")
+    if not file then
+      return false
+    end
+    for line in file:lines() do
+      if line:find("\t") then
+        file:close()
+        return true
+      end
+    end
+    file:close()
+    return false
+  end
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  for _, line in ipairs(lines) do
+    if line:find("\t") then
+      return true
+    end
+  end
+  return false
+end

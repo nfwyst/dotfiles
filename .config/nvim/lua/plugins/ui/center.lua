@@ -5,5 +5,6 @@ return {
   priority = 1000,
   opts = {
     enabled = true,
+    skip_filetypes = { "toggleterm" },
   },
 }

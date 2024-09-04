@@ -1,6 +1,11 @@
 return {
   ["<leader>n"] = { group = "Note/Nav/Notify" },
   ["<leader>nt"] = { group = "Note" },
+  ["<leader>ntm"] = { group = "Markview" },
+  ["<leader>ntmv"] = {
+    "<cmd>Markview splitToggle<cr>",
+    desc = "Toggle vertical split view",
+  },
   ["<leader>nto"] = { group = "Obsidian" },
   ["<leader>ntoc"] = {
     "<cmd>ObsidianLinkNew<cr>",

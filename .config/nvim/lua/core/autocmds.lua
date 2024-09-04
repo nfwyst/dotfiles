@@ -147,6 +147,24 @@ SET_AUTOCMDS({
       group = AUTOGROUP("_auto_resize_", { clear = true }),
     },
   },
+  {
+    "BufReadPost",
+    {
+      group = AUTOGROUP("_indent_tab_", { clear = true }),
+      callback = function()
+        local expandtab = true
+        local width = 2
+        if IS_INDENT_WITH_TABS() then
+          expandtab = false
+          width = 4
+        end
+        vim.bo.expandtab = expandtab
+        vim.bo.tabstop = width
+        vim.bo.softtabstop = width
+        vim.bo.shiftwidth = width
+      end,
+    },
+  },
 })
 
 if not IS_MAC then

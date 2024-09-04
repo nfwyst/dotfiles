@@ -25,6 +25,12 @@ return {
           set_conceal(win, 0, "")
         end,
       },
+      code_blocks = {
+        pad_amount = 0,
+      },
+      list_items = {
+        shift_width = 2,
+      },
     })
   end,
 }
