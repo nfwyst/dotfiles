@@ -6,6 +6,7 @@ return {
       },
       diagnostics = {
         globals = { "vim" },
+        disable = { "lowercase-global" },
       },
       runtime = {
         version = "LuaJIT",

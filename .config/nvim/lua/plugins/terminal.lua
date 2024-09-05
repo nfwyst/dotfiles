@@ -38,15 +38,16 @@ local function set_commands()
     end,
   })
   AUTOCMD("TermOpen", {
-    callback = function()
-      SET_BUF_KEY_MAPS({
+    callback = function(event)
+      local opts = { buffer = event.buf }
+      SET_KEY_MAPS({
         t = {
-          { lhs = "<esc>", rhs = [[<C-\><C-n>]] },
-          { lhs = "jk", rhs = [[<C-\><C-n>]] },
-          { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]] },
-          { lhs = "<C-j>", rhs = [[<C-\><C-n><C-W>j]] },
-          { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]] },
-          { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]] },
+          { lhs = "<esc>", rhs = [[<C-\><C-n>]], opts = opts },
+          { lhs = "jk", rhs = [[<C-\><C-n>]], opts = opts },
+          { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]], opts = opts },
+          { lhs = "<C-j>", rhs = [[<C-\><C-n><C-W>j]], opts = opts },
+          { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]], opts = opts },
+          { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]], opts = opts },
         },
       })
     end,

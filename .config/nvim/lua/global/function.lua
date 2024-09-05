@@ -79,14 +79,6 @@ function GET_HIGHLIGHT(name, opt)
   return ht[opt]
 end
 
-function SET_BUF_KEY_MAPS(table)
-  for mode, maps in pairs(table) do
-    for _, v in ipairs(maps) do
-      BUF_KEY_MAP(mode, v.lhs, v.rhs, v.opts)
-    end
-  end
-end
-
 function SET_KEY_MAPS(table)
   for mode, maps in pairs(table) do
     for _, v in ipairs(maps) do
@@ -114,17 +106,6 @@ local function key_exists(mode, lhs)
     return false
   end
   return exists
-end
-
-function BUF_KEY_MAP(mode, lhs, rhs, opts, bufnr)
-  local has_key = key_exists(mode, lhs)
-  if has_key then
-    return
-  end
-  opts = opts or {}
-  local silent = opts.silent ~= false
-  opts = MERGE_TABLE({ noremap = true, silent = silent }, opts)
-  vim.api.nvim_buf_set_keymap(bufnr or 0, mode, lhs, rhs, opts)
 end
 
 function KEY_MAP(mode, lhs, rhs, opts)
@@ -466,4 +447,12 @@ function IS_INDENT_WITH_TABS(path)
     end
   end
   return false
+end
+
+function TO_NORMAL_MODE()
+  vim.api.nvim_feedkeys(
+    vim.api.nvim_replace_termcodes("<esc>", true, false, true),
+    "x",
+    false
+  )
 end

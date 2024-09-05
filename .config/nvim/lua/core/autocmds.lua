@@ -1,4 +1,43 @@
 local group = AUTOGROUP("_general_settings_", { clear = true })
+local fn = vim.fn
+local v = vim.v
+local cmd = vim.cmd
+
+local function remove_qf_normal()
+  local start_index = fn.line(".")
+  local count = v.count > 0 and v.count or 1
+  return start_index, count
+end
+
+local function remove_qf_visual()
+  local v_start_idx = fn.line("v")
+  local v_end_idx = fn.line(".")
+
+  local start_index = math.min(v_start_idx, v_end_idx)
+  local count = math.abs(v_end_idx - v_start_idx) + 1
+  TO_NORMAL_MODE()
+  return start_index, count
+end
+
+local function remove_qf_item(is_normal)
+  return function()
+    local start_index
+    local count
+    if is_normal then
+      start_index, count = remove_qf_normal()
+    else
+      start_index, count = remove_qf_visual()
+    end
+    local qflist = fn.getqflist()
+
+    for _ = 1, count, 1 do
+      table.remove(qflist, start_index)
+    end
+
+    fn.setqflist(qflist, "r")
+    fn.cursor(start_index, 1)
+  end
+end
 
 SET_AUTOCMDS({
   {
@@ -18,7 +57,7 @@ SET_AUTOCMDS({
       callback = function(event)
         local match = event.match
         if match ~= "gitconfig" then
-          vim.cmd.nnoremap("<silent> <buffer> q :close<cr>")
+          cmd.nnoremap("<silent> <buffer> q :close<cr>")
         end
         if IS_WIN_LINUX then
           return
@@ -75,11 +114,14 @@ SET_AUTOCMDS({
     "FileType",
     {
       pattern = "qf",
-      callback = function()
+      callback = function(event)
         SET_OPTS({
           buflisted = false,
           relativenumber = false,
         }, true)
+        local opt = { buffer = event.buf }
+        KEY_MAP("n", "dd", remove_qf_item(true), opt)
+        KEY_MAP("x", "d", remove_qf_item(), opt)
       end,
       group = group,
     },

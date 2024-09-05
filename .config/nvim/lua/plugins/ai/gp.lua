@@ -6,7 +6,7 @@ local theme = require("telescope.themes")
 local conf = require("telescope.config").values
 
 local model = {
-  model = "deepseek-coder",
+  model = "deepseek-chat",
   top_p = 1,
   max_tokens = 8192,
   num_ctx = 131072,
@@ -354,23 +354,12 @@ return {
           name = "chat",
           chat = true,
           command = false,
-          model = MERGE_TABLE(
-            model,
-            { model = "deepseek-chat", temperature = 1.2 }
-          ),
+          model = MERGE_TABLE(model, { temperature = 1.2 }),
           system_prompt = gp.defaults.chat_system_prompt,
         },
         {
           provider = "openai",
           name = "coder",
-          chat = true,
-          command = false,
-          model = MERGE_TABLE(model, { temperature = 1 }),
-          system_prompt = gp.defaults.chat_system_prompt,
-        },
-        {
-          provider = "openai",
-          name = "commander",
           chat = false,
           command = true,
           model = MERGE_TABLE(model, { temperature = 0.8 }),
