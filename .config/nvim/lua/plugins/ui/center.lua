@@ -1,5 +1,6 @@
 return {
-  "arnamak/stay-centered.nvim",
+  -- "arnamak/stay-centered.nvim",
+  "nfwyst/stay-centered.nvim",
   lazy = false,
   name = "stay-centered",
   priority = 1000,
