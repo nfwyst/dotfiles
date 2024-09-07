@@ -46,11 +46,9 @@ return {
         },
         {
           sign = {
-            namespace = { ".*" },
-            maxwidth = 2,
-            colwidth = 1,
+            namespace = { "markview*" },
+            maxwidth = 1,
             auto = true,
-            wrap = true,
           },
           click = "v:lua.ScSa",
         },
