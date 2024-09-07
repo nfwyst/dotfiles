@@ -151,7 +151,7 @@ SET_AUTOCMDS({
       callback = function()
         SET_TIMEOUT(function()
           local opt = {
-            wrap = false,
+            wrap = true,
             tabstop = 2,
             softtabstop = 2,
             shiftwidth = 2,

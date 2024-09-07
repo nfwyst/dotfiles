@@ -26,6 +26,7 @@ return {
         end,
       },
       code_blocks = {
+        style = "simple",
         pad_amount = 0,
       },
       list_items = {
