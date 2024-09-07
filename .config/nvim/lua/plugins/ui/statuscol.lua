@@ -45,6 +45,16 @@ return {
           click = "v:lua.ScSa",
         },
         {
+          sign = {
+            namespace = { ".*" },
+            maxwidth = 2,
+            colwidth = 1,
+            auto = true,
+            wrap = true,
+          },
+          click = "v:lua.ScSa",
+        },
+        {
           text = { " ", builtin.lnumfunc, " " },
           condition = { builtin.not_empty },
           click = "v:lua.ScLa",
