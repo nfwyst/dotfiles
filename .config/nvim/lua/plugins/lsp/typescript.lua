@@ -16,19 +16,6 @@ local hint = {
   includeInlayEnumMemberValueHints = true,
 }
 
-local function get_tsserver_path()
-  local ok, registry = pcall(require, "mason-registry")
-  if not ok then
-    vim.print(ok, registry)
-    return nil
-  end
-  local name = "typescript-language-server"
-  local install_path = registry.get_package(name):get_install_path()
-  local path = install_path .. "/node_modules/typescript/lib/tsserver.js"
-  vim.print(path)
-  return path
-end
-
 local function filter_hints_result(result)
   return FILTER_TABLE(result, function(_hint)
     local label = _hint.label
@@ -113,7 +100,6 @@ return {
         ["textDocument/foldingRange"] = foldingRange,
       },
       settings = {
-        tsserver_path = get_tsserver_path(),
         separate_diagnostic_server = true,
         expose_as_code_action = "all",
         tsserver_plugins = {
