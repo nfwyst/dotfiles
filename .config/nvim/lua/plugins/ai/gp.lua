@@ -2,7 +2,6 @@ local theme = require("telescope.themes")
 
 local model = {
   model = "deepseek-chat",
-  top_p = 1,
   max_tokens = 8192,
   num_ctx = 131072,
   stream = true,

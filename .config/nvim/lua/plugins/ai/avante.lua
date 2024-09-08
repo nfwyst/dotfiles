@@ -43,15 +43,9 @@ return {
               },
               body = {
                 model = opts.model,
-                messages = {
-                  { role = "system", content = code_opts.system_prompt },
-                  {
-                    role = "user",
-                    content = require("avante.providers.openai").get_user_message(
-                      code_opts
-                    ),
-                  },
-                },
+                messages = require("avante.providers").copilot.parse_message(
+                  code_opts
+                ),
                 temperature = 0,
                 max_tokens = 8192,
                 stream = true,
