@@ -33,7 +33,7 @@ local function inspect_log(plugin, _)
 end
 
 local function buffer_chat_new(gp, _)
-  vim.api.nvim_command("%" .. gp.config.cmd_prefix .. "ChatNew")
+  vim.api.nvim_command("%" .. gp.config.cmd_prefix .. "ChatNew vsplit")
 end
 
 local function translate(gp, params)
@@ -197,7 +197,7 @@ local function pick_command(mode)
   end
 
   NEW_PICKER("Select command", {}, command_names, function(selection)
-    local command = selection[1]:match("^(%S+)")
+    local command = selection[1]:match("^%s*(.-)%s*-")
     if mode == "v" then
       command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
     else
