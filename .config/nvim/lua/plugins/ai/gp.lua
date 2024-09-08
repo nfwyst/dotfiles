@@ -1,9 +1,4 @@
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
 local theme = require("telescope.themes")
-local conf = require("telescope.config").values
 
 local model = {
   model = "deepseek-chat",
@@ -184,28 +179,14 @@ local hooks = {
 
 local function select_agent(gp)
   local is_chat = IS_GPT_PROMPT_CHAT()
-  local opts = theme.get_dropdown({
+  local dropdown = theme.get_dropdown({
     winblend = 10,
     previewer = false,
   })
   local results = is_chat and gp._chat_agents or gp._command_agents
-  pickers
-    .new(opts, {
-      prompt_title = "Models",
-      finder = finders.new_table({
-        results = results,
-      }),
-      sorter = conf.generic_sorter(opts),
-      attach_mappings = function(prompt_bufnr)
-        actions.select_default:replace(function()
-          local selection = action_state.get_selected_entry()
-          actions.close(prompt_bufnr)
-          gp.cmd.Agent({ args = selection[1] })
-        end)
-        return true
-      end,
-    })
-    :find()
+  NEW_PICKER("Models", dropdown, results, function(selection)
+    gp.cmd.Agent({ args = selection[1] })
+  end)
 end
 
 local function pick_command(mode)
@@ -216,34 +197,20 @@ local function pick_command(mode)
     end
   end
 
-  pickers
-    .new({}, {
-      prompt_title = "Select Command",
-      finder = finders.new_table({
-        results = command_names,
-      }),
-      sorter = conf.generic_sorter({}),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          actions.close(prompt_bufnr)
-          local selection = action_state.get_selected_entry()
-          local command = selection[1]:match("^(%S+)")
-          if mode == "v" then
-            command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
-          else
-            command = ":Gp" .. command .. "<CR>"
-          end
+  NEW_PICKER("Select command", {}, command_names, function(selection)
+    local command = selection[1]:match("^(%S+)")
+    if mode == "v" then
+      command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
+    else
+      command = ":Gp" .. command .. "<CR>"
+    end
 
-          vim.api.nvim_feedkeys(
-            vim.api.nvim_replace_termcodes(command, true, false, true),
-            "c",
-            true
-          )
-        end)
-        return true
-      end,
-    })
-    :find()
+    vim.api.nvim_feedkeys(
+      vim.api.nvim_replace_termcodes(command, true, false, true),
+      "c",
+      true
+    )
+  end)
 end
 
 local function init(gp)

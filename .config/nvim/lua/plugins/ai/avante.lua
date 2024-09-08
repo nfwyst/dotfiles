@@ -76,9 +76,7 @@ return {
       },
       windows = {
         height = 100,
-        input = {
-          prefix = "🗨",
-        },
+        input = { prefix = "➜ " },
       },
       mappings = {
         diff = {

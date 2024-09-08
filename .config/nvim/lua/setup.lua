@@ -36,17 +36,8 @@ require("lazy").setup({
     { import = "plugins.git" },
     { import = "plugins.navigation" },
   },
-  install = {
-    colorscheme = { "tokyonight", "NeoSolarized" },
-  },
-  ui = {
-    border = "rounded",
-  },
-  checker = {
-    enabled = false,
-    notify = false,
-  },
-  change_detection = {
-    notify = false,
-  },
+  install = { colorscheme = { "tokyonight", "NeoSolarized" } },
+  ui = { border = "rounded", backdrop = 100, wrap = false },
+  checker = { enabled = true, frequency = 3600 * 24, notify = false },
+  change_detection = { notify = false },
 })
