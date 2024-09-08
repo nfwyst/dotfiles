@@ -3,6 +3,7 @@ return {
   ["<leader>ai"] = { group = "AI" },
   ["<leader>as"] = { group = "AST" },
   ["<leader>aig"] = { group = "GPT prompt" },
+  ["<leader>aia"] = { group = "Avante" },
   ["<leader>aigc"] = { "<cmd>GpPickCommand<cr>", desc = "GPT select command" },
   ["<leader>aiga"] = { "<cmd>GpSelectAgent<cr>", desc = "GPT select agent" },
   ["<leader>asc"] = { "<cmd>TSContextToggle<cr>", desc = "Toggle code context" },
