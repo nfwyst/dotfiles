@@ -158,13 +158,14 @@ SET_AUTOCMDS({
           "AvanteInput",
         }, event.match)
         SET_TIMEOUT(function()
+          local bufnr = event.buf
           local opts = {
             wrap = true,
             tabstop = 2,
             softtabstop = 2,
             shiftwidth = 2,
           }
-          if isAvante or IS_GPT_PROMPT_CHAT() then
+          if isAvante or IS_GPT_PROMPT_CHAT(bufnr) then
             opts = MERGE_TABLE(opts, {
               number = false,
               relativenumber = false,
@@ -174,7 +175,7 @@ SET_AUTOCMDS({
               showbreak = "NONE",
             })
           end
-          SET_OPTS(opts, event.buf)
+          SET_OPTS(opts, bufnr)
         end, 100)
       end,
       group = AUTOGROUP("_markdown_git_", { clear = true }),
