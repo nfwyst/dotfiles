@@ -113,6 +113,7 @@ TREESITTER_ENSURE_INSTALL = {
   "go",
   "lua",
   "svelte",
+  "latex",
 }
 
 TELESCOPE_IGNORE_PATTERNS = {
