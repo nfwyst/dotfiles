@@ -1,6 +1,5 @@
 return {
   "debugloop/telescope-undo.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   cmd = { "Telescope undo" },
   dependencies = {
     "nvim-telescope/telescope.nvim",

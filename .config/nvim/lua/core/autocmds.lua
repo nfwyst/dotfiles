@@ -59,11 +59,8 @@ SET_AUTOCMDS({
         if match ~= "gitconfig" then
           cmd.nnoremap("<silent> <buffer> q :close<cr>")
         end
-        if IS_WIN_LINUX then
-          return
-        end
         if match == "help" or match == "gitconfig" then
-          vim.opt_local.list = false
+          SET_OPT("list", false, event.buf)
         end
       end,
       group = group,
@@ -115,11 +112,12 @@ SET_AUTOCMDS({
     {
       pattern = "qf",
       callback = function(event)
+        local bufnr = event.buf
         SET_OPTS({
           buflisted = false,
           relativenumber = false,
-        }, true)
-        local opt = { buffer = event.buf }
+        }, bufnr)
+        local opt = { buffer = bufnr }
         KEY_MAP("n", "dd", remove_qf_item(true), opt)
         KEY_MAP("x", "d", remove_qf_item(), opt)
       end,
@@ -139,7 +137,7 @@ SET_AUTOCMDS({
         then
           return
         end
-        SET_OPTS({ cursorline = true }, true)
+        SET_OPT("cursorline", true, event.buf)
       end,
       group = group,
     },
@@ -147,17 +145,27 @@ SET_AUTOCMDS({
   {
     "FileType",
     {
-      pattern = { "markdown", "gitcommit", "NeogitCommitMessage" },
-      callback = function()
+      pattern = {
+        "markdown",
+        "gitcommit",
+        "NeogitCommitMessage",
+        "Avante",
+        "AvanteInput",
+      },
+      callback = function(event)
+        local isAvante = TABLE_CONTAINS({
+          "Avante",
+          "AvanteInput",
+        }, event.match)
         SET_TIMEOUT(function()
-          local opt = {
+          local opts = {
             wrap = true,
             tabstop = 2,
             softtabstop = 2,
             shiftwidth = 2,
           }
-          if IS_GPT_PROMPT_CHAT() then
-            opt = MERGE_TABLE(opt, {
+          if isAvante or IS_GPT_PROMPT_CHAT() then
+            opts = MERGE_TABLE(opts, {
               number = false,
               relativenumber = false,
               statuscolumn = "",
@@ -166,7 +174,7 @@ SET_AUTOCMDS({
               showbreak = "NONE",
             })
           end
-          SET_OPTS(opt, true)
+          SET_OPTS(opts, event.buf)
         end, 100)
       end,
       group = AUTOGROUP("_markdown_git_", { clear = true }),
@@ -176,8 +184,8 @@ SET_AUTOCMDS({
     "FileType",
     {
       pattern = "Neogit*",
-      callback = function()
-        SET_OPTS({ foldcolumn = "0" }, true)
+      callback = function(event)
+        SET_OPT("foldcolumn", "0", event.buf)
       end,
     },
   },
@@ -209,18 +217,14 @@ SET_AUTOCMDS({
   },
 })
 
-if not IS_MAC then
-  return
-end
-
 SET_AUTOCMDS({
   {
     "InsertEnter",
     {
       pattern = "*",
       group = group,
-      callback = function()
-        SET_OPTS({ cursorline = false }, true)
+      callback = function(event)
+        SET_OPT("cursorline", false, event.buf)
       end,
     },
   },
@@ -229,10 +233,11 @@ SET_AUTOCMDS({
     {
       pattern = "*",
       group = group,
-      callback = function()
-        SET_OPTS(
-          { cursorline = not TABLE_CONTAINS(INVALID_FILETYPE, vim.bo.filetype) },
-          true
+      callback = function(event)
+        SET_OPT(
+          "cursorline",
+          not TABLE_CONTAINS(INVALID_FILETYPE, vim.bo.filetype),
+          event.buf
         )
       end,
     },

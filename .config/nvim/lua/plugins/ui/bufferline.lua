@@ -119,7 +119,6 @@ end
 
 return {
   "akinsho/bufferline.nvim",
-  cond = not IS_VSCODE,
   event = { "BufReadPost", "BufAdd", "BufNewFile" },
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()

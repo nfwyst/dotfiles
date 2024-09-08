@@ -1,6 +1,5 @@
 return {
   "williamboman/mason.nvim",
-  cond = not IS_VSCODE,
   dependencies = {
     "williamboman/mason-lspconfig.nvim",
     "WhoIsSethDaniel/mason-tool-installer.nvim",
@@ -34,7 +33,7 @@ return {
       "js-debug-adapter",
     }
 
-    if not IS_LINUX then
+    if IS_MAC then
       table.insert(other, "stylua")
     end
 

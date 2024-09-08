@@ -7,26 +7,15 @@ WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
 MAX_FILE_LENGTH = 5000
 MAX_FILE_SIZE = 0.125 -- MiB
-IS_VSCODE = vim.g.vscode ~= nil
 HAS_OPENAI_KEY = vim.env.OPENAI_API_KEY ~= nil
-IS_LEET_CODE = "leetcode.nvim" == vim.fn.argv()[1]
-IS_VSCODE_OR_LEET_CODE = IS_VSCODE or IS_LEET_CODE
 BIGFILES = {}
 OS = jit.os
-IS_WINDOWS = OS == "Windows"
 IS_MAC = OS == "OSX"
-IS_LINUX = OS == "Linux"
-IS_WIN_LINUX = IS_LINUX or IS_WINDOWS
-OS_SEP = IS_WINDOWS and "\\" or "/"
 DEFAULT_COLORSCHEME = "tokyonight"
 MAX_BUFFER_NUM = 6
 BUFFER_OPENED_TIME = {}
 LSP_DOC_WIDTH = 60
 VERSION = vim.version()
-IS_DEV = VERSION.prerelease == "dev"
-MAJOR = VERSION.major
-MINOR = VERSION.minor
-IS_ZERO_TEN_DEV = IS_DEV and MAJOR == 0 and MINOR == 10
 CURSOR_HILIGHT_OPTS = {
   Cursor = { bg = "#5f87af", ctermbg = 67, blend = 0 },
   iCursor = { bg = "#ffffaf", ctermbg = 229 },
@@ -43,15 +32,15 @@ if MANUAL_MODE == nil then
   MANUAL_MODE = false
 end
 
-function FORMAT_PATH_BY_OS(path)
-  return not IS_WINDOWS and path or string.gsub(path, "/", OS_SEP)
+function GEN_PATH(path)
+  return vim.fn.fnamemodify(path, ":p")
 end
 
-NOTE_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/notes")
-OBSIDIAN_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian/personal")
-OBSIDIAN_WORK_DIR = FORMAT_PATH_BY_OS(HOME_PATH .. "/Documents/Obsidian/work")
-LAZY_PATH = DATA_PATH .. FORMAT_PATH_BY_OS("/lazy/lazy.nvim")
-SNIPPET_PATH = CONFIG_PATH .. FORMAT_PATH_BY_OS("/snippets")
+NOTE_DIR = GEN_PATH(HOME_PATH .. "/Documents/notes")
+OBSIDIAN_DIR = GEN_PATH(HOME_PATH .. "/Documents/Obsidian/personal")
+OBSIDIAN_WORK_DIR = GEN_PATH(HOME_PATH .. "/Documents/Obsidian/work")
+LAZY_PATH = DATA_PATH .. GEN_PATH("/lazy/lazy.nvim")
+SNIPPET_PATH = CONFIG_PATH .. GEN_PATH("/snippets")
 
 TSX_COMMENT_INCLUDED_FILES = {
   "javascriptreact",
@@ -216,4 +205,11 @@ LSP_SYMBOLS = {
   "Event",
   "Operator",
   "TypeParameter",
+}
+
+BUFFER_SCOPE_OPTIONS = {
+  "tabstop",
+  "shiftwidth",
+  "softtabstop",
+  "buflisted",
 }

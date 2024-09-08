@@ -42,7 +42,6 @@ end
 return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   cmd = { "Telescope harpoon", "AddHarpoonFile", "ToggleHarpoonQuickMenu" },
   keys = { "<tab>" },
   dependencies = {

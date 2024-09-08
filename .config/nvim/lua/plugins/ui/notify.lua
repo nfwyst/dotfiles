@@ -18,13 +18,12 @@ end
 
 return {
   "rcarriga/nvim-notify",
-  cond = not IS_VSCODE,
   config = function()
     local notify = require("notify")
     notify.setup({
       timeout = 3000,
-      animate = not IS_WIN_LINUX,
-      stages = IS_WIN_LINUX and "static" or "fade_in_slide_out",
+      animate = true,
+      stages = "fade_in_slide_out",
       max_height = function()
         return math.floor(vim.o.lines * 0.9)
       end,

@@ -42,7 +42,6 @@ end
 
 return {
   "stevearc/conform.nvim",
-  cond = not IS_VSCODE,
   cmd = { "Format", "ConformInfo" },
   config = function()
     local conform = require("conform")

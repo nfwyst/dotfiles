@@ -12,7 +12,6 @@ end
 
 return {
   "kevinhwang91/nvim-ufo",
-  cond = not IS_VSCODE,
   keys = {
     "zR",
     "zM",

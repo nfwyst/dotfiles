@@ -156,7 +156,6 @@ local fileformat = {
 
 return {
   "nvim-lualine/lualine.nvim",
-  cond = not IS_VSCODE,
   dependencies = { "nvim-tree/nvim-web-devicons" },
   event = "VeryLazy",
   config = function()
@@ -200,7 +199,6 @@ return {
         },
         lualine_z = { progress },
       },
-      extensions = IS_MAC and { "quickfix", "man" } or {},
     })
   end,
 }

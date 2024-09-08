@@ -1,4 +1,5 @@
-local cmd = vim.api.nvim_create_user_command
+local api = vim.api
+local cmd = api.nvim_create_user_command
 local cursor = vim.opt.guicursor
 
 function MERGE_TABLE(...)
@@ -53,12 +54,12 @@ function SET_HL(table)
       value.force = true
     end
     local old_value = GET_HL(group)
-    vim.api.nvim_set_hl(0, group, MERGE_TABLE(old_value, value))
+    api.nvim_set_hl(0, group, MERGE_TABLE(old_value, value))
   end
 end
 
 function GET_HL(name)
-  return vim.api.nvim_get_hl(0, { name = name })
+  return api.nvim_get_hl(0, { name = name })
 end
 
 function SHOW_CURSOR()
@@ -126,13 +127,34 @@ function SET_GLOBAL_OPTS(opts)
   end
 end
 
-function SET_OPTS(opts, is_local)
-  for k, v in pairs(opts) do
-    if is_local then
-      vim.opt_local[k] = v
-    else
-      vim.opt[k] = v
+function GET_WINDOWS_BY_BUF(buffer_number)
+  local windows = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(win) == buffer_number then
+      table.insert(windows, win)
     end
+  end
+  return windows
+end
+
+function SET_OPT(k, v, bufnr)
+  if not bufnr then
+    vim.opt[k] = v
+    return
+  end
+  if TABLE_CONTAINS(BUFFER_SCOPE_OPTIONS, k) then
+    api.nvim_set_option_value(k, v, { buf = bufnr })
+    return
+  end
+  local wins = GET_WINDOWS_BY_BUF(bufnr)
+  for _, win in ipairs(wins) do
+    api.nvim_set_option_value(k, v, { win = win })
+  end
+end
+
+function SET_OPTS(opts, bufnr)
+  for k, v in pairs(opts) do
+    SET_OPT(k, v, bufnr)
   end
 end
 
@@ -194,9 +216,9 @@ function GET_PROJECT_NAME()
     local basename = vim.fs.basename
     if current_element == nil then
       local find = false
-      local bufs = vim.api.nvim_list_bufs()
+      local bufs = api.nvim_list_bufs()
       for _, bufnr in ipairs(bufs) do
-        local path_name = vim.api.nvim_buf_get_name(bufnr)
+        local path_name = api.nvim_buf_get_name(bufnr)
         if IS_FILE_URI(path_name) then
           current_element = { path = path_name }
           find = true
@@ -221,7 +243,8 @@ function UNPACK(table)
 end
 
 function IS_ABSOLUTE_PATH(path)
-  return string.sub(path, 1, 1) == OS_SEP
+  local seps = { "/", "\\" }
+  return TABLE_CONTAINS(seps, string.sub(path, 1, 1))
 end
 
 function SET_AUTOCMDS(list)
@@ -237,7 +260,7 @@ function SET_COLORSCHEME(scheme)
 end
 
 function GET_CURRENT_BUFFER()
-  return vim.api.nvim_get_current_buf()
+  return api.nvim_get_current_buf()
 end
 
 function IS_PACKAGE_LOADED(pkg)
@@ -274,11 +297,11 @@ function SAVE_THEN_QUIT(force)
 end
 
 function GET_BUFFER_NAME(bufnr)
-  return vim.api.nvim_buf_get_name(bufnr)
+  return api.nvim_buf_get_name(bufnr)
 end
 
 function GET_BUFFER_OPT(bufnr, optname)
-  return vim.api.nvim_buf_get_option(bufnr, optname)
+  return api.nvim_buf_get_option(bufnr, optname)
 end
 
 function STR_INCLUDES(str, pattern, init, plain)
@@ -416,8 +439,8 @@ function IS_GPT_PROMPT_CHAT()
   if not ok then
     return false
   end
-  local buf = vim.api.nvim_get_current_buf()
-  local file_name = vim.api.nvim_buf_get_name(buf)
+  local buf = api.nvim_get_current_buf()
+  local file_name = api.nvim_buf_get_name(buf)
   return gp.not_chat(buf, file_name) == nil
 end
 
@@ -440,7 +463,7 @@ function IS_INDENT_WITH_TABS(path)
     file:close()
     return false
   end
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local lines = api.nvim_buf_get_lines(0, 0, -1, false)
   for _, line in ipairs(lines) do
     if line:find("\t") then
       return true
@@ -450,8 +473,8 @@ function IS_INDENT_WITH_TABS(path)
 end
 
 function TO_NORMAL_MODE()
-  vim.api.nvim_feedkeys(
-    vim.api.nvim_replace_termcodes("<esc>", true, false, true),
+  api.nvim_feedkeys(
+    api.nvim_replace_termcodes("<esc>", true, false, true),
     "x",
     false
   )

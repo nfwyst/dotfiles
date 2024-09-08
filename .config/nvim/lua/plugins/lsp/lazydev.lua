@@ -1,6 +1,5 @@
 return {
   "folke/lazydev.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   dependencies = {
     { "Bilal2453/luvit-meta" },
     { "justinsgithub/wezterm-types" },

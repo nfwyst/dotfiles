@@ -134,11 +134,7 @@ local function init(builtin, themes)
           return
         end
         local relativePath = vim.uv.cwd()
-        WORKSPACE_PATH = string.format(
-          "%s" .. OS_SEP .. "%s",
-          relativePath,
-          FORMAT_PATH_BY_OS(path)
-        )
+        WORKSPACE_PATH = GEN_PATH(relativePath .. "/" .. path)
         LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
       end)
     end,
@@ -175,7 +171,6 @@ end
 
 return {
   "nvim-telescope/telescope.nvim",
-  cond = not IS_VSCODE,
   cmd = {
     "FindText",
     "FindTextByFileType",
@@ -199,8 +194,6 @@ return {
     init(require("telescope.builtin"), require("telescope.themes"))
     telescope.setup({
       defaults = {
-        history = IS_WIN_LINUX,
-        cache_picker = IS_WIN_LINUX,
         path_display = { "truncate" },
         layout_strategy = "vertical",
         layout_config = {

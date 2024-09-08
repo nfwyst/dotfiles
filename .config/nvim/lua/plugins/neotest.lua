@@ -1,6 +1,5 @@
 return {
   "nvim-neotest/neotest",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   lazy = true,
   dependencies = {
     "nvim-neotest/nvim-nio",

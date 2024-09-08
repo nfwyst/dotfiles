@@ -46,7 +46,6 @@ end
 
 return {
   "folke/which-key.nvim",
-  cond = not IS_VSCODE,
   config = function()
     local wk = require("which-key")
     init(wk)

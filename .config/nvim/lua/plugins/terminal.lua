@@ -88,12 +88,10 @@ end
 
 local function bind_shell()
   local shell = vim.opt.shell:get()
-  if IS_LINUX then
-    SET_OPTS({
-      shell = shell or "zsh",
-    })
+  if OS == "Linux" then
+    SET_OPT("shell", shell or "zsh")
   end
-  if IS_WINDOWS then
+  if OS == "Windows" then
     local fallback = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
     SET_OPTS({
       shell = shell or fallback,
@@ -115,7 +113,6 @@ end
 
 return {
   "akinsho/toggleterm.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   cmd = {
     "ToggleNode",
     "ToggleNcdu",

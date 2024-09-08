@@ -1,6 +1,5 @@
 return {
   "sindrets/diffview.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   cmd = {
     "DiffviewOpen",
     "DiffviewClose",
@@ -12,13 +11,13 @@ return {
   config = function()
     require("diffview").setup({
       hooks = {
-        diff_buf_read = function()
+        diff_buf_read = function(bufnr)
           SET_OPTS({
             number = false,
             relativenumber = false,
             statuscolumn = "",
             foldcolumn = "2",
-          }, true)
+          }, bufnr)
         end,
       },
     })

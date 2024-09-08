@@ -11,7 +11,6 @@ local my_feature = {
 
 return {
   "lunarvim/bigfile.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   event = { "FileReadPre", "BufReadPre", "User FileOpened" },
   config = function()
     require("bigfile").setup({

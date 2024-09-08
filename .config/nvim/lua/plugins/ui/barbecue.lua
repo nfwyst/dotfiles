@@ -15,12 +15,11 @@ local function init()
   })
 end
 
-local navic_enabled = not IS_WIN_LINUX
+local navic_enabled = true
 
 return {
   "utilyre/barbecue.nvim",
   name = "barbecue",
-  cond = not IS_VSCODE,
   event = "VeryLazy",
   dependencies = {
     "SmiteshP/nvim-navic",

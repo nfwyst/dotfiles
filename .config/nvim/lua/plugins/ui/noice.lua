@@ -44,7 +44,6 @@ end
 
 return {
   "folke/noice.nvim",
-  cond = not IS_VSCODE,
   dependencies = {
     "MunifTanjim/nui.nvim",
     "rcarriga/nvim-notify",
@@ -109,7 +108,7 @@ return {
         },
         signature = {
           auto_open = {
-            enabled = not IS_WIN_LINUX,
+            enabled = true,
           },
         },
       },

@@ -1,20 +1,15 @@
-SET_OPTS({
-  completeopt = { "menu", "menuone", "noselect" },
-})
-
-local disable_fuzzy = IS_WIN_LINUX
+local disable_fuzzy = true
 
 local function get_sources(cmp, names)
   local sources = {}
   for _, name in ipairs(names) do
-    table.insert(sources, { name = name, max_item_count = 10 })
+    table.insert(sources, { name = name, max_item_count = 3 })
   end
   return cmp.config.sources(sources)
 end
 
 return {
   "hrsh7th/nvim-cmp",
-  cond = not IS_VSCODE,
   event = "InsertEnter",
   dependencies = {
     "hrsh7th/cmp-buffer",

@@ -22,9 +22,6 @@ local function setup_diagnostic()
     },
   }
   vim.diagnostic.config(config)
-  if IS_LEET_CODE then
-    vim.diagnostic.enable(false)
-  end
 end
 
 local function init()
@@ -76,7 +73,6 @@ end
 
 return {
   "neovim/nvim-lspconfig",
-  cond = not IS_VSCODE,
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",

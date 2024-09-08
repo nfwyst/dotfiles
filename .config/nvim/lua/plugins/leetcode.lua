@@ -1,6 +1,6 @@
 return {
   "kawre/leetcode.nvim",
-  cond = not IS_VSCODE and IS_LEET_CODE,
+  lazy = true,
   dependencies = {
     "nvim-telescope/telescope.nvim",
     "MunifTanjim/nui.nvim",

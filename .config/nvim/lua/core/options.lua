@@ -24,7 +24,7 @@ SET_OPTS({
   softtabstop = 2, -- insert 2 spaces for a tab
   cursorline = true, -- highlight the current line
   number = true, -- set numbered lines
-  relativenumber = not IS_WIN_LINUX, -- enable relative number
+  relativenumber = true, -- enable relative number
   numberwidth = 2, -- set number column width to 2 {default 4}
   signcolumn = "yes", -- always show the sign column, otherwise it would shift the text each time
   wrap = false, -- display lines as one long line, for performance
@@ -54,7 +54,7 @@ SET_OPTS({
   formatoptions = "jcroqlnt", -- tcqj
   grepformat = "%f:%l:%c:%m", -- grep command output format, %f filename, %l row, %c column, %m content
   grepprg = "rg --vimgrep", -- external program for grep, default is ripgrep
-  list = not IS_WIN_LINUX, -- show some invisible characters like tabs etc
+  list = true, -- show some invisible characters like tabs etc
   listchars = {
     tab = "▓░",
     trail = "•",
@@ -65,7 +65,7 @@ SET_OPTS({
   sessionoptions = { "buffers", "curdir", "tabpages", "winsize" }, -- seesions that will save when exiting
   shiftround = true, -- round indent to multiple of shiftwidth
   splitkeep = "cursor", -- keep the same relative cursor position
-  undolevels = IS_WIN_LINUX and 300 or 10000, -- more big, more undo can do
+  undolevels = 300, -- more big, more undo can do
   wildmode = "longest:full,full", -- command line completion mode
   winminwidth = 5, -- minimum width of window
   showcmd = false,
@@ -75,6 +75,7 @@ SET_OPTS({
   path = vim.opt.path + "**",
   wildignore = vim.opt.wildignore + "*/node_modules/*",
   formatexpr = "v:lua.require'conform'.formatexpr()",
+  completeopt = { "menu", "menuone", "noselect" },
 })
 
 SET_GLOBAL_OPTS({

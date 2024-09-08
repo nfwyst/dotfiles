@@ -68,7 +68,6 @@ end
 
 return {
   "pmizio/typescript-tools.nvim",
-  cond = not IS_VSCODE,
   dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
   ft = {
     "javascript",

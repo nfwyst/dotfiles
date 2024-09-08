@@ -1,6 +1,6 @@
 return {
   "willothy/wezterm.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE and not IS_WIN_LINUX,
+  cond = IS_MAC,
   lazy = true,
   opts = {
     create_commands = false,

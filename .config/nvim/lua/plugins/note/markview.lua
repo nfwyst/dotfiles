@@ -7,7 +7,6 @@ end
 
 return {
   "OXY2DEV/markview.nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   lazy = false,
   dependencies = {
     "nvim-treesitter/nvim-treesitter",

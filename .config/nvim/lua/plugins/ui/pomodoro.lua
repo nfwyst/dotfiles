@@ -1,6 +1,5 @@
 return {
   "dbinagi/nomodoro",
-  cond = not IS_VSCODE and IS_LINUX,
   cmd = { "NomoTimer", "NomoMenu" },
   config = function()
     require("nomodoro").setup({

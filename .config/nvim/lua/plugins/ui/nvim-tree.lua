@@ -123,7 +123,6 @@ end
 
 return {
   "nvim-tree/nvim-tree.lua",
-  cond = not IS_VSCODE,
   dependencies = { "nvim-tree/nvim-web-devicons" },
   cmd = {
     "NvimTreeToggle",
@@ -200,7 +199,7 @@ return {
           ".DS_Store",
         },
       },
-      git = { ignore = false, enable = not IS_WIN_LINUX },
+      git = { ignore = false, enable = false },
       view = {
         width = {
           max = "35%",

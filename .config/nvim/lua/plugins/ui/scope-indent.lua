@@ -50,7 +50,6 @@ local disabled = false
 
 return {
   "nvimdev/indentmini.nvim",
-  cond = not IS_VSCODE,
   event = "VimEnter",
   config = function()
     if disabled then

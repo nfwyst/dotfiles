@@ -10,10 +10,9 @@ local keys = {
 
 return {
   "karb94/neoscroll.nvim",
-  cond = not IS_VSCODE,
   keys = keys,
   opts = {
-    performance_mode = not IS_MAC,
+    performance_mode = true,
     mappings = keys,
   },
 }

@@ -12,15 +12,15 @@ local function init()
   AUTOCMD("User", {
     pattern = "AlphaReady",
     group = AUTOGROUP("_alpha_", { clear = true }),
-    callback = function()
-      SET_OPTS({ showtabline = 0, cursorline = true }, true)
+    callback = function(event)
+      SET_OPT("showtabline", 0)
+      SET_OPT("cursorline", true, event.buf)
     end,
   })
 end
 
 return {
   "goolord/alpha-nvim",
-  cond = not IS_VSCODE_OR_LEET_CODE,
   event = "VimEnter",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
