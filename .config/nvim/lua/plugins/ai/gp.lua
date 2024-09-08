@@ -354,7 +354,7 @@ return {
           name = "chat",
           chat = true,
           command = false,
-          model = MERGE_TABLE(model, { temperature = 1.2 }),
+          model = MERGE_TABLE(model, { temperature = 0.7 }),
           system_prompt = gp.defaults.chat_system_prompt,
         },
         {
@@ -362,7 +362,7 @@ return {
           name = "coder",
           chat = false,
           command = true,
-          model = MERGE_TABLE(model, { temperature = 0.8 }),
+          model = MERGE_TABLE(model, { temperature = 0 }),
           system_prompt = gp.defaults.code_system_prompt,
         },
       },
