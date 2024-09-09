@@ -16,7 +16,7 @@ local function check_project_for_tabs(dir)
   local ignore_pattern = { "node_modules", build_pattern("*.ttf") }
   while #stack > 0 do
     local current_dir = table.remove(stack)
-    local files = GET_FILES_FROM_PATH(current_dir, 10)
+    local files = GET_FILES_FROM_PATH(current_dir, 5)
     for _, file in ipairs(files) do
       local filepath = current_dir .. "/" .. file
       if file:sub(1, 1) ~= "." then
