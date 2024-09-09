@@ -288,7 +288,7 @@ function SAVE(force)
 end
 
 function QUIT(force)
-  vim.cmd.quit({ bang = force ~= nil and force ~= false })
+  pcall(vim.cmd.quit, { bang = force ~= nil and force ~= false })
 end
 
 function SAVE_THEN_QUIT(force)
@@ -301,7 +301,7 @@ function GET_BUFFER_NAME(bufnr)
 end
 
 function GET_BUFFER_OPT(bufnr, optname)
-  return api.nvim_buf_get_option(bufnr, optname)
+  return api.nvim_get_option_value(optname, { buf = bufnr })
 end
 
 function STR_INCLUDES(str, pattern, init, plain)
@@ -449,36 +449,82 @@ function GET_CURRENT_MODE()
   return string.lower(vim.fn.mode())
 end
 
-function IS_INDENT_WITH_TABS(path)
-  if path then
-    local file = io.open(path, "r")
+function GET_FILES_FROM_PATH(path, num)
+  local files = {}
+  local handle = io.popen("ls -a " .. path)
+  if not handle then
+    return files
+  end
+
+  for _ = 1, num do
+    local file = handle:read("*l")
+    if not file then
+      handle:close()
+      return files
+    end
+    table.insert(files, file)
+  end
+
+  handle:close()
+  return files
+end
+
+function IS_EMPTY_LINE(line)
+  line = line:gsub("[\r\n]+$", "")
+  return line == "" or line:match("^%s*$")
+end
+
+function GET_LINES_FROM_BUF(bufnr, line_num)
+  return api.nvim_buf_get_lines(bufnr, 0, line_num, false)
+end
+
+function LINES_TAB_MORE_THAN_SPACE(lines)
+  local tab_num = 0
+  local space_num = 0
+  for _, line in ipairs(lines) do
+    local empty = IS_EMPTY_LINE(line)
+    local start_with_tab = line:match("^\t")
+    if not empty and start_with_tab then
+      tab_num = tab_num + 1
+    end
+    if not empty and not start_with_tab and line:match("^%s") then
+      space_num = space_num + 1
+    end
+  end
+  return tab_num > space_num
+end
+
+function GET_LINES_FROM_FILE(file, num)
+  local lines = {}
+  for _ = 1, num do
+    local line = file:read("*l")
+    if not line then
+      return lines
+    end
+    table.insert(lines, line)
+  end
+  return lines
+end
+
+function IS_INDENT_WITH_TAB(params)
+  local filepath = params.filepath
+  local line_num = 50
+  if filepath then
+    local file = io.open(filepath, "r")
     if not file then
       return false
     end
-    for line in file:lines() do
-      if line:find("\t") then
-        file:close()
-        return true
-      end
-    end
+    local lines = GET_LINES_FROM_FILE(file, line_num)
+    local is_tab_indent = LINES_TAB_MORE_THAN_SPACE(lines)
     file:close()
-    return false
+    return is_tab_indent
   end
-  local lines = api.nvim_buf_get_lines(0, 0, -1, false)
-  for _, line in ipairs(lines) do
-    if line:find("\t") then
-      return true
-    end
+  local bufnr = params.buf
+  if not bufnr then
+    bufnr = GET_CURRENT_BUFFER()
   end
-  return false
-end
-
-function TO_NORMAL_MODE()
-  api.nvim_feedkeys(
-    api.nvim_replace_termcodes("<esc>", true, false, true),
-    "x",
-    false
-  )
+  local lines = GET_LINES_FROM_BUF(bufnr, line_num)
+  return LINES_TAB_MORE_THAN_SPACE(lines)
 end
 
 function NEW_PICKER(title, theme, results, on_select)
@@ -504,4 +550,12 @@ function NEW_PICKER(title, theme, results, on_select)
       end,
     })
     :find()
+end
+
+function FEED_KEYS(keys, mode)
+  local from_part = true
+  local do_lt = false
+  local special = true
+  local keyscode = api.nvim_replace_termcodes(keys, from_part, do_lt, special)
+  api.nvim_feedkeys(keyscode, mode, false)
 end

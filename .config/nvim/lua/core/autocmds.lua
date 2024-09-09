@@ -15,7 +15,7 @@ local function remove_qf_visual()
 
   local start_index = math.min(v_start_idx, v_end_idx)
   local count = math.abs(v_end_idx - v_start_idx) + 1
-  TO_NORMAL_MODE()
+  FEED_KEYS("<esc>", "x")
   return start_index, count
 end
 
@@ -150,13 +150,9 @@ SET_AUTOCMDS({
         "gitcommit",
         "NeogitCommitMessage",
         "Avante",
-        "AvanteInput",
       },
       callback = function(event)
-        local isAvante = TABLE_CONTAINS({
-          "Avante",
-          "AvanteInput",
-        }, event.match)
+        local isAvante = "Avante" == event.match
         SET_TIMEOUT(function()
           local bufnr = event.buf
           local opts = {
@@ -202,10 +198,10 @@ SET_AUTOCMDS({
     "BufReadPost",
     {
       group = AUTOGROUP("_indent_tab_", { clear = true }),
-      callback = function()
+      callback = function(event)
         local expandtab = true
         local width = 2
-        if IS_INDENT_WITH_TABS() then
+        if IS_INDENT_WITH_TAB(event) then
           expandtab = false
           width = 4
         end

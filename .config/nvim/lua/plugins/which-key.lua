@@ -1,10 +1,30 @@
 local leader = require("keymaps.leader")
 local g = require("keymaps.g")
 
+local function key_filter(config)
+  local rhs = config[2]
+  local exclude_fts = KEYMAP_EXCLUDE_FTS[rhs]
+  if exclude_fts and #exclude_fts > 0 then
+    config[2] = function(...)
+      local bufnr = GET_CURRENT_BUFFER()
+      local ft = GET_BUFFER_OPT(bufnr, "filetype")
+      local is_excluded = TABLE_CONTAINS(exclude_fts, ft)
+      if is_excluded then
+        return
+      end
+      if type(rhs) == "function" then
+        return rhs(...)
+      end
+      FEED_KEYS(rhs, "nx")
+    end
+  end
+end
+
 local function format(conf)
   local new_conf = { mode = { "n", "v" } }
   for key, config in pairs(conf) do
     table.insert(config, 1, key)
+    key_filter(config)
     table.insert(
       new_conf,
       MERGE_TABLE(config, {

@@ -1,5 +1,3 @@
-local api = vim.api
-
 local function on_link_click()
   local linenr = vim.fn.line(".")
   local line = vim.fn.getline(linenr)
@@ -19,9 +17,7 @@ local function on_click()
       return on_link_click()
     end
   end
-  local key = "c-LeftMouse"
-  key = api.nvim_replace_termcodes(key, true, true, true)
-  return api.nvim_feedkeys(key, "mnx", false)
+  FEED_KEYS("c-LeftMouse", "mnx")
 end
 
 --   command_mode = "c",

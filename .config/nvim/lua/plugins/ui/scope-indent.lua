@@ -14,25 +14,19 @@ end
 local function check_project_for_tabs(dir)
   local stack = { dir }
   local ignore_pattern = { "node_modules", build_pattern("*.ttf") }
-
   while #stack > 0 do
     local current_dir = table.remove(stack)
-    local handle = io.popen("ls -a " .. current_dir)
-    if not handle then
-      return false
-    end
-
-    for file in handle:lines() do
-      local file_path = current_dir .. "/" .. file
+    local files = GET_FILES_FROM_PATH(current_dir, 10)
+    for _, file in ipairs(files) do
+      local filepath = current_dir .. "/" .. file
       if file:sub(1, 1) ~= "." then
-        if not is_exclude(file_path, ignore_pattern) then
-          local attr = vim.uv.fs_stat(file_path)
+        if not is_exclude(filepath, ignore_pattern) then
+          local attr = vim.uv.fs_stat(filepath)
           if attr then
             if attr.type == "directory" then
-              table.insert(stack, file_path)
+              table.insert(stack, filepath)
             elseif attr.type == "file" then
-              if IS_INDENT_WITH_TABS(file_path) then
-                handle:close()
+              if IS_INDENT_WITH_TAB({ filepath = filepath }) then
                 return true
               end
             end
@@ -40,7 +34,6 @@ local function check_project_for_tabs(dir)
         end
       end
     end
-    handle:close()
   end
 
   return false

@@ -204,11 +204,7 @@ local function pick_command(mode)
       command = ":Gp" .. command .. "<CR>"
     end
 
-    vim.api.nvim_feedkeys(
-      vim.api.nvim_replace_termcodes(command, true, false, true),
-      "c",
-      true
-    )
+    FEED_KEYS(command, "c")
   end)
 end
 

@@ -214,3 +214,8 @@ BUFFER_SCOPE_OPTIONS = {
   "softtabstop",
   "buflisted",
 }
+
+KEYMAP_EXCLUDE_FTS = {
+  ["<c-o>"] = { "qf" },
+  ["<c-i>"] = { "qf" },
+}

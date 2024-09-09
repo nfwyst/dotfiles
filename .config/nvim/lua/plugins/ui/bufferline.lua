@@ -6,7 +6,7 @@ local function restore_position(bufnr)
     and last_known_line > 1
     and last_known_line <= vim.api.nvim_buf_line_count(bufnr)
   then
-    vim.api.nvim_feedkeys([[g`"]], "nx", false)
+    FEED_KEYS([[g`"]], "nx")
   end
 end
 
