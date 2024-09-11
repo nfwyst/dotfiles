@@ -1,30 +1,20 @@
-local function toggle_telescope(harpoon_files, conf)
+local function toggle_telescope(harpoon_files)
   local file_paths = {}
   for _, item in ipairs(harpoon_files.items) do
     table.insert(file_paths, item.value)
   end
 
-  require("telescope.pickers")
-    .new({}, {
-      prompt_title = "Harpoon",
-      finder = require("telescope.finders").new_table({
-        results = file_paths,
-      }),
-      previewer = conf.file_previewer({}),
-      sorter = conf.generic_sorter({}),
-    })
-    :find()
+  NEW_PICKER("Harpoon", {}, file_paths, { preview = true })
 end
 
 local function init(harpoon)
-  local conf = require("telescope.config").values
   SET_HL({ HarpoonBorder = { link = "TelescopeBorder" } })
   SET_USER_COMMANDS({
     AddHarpoonFile = function()
       harpoon:list():add()
     end,
     ToggleHarpoonQuickMenu = function()
-      toggle_telescope(harpoon:list(), conf)
+      toggle_telescope(harpoon:list())
     end,
   })
   SET_KEY_MAPS({

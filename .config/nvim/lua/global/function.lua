@@ -527,27 +527,29 @@ function IS_INDENT_WITH_TAB(params)
   return LINES_TAB_MORE_THAN_SPACE(lines)
 end
 
-function NEW_PICKER(title, theme, results, on_select)
+function NEW_PICKER(title, theme, results, opts)
   local pickers = require("telescope.pickers")
   local finders = require("telescope.finders")
   local conf = require("telescope.config").values
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
+  local function attach_mappings(prompt_bufnr, _)
+    actions.select_default:replace(function()
+      local selection = action_state.get_selected_entry()
+      actions.close(prompt_bufnr)
+      opts.on_select(selection)
+    end)
+    return true
+  end
   pickers
     .new(theme, {
       prompt_title = title,
       finder = finders.new_table({
         results = results,
       }),
+      previewer = opts.preview and conf.file_previewer(theme) or nil,
       sorter = conf.generic_sorter(theme),
-      attach_mappings = function(prompt_bufnr, _)
-        actions.select_default:replace(function()
-          local selection = action_state.get_selected_entry()
-          actions.close(prompt_bufnr)
-          on_select(selection)
-        end)
-        return true
-      end,
+      attach_mappings = opts.on_select and attach_mappings or nil,
     })
     :find()
 end

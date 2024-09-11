@@ -183,9 +183,11 @@ local function select_agent(gp)
     previewer = false,
   })
   local results = is_chat and gp._chat_agents or gp._command_agents
-  NEW_PICKER("Models", dropdown, results, function(selection)
-    gp.cmd.Agent({ args = selection[1] })
-  end)
+  NEW_PICKER("Models", dropdown, results, {
+    on_select = function(selection)
+      gp.cmd.Agent({ args = selection[1] })
+    end,
+  })
 end
 
 local function pick_command(mode)
@@ -196,16 +198,18 @@ local function pick_command(mode)
     end
   end
 
-  NEW_PICKER("Select command", {}, command_names, function(selection)
-    local command = selection[1]:match("^%s*(.-)%s*-")
-    if mode == "v" then
-      command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
-    else
-      command = ":Gp" .. command .. "<CR>"
-    end
+  NEW_PICKER("Select command", {}, command_names, {
+    on_select = function(selection)
+      local command = selection[1]:match("^%s*(.-)%s*-")
+      if mode == "v" then
+        command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
+      else
+        command = ":Gp" .. command .. "<CR>"
+      end
 
-    FEED_KEYS(command, "c")
-  end)
+      FEED_KEYS(command, "c")
+    end,
+  })
 end
 
 local function init(gp)

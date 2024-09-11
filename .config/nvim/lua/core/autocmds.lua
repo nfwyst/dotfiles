@@ -212,9 +212,6 @@ SET_AUTOCMDS({
       end,
     },
   },
-})
-
-SET_AUTOCMDS({
   {
     "InsertEnter",
     {
