@@ -533,21 +533,71 @@ function NEW_PICKER(title, theme, results, opts)
   local conf = require("telescope.config").values
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
+  local previewers = require("telescope.previewers")
+  local from_entry = require("telescope.from_entry")
+
   local function attach_mappings(prompt_bufnr, _)
     actions.select_default:replace(function()
       local selection = action_state.get_selected_entry()
       actions.close(prompt_bufnr)
-      opts.on_select(selection)
+      opts.on_select(results[selection.index])
     end)
     return true
   end
+
+  local function defaulter(f, default_opts)
+    default_opts = default_opts or {}
+    return {
+      new = function(options)
+        if conf.preview == false and not options.preview then
+          return false
+        end
+        options.preview = type(options.preview) ~= "table" and {}
+          or options.preview
+        if type(conf.preview) == "table" then
+          for k, v in pairs(conf.preview) do
+            options.preview[k] = vim.F.if_nil(options.preview[k], v)
+          end
+        end
+        return f(options)
+      end,
+      __call = function()
+        local ok, err = pcall(f(default_opts))
+        if not ok then
+          error(debug.traceback(err))
+        end
+      end,
+    }
+  end
+
+  local previewer = defaulter(function(options)
+    return previewers.new_buffer_previewer({
+      define_preview = function(self, entry)
+        local p = from_entry.path(
+          opts.entry_parser and opts.entry_parser(entry) or entry,
+          true,
+          false
+        )
+        if p == nil or p == "" then
+          return
+        end
+        conf.buffer_previewer_maker(p, self.state.bufnr, {
+          bufname = self.state.bufname,
+          winid = self.state.winid,
+          preview = options.preview,
+          file_encoding = options.file_encoding,
+        })
+      end,
+    })
+  end, {})
+
   pickers
     .new(theme, {
       prompt_title = title,
       finder = finders.new_table({
         results = results,
       }),
-      previewer = opts.preview and conf.file_previewer(theme) or nil,
+      previewer = opts.preview and previewer.new(theme) or nil,
       sorter = conf.generic_sorter(theme),
       attach_mappings = opts.on_select and attach_mappings or nil,
     })

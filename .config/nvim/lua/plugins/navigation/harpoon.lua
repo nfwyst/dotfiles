@@ -1,10 +1,38 @@
-local function toggle_telescope(harpoon_files)
+local gen_bookmark = function(postfix)
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local filepath = GET_CURRENT_FILE_PATH()
+  local row = pos[1]
+  local col = pos[2]
+  return filepath .. ":" .. row .. ":" .. col .. postfix
+end
+
+local parse_bookmark = function(value)
+  local pt = "(.-):(%d+):(%d+)(.*)"
+  local path, row, col, _ = string.match(value or "", pt)
+  return {
+    filepath = path,
+    row = tonumber(row),
+    col = tonumber(col),
+  }
+end
+
+local function on_select(value)
+  local bookmark = parse_bookmark(value)
+  vim.cmd.edit(bookmark.filepath)
+  vim.api.nvim_win_set_cursor(0, { bookmark.row, bookmark.col })
+end
+
+local function toggle_telescope(harpoon_files, entry_parser)
   local file_paths = {}
   for _, item in ipairs(harpoon_files.items) do
     table.insert(file_paths, item.value)
   end
 
-  NEW_PICKER("Harpoon", {}, file_paths, { preview = true })
+  NEW_PICKER("Harpoon", {}, file_paths, {
+    preview = true,
+    entry_parser = entry_parser,
+    on_select = entry_parser and on_select or nil,
+  })
 end
 
 local function init(harpoon)
@@ -17,7 +45,10 @@ local function init(harpoon)
       toggle_telescope(harpoon:list())
     end,
     ShowHarpoonBookmarks = function()
-      toggle_telescope(harpoon:list("bookmarks"))
+      toggle_telescope(harpoon:list("bookmarks"), function(entry)
+        entry[1] = parse_bookmark(entry[1]).filepath
+        return entry
+      end)
     end,
     AddHarpoonBookmark = function()
       local postfix = vim.fn.input("Note: ")
@@ -53,24 +84,6 @@ local function init(harpoon)
   })
 end
 
-local gen_bookmark = function(postfix)
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local filepath = GET_CURRENT_FILE_PATH()
-  local row = pos[1]
-  local col = pos[2]
-  return filepath .. ":" .. row .. ":" .. col .. postfix
-end
-
-local parse_bookmark = function(value)
-  local pt = "(.-):(%d+):(%d+)(.*)"
-  local path, row, col, _ = string.match(value or "", pt)
-  return {
-    filepath = path,
-    row = tonumber(row),
-    col = tonumber(col),
-  }
-end
-
 return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
@@ -99,11 +112,8 @@ return {
         create_list_item = function(_, name)
           return { value = gen_bookmark(name) }
         end,
-
         select = function(list_item, _, _)
-          local bookmark = parse_bookmark(list_item.value)
-          vim.cmd.edit(bookmark.filepath)
-          vim.api.nvim_win_set_cursor(0, { bookmark.row, bookmark.col })
+          on_select(list_item.value)
         end,
       },
     })
