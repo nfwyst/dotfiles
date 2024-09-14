@@ -579,6 +579,7 @@ function NEW_PICKER(title, theme, results, opts)
     return previewers.new_buffer_previewer({
       define_preview = function(self, entry)
         local winid = self.state.winid
+        local bufnr = self.state.bufnr
         local parsed_entry = entry
         local row = nil
         if opts.entry_parser then
@@ -588,17 +589,23 @@ function NEW_PICKER(title, theme, results, opts)
         if p == nil or p == "" then
           return
         end
-        conf.buffer_previewer_maker(p, self.state.bufnr, {
+        conf.buffer_previewer_maker(p, bufnr, {
           bufname = self.state.bufname,
           winid = winid,
           preview = options.preview,
           file_encoding = options.file_encoding,
         })
         SET_TIMEOUT(function()
+          HIGHLIGHT_ROW(bufnr, row)
+          local win_height = GET_VIEWPORT_HEIGHT(winid)
+          row = row - 1 - math.floor(win_height / 2)
+          if row < 0 then
+            return
+          end
           vim.api.nvim_win_call(winid, function()
             vim.cmd([[normal! ]] .. row .. [[]])
           end)
-        end)
+        end, 20)
       end,
     })
   end, {})
@@ -622,4 +629,15 @@ function FEED_KEYS(keys, mode)
   local special = true
   local keyscode = api.nvim_replace_termcodes(keys, from_part, do_lt, special)
   api.nvim_feedkeys(keyscode, mode, false)
+end
+
+function HIGHLIGHT_ROW(bufnr, row)
+  local hl_group = "CursorLine"
+  vim.api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
+end
+
+function GET_VIEWPORT_HEIGHT(winnr)
+  local win_height = vim.api.nvim_win_get_height(winnr)
+  local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = winnr })
+  return win_height - 2 * scrolloff
 end
