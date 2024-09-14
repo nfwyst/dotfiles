@@ -6,12 +6,17 @@ function MERGE_TABLE(...)
   return vim.tbl_deep_extend("force", ...)
 end
 
-function FILTER_TABLE(table, filter)
+function FILTER_TABLE(tbl, filter)
   local tb = {}
-  for key, value in pairs(table) do
+  for key, value in pairs(tbl) do
     local ok = filter(value, key)
+    local is_number = type(key) == "number"
     if ok then
-      tb[key] = value
+      if is_number then
+        table.insert(tb, value)
+      else
+        tb[key] = value
+      end
     end
   end
   return tb
