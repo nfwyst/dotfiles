@@ -46,8 +46,15 @@ local function init(harpoon)
     end,
     ShowHarpoonBookmarks = function()
       toggle_telescope(harpoon:list("bookmarks"), function(entry)
-        entry[1] = parse_bookmark(entry[1]).filepath
-        return entry
+        local entity = entry[1]
+        if entry.origin_entity then
+          entity = entry.origin_entity
+        else
+          entry.origin_entity = entity
+        end
+        local bookmark = parse_bookmark(entity)
+        entry[1] = bookmark.filepath
+        return entry, bookmark.row
       end)
     end,
     AddHarpoonBookmark = function()

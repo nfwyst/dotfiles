@@ -578,20 +578,27 @@ function NEW_PICKER(title, theme, results, opts)
   local previewer = defaulter(function(options)
     return previewers.new_buffer_previewer({
       define_preview = function(self, entry)
-        local p = from_entry.path(
-          opts.entry_parser and opts.entry_parser(entry) or entry,
-          true,
-          false
-        )
+        local winid = self.state.winid
+        local parsed_entry = entry
+        local row = nil
+        if opts.entry_parser then
+          parsed_entry, row = opts.entry_parser(entry)
+        end
+        local p = from_entry.path(parsed_entry, true, false)
         if p == nil or p == "" then
           return
         end
         conf.buffer_previewer_maker(p, self.state.bufnr, {
           bufname = self.state.bufname,
-          winid = self.state.winid,
+          winid = winid,
           preview = options.preview,
           file_encoding = options.file_encoding,
         })
+        SET_TIMEOUT(function()
+          vim.api.nvim_win_call(winid, function()
+            vim.cmd([[normal! ]] .. row .. [[]])
+          end)
+        end)
       end,
     })
   end, {})
