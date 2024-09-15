@@ -224,7 +224,7 @@ function GET_PROJECT_NAME()
       local bufs = api.nvim_list_bufs()
       for _, bufnr in ipairs(bufs) do
         local path_name = api.nvim_buf_get_name(bufnr)
-        if IS_FILE_URI(path_name) then
+        if IS_FILE_PATH(path_name) then
           current_element = { path = path_name }
           find = true
           break
@@ -324,26 +324,9 @@ function SET_TIMEOUT(func, timeout)
   vim.defer_fn(func, timeout or 0)
 end
 
-function IS_FILE_URI(path)
-  if type(path) ~= "string" then
-    return false
-  end
-
-  if not path:match("^[/\\]") then
-    return false
-  end
-
-  if path:match("[*?<>|]") then
-    return false
-  end
-
-  local f = io.open(path, "r")
-  if f ~= nil then
-    io.close(f)
-    return true
-  else
-    return false
-  end
+function IS_FILE_PATH(path)
+  local Path = require("plenary.path")
+  return Path:new(path):is_file()
 end
 
 function PCALL(f, ...)

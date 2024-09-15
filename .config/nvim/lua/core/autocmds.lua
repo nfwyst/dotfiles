@@ -86,7 +86,7 @@ SET_AUTOCMDS({
           return
         end
         local filename = GET_BUFFER_NAME(bufnr)
-        local is_file = IS_FILE_URI(filename)
+        local is_file = IS_FILE_PATH(filename)
         if not is_file then
           return
         end
