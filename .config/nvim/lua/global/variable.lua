@@ -219,3 +219,70 @@ KEYMAP_EXCLUDE_FTS = {
   ["<c-o>"] = { "qf" },
   ["<c-i>"] = { "qf" },
 }
+
+local function defaulter(f, default_opts)
+  default_opts = default_opts or {}
+  return {
+    new = function(options)
+      local conf = require("telescope.config").values
+      if conf.preview == false and not options.preview then
+        return false
+      end
+      options.preview = type(options.preview) ~= "table" and {}
+        or options.preview
+      if type(conf.preview) == "table" then
+        for k, v in pairs(conf.preview) do
+          options.preview[k] = vim.F.if_nil(options.preview[k], v)
+        end
+      end
+      return f(options)
+    end,
+    __call = function()
+      local ok, err = pcall(f(default_opts))
+      if not ok then
+        error(debug.traceback(err))
+      end
+    end,
+  }
+end
+
+PREVIEWER = defaulter(function(options)
+  local previewers = require("telescope.previewers")
+  local from_entry = require("telescope.from_entry")
+  local conf = require("telescope.config").values
+  return previewers.new_buffer_previewer({
+    define_preview = function(self, entry)
+      local winid = self.state.winid
+      local bufnr = self.state.bufnr
+      local parsed_entry = entry
+      local row = nil
+      if options.entry_parser then
+        parsed_entry, row = options.entry_parser(entry)
+      end
+      local filepath = from_entry.path(parsed_entry, true, false)
+      if filepath == nil or filepath == "" then
+        return
+      end
+      conf.buffer_previewer_maker(filepath, bufnr, {
+        bufname = self.state.bufname,
+        winid = winid,
+        preview = options.preview,
+        file_encoding = options.file_encoding,
+      })
+      if row == nil then
+        return
+      end
+      SET_TIMEOUT(function()
+        HIGHLIGHT_ROW(bufnr, row)
+        local win_height = GET_VIEWPORT_HEIGHT(winid)
+        row = row - 1 - math.floor(win_height / 2)
+        if row <= 0 then
+          return
+        end
+        vim.api.nvim_win_call(winid, function()
+          vim.cmd([[normal! ]] .. row .. [[]])
+        end)
+      end, 20)
+    end,
+  })
+end, {})

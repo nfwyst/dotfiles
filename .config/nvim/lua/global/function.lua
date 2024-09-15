@@ -533,13 +533,12 @@ function IS_INDENT_WITH_TAB(params)
 end
 
 function NEW_PICKER(title, theme, results, opts)
+  theme.entry_parser = opts.entry_parser
   local pickers = require("telescope.pickers")
   local finders = require("telescope.finders")
   local conf = require("telescope.config").values
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
-  local previewers = require("telescope.previewers")
-  local from_entry = require("telescope.from_entry")
 
   local function attach_mappings(prompt_bufnr, _)
     actions.select_default:replace(function()
@@ -550,73 +549,13 @@ function NEW_PICKER(title, theme, results, opts)
     return true
   end
 
-  local function defaulter(f, default_opts)
-    default_opts = default_opts or {}
-    return {
-      new = function(options)
-        if conf.preview == false and not options.preview then
-          return false
-        end
-        options.preview = type(options.preview) ~= "table" and {}
-          or options.preview
-        if type(conf.preview) == "table" then
-          for k, v in pairs(conf.preview) do
-            options.preview[k] = vim.F.if_nil(options.preview[k], v)
-          end
-        end
-        return f(options)
-      end,
-      __call = function()
-        local ok, err = pcall(f(default_opts))
-        if not ok then
-          error(debug.traceback(err))
-        end
-      end,
-    }
-  end
-
-  local previewer = defaulter(function(options)
-    return previewers.new_buffer_previewer({
-      define_preview = function(self, entry)
-        local winid = self.state.winid
-        local bufnr = self.state.bufnr
-        local parsed_entry = entry
-        local row = nil
-        if opts.entry_parser then
-          parsed_entry, row = opts.entry_parser(entry)
-        end
-        local p = from_entry.path(parsed_entry, true, false)
-        if p == nil or p == "" then
-          return
-        end
-        conf.buffer_previewer_maker(p, bufnr, {
-          bufname = self.state.bufname,
-          winid = winid,
-          preview = options.preview,
-          file_encoding = options.file_encoding,
-        })
-        SET_TIMEOUT(function()
-          HIGHLIGHT_ROW(bufnr, row)
-          local win_height = GET_VIEWPORT_HEIGHT(winid)
-          row = row - 1 - math.floor(win_height / 2)
-          if row < 0 then
-            return
-          end
-          vim.api.nvim_win_call(winid, function()
-            vim.cmd([[normal! ]] .. row .. [[]])
-          end)
-        end, 20)
-      end,
-    })
-  end, {})
-
   pickers
     .new(theme, {
       prompt_title = title,
       finder = finders.new_table({
         results = results,
       }),
-      previewer = opts.preview and previewer.new(theme) or nil,
+      previewer = opts.preview and PREVIEWER.new(theme) or nil,
       sorter = conf.generic_sorter(theme),
       attach_mappings = opts.on_select and attach_mappings or nil,
     })
