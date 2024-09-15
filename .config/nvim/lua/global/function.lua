@@ -580,3 +580,8 @@ function GET_VIEWPORT_HEIGHT(winnr)
   local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = winnr })
   return win_height - 2 * scrolloff
 end
+
+function IS_VALID_ROW(row, bufnr)
+  local rows = vim.api.nvim_buf_line_count(bufnr)
+  return row ~= nil and row > 1 and row <= rows
+end

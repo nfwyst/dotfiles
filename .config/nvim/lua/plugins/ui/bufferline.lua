@@ -3,8 +3,7 @@ local function restore_position(bufnr)
   local last_known_line = vim.api.nvim_buf_get_mark(bufnr, '"')[1]
   if
     not (ft:match("commit") and ft:match("rebase"))
-    and last_known_line > 1
-    and last_known_line <= vim.api.nvim_buf_line_count(bufnr)
+    and IS_VALID_ROW(last_known_line, bufnr)
   then
     FEED_KEYS([[g`"]], "nx")
   end
