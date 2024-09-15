@@ -269,7 +269,7 @@ PREVIEWER = defaulter(function(options)
         preview = options.preview,
         file_encoding = options.file_encoding,
       })
-      if row == nil then
+      if not row then
         return
       end
       SET_TIMEOUT(function()
