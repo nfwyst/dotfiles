@@ -269,7 +269,7 @@ PREVIEWER = defaulter(function(options)
         preview = options.preview,
         file_encoding = options.file_encoding,
       })
-      if not IS_VALID_ROW(row, bufnr) then
+      if row == nil then
         return
       end
       SET_TIMEOUT(function()
