@@ -132,10 +132,10 @@ function SET_GLOBAL_OPTS(opts)
   end
 end
 
-function GET_WINDOWS_BY_BUF(buffer_number)
+function GET_WINDOWS_BY_BUF(bufnr)
   local windows = {}
   for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_get_buf(win) == buffer_number then
+    if GET_BUFFER_ID(win) == bufnr then
       table.insert(windows, win)
     end
   end
@@ -562,4 +562,16 @@ function GET_VIEWPORT_HEIGHT(winnr)
   local win_height = vim.api.nvim_win_get_height(winnr)
   local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = winnr })
   return win_height - 2 * scrolloff
+end
+
+function GET_FILETYPE(bufnr)
+  return vim.filetype.match({ buf = bufnr })
+end
+
+function GET_BUFFER_ID(winid)
+  return vim.api.nvim_win_get_buf(winid)
+end
+
+function IS_CURSOR_HIDE()
+  return GET_HIGHLIGHT("Cursor", "blend") == 100
 end

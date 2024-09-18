@@ -38,30 +38,30 @@ end
 
 local function translate(gp, params)
   local chat_system_prompt =
-    "You are a Translator, please translate between English and Chinese."
+    "你是一位出色的翻译专家，请在英文和中文之间进行翻译"
   gp.cmd.ChatNew(params, chat_system_prompt)
 end
 
 local function unit_tests(gp, params)
-  local template = "I have the following code from {{filename}}:\n\n"
+  local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n{{selection}}\n```\n\n"
-    .. "Please respond by writing table driven unit tests for the code above."
+    .. "请为上述代码编写表驱动的单元测试。"
   local agent = gp.get_command_agent()
   gp.Prompt(params, gp.Target.enew, agent, template)
 end
 
 local function explain(gp, params)
-  local template = "I have the following code from {{filename}}:\n\n"
+  local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n{{selection}}\n```\n\n"
-    .. "Please respond by explaining the code above."
+    .. "请解释上述代码。"
   local agent = gp.get_chat_agent()
   gp.Prompt(params, gp.Target.popup, agent, template)
 end
 
 local function code_review(gp, params)
-  local template = "I have the following code from {{filename}}:\n\n"
+  local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n{{selection}}\n```\n\n"
-    .. "Please analyze for code smells and suggest improvements."
+    .. "请审查上述代码并提供反馈。"
   local agent = gp.get_chat_agent()
   gp.Prompt(params, gp.Target.enew("markdown"), agent, template)
 end
@@ -321,7 +321,7 @@ return {
           chat = true,
           command = false,
           model = MERGE_TABLE(model, { temperature = 0.7 }),
-          system_prompt = gp.defaults.chat_system_prompt,
+          system_prompt = PROMPT,
         },
         {
           provider = "openai",
@@ -329,7 +329,7 @@ return {
           chat = false,
           command = true,
           model = MERGE_TABLE(model, { temperature = 0 }),
-          system_prompt = gp.defaults.code_system_prompt,
+          system_prompt = PROMPT,
         },
       },
       hooks = _hooks,

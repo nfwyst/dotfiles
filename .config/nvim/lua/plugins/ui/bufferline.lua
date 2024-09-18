@@ -1,5 +1,5 @@
 local function restore_position(bufnr)
-  local ft = vim.bo[bufnr].filetype
+  local ft = GET_FILETYPE(bufnr)
   local last_known_line = vim.api.nvim_buf_get_mark(bufnr, '"')[1]
   if
     not (ft:match("commit") and ft:match("rebase"))

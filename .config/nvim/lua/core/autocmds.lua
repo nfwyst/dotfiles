@@ -129,15 +129,19 @@ SET_AUTOCMDS({
     {
       pattern = { "lazy", "DressingInput", "DressingSelect" },
       callback = function(event)
-        if GET_HIGHLIGHT("Cursor", "blend") == 100 then
-          SHOW_CURSOR()
-        end
-        if
-          TABLE_CONTAINS({ "DressingSelect", "DressingInput" }, event.match)
-        then
-          return
-        end
-        SET_OPT("cursorline", true, event.buf)
+        SET_TIMEOUT(function()
+          local ft = event.match
+          local fts_no_cursorline = { "DressingSelect", "DressingInput" }
+          local no_cursorline = TABLE_CONTAINS(fts_no_cursorline, ft)
+          SET_OPT("wrap", true, event.buf)
+          if IS_CURSOR_HIDE() then
+            SHOW_CURSOR()
+          end
+          if no_cursorline then
+            return
+          end
+          SET_OPT("cursorline", true, event.buf)
+        end, 1)
       end,
       group = group,
     },

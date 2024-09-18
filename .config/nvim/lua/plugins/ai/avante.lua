@@ -14,6 +14,23 @@ local image = {
   },
 }
 
+local function init(config)
+  local default_prompt = "你是一位出色的编程专家。"
+  local function setup_prompt(custom)
+    local prompt = default_prompt
+    if config.options.system_prompt == default_prompt then
+      prompt = PROMPT
+    else
+      prompt = default_prompt
+    end
+    config.override({
+      system_prompt = custom or prompt,
+    })
+  end
+  USER_COMMAND("TogglePrompt", setup_prompt)
+  setup_prompt(PROMPT)
+end
+
 return {
   "yetone/avante.nvim",
   event = "VeryLazy",
@@ -26,6 +43,8 @@ return {
     image,
   },
   config = function()
+    local config = require("avante.config")
+    local providers = require("avante.providers")
     require("avante").setup({
       provider = "deepseek",
       vendors = {
@@ -43,9 +62,7 @@ return {
               },
               body = {
                 model = opts.model,
-                messages = require("avante.providers").copilot.parse_message(
-                  code_opts
-                ),
+                messages = providers.copilot.parse_message(code_opts),
                 temperature = 0,
                 max_tokens = 8192,
                 stream = true,
@@ -53,11 +70,7 @@ return {
             }
           end,
           parse_response_data = function(data_stream, event_state, opts)
-            require("avante.providers").openai.parse_response(
-              data_stream,
-              event_state,
-              opts
-            )
+            providers.openai.parse_response(data_stream, event_state, opts)
           end,
         },
       },
@@ -107,5 +120,6 @@ return {
         },
       },
     })
+    init(config)
   end,
 }

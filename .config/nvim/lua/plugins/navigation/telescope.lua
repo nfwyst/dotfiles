@@ -16,8 +16,7 @@ local function flash(prompt_bufnr)
       mode = "search",
       exclude = {
         function(win)
-          return vim.bo[vim.api.nvim_win_get_buf(win)].filetype
-            ~= "TelescopeResults"
+          return GET_FILETYPE(GET_BUFFER_ID(win)) ~= "TelescopeResults"
         end,
       },
     },

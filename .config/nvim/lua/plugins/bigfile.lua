@@ -17,7 +17,7 @@ return {
       pattern = function(bufnr, filesize_mib)
         local file_contents = vim.fn.readfile(GET_BUFFER_NAME(bufnr))
         local file_length = #file_contents
-        local filetype = vim.filetype.match({ buf = bufnr })
+        local filetype = GET_FILETYPE(bufnr)
         if TABLE_CONTAINS({ "help", "text", "markdown" }, filetype) then
           return false
         end
