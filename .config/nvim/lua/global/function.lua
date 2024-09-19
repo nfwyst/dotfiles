@@ -565,7 +565,7 @@ function GET_VIEWPORT_HEIGHT(winnr)
 end
 
 function GET_FILETYPE(bufnr)
-  return vim.filetype.match({ buf = bufnr })
+  return vim.filetype.match({ buf = bufnr }) or vim.bo[bufnr].filetype
 end
 
 function GET_BUFFER_ID(winid)
