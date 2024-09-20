@@ -1,3 +1,15 @@
+local patterns = { "/packages/", "/app/", "/apps/" }
+local jest_extensions = { "js", "ts", "mjs", "cjs", "json" }
+
+local function get_cwd(filepath)
+  for _, pattern in ipairs(patterns) do
+    if string.find(filepath, pattern) then
+      return string.match(filepath, "(.-/[^/]+/)src")
+    end
+  end
+  return vim.fn.getcwd() .. "/"
+end
+
 return {
   "nvim-neotest/neotest",
   lazy = true,
@@ -21,20 +33,16 @@ return {
         }),
         require("neotest-jest")({
           env = { CI = true },
-          jestCommand = "yarn run test --",
-          jestConfigFile = function(file)
-            local config_name = "jest.config.js"
-            if string.find(file, "/packages/") then
-              return string.match(file, "(.-/[^/]+/)src") .. config_name
+          jestCommand = "yarn run test",
+          jestConfigFile = function(filepath)
+            for _, extension in ipairs(jest_extensions) do
+              local path = get_cwd(filepath) .. "jest.config." .. extension
+              if IS_FILE_PATH(path) then
+                return path
+              end
             end
-            return vim.fn.getcwd() .. "/" .. config_name
           end,
-          cwd = function(file)
-            if string.find(file, "/packages/") then
-              return string.match(file, "(.-/[^/]+/)src")
-            end
-            return vim.fn.getcwd()
-          end,
+          cwd = get_cwd,
         }),
       },
       log_level = vim.log.levels.OFF,
