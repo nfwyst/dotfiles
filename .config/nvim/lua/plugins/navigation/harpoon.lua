@@ -1,9 +1,10 @@
 local gen_bookmark = function(postfix)
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local filepath = GET_CURRENT_FILE_PATH()
+  local win = GET_CURRENT_WIN()
+  local pos = vim.api.nvim_win_get_cursor(win)
+  local buffer_path = GET_CURRENT_BUFFER_PATH()
   local row = pos[1]
   local col = pos[2]
-  return filepath .. ":" .. row .. ":" .. col .. postfix
+  return buffer_path .. ":" .. row .. ":" .. col .. postfix
 end
 
 local parse_bookmark = function(value)
@@ -116,8 +117,8 @@ return {
         save_on_toggle = true,
       },
       bookmarks = {
-        create_list_item = function(_, name)
-          return { value = gen_bookmark(name) }
+        create_list_item = function(_, postfix)
+          return { value = gen_bookmark(postfix) }
         end,
         select = function(list_item, _, _)
           on_select(list_item.value)

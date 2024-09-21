@@ -60,7 +60,7 @@ SET_AUTOCMDS({
           cmd.nnoremap("<silent> <buffer> q :close<cr>")
         end
         if match == "help" or match == "gitconfig" then
-          SET_OPT("list", false, event.buf)
+          SET_OPT("list", false, event)
         end
       end,
       group = group,
@@ -82,11 +82,11 @@ SET_AUTOCMDS({
       pattern = "*",
       callback = function(event)
         local bufnr = event.buf
-        if GET_BUFFER_OPT(bufnr, "buflisted") then
+        if GET_OPT("buflisted", { buf = bufnr }) then
           return
         end
-        local filename = GET_BUFFER_NAME(bufnr)
-        local is_file = IS_FILE_PATH(filename)
+        local buffer_path = GET_BUFFER_PATH(bufnr)
+        local is_file = IS_FILE_PATH(buffer_path)
         if not is_file then
           return
         end
@@ -112,12 +112,11 @@ SET_AUTOCMDS({
     {
       pattern = "qf",
       callback = function(event)
-        local bufnr = event.buf
         SET_OPTS({
           buflisted = false,
           relativenumber = false,
-        }, bufnr)
-        local opt = { buffer = bufnr }
+        }, event)
+        local opt = { buffer = event.buf }
         KEY_MAP("n", "dd", remove_qf_item(true), opt)
         KEY_MAP("x", "d", remove_qf_item(), opt)
       end,
@@ -133,14 +132,14 @@ SET_AUTOCMDS({
           local ft = event.match
           local fts_no_cursorline = { "DressingSelect", "DressingInput" }
           local no_cursorline = TABLE_CONTAINS(fts_no_cursorline, ft)
-          SET_OPT("wrap", true, event.buf)
+          SET_OPT("wrap", true, event)
           if IS_CURSOR_HIDE() then
             SHOW_CURSOR()
           end
           if no_cursorline then
             return
           end
-          SET_OPT("cursorline", true, event.buf)
+          SET_OPT("cursorline", true, event)
         end, 1)
       end,
       group = group,
@@ -158,14 +157,13 @@ SET_AUTOCMDS({
       callback = function(event)
         local isAvante = "Avante" == event.match
         SET_TIMEOUT(function()
-          local bufnr = event.buf
           local opts = {
             wrap = true,
             tabstop = 2,
             softtabstop = 2,
             shiftwidth = 2,
           }
-          if isAvante or IS_GPT_PROMPT_CHAT(bufnr) then
+          if isAvante or IS_GPT_PROMPT_CHAT(event.buf) then
             opts = MERGE_TABLE(opts, {
               number = false,
               relativenumber = false,
@@ -175,7 +173,7 @@ SET_AUTOCMDS({
               showbreak = "NONE",
             })
           end
-          SET_OPTS(opts, bufnr)
+          SET_OPTS(opts, event)
         end, 100)
       end,
       group = AUTOGROUP("_markdown_git_", { clear = true }),
@@ -186,7 +184,7 @@ SET_AUTOCMDS({
     {
       pattern = "Neogit*",
       callback = function(event)
-        SET_OPT("foldcolumn", "0", event.buf)
+        SET_OPT("foldcolumn", "0", event)
       end,
     },
   },
@@ -222,7 +220,7 @@ SET_AUTOCMDS({
       pattern = "*",
       group = group,
       callback = function(event)
-        SET_OPT("cursorline", false, event.buf)
+        SET_OPT("cursorline", false, event)
       end,
     },
   },
@@ -235,7 +233,7 @@ SET_AUTOCMDS({
         SET_OPT(
           "cursorline",
           not TABLE_CONTAINS(INVALID_FILETYPE, vim.bo.filetype),
-          event.buf
+          event
         )
       end,
     },

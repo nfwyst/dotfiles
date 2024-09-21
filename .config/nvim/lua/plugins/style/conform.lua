@@ -3,12 +3,7 @@ local is_fixing = false
 
 local function setup_eslint()
   local eslint_d = require("conform.formatters.eslint_d")
-  eslint_d.cwd = require("conform.util").root_file({
-    ".eslintrc.js",
-    ".eslintrc.cjs",
-    ".eslintrc.yaml",
-    ".eslintrc.json",
-  })
+  eslint_d.cwd = require("conform.util").root_file(ESLINT_CONFIG_NAMES)
   eslint_d.require_cwd = true
 end
 

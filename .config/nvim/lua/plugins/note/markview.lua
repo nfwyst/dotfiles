@@ -1,8 +1,5 @@
-local api = vim.api
-
 local function set_conceal(win, level, cursor)
-  api.nvim_set_option_value("conceallevel", level, { win = win })
-  api.nvim_set_option_value("conecalcursor", cursor, { win = win })
+  SET_OPTS({ conceallevel = level, conecalcursor = cursor }, { win = win })
 end
 
 return {

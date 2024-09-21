@@ -17,7 +17,7 @@ return {
             relativenumber = false,
             statuscolumn = "",
             foldcolumn = "2",
-          }, bufnr)
+          }, { buf = bufnr })
         end,
       },
     })

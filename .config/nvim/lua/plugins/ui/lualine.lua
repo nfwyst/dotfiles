@@ -90,7 +90,7 @@ local spaces = function()
   if width < 56 then
     return ""
   end
-  return "space:" .. GET_BUFFER_OPT(0, "shiftwidth")
+  return "space:" .. GET_OPT("shiftwidth", { buf = GET_CURRENT_BUFFER() })
 end
 
 local noice_mode = {

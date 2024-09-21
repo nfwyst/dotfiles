@@ -14,7 +14,7 @@ local function init()
     group = AUTOGROUP("_alpha_", { clear = true }),
     callback = function(event)
       SET_OPT("showtabline", 0)
-      SET_OPT("cursorline", true, event.buf)
+      SET_OPT("cursorline", true, event)
     end,
   })
 end

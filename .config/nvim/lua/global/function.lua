@@ -35,8 +35,7 @@ end
 function DEFINE_SIGNS(signs)
   for name, sign in pairs(signs) do
     local opt = { text = sign, numhl = "" }
-    local is_table = type(sign) == "table"
-    if is_table then
+    if type(sign) == "table" then
       opt = MERGE_TABLE(opt, sign)
     end
     vim.fn.sign_define(name, opt)
@@ -142,24 +141,36 @@ function GET_WINDOWS_BY_BUF(bufnr)
   return windows
 end
 
-function SET_OPT(k, v, bufnr)
-  if not bufnr then
+function SET_OPT(k, v, config)
+  if not config then
     vim.opt[k] = v
     return
   end
-  if TABLE_CONTAINS(BUFFER_SCOPE_OPTIONS, k) then
-    api.nvim_set_option_value(k, v, { buf = bufnr })
-    return
+  local setter = api.nvim_set_option_value
+  function set_opt_for_win(bufnr)
+    for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
+      setter(k, v, { win = win })
+    end
   end
-  local wins = GET_WINDOWS_BY_BUF(bufnr)
-  for _, win in ipairs(wins) do
-    api.nvim_set_option_value(k, v, { win = win })
+  local buf = config.buf
+  local win = config.win
+  if buf then
+    if win then
+      setter(k, v, { win = win })
+      return
+    end
+    local ok, _ = pcall(function()
+      setter(k, v, { buf = buf })
+    end)
+    if not ok then
+      set_opt_for_win(buf)
+    end
   end
 end
 
-function SET_OPTS(opts, bufnr)
+function SET_OPTS(opts, config)
   for k, v in pairs(opts) do
-    SET_OPT(k, v, bufnr)
+    SET_OPT(k, v, config)
   end
 end
 
@@ -190,8 +201,7 @@ function SET_WORKSPACE_PATH_GLOBAL()
     LOG_ERROR("pcall error", util)
     return
   end
-  local get_root = util.root_pattern(UNPACK(PROJECT_PATTERNS))
-  WORKSPACE_PATH = get_root(GET_CURRENT_FILE_PATH(true)) or vim.uv.cwd()
+  WORKSPACE_PATH = GET_WORKSPACE_PATH()
   LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
 end
 
@@ -223,9 +233,9 @@ function GET_PROJECT_NAME()
       local find = false
       local bufs = api.nvim_list_bufs()
       for _, bufnr in ipairs(bufs) do
-        local path_name = api.nvim_buf_get_name(bufnr)
-        if IS_FILE_PATH(path_name) then
-          current_element = { path = path_name }
+        local buffer_path = GET_BUFFER_PATH(bufnr)
+        if IS_FILE_PATH(buffer_path) then
+          current_element = { path = buffer_path }
           find = true
           break
         end
@@ -234,10 +244,10 @@ function GET_PROJECT_NAME()
         return "文件浏览器"
       end
     end
+    ---@diagnostic disable-next-line: need-check-nil
     local current_file_path = current_element.path
-    local get_pattern = util.root_pattern(UNPACK(PROJECT_PATTERNS))
-    local name = basename(get_pattern(current_file_path))
-    local repo_name = basename(vim.uv.cwd())
+    local name = basename(GET_WORKSPACE_PATH(current_file_path))
+    local repo_name = basename(GET_GIT_PATH(current_file_path))
     return name ~= repo_name and name or "文件浏览器"
   end
 end
@@ -265,21 +275,21 @@ function SET_COLORSCHEME(scheme)
 end
 
 function GET_CURRENT_BUFFER()
-  return api.nvim_get_current_buf()
+  return api.nvim_get_current_buf() or 0
+end
+
+function GET_CURRENT_WIN()
+  return api.nvim_get_current_win() or 0
 end
 
 function IS_PACKAGE_LOADED(pkg)
   return not not package.loaded[pkg]
 end
 
-function GET_CURRENT_FILE_PATH(absolute)
-  return vim.fn.expand(absolute and "%:p" or "%")
-end
-
 function SAVE(force)
   local bang = force ~= nil and force ~= false
-  local filename = GET_CURRENT_FILE_PATH(true)
-  if filename == "" then
+  local buffer_path = GET_CURRENT_BUFFER_PATH()
+  if buffer_path == "" then
     vim.ui.input({ prompt = "Enter a file name: " }, function(fname)
       if not fname then
         LOG_ERROR("cant save", "file name missing")
@@ -301,12 +311,12 @@ function SAVE_THEN_QUIT(force)
   QUIT(force)
 end
 
-function GET_BUFFER_NAME(bufnr)
+function GET_BUFFER_PATH(bufnr)
   return api.nvim_buf_get_name(bufnr)
 end
 
-function GET_BUFFER_OPT(bufnr, optname)
-  return api.nvim_get_option_value(optname, { buf = bufnr })
+function GET_OPT(optname, config)
+  return api.nvim_get_option_value(optname, config)
 end
 
 function STR_INCLUDES(str, pattern, init, plain)
@@ -427,10 +437,9 @@ function IS_GPT_PROMPT_CHAT(bufnr)
   if not ok then
     return false
   end
-  local has_buf = bufnr ~= nil
-  local buf = has_buf and bufnr or GET_CURRENT_BUFFER()
-  local file_name = api.nvim_buf_get_name(buf)
-  return gp.not_chat(buf, file_name) == nil
+  local buf = bufnr or GET_CURRENT_BUFFER()
+  local buffer_path = GET_BUFFER_PATH(buf)
+  return gp.not_chat(buf, buffer_path) == nil
 end
 
 function GET_CURRENT_MODE()
@@ -560,7 +569,7 @@ end
 
 function GET_VIEWPORT_HEIGHT(winnr)
   local win_height = vim.api.nvim_win_get_height(winnr)
-  local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = winnr })
+  local scrolloff = GET_OPT("scrolloff", { win = winnr })
   return win_height - 2 * scrolloff
 end
 
@@ -574,4 +583,38 @@ end
 
 function IS_CURSOR_HIDE()
   return GET_HIGHLIGHT("Cursor", "blend") == 100
+end
+
+function LOOKUP_FILE_PATH(file_names, start_filepath)
+  local dirname = vim.fs.dirname
+  for _, file_name in ipairs(file_names) do
+    local pathes = vim.fs.find(file_name, {
+      upward = true,
+      ---@diagnostic disable-next-line: undefined-field
+      stop = dirname(vim.uv.os_homedir()),
+      path = dirname(start_filepath or GET_CURRENT_BUFFER_PATH()),
+    })
+    if #pathes > 0 then
+      return pathes[1]
+    end
+  end
+end
+
+function GET_DIR_MATCH_PATTERNS(file_name_patterns, start_filepath)
+  local util = require("lspconfig.util")
+  local get_root = util.root_pattern(UNPACK(file_name_patterns))
+  return get_root(start_filepath or GET_CURRENT_BUFFER_PATH())
+end
+
+function GET_WORKSPACE_PATH(start_filepath)
+  return GET_DIR_MATCH_PATTERNS(PROJECT_PATTERNS, start_filepath)
+end
+
+function GET_GIT_PATH(start_filepath)
+  local util = require("lspconfig.util")
+  return util.find_git_ancestor(start_filepath)
+end
+
+function GET_CURRENT_BUFFER_PATH()
+  return GET_BUFFER_PATH(GET_CURRENT_BUFFER())
 end

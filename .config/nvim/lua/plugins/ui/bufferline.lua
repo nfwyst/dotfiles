@@ -88,9 +88,10 @@ local function init(bufferline)
         pattern = "BDeletePost*",
         group = group,
         callback = function(event)
-          local bufname = GET_BUFFER_NAME(event.buf)
-          local bufft = GET_BUFFER_OPT(event.buf, "filetype")
-          local is_empty = bufname == "" and bufft == ""
+          local bufnr = event.buf
+          local buffer_path = GET_BUFFER_PATH(bufnr)
+          local buffer_filetype = GET_OPT("filetype", { buf = bufnr })
+          local is_empty = buffer_path == "" and buffer_filetype == ""
           if not is_empty then
             return
           end

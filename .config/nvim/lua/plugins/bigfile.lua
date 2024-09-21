@@ -15,7 +15,7 @@ return {
   config = function()
     require("bigfile").setup({
       pattern = function(bufnr, filesize_mib)
-        local file_contents = vim.fn.readfile(GET_BUFFER_NAME(bufnr))
+        local file_contents = vim.fn.readfile(GET_BUFFER_PATH(bufnr))
         local file_length = #file_contents
         local filetype = GET_FILETYPE(bufnr)
         if TABLE_CONTAINS({ "help", "text", "markdown" }, filetype) then

@@ -38,7 +38,9 @@ return {
   ["<leader>nas"] = { "<cmd>Telescope colorscheme<cr>", desc = "Colorscheme" },
   ["<leader>nai"] = { "<cmd>e $MYVIMRC<cr>", desc = "Open init.lua" },
   ["<leader>naS"] = {
-    "<cmd>e /Users/malisheng/.config/nvim/snippets/package.json<cr>",
+    function()
+      vim.cmd.edit(CONFIG_PATH .. "/snippets/package.json")
+    end,
     desc = "Open snippets",
   },
   ["<leader>nao"] = { "<cmd>Outline<cr>", desc = "Toggle outline" },

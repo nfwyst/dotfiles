@@ -208,13 +208,6 @@ LSP_SYMBOLS = {
   "TypeParameter",
 }
 
-BUFFER_SCOPE_OPTIONS = {
-  "tabstop",
-  "shiftwidth",
-  "softtabstop",
-  "buflisted",
-}
-
 KEYMAP_EXCLUDE_FTS = {
   ["<c-o>"] = { "qf" },
   ["<c-i>"] = { "qf" },
@@ -282,7 +275,7 @@ PREVIEWER = defaulter(function(options)
         vim.api.nvim_win_call(winid, function()
           vim.cmd([[normal! ]] .. row .. [[]])
         end)
-      end, 20)
+      end, 50)
     end,
   })
 end, {})
@@ -317,3 +310,18 @@ PROMPT = [[
 请记住，你的目标不仅是帮助我编写正确的代码，而且要帮助我理解基本原理并提高我的编程技能。
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
+
+ESLINT_CONFIG_NAMES = {
+  ".eslintrc.js",
+  ".eslintrc.cjs",
+  ".eslintrc.yaml",
+  ".eslintrc.yml",
+  ".eslintrc.json",
+  "eslint.config.js",
+  "eslint.config.mjs",
+  "eslint.config.cjs",
+  "eslint.config.ts",
+  "eslint.config.mts",
+  "eslint.config.cts",
+  "package.json",
+}

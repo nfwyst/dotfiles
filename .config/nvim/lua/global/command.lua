@@ -1,9 +1,9 @@
 SET_USER_COMMANDS({
   OpenCurFile = function()
-    OPEN_LINK_OR_FILE(GET_CURRENT_FILE_PATH(true))
+    OPEN_LINK_OR_FILE(GET_CURRENT_BUFFER_PATH())
   end,
   ShowFilePath = function()
-    LOG_INFO("current file path is", GET_CURRENT_FILE_PATH(true))
+    LOG_INFO("current file path is", GET_CURRENT_BUFFER_PATH())
   end,
   ExitInsertMode = function()
     vim.cmd.stopinsert()

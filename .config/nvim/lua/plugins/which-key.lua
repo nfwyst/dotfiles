@@ -6,8 +6,7 @@ local function key_filter(config)
   local exclude_fts = KEYMAP_EXCLUDE_FTS[rhs]
   if exclude_fts and #exclude_fts > 0 then
     config[2] = function(...)
-      local bufnr = GET_CURRENT_BUFFER()
-      local ft = GET_BUFFER_OPT(bufnr, "filetype")
+      local ft = GET_OPT("filetype", { buf = GET_CURRENT_BUFFER() })
       local is_excluded = TABLE_CONTAINS(exclude_fts, ft)
       if is_excluded then
         return
