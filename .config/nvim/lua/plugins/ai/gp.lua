@@ -26,9 +26,9 @@ local function inspect_log(plugin, _)
   local log_file = plugin.config.log_file
   local buffer = plugin.helpers.get_buffer(log_file)
   if not buffer then
-    vim.cmd("e " .. log_file)
+    vim.cmd.edit(log_file)
   else
-    vim.cmd("buffer " .. buffer)
+    vim.cmd.buffer(buffer)
   end
 end
 

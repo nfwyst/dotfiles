@@ -108,7 +108,7 @@ return {
         if not minutes then
           LOG_ERROR("no time", "run failed")
         else
-          vim.cmd("NomoTimer" .. minutes)
+          RUN_CMD("NomoTimer " .. minutes, true)
         end
       end)
     end,

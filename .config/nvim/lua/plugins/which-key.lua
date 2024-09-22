@@ -57,8 +57,18 @@ local function init(wk)
   leader(wk)
 
   wk.add({
-    ["[["] = { desc = "Prev Matched Wrod" },
-    ["]]"] = { desc = "Next Matched Word" },
+    ["[["] = {
+      function()
+        require("illuminate").goto_prev_reference(false)
+      end,
+      desc = "Prev Matched Wrod",
+    },
+    ["]]"] = {
+      function()
+        require("illuminate").goto_next_reference(false)
+      end,
+      desc = "Next Matched Word",
+    },
     ["zp"] = { desc = "Fold Preview" },
   })
 end

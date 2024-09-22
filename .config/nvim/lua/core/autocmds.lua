@@ -1,7 +1,6 @@
 local group = AUTOGROUP("_general_settings_", { clear = true })
 local fn = vim.fn
 local v = vim.v
-local cmd = vim.cmd
 
 local function remove_qf_normal()
   local start_index = fn.line(".")
@@ -39,31 +38,98 @@ local function remove_qf_item(is_normal)
   end
 end
 
+local filetype_to_runner = {
+  [{
+    "qf",
+    "help",
+    "man",
+    "notify",
+    "lspinfo",
+    "DressingInput",
+    "DressingSelect",
+    "DiffviewFileHistory",
+  }] = function(event)
+    local option = { silent = true, buffer = event.buf }
+    KEY_MAP("n", "q", vim.cmd.close, option)
+  end,
+  [{ "help", "gitconfig" }] = function(event)
+    SET_OPT("list", false, event)
+  end,
+  qf = function(event)
+    local opt = {
+      buflisted = false,
+      relativenumber = false,
+    }
+    SET_OPTS(opt, event)
+    opt = { buffer = event.buf }
+    KEY_MAP("n", "dd", remove_qf_item(true), opt)
+    KEY_MAP("x", "d", remove_qf_item(), opt)
+  end,
+  [{
+    "lazy",
+    "DressingInput",
+    "DressingSelect",
+  }] = function(event)
+    SET_TIMEOUT(function()
+      SET_OPT("wrap", true, event)
+      if IS_CURSOR_HIDE() then
+        SHOW_CURSOR()
+      end
+      if event.match == "lazy" then
+        SET_OPT("cursorline", true, event)
+      end
+    end, 10)
+  end,
+  [{
+    "markdown",
+    "gitcommit",
+    "NeogitCommitMessage",
+    "Avante",
+  }] = function(event)
+    local isAvante = "Avante" == event.match
+    local isChat = IS_GPT_PROMPT_CHAT(event.buf)
+    SET_TIMEOUT(function()
+      local opts = {
+        wrap = true,
+        tabstop = 2,
+        softtabstop = 2,
+        shiftwidth = 2,
+      }
+      if isAvante or isChat then
+        opts = MERGE_TABLE(opts, {
+          number = false,
+          relativenumber = false,
+          statuscolumn = "",
+          foldcolumn = "0",
+          list = false,
+          showbreak = "NONE",
+        })
+      end
+      SET_OPTS(opts, event)
+    end, 100)
+  end,
+  ["Neogit*"] = function(event)
+    SET_OPT("foldcolumn", "0", event)
+  end,
+}
+
 SET_AUTOCMDS({
   {
     "FileType",
     {
-      pattern = {
-        "qf",
-        "help",
-        "gitconfig",
-        "man",
-        "notify",
-        "lspinfo",
-        "DressingInput",
-        "DressingSelect",
-        "DiffviewFileHistory",
-      },
+      pattern = vim.iter(vim.tbl_keys(filetype_to_runner)):flatten(1):totable(),
+      group = group,
       callback = function(event)
-        local match = event.match
-        if match ~= "gitconfig" then
-          cmd.nnoremap("<silent> <buffer> q :close<cr>")
-        end
-        if match == "help" or match == "gitconfig" then
-          SET_OPT("list", false, event)
+        local filetype = GET_FILETYPE(event.buf)
+        for filetypes, runner in pairs(filetype_to_runner) do
+          local is_table = type(filetypes) == "table"
+          local equal = filetypes == filetype
+          local contain = is_table and TABLE_CONTAINS(filetypes, filetype)
+          if equal or contain then
+            runner(event)
+          end
         end
       end,
-      group = group,
     },
   },
   {
@@ -88,7 +154,7 @@ SET_AUTOCMDS({
         if not is_file then
           return
         end
-        vim.opt_local.buflisted = true
+        SET_OPT("buflisted", true, { buf = bufnr })
       end,
       group = group,
     },
@@ -100,88 +166,6 @@ SET_AUTOCMDS({
         local bufnr = event.buf
         TABLE_REMOVE_BY_VAL(BIGFILES, bufnr)
         TABLE_REMOVE_BY_KEY(BUFFER_OPENED_TIME, bufnr)
-      end,
-      group = group,
-    },
-  },
-  {
-    "FileType",
-    {
-      pattern = "qf",
-      callback = function(event)
-        SET_OPTS({
-          buflisted = false,
-          relativenumber = false,
-        }, event)
-        local opt = { buffer = event.buf }
-        KEY_MAP("n", "dd", remove_qf_item(true), opt)
-        KEY_MAP("x", "d", remove_qf_item(), opt)
-      end,
-      group = group,
-    },
-  },
-  {
-    "FileType",
-    {
-      pattern = { "lazy", "DressingInput", "DressingSelect" },
-      callback = function(event)
-        SET_TIMEOUT(function()
-          local ft = event.match
-          local fts_no_cursorline = { "DressingSelect", "DressingInput" }
-          local no_cursorline = TABLE_CONTAINS(fts_no_cursorline, ft)
-          SET_OPT("wrap", true, event)
-          if IS_CURSOR_HIDE() then
-            SHOW_CURSOR()
-          end
-          if no_cursorline then
-            return
-          end
-          SET_OPT("cursorline", true, event)
-        end, 1)
-      end,
-      group = group,
-    },
-  },
-  {
-    "FileType",
-    {
-      pattern = {
-        "markdown",
-        "gitcommit",
-        "NeogitCommitMessage",
-        "Avante",
-      },
-      callback = function(event)
-        local isAvante = "Avante" == event.match
-        SET_TIMEOUT(function()
-          local opts = {
-            wrap = true,
-            tabstop = 2,
-            softtabstop = 2,
-            shiftwidth = 2,
-          }
-          if isAvante or IS_GPT_PROMPT_CHAT(event.buf) then
-            opts = MERGE_TABLE(opts, {
-              number = false,
-              relativenumber = false,
-              statuscolumn = "",
-              foldcolumn = "0",
-              list = false,
-              showbreak = "NONE",
-            })
-          end
-          SET_OPTS(opts, event)
-        end, 100)
-      end,
-      group = AUTOGROUP("_markdown_git_", { clear = true }),
-    },
-  },
-  {
-    "FileType",
-    {
-      pattern = "Neogit*",
-      callback = function(event)
-        SET_OPT("foldcolumn", "0", event)
       end,
       group = group,
     },
