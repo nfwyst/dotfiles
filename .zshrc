@@ -6,6 +6,20 @@ fi
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
+# set proxy
+function proxy ()
+{
+  export {https,http}_proxy=http://127.0.0.1:7897
+  export all_proxy=socks5://127.0.0.1:7897
+  if command_exists "npm"; then
+    npm config set proxy http://127.0.0.1:7897
+  fi
+  export no_proxy=127.0.0.1,localhost,apple.com
+}
+
+# init proxy
+proxy
+
 # Download Zinit, if it's not there yet
 if [ ! -d "$ZINIT_HOME" ]; then
   mkdir -p "$(dirname $ZINIT_HOME)"
@@ -114,19 +128,6 @@ function cx() {
     echo "Please provide a directory name."
   fi
 }
-
-# set proxy
-function proxy ()
-{
-  export {https,http}_proxy=http://127.0.0.1:7897
-  export all_proxy=socks5://127.0.0.1:7897
-  if command_exists "npm"; then
-    npm config set proxy http://127.0.0.1:7897
-  fi
-  export no_proxy=127.0.0.1,localhost,apple.com
-}
-# init proxy
-proxy
 
 # unset proxy
 function unproxy()
