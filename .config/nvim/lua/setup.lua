@@ -20,7 +20,12 @@ if not vim.uv.fs_stat(LAZY_PATH) then
 end
 vim.opt.rtp:prepend(LAZY_PATH)
 
-require("lazy").setup({
+local ok, lazy = pcall(require, "lazy")
+if not ok then
+  return
+end
+
+lazy.setup({
   defaults = {
     version = false,
   },
