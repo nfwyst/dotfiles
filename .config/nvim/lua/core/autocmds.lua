@@ -69,7 +69,6 @@ SET_AUTOCMDS({
   {
     "TextYankPost",
     {
-      pattern = "*",
       callback = function()
         pcall(vim.highlight.on_yank, { higroup = "Visual", timeout = 200 })
       end,
@@ -79,7 +78,6 @@ SET_AUTOCMDS({
   {
     "BufWinEnter",
     {
-      pattern = "*",
       callback = function(event)
         local bufnr = event.buf
         if GET_OPT("buflisted", { buf = bufnr }) then
@@ -98,7 +96,6 @@ SET_AUTOCMDS({
   {
     "BufDelete",
     {
-      pattern = "*",
       callback = function(event)
         local bufnr = event.buf
         TABLE_REMOVE_BY_VAL(BIGFILES, bufnr)
@@ -190,22 +187,8 @@ SET_AUTOCMDS({
     },
   },
   {
-    "FileType",
-    {
-      pattern = "alpha",
-      group = group,
-      callback = function(event)
-        SET_OPTS({
-          showtabline = 0,
-          cursorline = true,
-        }, event)
-      end,
-    },
-  },
-  {
     "VimResized",
     {
-      pattern = "*",
       command = "silent!tabdo wincmd =",
       group = AUTOGROUP("_auto_resize_", { clear = true }),
     },
@@ -231,7 +214,6 @@ SET_AUTOCMDS({
   {
     "InsertEnter",
     {
-      pattern = "*",
       group = group,
       callback = function(event)
         SET_OPT("cursorline", false, event)
@@ -241,14 +223,14 @@ SET_AUTOCMDS({
   {
     "InsertLeave",
     {
-      pattern = "*",
       group = group,
       callback = function(event)
-        SET_OPT(
-          "cursorline",
-          not TABLE_CONTAINS(INVALID_FILETYPE, vim.bo.filetype),
-          event
-        )
+        local filetype = GET_FILETYPE(event.buf)
+        local exclude_filetype = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
+        if exclude_filetype then
+          return
+        end
+        SET_OPT("cursorline", true, event)
       end,
     },
   },

@@ -8,6 +8,35 @@ local function footer()
   return fortune
 end
 
+local function init()
+  local group = AUTOGROUP("_alpha_", { clear = true })
+  AUTOCMD("User", {
+    pattern = "AlphaReady",
+    group = group,
+    callback = function(event)
+      SET_TIMEOUT(function()
+        SET_OPTS({
+          showtabline = 0,
+          laststatus = 0,
+        })
+        SET_OPT("cursorline", true, event)
+      end, 10)
+      AUTOCMD("BufUnload", {
+        buffer = event.buf,
+        group = group,
+        callback = function()
+          SET_TIMEOUT(function()
+            SET_OPTS({
+              showtabline = 2,
+              laststatus = 3,
+            })
+          end, 10)
+        end,
+      })
+    end,
+  })
+end
+
 return {
   "goolord/alpha-nvim",
   event = "VimEnter",
@@ -47,5 +76,6 @@ return {
     bd.section.buttons.opts.hl = "Keyword"
     bd.opts.opts.noautocmd = true
     alpha.setup(bd.opts)
+    init()
   end,
 }

@@ -316,6 +316,9 @@ function GET_BUFFER_PATH(bufnr)
 end
 
 function GET_OPT(optname, config)
+  if not config then
+    return vim.o[optname]
+  end
   return api.nvim_get_option_value(optname, config)
 end
 
