@@ -12,7 +12,7 @@ BIGFILES = {}
 OS = jit.os
 IS_MAC = OS == "OSX"
 DEFAULT_COLORSCHEME = "tokyonight"
-MAX_BUFFER_NUM = 6
+MAX_BUFFER_NUM = 7
 BUFFER_OPENED_TIME = {}
 LSP_DOC_WIDTH = 60
 VERSION = vim.version()

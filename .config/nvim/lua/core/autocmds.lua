@@ -186,6 +186,20 @@ SET_AUTOCMDS({
       callback = function(event)
         SET_OPT("foldcolumn", "0", event)
       end,
+      group = group,
+    },
+  },
+  {
+    "FileType",
+    {
+      pattern = "alpha",
+      group = group,
+      callback = function(event)
+        SET_OPTS({
+          showtabline = 0,
+          cursorline = true,
+        }, event)
+      end,
     },
   },
   {

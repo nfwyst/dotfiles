@@ -31,12 +31,18 @@ local function delete_buffers(num, buffers)
   end
 end
 
-local function delete_old_buffers(bufferline)
+local function delete_old_buffers(bufferline, bufnr)
   local buffers = bufferline.get_elements().elements
   local num_to_delete = #buffers - MAX_BUFFER_NUM
   if num_to_delete <= 0 then
     return
   end
+  buffers = FILTER_TABLE(buffers, function(buffer)
+    local buf = buffer.id
+    local unsaved = GET_OPT("modified", { buf = buf })
+    local is_current_buffer = buf == bufnr
+    return not unsaved and not is_current_buffer
+  end)
   delete_buffers(num_to_delete, buffers)
 end
 
@@ -75,7 +81,7 @@ local function init(bufferline)
                 return
               end
               vim.schedule(function()
-                PCALL(delete_old_buffers, bufferline)
+                PCALL(delete_old_buffers, bufferline, bufnr)
               end)
             end,
           })
@@ -120,7 +126,7 @@ end
 
 return {
   "akinsho/bufferline.nvim",
-  event = { "BufReadPost", "BufAdd", "BufNewFile" },
+  event = "VeryLazy",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()
     local bufferline = require("bufferline")
