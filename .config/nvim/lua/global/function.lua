@@ -616,6 +616,10 @@ function GET_CURRENT_BUFFER_PATH()
 end
 
 function SPLIT_STRING_BY_LEN(str, max_len)
+  if #str < max_len then
+    return { str }
+  end
+
   local result = {}
   local start_index = 1
 
@@ -631,18 +635,16 @@ function SPLIT_STRING_BY_LEN(str, max_len)
   return result
 end
 
-function NOTIFY(message, timeout)
-  local width = vim.o.columns
-  local height = vim.o.lines
-
-  local max_width = math.floor(width * 0.3)
+function TIP(message, timeout)
+  local editor_width = GET_EDITOR_WIDTH()
+  local max_width = math.floor(editor_width * 0.3)
   local lines = SPLIT_STRING_BY_LEN(message, max_width)
 
   local win_width = math.min(max_width, #message)
   local win_height = #lines
 
-  local row = math.floor((height - win_height) / 2)
-  local col = math.floor((width - win_width) / 2)
+  local row = math.floor((GET_EDITOR_HEIGHT() - win_height) / 2)
+  local col = math.floor((editor_width - win_width) / 2)
   local opts = {
     relative = "editor",
     width = win_width,
@@ -668,4 +670,12 @@ function NOTIFY(message, timeout)
     api.nvim_win_close(win, true)
     SHOW_CURSOR()
   end, timeout or 1000)
+end
+
+function GET_EDITOR_WIDTH()
+  return vim.o.columns
+end
+
+function GET_EDITOR_HEIGHT()
+  return vim.o.lines
 end

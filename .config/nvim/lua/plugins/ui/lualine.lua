@@ -15,7 +15,7 @@ local show_on_width = function(width)
   if not width then
     width = 80
   end
-  return vim.o.columns > width
+  return GET_EDITOR_WIDTH() > width
 end
 
 local diff = {
@@ -86,7 +86,7 @@ local progress = {
 }
 
 local spaces = function()
-  local width = vim.o.columns
+  local width = GET_EDITOR_WIDTH()
   if width < 56 then
     return ""
   end
@@ -105,7 +105,7 @@ local noice_mode = {
 
 local lsps = function()
   local clients = vim.lsp.get_clients({ bufnr = GET_CURRENT_BUFFER() })
-  local width = vim.o.columns
+  local width = GET_EDITOR_WIDTH()
   if next(clients) == nil or width < 66 then
     return ""
   end

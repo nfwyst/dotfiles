@@ -12,7 +12,7 @@ return {
       window = {
         backdrop = 1,
         width = function()
-          return math.min(120, vim.o.columns * 0.75)
+          return math.min(120, GET_EDITOR_WIDTH() * 0.75)
         end,
         height = 0.9,
         options = {

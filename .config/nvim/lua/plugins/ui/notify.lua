@@ -25,10 +25,10 @@ return {
       animate = true,
       stages = "fade_in_slide_out",
       max_height = function()
-        return math.floor(vim.o.lines * 0.9)
+        return math.floor(GET_EDITOR_HEIGHT() * 0.9)
       end,
       max_width = function()
-        return math.floor(vim.o.columns * 0.3)
+        return math.floor(GET_EDITOR_WIDTH() * 0.3)
       end,
       render = "wrapped-default",
     })
