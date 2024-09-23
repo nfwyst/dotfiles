@@ -1,5 +1,22 @@
 return {
   ["<leader>w"] = { group = "Workspace" },
+  ["<leader>wf"] = { group = "Find and replace" },
+  ["<leader>wft"] = {
+    "<cmd>lua require('spectre').toggle()<cr>",
+    desc = "Toggle spectre",
+  },
+  ["<leader>wfu"] = {
+    "<cmd>lua require('pickers.spectre').toggle()<cr>",
+    desc = "Toggle spectre ui",
+  },
+  ["<leader>wfi"] = {
+    "<cmd>lua require('spectre').change_options('ignore-case')<cr>",
+    desc = "Toggle ignore case",
+  },
+  ["<leader>wfh"] = {
+    "<cmd>lua require('spectre').change_options('hidden')<cr>",
+    desc = "Toggle search hidden",
+  },
   ["<leader>wc"] = { "<cmd>SetWorkspacePathCustom<cr>", desc = "Custom path" },
   ["<leader>wg"] = {
     "<cmd>SetWorkspacePathGlobal<cr>",

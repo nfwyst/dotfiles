@@ -48,6 +48,7 @@ local filetype_to_runner = {
     "DressingInput",
     "DressingSelect",
     "DiffviewFileHistory",
+    "spectre_panel",
   }] = function(event)
     local option = { silent = true, buffer = event.buf }
     KEY_MAP("n", "q", vim.cmd.close, option)

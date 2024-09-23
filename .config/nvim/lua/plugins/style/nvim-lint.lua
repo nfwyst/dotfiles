@@ -59,7 +59,6 @@ return {
       svelte = fe,
       sh = { "shellcheck" },
       zsh = { "zsh" },
-      alpha = {},
     }
     init(lint)
   end,

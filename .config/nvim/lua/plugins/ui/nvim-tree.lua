@@ -119,6 +119,9 @@ local function init()
       },
     },
   })
+  SET_HL({
+    NvimTreeIndentMarker = { fg = GET_COLOR().green },
+  })
 end
 
 return {

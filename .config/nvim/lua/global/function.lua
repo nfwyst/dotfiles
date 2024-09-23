@@ -408,7 +408,6 @@ end
 
 function INIT_HL()
   local color = GET_COLOR()
-  local illuminate = { bg = "#B2D4FC", fg = "#4d2b03", bold = true }
   SET_HL(MERGE_TABLE(CURSOR_HILIGHT_OPTS, {
     CursorLine = { bg = color.fg1 },
     CursorLineNr = { fg = "#388bfd" },
@@ -418,12 +417,6 @@ function INIT_HL()
     LineNrAbove = { fg = color.fg1 },
     LineNr = { fg = color.fg1 },
     LineNrBelow = { fg = color.fg1 },
-    IlluminatedWord = illuminate,
-    IlluminatedCurWord = illuminate,
-    IlluminatedWordText = illuminate,
-    IlluminatedWordRead = illuminate,
-    IlluminatedWordWrite = illuminate,
-    NvimTreeIndentMarker = { fg = color.green },
   }))
 end
 
@@ -620,4 +613,59 @@ end
 
 function GET_CURRENT_BUFFER_PATH()
   return GET_BUFFER_PATH(GET_CURRENT_BUFFER())
+end
+
+function SPLIT_STRING_BY_LEN(str, max_len)
+  local result = {}
+  local start_index = 1
+
+  while start_index <= #str do
+    local end_index = start_index + max_len - 1
+    if end_index > #str then
+      end_index = #str
+    end
+    table.insert(result, str:sub(start_index, end_index))
+    start_index = end_index + 1
+  end
+
+  return result
+end
+
+function NOTIFY(message, timeout)
+  local width = vim.o.columns
+  local height = vim.o.lines
+
+  local max_width = math.floor(width * 0.3)
+  local lines = SPLIT_STRING_BY_LEN(message, max_width)
+
+  local win_width = math.min(max_width, #message)
+  local win_height = #lines
+
+  local row = math.floor((height - win_height) / 2)
+  local col = math.floor((width - win_width) / 2)
+  local opts = {
+    relative = "editor",
+    width = win_width,
+    height = win_height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+  }
+
+  local buf = api.nvim_create_buf(false, true)
+  local win = api.nvim_open_win(buf, true, opts)
+  api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  SET_OPTS({
+    winhl = "Normal:Normal,FloatBorder:Normal",
+    winblend = 100,
+    cursorline = false,
+  }, { win = win })
+
+  HIDE_CURSOR()
+  SET_TIMEOUT(function()
+    api.nvim_win_close(win, true)
+    SHOW_CURSOR()
+  end, timeout or 1000)
 end
