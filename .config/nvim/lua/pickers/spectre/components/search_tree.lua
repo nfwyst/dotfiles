@@ -148,8 +148,8 @@ local function on_select(origin_winid)
 
       vim.api.nvim_set_current_win(origin_winid)
       vim.api.nvim_command([[execute "normal! m` "]])
-      vim.cmd("e " .. escaped_filename)
-      vim.api.nvim_win_set_cursor(0, { entry.lnum, entry.col - 1 })
+      vim.cmd.edit(escaped_filename)
+      SCROLL_TO(entry.lnum, entry.col - 1)
     end
   end
 end

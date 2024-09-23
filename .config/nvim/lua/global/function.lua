@@ -154,17 +154,18 @@ function SET_OPT(k, v, config)
   end
   local buf = config.buf
   local win = config.win
-  if buf then
-    if win then
-      setter(k, v, { win = win })
-      return
-    end
-    local ok, _ = pcall(function()
-      setter(k, v, { buf = buf })
-    end)
-    if not ok then
-      set_opt_for_win(buf)
-    end
+  if win then
+    setter(k, v, { win = win })
+    return
+  end
+  if not buf then
+    return
+  end
+  local ok, _ = pcall(function()
+    setter(k, v, { buf = buf })
+  end)
+  if not ok then
+    set_opt_for_win(buf)
   end
 end
 
@@ -645,7 +646,9 @@ function TIP(message, timeout)
 
   local row = math.floor((GET_EDITOR_HEIGHT() - win_height) / 2)
   local col = math.floor((editor_width - win_width) / 2)
-  local opts = {
+
+  local buf = api.nvim_create_buf(false, true)
+  local win = api.nvim_open_win(buf, false, {
     relative = "editor",
     width = win_width,
     height = win_height,
@@ -653,22 +656,16 @@ function TIP(message, timeout)
     col = col,
     style = "minimal",
     border = "rounded",
-  }
-
-  local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, true, opts)
+  })
   api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   SET_OPTS({
-    winhl = "Normal:Normal,FloatBorder:Normal",
-    winblend = 100,
+    winhl = "Normal:Normal,FloatBorder:TelescopeBorder",
     cursorline = false,
   }, { win = win })
 
-  HIDE_CURSOR()
   SET_TIMEOUT(function()
     api.nvim_win_close(win, true)
-    SHOW_CURSOR()
   end, timeout or 1000)
 end
 
@@ -678,4 +675,8 @@ end
 
 function GET_EDITOR_HEIGHT()
   return vim.o.lines
+end
+
+function SCROLL_TO(line, col)
+  api.nvim_win_set_cursor(GET_CURRENT_WIN(), { line, col })
 end

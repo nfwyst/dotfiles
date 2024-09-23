@@ -277,7 +277,7 @@ function M.preserve_cursor_position(fn)
       line = lastline
     end
 
-    vim.api.nvim_win_set_cursor(0, { line, col })
+    SCROLL_TO(line, col)
   end)
 end
 

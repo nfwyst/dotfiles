@@ -20,7 +20,7 @@ end
 local function on_select(value)
   local bookmark = parse_bookmark(value)
   vim.cmd.edit(bookmark.filepath)
-  vim.api.nvim_win_set_cursor(0, { bookmark.row, bookmark.col })
+  SCROLL_TO(bookmark.row, bookmark.col)
 end
 
 local function toggle_telescope(harpoon_files, entry_parser)

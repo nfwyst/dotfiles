@@ -30,7 +30,7 @@ return {
       max_width = function()
         return math.floor(GET_EDITOR_WIDTH() * 0.3)
       end,
-      render = "wrapped-default",
+      render = "wrapped-compact",
     })
     init(notify)
   end,

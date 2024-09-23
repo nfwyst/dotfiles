@@ -14,7 +14,7 @@ function M.toggle()
   local win_width = vim.api.nvim_win_get_width(0)
   local win_height = vim.api.nvim_win_get_height(0)
   local width = 46
-  local height = win_height - 2
+  local height = win_height
 
   local renderer = n.create_renderer({
     width = width,
@@ -104,6 +104,7 @@ function M.toggle()
         value = signal.is_case_insensitive_checked,
         on_change = function(is_checked)
           signal.is_case_insensitive_checked = is_checked
+          TIP("ignore-case: " .. tostring(is_checked))
         end,
       }),
       n.checkbox({
@@ -116,6 +117,7 @@ function M.toggle()
         value = signal.is_hidden_checked,
         on_change = function(is_checked)
           signal.is_hidden_checked = is_checked
+          TIP("hidden: " .. tostring(is_checked))
         end,
       }),
       n.checkbox({
