@@ -604,6 +604,10 @@ end
 
 function GET_GIT_PATH(start_filepath)
   local util = require("lspconfig.util")
+  if not start_filepath then
+    ---@diagnostic disable-next-line: undefined-field
+    return vim.uv.cwd()
+  end
   return util.find_git_ancestor(start_filepath)
 end
 

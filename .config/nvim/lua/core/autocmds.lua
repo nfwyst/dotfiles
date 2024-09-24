@@ -114,6 +114,23 @@ local filetype_to_runner = {
   end,
 }
 
+local function close_alpha_when_open_file(event)
+  local buffer_path = GET_BUFFER_PATH(event.buf)
+  if not ALPHA_BUF or not IS_FILE_PATH(buffer_path) then
+    return
+  end
+  if not vim.api.nvim_buf_is_valid(ALPHA_BUF) then
+    ALPHA_BUF = nil
+    return
+  end
+  SET_TIMEOUT(function()
+    vim.api.nvim_buf_call(ALPHA_BUF, function()
+      vim.cmd("Alpha")
+      ALPHA_BUF = nil
+    end)
+  end, 10)
+end
+
 SET_AUTOCMDS({
   {
     "FileType",
@@ -193,6 +210,7 @@ SET_AUTOCMDS({
         vim.bo.tabstop = width
         vim.bo.softtabstop = width
         vim.bo.shiftwidth = width
+        close_alpha_when_open_file(event)
       end,
     },
   },

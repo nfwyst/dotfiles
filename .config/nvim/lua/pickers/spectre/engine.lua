@@ -105,7 +105,7 @@ function M.search(options, signal)
 
   pcall(function()
     spectre_state.finder_instance:search({
-      cwd = vim.fn.getcwd(),
+      cwd = GET_GIT_PATH(),
       search_text = options.search_query,
       replace_query = options.replace_query,
       -- path = spectre_state.query.path,

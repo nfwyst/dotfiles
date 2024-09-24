@@ -119,7 +119,7 @@ local function init(builtin, themes)
     end,
     SetWorkspacePathGlobal = SET_WORKSPACE_PATH_GLOBAL,
     SetWorkspacePathLocal = function()
-      WORKSPACE_PATH = vim.uv.cwd() or ""
+      WORKSPACE_PATH = GET_GIT_PATH()
       LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
     end,
     SetWorkspacePathCustom = function()
@@ -132,7 +132,7 @@ local function init(builtin, themes)
           LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
           return
         end
-        local relativePath = vim.uv.cwd()
+        local relativePath = GET_GIT_PATH()
         WORKSPACE_PATH = GEN_PATH(relativePath .. "/" .. path)
         LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
       end)

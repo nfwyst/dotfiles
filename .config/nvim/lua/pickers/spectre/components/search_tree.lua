@@ -41,7 +41,7 @@ local function replace_node(component, node, search_query, replace_query)
   replacer:replace({
     lnum = entry.lnum,
     col = entry.col,
-    cwd = vim.fn.getcwd(),
+    cwd = GET_GIT_PATH(),
     display_lnum = 0,
     filename = entry.filename,
     search_text = search_query:get_value(),
