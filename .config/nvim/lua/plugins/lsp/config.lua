@@ -31,7 +31,7 @@ local function init()
   local hd = lsp.handlers
   local opt = {
     border = "rounded",
-    width = LSP_DOC_WIDTH,
+    width = "auto",
     max_width = GET_MAX_WIDTH(),
     silent = true,
   }

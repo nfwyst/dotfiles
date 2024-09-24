@@ -79,7 +79,7 @@ return {
     local api = require("typescript-tools.api")
     local opt = {
       border = "rounded",
-      width = LSP_DOC_WIDTH,
+      width = "auto",
       max_width = GET_MAX_WIDTH(),
       silent = true,
     }

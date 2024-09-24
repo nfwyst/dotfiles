@@ -14,6 +14,10 @@ local function key_filter(config)
       if type(rhs) == "function" then
         return rhs(...)
       end
+      if START_WITH(rhs, "<cmd>") then
+        local command = rhs:gsub("<cmd>", ""):gsub("<cr>", "")
+        return RUN_CMD(command, true)
+      end
       FEED_KEYS(rhs, "nx")
     end
   end

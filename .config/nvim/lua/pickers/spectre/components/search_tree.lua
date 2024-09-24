@@ -1,5 +1,6 @@
 local fn = require("pickers.spectre.fn")
 local n = require("nui-components")
+local spectre_state_utils = require("spectre.state_utils")
 
 local function replace_handler(tree, node)
   return {
@@ -13,43 +14,57 @@ local function replace_handler(tree, node)
   }
 end
 
-local function mappings(search_query, replace_query)
-  local spectre_state_utils = require("spectre.state_utils")
+local function replace_node(component, node, search_query, replace_query)
+  if not node then
+    return
+  end
 
+  local tree = component:get_tree()
+  local has_children = node:has_children()
+
+  if has_children then
+    local child_nodes = tree:get_nodes(node:get_id())
+    for _, child_node in ipairs(child_nodes) do
+      replace_node(component, child_node, search_query, replace_query)
+    end
+    return
+  end
+
+  local replacer_creator = spectre_state_utils.get_replace_creator()
+  local replacer = replacer_creator:new(
+    spectre_state_utils.get_replace_engine_config(),
+    replace_handler(tree, node)
+  )
+
+  local entry = node.entry
+
+  replacer:replace({
+    lnum = entry.lnum,
+    col = entry.col,
+    cwd = vim.fn.getcwd(),
+    display_lnum = 0,
+    filename = entry.filename,
+    search_text = search_query:get_value(),
+    replace_text = replace_query:get_value(),
+  })
+end
+
+local function mappings(search_query, replace_query)
   return function(component)
+    function REPLACE_ALL()
+      local tree = component:get_tree()
+      local nodes = tree:get_nodes()
+      for _, node in ipairs(nodes) do
+        replace_node(component, node, search_query, replace_query)
+      end
+    end
     return {
       {
         mode = { "n" },
         key = "r",
         handler = function()
-          local tree = component:get_tree()
           local focused_node = component:get_focused_node()
-
-          if not focused_node then
-            return
-          end
-
-          local has_children = focused_node:has_children()
-
-          if not has_children then
-            local replacer_creator = spectre_state_utils.get_replace_creator()
-            local replacer = replacer_creator:new(
-              spectre_state_utils.get_replace_engine_config(),
-              replace_handler(tree, focused_node)
-            )
-
-            local entry = focused_node.entry
-
-            replacer:replace({
-              lnum = entry.lnum,
-              col = entry.col,
-              cwd = vim.fn.getcwd(),
-              display_lnum = 0,
-              filename = entry.filename,
-              search_text = search_query:get_value(),
-              replace_text = replace_query:get_value(),
-            })
-          end
+          replace_node(component, focused_node, search_query, replace_query)
         end,
       },
     }

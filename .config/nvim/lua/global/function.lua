@@ -94,8 +94,7 @@ end
 
 function GET_MAX_WIDTH(offset)
   offset = offset or 20
-  local win_width = vim.fn.winwidth(0)
-  local width = win_width - offset
+  local width = GET_EDITOR_WIDTH() - offset
   return width > 0 and width or -width
 end
 
@@ -321,10 +320,6 @@ function GET_OPT(optname, config)
     return vim.o[optname]
   end
   return api.nvim_get_option_value(optname, config)
-end
-
-function STR_INCLUDES(str, pattern, init, plain)
-  return string.find(str, pattern, init, plain) ~= nil
 end
 
 function RUN_CMD(command, check)
@@ -679,4 +674,8 @@ end
 
 function SCROLL_TO(line, col)
   api.nvim_win_set_cursor(GET_CURRENT_WIN(), { line, col })
+end
+
+function START_WITH(str, prefix)
+  return string.sub(str, 1, #prefix) == prefix
 end

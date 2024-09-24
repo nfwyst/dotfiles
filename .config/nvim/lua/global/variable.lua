@@ -14,7 +14,6 @@ IS_MAC = OS == "OSX"
 DEFAULT_COLORSCHEME = "tokyonight"
 MAX_BUFFER_NUM = 7
 BUFFER_OPENED_TIME = {}
-LSP_DOC_WIDTH = 60
 VERSION = vim.version()
 CURSOR_HILIGHT_OPTS = {
   Cursor = { bg = "#5f87af", ctermbg = 67, blend = 0 },

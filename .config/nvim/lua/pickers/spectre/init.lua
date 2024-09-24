@@ -7,11 +7,6 @@ local search_tree = require("pickers.spectre.components.search_tree")
 local M = {}
 
 function M.toggle()
-  if M.signal then
-    M.signal.is_case_insensitive_checked = state.options["ignore-case"] or false
-    M.signal.is_hidden_checked = state.options["hidden"] or false
-  end
-
   if M.renderer then
     return M.renderer:focus()
   end
@@ -193,7 +188,7 @@ function M.toggle()
         },
         border_style = "rounded",
         on_press = function()
-          require("spectre.actions").run_replace()
+          REPLACE_ALL()
         end,
       })
     ),

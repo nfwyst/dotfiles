@@ -119,10 +119,12 @@ return {
             style = "rounded",
             padding = { 0, 1 },
           },
-          size = { width = LSP_DOC_WIDTH, max_width = GET_MAX_WIDTH() },
+          size = { width = "auto", max_width = GET_MAX_WIDTH() },
           position = { row = 2, col = 2 },
         },
-        cmdline_popup = { size = { width = LSP_DOC_WIDTH } },
+        cmdline_popup = {
+          size = { width = "auto", max_width = GET_MAX_WIDTH(4) },
+        },
       },
       presets = {
         bottom_search = true,
