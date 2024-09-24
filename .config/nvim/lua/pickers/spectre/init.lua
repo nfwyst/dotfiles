@@ -7,6 +7,11 @@ local search_tree = require("pickers.spectre.components.search_tree")
 local M = {}
 
 function M.toggle()
+  if M.signal then
+    M.signal.is_case_insensitive_checked = state.options["ignore-case"] or false
+    M.signal.is_hidden_checked = state.options["hidden"] or false
+  end
+
   if M.renderer then
     return M.renderer:focus()
   end
@@ -47,6 +52,9 @@ function M.toggle()
       return not vim.deep_equal(prev[key], curr[key])
     end)
 
+    state.options["ignore-case"] = curr.is_case_insensitive_checked
+    state.options["hidden"] = curr.is_hidden_checked
+
     if diff then
       if #curr.search_query > 2 then
         engine.search(curr, signal)
@@ -77,9 +85,11 @@ function M.toggle()
   renderer:on_unmount(function()
     subscription:unsubscribe()
     M.renderer = nil
+    M.signal = nil
   end)
 
   M.renderer = renderer
+  M.signal = signal
 
   local body = n.rows(n.columns(n.rows(
     n.columns(

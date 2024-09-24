@@ -10,11 +10,11 @@ return {
     desc = "Toggle spectre ui",
   },
   ["<leader>wfi"] = {
-    "<cmd>lua require('spectre').change_options('ignore-case')<cr>",
+    "<cmd>ToggleSpectreCase<cr>",
     desc = "Toggle ignore case",
   },
   ["<leader>wfh"] = {
-    "<cmd>lua require('spectre').change_options('hidden')<cr>",
+    "<cmd>ToggleSpectreHidden<cr>",
     desc = "Toggle search hidden",
   },
   ["<leader>wc"] = { "<cmd>SetWorkspacePathCustom<cr>", desc = "Custom path" },

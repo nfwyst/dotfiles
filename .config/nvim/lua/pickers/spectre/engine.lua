@@ -97,8 +97,6 @@ function M.search(options, signal)
   M.stop()
 
   local search_engine = spectre_search["rg"]
-  spectre_state.options["ignore-case"] = not options.is_case_insensitive_checked
-  spectre_state.options["hidden"] = not options.is_case_insensitive_checked
   spectre_state.finder_instance = search_engine:new(
     spectre_state_utils.get_search_engine_config(),
     search_handler(options, signal)
