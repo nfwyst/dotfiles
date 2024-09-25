@@ -141,7 +141,10 @@ SET_AUTOCMDS({
         local filetype = GET_FILETYPE(event.buf)
         for filetypes, runner in pairs(filetype_to_runner) do
           local is_table = type(filetypes) == "table"
-          local equal = filetypes == filetype
+          if type(filetypes) == "string" then
+            filetypes = STRING_TO_PATTERN(filetypes)
+          end
+          local equal = STRING_PATTERN_MATCHED(filetype, filetypes)
           local contain = is_table and TABLE_CONTAINS(filetypes, filetype)
           if equal or contain then
             runner(event)

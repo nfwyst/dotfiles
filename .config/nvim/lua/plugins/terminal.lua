@@ -39,17 +39,22 @@ local function set_commands()
   })
   AUTOCMD("TermOpen", {
     callback = function(event)
+      local is_lazygit = STRING_PATTERN_MATCHED(event.file, "lazygit")
+      local rhs = [[<C-\><C-n>]]
       local opts = { buffer = event.buf }
-      SET_KEY_MAPS({
-        t = {
-          { lhs = "<esc>", rhs = [[<C-\><C-n>]], opts = opts },
-          { lhs = "jk", rhs = [[<C-\><C-n>]], opts = opts },
-          { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]], opts = opts },
-          { lhs = "<C-j>", rhs = [[<C-\><C-n><C-W>j]], opts = opts },
-          { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]], opts = opts },
-          { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]], opts = opts },
-        },
-      })
+      local keymap_config = {
+        { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]], opts = opts },
+        { lhs = "<C-j>", rhs = [[<C-\><C-n><C-W>j]], opts = opts },
+        { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]], opts = opts },
+        { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]], opts = opts },
+      }
+      if not is_lazygit then
+        keymap_config = MERGE_ARRAYS(keymap_config, {
+          { lhs = "<esc>", rhs = rhs, opts = opts },
+          { lhs = "jk", rhs = rhs, opts = opts },
+        })
+      end
+      SET_KEY_MAPS({ t = keymap_config })
     end,
     pattern = "term://*",
     group = AUTOGROUP("_TermOpen_", { clear = true }),
@@ -146,6 +151,17 @@ return {
       float_opts = {
         border = "curved",
         winblend = 0,
+        width = function()
+          local multiple = 0.96
+          if ALPHA_BUF and vim.api.nvim_buf_is_valid(ALPHA_BUF) then
+            multiple = 1
+          end
+          return math.floor(GET_EDITOR_WIDTH() * multiple)
+        end,
+        height = function()
+          return math.floor(GET_EDITOR_HEIGHT() * 0.9)
+        end,
+        col = 7,
       },
     })
     init(require("toggleterm.terminal"))

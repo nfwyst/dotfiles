@@ -23,3 +23,4 @@ Ensure you have the following installed on your system
 - wezterm, terminal emulator that support multiplexer and written in rust
 - nvim, better and powerful vim
 - zellij, pluggable terminal workspace, with terminal multiplexer as the base feature
+- difftastic, structural diff tool that understands syntax

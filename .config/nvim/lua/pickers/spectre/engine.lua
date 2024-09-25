@@ -50,7 +50,8 @@ local function search_handler(options, signal)
   return {
     on_start = function()
       spectre_state.is_running = true
-      start_time = vim.loop.hrtime()
+      ---@diagnostic disable-next-line: undefined-field
+      start_time = vim.uv.hrtime()
     end,
     on_result = function(item)
       if not spectre_state.is_running then
@@ -70,7 +71,8 @@ local function search_handler(options, signal)
         return
       end
 
-      local end_time = (vim.loop.hrtime() - start_time) / 1E9
+      ---@diagnostic disable-next-line: undefined-field
+      local end_time = (vim.uv.hrtime() - start_time) / 1E9
 
       signal.search_results = M.process(options)
       signal.search_info =

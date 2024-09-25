@@ -683,3 +683,19 @@ end
 function START_WITH(str, prefix)
   return string.sub(str, 1, #prefix) == prefix
 end
+
+function STRING_TO_PATTERN(str)
+  return "^" .. str:gsub("%.", "%%."):gsub("%*", ".*") .. "$"
+end
+
+function STRING_PATTERN_MATCHED(str, patterns)
+  if type(patterns) == "string" then
+    return string.match(str, patterns)
+  end
+  for _, pattern in ipairs(patterns) do
+    if string.match(str, pattern) then
+      return true
+    end
+  end
+  return false
+end

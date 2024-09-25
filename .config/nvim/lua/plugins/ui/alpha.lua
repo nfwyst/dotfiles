@@ -49,7 +49,9 @@ return {
   config = function()
     local alpha = require("alpha")
     local dashboard = require("alpha.themes.dashboard")
-    dashboard.section.header.val = {
+    local current_path = GET_GIT_PATH()
+    local git_path = GET_GIT_PATH(current_path)
+    local val = {
       [[                               __                ]],
       [[  ___     ___    ___   __  __ /\_\    ___ ___    ]],
       [[ / _ `\  / __`\ / __`\/\ \/\ \\/\ \  / __` __`\  ]],
@@ -57,9 +59,12 @@ return {
       [[\ \_\ \_\ \____\ \____/\ \___/  \ \_\ \_\ \_\ \_\]],
       [[ \/_/\/_/\/____/\/___/  \/__/    \/_/\/_/\/_/\/_/]],
       [[]],
-      " : " .. expand_path(GET_GIT_PATH(GET_GIT_PATH())),
-      " : " .. expand_path(GET_GIT_PATH()),
+      " : " .. expand_path(current_path),
     }
+    if git_path and current_path ~= git_path then
+      table.insert(val, " : " .. expand_path(git_path))
+    end
+    dashboard.section.header.val = val
     dashboard.section.buttons.val = {
       dashboard.button("f", "󰱼  Find file", "<cmd>FindFiles<cr>"),
       dashboard.button("e", "  New file", "<cmd>ene <bar> startinsert<cr>"),
