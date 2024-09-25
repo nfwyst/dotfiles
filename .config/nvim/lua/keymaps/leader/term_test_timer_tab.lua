@@ -58,7 +58,7 @@ return {
   },
   ["<leader>tef"] = {
     function()
-      require("neotest").run.run(vim.fn.expand("%"))
+      require("neotest").run.run(GET_CUR_BUF_TO_GIT_PATH())
     end,
     desc = "Test Run File",
   },
@@ -94,7 +94,7 @@ return {
   ["<leader>teV"] = {
     function()
       require("neotest").run.run({
-        vim.fn.expand("%"),
+        GET_CUR_BUF_TO_GIT_PATH(),
         vitestCommand = "vitest --watch",
         suite = true,
       })

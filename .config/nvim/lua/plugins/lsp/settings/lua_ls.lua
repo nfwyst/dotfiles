@@ -14,7 +14,7 @@ return {
       workspace = {
         checkThirdParty = "Disable",
         library = {
-          [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+          [os.getenv("VIMRUNTIME") .. "/lua"] = true,
           [CONFIG_PATH .. "/lua"] = true,
         },
       },

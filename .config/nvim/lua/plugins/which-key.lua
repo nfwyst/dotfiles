@@ -2,13 +2,15 @@ local leader = require("keymaps.leader")
 local g = require("keymaps.g")
 
 local function key_filter(config)
+  local lhs = config[1]
   local rhs = config[2]
-  local exclude_fts = KEYMAP_EXCLUDE_FTS[rhs]
+  local exclude_fts = KEYMAP_EXCLUDE_FTS[lhs]
   if exclude_fts and #exclude_fts > 0 then
     config[2] = function(...)
       local ft = GET_OPT("filetype", { buf = GET_CURRENT_BUFFER() })
       local is_excluded = TABLE_CONTAINS(exclude_fts, ft)
       if is_excluded then
+        LOG_INFO("keymap", "key " .. lhs .. " disabled for filetype " .. ft)
         return
       end
       if type(rhs) == "function" then
@@ -16,7 +18,7 @@ local function key_filter(config)
       end
       if START_WITH(rhs, "<cmd>") then
         local command = rhs:gsub("<cmd>", ""):gsub("<cr>", "")
-        return RUN_CMD(command, true)
+        return RUN_CMD(command)
       end
       FEED_KEYS(rhs, "nx")
     end

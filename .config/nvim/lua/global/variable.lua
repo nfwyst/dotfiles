@@ -210,6 +210,10 @@ LSP_SYMBOLS = {
 KEYMAP_EXCLUDE_FTS = {
   ["<c-o>"] = { "qf" },
   ["<c-i>"] = { "qf" },
+  ["<leader>f"] = { "qf" },
+  ["<leader>F"] = { "qf" },
+  ["<leader>r"] = { "qf" },
+  ["<leader>R"] = { "qf" },
 }
 
 local function defaulter(f, default_opts)

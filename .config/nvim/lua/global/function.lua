@@ -699,3 +699,7 @@ function STRING_PATTERN_MATCHED(str, patterns)
   end
   return false
 end
+
+function GET_CUR_BUF_TO_GIT_PATH()
+  return vim.fn.expand("%")
+end
