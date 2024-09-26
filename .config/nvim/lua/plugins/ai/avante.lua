@@ -34,7 +34,7 @@ end
 return {
   "yetone/avante.nvim",
   event = "VeryLazy",
-  build = "make",
+  build = "make BUILD_FROM_SOURCE=true",
   dependencies = {
     "stevearc/dressing.nvim",
     "nvim-lua/plenary.nvim",
