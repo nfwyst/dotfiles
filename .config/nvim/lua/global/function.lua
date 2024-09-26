@@ -334,7 +334,8 @@ function SET_TIMEOUT(func, timeout)
 end
 
 function IS_FILE_PATH(path)
-  local Path = require("plenary.path")
+  local ok, Path = pcall(require, "plenary.path")
+  if not ok then return end
   return Path:new(path):is_file()
 end
 
