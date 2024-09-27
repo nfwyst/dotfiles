@@ -2,7 +2,7 @@
   "LuaSnip": { "branch": "master", "commit": "e808bee352d1a6fcf902ca1a71cee76e60e24071" },
   "NeoSolarized": { "branch": "master", "commit": "bdfcdd056c4c73b10fc6f42f0c2d0df839ff49ae" },
   "alpha-nvim": { "branch": "main", "commit": "b6f4129302db197a7249e67a90de3f2b676de13e" },
-  "avante.nvim": { "branch": "main", "commit": "9387c8ad4524bc887e591a1f6e7fd26c1a8184c0" },
+  "avante.nvim": { "branch": "main", "commit": "f3ee77dd5b08fb617065031a80a2f9ef409e566d" },
   "barbecue": { "branch": "main", "commit": "3e31404f0b93a2c30d151abf0648650ac811c664" },
   "bigfile.nvim": { "branch": "main", "commit": "33eb067e3d7029ac77e081cfe7c45361887a311a" },
   "bufdelete.nvim": { "branch": "master", "commit": "f6bcea78afb3060b198125256f897040538bcb81" },

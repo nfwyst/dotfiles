@@ -335,7 +335,9 @@ end
 
 function IS_FILE_PATH(path)
   local ok, Path = pcall(require, "plenary.path")
-  if not ok then return end
+  if not ok then
+    return
+  end
   return Path:new(path):is_file()
 end
 
@@ -703,4 +705,21 @@ end
 
 function GET_CUR_BUF_TO_GIT_PATH()
   return vim.fn.expand("%")
+end
+
+function FOCUS_TO_BUFFER(bufnr)
+  local windows = GET_WINDOWS_BY_BUF(bufnr)
+  for _, win in ipairs(windows) do
+    vim.api.nvim_set_current_win(win)
+  end
+  vim.api.nvim_set_current_buf(bufnr)
+end
+
+function FOCUS_TO_FILETYPE(filetype)
+  local buffers = vim.api.nvim_list_bufs()
+  for _, bufnr in ipairs(buffers) do
+    if filetype == GET_FILETYPE(bufnr) then
+      return FOCUS_TO_BUFFER(bufnr)
+    end
+  end
 end

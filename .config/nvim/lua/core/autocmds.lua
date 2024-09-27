@@ -38,6 +38,31 @@ local function remove_qf_item(is_normal)
   end
 end
 
+function focuse_avante_input(isAvante, buf)
+  if not isAvante then
+    return
+  end
+  AVANTE_BUF = buf
+  SET_TIMEOUT(function()
+    FOCUS_TO_FILETYPE("AvanteInput")
+  end, 120)
+end
+
+function quit_buffer(buf)
+  local isAvanteInput = GET_FILETYPE(buf) == "AvanteInput"
+  if not isAvanteInput then
+    return vim.cmd.close()
+  end
+  if not AVANTE_BUF then
+    return
+  end
+  if not vim.api.nvim_buf_is_valid(AVANTE_BUF) then
+    AVANTE_BUF = nil
+    return
+  end
+  vim.api.nvim_buf_call(AVANTE_BUF, vim.cmd.close)
+end
+
 local filetype_to_runner = {
   [{
     "qf",
@@ -49,9 +74,13 @@ local filetype_to_runner = {
     "DressingSelect",
     "DiffviewFileHistory",
     "spectre_panel",
+    "AvanteInput",
   }] = function(event)
+    local buf = event.buf
     local option = { silent = true, buffer = event.buf }
-    KEY_MAP("n", "q", vim.cmd.close, option)
+    KEY_MAP("n", "q", function()
+      quit_buffer(buf)
+    end, option)
   end,
   [{ "help", "gitconfig" }] = function(event)
     SET_OPT("list", false, event)
@@ -88,14 +117,16 @@ local filetype_to_runner = {
     "Avante",
   }] = function(event)
     local isAvante = "Avante" == event.match
-    local isChat = IS_GPT_PROMPT_CHAT(event.buf)
+    local buf = event.buf
+    local isChat = IS_GPT_PROMPT_CHAT(buf)
+    local opts = {
+      wrap = true,
+      tabstop = 2,
+      softtabstop = 2,
+      shiftwidth = 2,
+    }
+    focuse_avante_input(isAvante, buf)
     SET_TIMEOUT(function()
-      local opts = {
-        wrap = true,
-        tabstop = 2,
-        softtabstop = 2,
-        shiftwidth = 2,
-      }
       if isAvante or isChat then
         opts = MERGE_TABLE(opts, {
           number = false,

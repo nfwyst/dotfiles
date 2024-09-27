@@ -31,10 +31,12 @@ local function init(config)
   setup_prompt(PROMPT)
 end
 
+local build = IS_MAC and "make" or "make BUILD_FROM_SOURCE=true"
+
 return {
   "yetone/avante.nvim",
   event = "VeryLazy",
-  build = "make BUILD_FROM_SOURCE=true",
+  build = build,
   dependencies = {
     "stevearc/dressing.nvim",
     "nvim-lua/plenary.nvim",
