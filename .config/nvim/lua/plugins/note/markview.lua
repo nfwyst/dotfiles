@@ -3,7 +3,7 @@ local function set_conceal(win, level, cursor)
 end
 
 return {
-  "OXY2DEV/markview.nvim",
+  "nfwyst/markview.nvim",
   lazy = false,
   dependencies = {
     "nvim-treesitter/nvim-treesitter",

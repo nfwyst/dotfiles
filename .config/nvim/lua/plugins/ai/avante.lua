@@ -77,10 +77,10 @@ return {
         },
       },
       behaviour = {
-        auto_suggestions = false,
+        auto_suggestions = true,
         auto_set_highlight_group = true,
-        auto_set_keymaps = true,
         auto_apply_diff_after_generation = true,
+        auto_set_keymaps = false,
         support_paste_from_clipboard = false,
       },
       windows = {
@@ -110,15 +110,6 @@ return {
         submit = {
           normal = "<cr>",
           insert = "<C-s>",
-        },
-        ask = "<leader>aiaa",
-        edit = "<leader>aiae",
-        refresh = "<leader>aiar",
-        toggle = {
-          default = "<leader>aiat",
-          debug = "<leader>aiad",
-          hint = "<leader>aiah",
-          suggestion = "<leader>aias",
         },
       },
     })

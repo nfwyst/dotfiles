@@ -38,16 +38,6 @@ local function remove_qf_item(is_normal)
   end
 end
 
-function focuse_avante_input(isAvante, buf)
-  if not isAvante then
-    return
-  end
-  AVANTE_BUF = buf
-  SET_TIMEOUT(function()
-    FOCUS_TO_FILETYPE("AvanteInput")
-  end, 120)
-end
-
 function quit_buffer(buf)
   local isAvanteInput = GET_FILETYPE(buf) == "AvanteInput"
   if not isAvanteInput then
@@ -125,9 +115,11 @@ local filetype_to_runner = {
       softtabstop = 2,
       shiftwidth = 2,
     }
-    focuse_avante_input(isAvante, buf)
     SET_TIMEOUT(function()
       if isAvante or isChat then
+        if isAvante then
+          AVANTE_BUF = buf
+        end
         opts = MERGE_TABLE(opts, {
           number = false,
           relativenumber = false,
