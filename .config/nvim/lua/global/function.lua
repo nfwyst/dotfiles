@@ -725,3 +725,8 @@ end
 function GET_CUR_BUF_TO_GIT_PATH()
   return vim.fn.expand("%")
 end
+
+function BIND_QUIT(bufnr)
+  local option = { silent = true, buffer = bufnr }
+  KEY_MAP("n", "q", vim.cmd.close, option)
+end

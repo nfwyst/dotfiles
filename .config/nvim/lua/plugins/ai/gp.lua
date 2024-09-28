@@ -80,7 +80,7 @@ local hooks = {
     fn = inspect_log,
   },
   BufferChatNew = {
-    desc = "opens new chat with the entire current buffer as a context",
+    desc = "chat with buffer vertical",
     selection = false,
     fn = buffer_chat_new,
   },
@@ -109,7 +109,7 @@ local hooks = {
     selection = false,
   },
   ChatToggle = {
-    desc = "GPT prompt Toggle Chat",
+    desc = "GPT prompt Toggle Chat vertical",
     selection = false,
   },
   ChatFinder = {
@@ -125,7 +125,7 @@ local hooks = {
     selection = false,
   },
   ["ChatNew vsplit"] = {
-    desc = "GPT prompt New Chat vsplit",
+    desc = "GPT prompt New Chat vertical",
     selection = false,
   },
   ["ChatNew tabnew"] = {
@@ -192,6 +192,27 @@ local function select_agent(gp)
   })
 end
 
+local function set_sidebar_width(multiple)
+  SET_TIMEOUT(function()
+    local bufs = vim.api.nvim_list_bufs()
+    local bufnr = nil
+    for _, buf in ipairs(bufs) do
+      local is_gp_buf = IS_GPT_PROMPT_CHAT(buf)
+      if is_gp_buf then
+        bufnr = buf
+        break
+      end
+    end
+    local wins = GET_WINDOWS_BY_BUF(bufnr)
+    for _, win in ipairs(wins) do
+      local width = math.floor(GET_EDITOR_WIDTH() * multiple)
+      vim.api.nvim_win_set_width(win, width)
+      BIND_QUIT(bufnr)
+      break
+    end
+  end, 10)
+end
+
 local function pick_command(mode)
   local command_names = {}
   for name, cmd in pairs(hooks) do
@@ -202,8 +223,13 @@ local function pick_command(mode)
 
   NEW_PICKER("Select command", {}, command_names, {
     on_select = function(selected)
-      local command = selected:match("^%s*(.-)%s*-")
+      local command, str = selected:match("^%s*(.-)%s*-%s*(.-)%s*$")
+      local is_vertical = string.match(str, "vertical")
       vim.cmd("Gp" .. command)
+      if not is_vertical then
+        return
+      end
+      set_sidebar_width(0.3)
     end,
   })
 end

@@ -51,8 +51,7 @@ local filetype_to_runner = {
     "spectre_panel",
     "AvanteInput",
   }] = function(event)
-    local option = { silent = true, buffer = event.buf }
-    KEY_MAP("n", "q", vim.cmd.close, option)
+    BIND_QUIT(event.buf)
   end,
   [{ "help", "gitconfig" }] = function(event)
     SET_OPT("list", false, event)
