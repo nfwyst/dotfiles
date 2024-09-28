@@ -33,13 +33,15 @@ local function inspect_log(plugin, _)
 end
 
 local function buffer_chat_new(gp, _)
-  vim.api.nvim_command("%" .. gp.config.cmd_prefix .. "ChatNew vsplit")
+  vim.cmd("%" .. gp.config.cmd_prefix .. "ChatNew vsplit")
 end
 
 local function translate(gp, params)
-  local chat_system_prompt =
-    "你是一位出色的翻译专家，请在英文和中文之间进行翻译"
-  gp.cmd.ChatNew(params, chat_system_prompt)
+  local template = "你是一位出色的翻译专家, 我有以下内容:\n\n"
+    .. "{{selection}}\n\n"
+    .. "如果上述内容为非中文的请翻译为中文, 否则翻译为英文, 只输出翻译结果。"
+  local agent = gp.get_chat_agent()
+  gp.Prompt(params, gp.Target.popup, agent, template)
 end
 
 local function unit_tests(gp, params)
@@ -201,13 +203,7 @@ local function pick_command(mode)
   NEW_PICKER("Select command", {}, command_names, {
     on_select = function(selected)
       local command = selected:match("^%s*(.-)%s*-")
-      if mode == "v" then
-        command = ":<C-u>'<,'>Gp" .. command .. "<CR>"
-      else
-        command = ":Gp" .. command .. "<CR>"
-      end
-
-      FEED_KEYS(command, "c")
+      vim.cmd("Gp" .. command)
     end,
   })
 end

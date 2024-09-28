@@ -276,7 +276,7 @@ PREVIEWER = defaulter(function(options)
           return
         end
         vim.api.nvim_win_call(winid, function()
-          vim.cmd([[normal! ]] .. row .. [[]])
+          vim.cmd.normal({ row .. "", bang = true })
         end)
       end, 50)
     end,

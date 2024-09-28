@@ -153,7 +153,7 @@ return {
         winblend = 0,
         width = function()
           local multiple = 0.96
-          if ALPHA_BUF and vim.api.nvim_buf_is_valid(ALPHA_BUF) then
+          if ALPHA_BUF and BUF_VALID(ALPHA_BUF) then
             multiple = 1
           end
           return math.floor(GET_EDITOR_WIDTH() * multiple)

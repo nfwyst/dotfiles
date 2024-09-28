@@ -132,7 +132,7 @@ end
 
 function GET_WINDOWS_BY_BUF(bufnr)
   local windows = {}
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
+  for _, win in ipairs(api.nvim_list_wins()) do
     if GET_BUFFER_ID(win) == bufnr then
       table.insert(windows, win)
     end
@@ -145,23 +145,25 @@ function SET_OPT(k, v, config)
     vim.opt[k] = v
     return
   end
-  local setter = api.nvim_set_option_value
   function set_opt_for_win(bufnr)
     for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
-      setter(k, v, { win = win })
+      ---@diagnostic disable-next-line: deprecated
+      vim.api.nvim_win_set_option(win, k, v)
     end
   end
   local buf = config.buf
   local win = config.win
   if win then
-    setter(k, v, { win = win })
+    ---@diagnostic disable-next-line: deprecated
+    vim.api.nvim_win_set_option(win, k, v)
     return
   end
   if not buf then
     return
   end
   local ok, _ = pcall(function()
-    setter(k, v, { buf = buf })
+    ---@diagnostic disable-next-line: deprecated
+    vim.api.nvim_buf_set_option(buf, k, v)
   end)
   if not ok then
     set_opt_for_win(buf)
@@ -559,13 +561,17 @@ end
 
 function HIGHLIGHT_ROW(bufnr, row)
   local hl_group = "CursorLine"
-  vim.api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
+  api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
 end
 
 function GET_VIEWPORT_HEIGHT(winnr)
-  local win_height = vim.api.nvim_win_get_height(winnr)
+  local win_height = api.nvim_win_get_height(winnr)
   local scrolloff = GET_OPT("scrolloff", { win = winnr })
   return win_height - 2 * scrolloff
+end
+
+function BUF_VALID(bufnr)
+  return api.nvim_buf_is_valid(bufnr)
 end
 
 function GET_FILETYPE(bufnr)
@@ -573,7 +579,7 @@ function GET_FILETYPE(bufnr)
 end
 
 function GET_BUFFER_ID(winid)
-  return vim.api.nvim_win_get_buf(winid)
+  return api.nvim_win_get_buf(winid)
 end
 
 function IS_CURSOR_HIDE()
@@ -687,16 +693,29 @@ function START_WITH(str, prefix)
   return string.sub(str, 1, #prefix) == prefix
 end
 
+function HAS_WILDCARD(str)
+  return string.find(str, "[*?]") ~= nil
+end
+
 function STRING_TO_PATTERN(str)
+  if not HAS_WILDCARD(str) then
+    return str
+  end
   return "^" .. str:gsub("%.", "%%."):gsub("%*", ".*") .. "$"
 end
 
 function STRING_PATTERN_MATCHED(str, patterns)
   if type(patterns) == "string" then
-    return string.match(str, patterns)
+    patterns = { patterns }
+  end
+  local function matcher(_str, pattern)
+    if HAS_WILDCARD(pattern) then
+      return string.match(_str, STRING_TO_PATTERN(pattern))
+    end
+    return _str == pattern
   end
   for _, pattern in ipairs(patterns) do
-    if string.match(str, pattern) then
+    if matcher(str, pattern) then
       return true
     end
   end
@@ -705,21 +724,4 @@ end
 
 function GET_CUR_BUF_TO_GIT_PATH()
   return vim.fn.expand("%")
-end
-
-function FOCUS_TO_BUFFER(bufnr)
-  local windows = GET_WINDOWS_BY_BUF(bufnr)
-  for _, win in ipairs(windows) do
-    vim.api.nvim_set_current_win(win)
-  end
-  vim.api.nvim_set_current_buf(bufnr)
-end
-
-function FOCUS_TO_FILETYPE(filetype)
-  local buffers = vim.api.nvim_list_bufs()
-  for _, bufnr in ipairs(buffers) do
-    if filetype == GET_FILETYPE(bufnr) then
-      return FOCUS_TO_BUFFER(bufnr)
-    end
-  end
 end

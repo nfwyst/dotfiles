@@ -38,21 +38,6 @@ local function remove_qf_item(is_normal)
   end
 end
 
-function quit_buffer(buf)
-  local isAvanteInput = GET_FILETYPE(buf) == "AvanteInput"
-  if not isAvanteInput then
-    return vim.cmd.close()
-  end
-  if not AVANTE_BUF then
-    return
-  end
-  if not vim.api.nvim_buf_is_valid(AVANTE_BUF) then
-    AVANTE_BUF = nil
-    return
-  end
-  vim.api.nvim_buf_call(AVANTE_BUF, vim.cmd.close)
-end
-
 local filetype_to_runner = {
   [{
     "qf",
@@ -66,11 +51,8 @@ local filetype_to_runner = {
     "spectre_panel",
     "AvanteInput",
   }] = function(event)
-    local buf = event.buf
     local option = { silent = true, buffer = event.buf }
-    KEY_MAP("n", "q", function()
-      quit_buffer(buf)
-    end, option)
+    KEY_MAP("n", "q", vim.cmd.close, option)
   end,
   [{ "help", "gitconfig" }] = function(event)
     SET_OPT("list", false, event)
@@ -142,7 +124,7 @@ local function close_alpha_when_open_file(event)
   if not ALPHA_BUF or not IS_FILE_PATH(buffer_path) then
     return
   end
-  if not vim.api.nvim_buf_is_valid(ALPHA_BUF) then
+  if not BUF_VALID(ALPHA_BUF) then
     ALPHA_BUF = nil
     return
   end
@@ -163,13 +145,8 @@ SET_AUTOCMDS({
       callback = function(event)
         local filetype = GET_FILETYPE(event.buf)
         for filetypes, runner in pairs(filetype_to_runner) do
-          local is_table = type(filetypes) == "table"
-          if type(filetypes) == "string" then
-            filetypes = STRING_TO_PATTERN(filetypes)
-          end
-          local equal = STRING_PATTERN_MATCHED(filetype, filetypes)
-          local contain = is_table and TABLE_CONTAINS(filetypes, filetype)
-          if equal or contain then
+          local matched = STRING_PATTERN_MATCHED(filetype, filetypes)
+          if matched then
             runner(event)
           end
         end
