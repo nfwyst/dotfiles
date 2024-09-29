@@ -16,7 +16,7 @@ local function disable_context_when_move()
         vim.cmd("TSContextDisable")
         is_disabled = true
       end
-      SET_TIMER(timer, 500, function()
+      SET_TIMER(timer, IS_MAC and 500 or 1500, function()
         vim.cmd("TSContextEnable")
         is_disabled = false
       end)
