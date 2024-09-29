@@ -64,7 +64,7 @@ return {
               },
               body = {
                 model = opts.model,
-                messages = providers.copilot.parse_message(code_opts),
+                messages = providers.openai.parse_message(code_opts),
                 temperature = 0,
                 max_tokens = 8192,
                 stream = true,

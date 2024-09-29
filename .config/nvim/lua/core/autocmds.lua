@@ -49,13 +49,13 @@ local filetype_to_runner = {
     "DressingSelect",
     "DiffviewFileHistory",
     "spectre_panel",
-  }] = function(event)
+  }] = DEBOUNCE(function(event)
     BIND_QUIT(event.buf)
-  end,
-  [{ "help", "gitconfig" }] = function(event)
+  end, 100),
+  [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
     SET_OPT("list", false, event)
-  end,
-  qf = function(event)
+  end, 100),
+  qf = DEBOUNCE(function(event)
     local opt = {
       buflisted = false,
       relativenumber = false,
@@ -64,12 +64,12 @@ local filetype_to_runner = {
     opt = { buffer = event.buf }
     KEY_MAP("n", "dd", remove_qf_item(true), opt)
     KEY_MAP("x", "d", remove_qf_item(), opt)
-  end,
+  end, 100),
   [{
     "lazy",
     "DressingInput",
     "DressingSelect",
-  }] = function(event)
+  }] = DEBOUNCE(function(event)
     SET_TIMEOUT(function()
       SET_OPT("wrap", true, event)
       if IS_CURSOR_HIDE() then
@@ -79,13 +79,13 @@ local filetype_to_runner = {
         SET_OPT("cursorline", true, event)
       end
     end, 10)
-  end,
+  end, 100),
   [{
     "markdown",
     "gitcommit",
     "NeogitCommitMessage",
     "Avante",
-  }] = function(event)
+  }] = DEBOUNCE(function(event)
     local isAvante = "Avante" == event.match
     local buf = event.buf
     local isChat = IS_GPT_PROMPT_CHAT(buf)
@@ -111,10 +111,10 @@ local filetype_to_runner = {
       end
       SET_OPTS(opts, event)
     end, 100)
-  end,
-  ["Neogit*"] = function(event)
+  end, 100),
+  ["Neogit*"] = DEBOUNCE(function(event)
     SET_OPT("foldcolumn", "0", event)
-  end,
+  end, 100),
 }
 
 local function close_alpha_when_open_file(event)

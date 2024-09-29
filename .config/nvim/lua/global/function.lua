@@ -730,3 +730,41 @@ function BIND_QUIT(bufnr)
   local option = { silent = true, buffer = bufnr }
   KEY_MAP("n", "q", vim.cmd.close, option)
 end
+
+function SET_TIMER(tm, ms, callback, ...)
+  local args = { ... }
+  tm:stop()
+  tm:start(ms, 0, function()
+    pcall(vim.schedule_wrap(function(...)
+      callback(...)
+      tm:stop()
+    end))
+    UNPACK(args)
+  end)
+end
+
+function DEBOUNCE(fn, ms, for_params)
+  local last_args = nil
+  local last_time = 0
+  if for_params == nil then
+    for_params = true
+  end
+  return function(...)
+    ---@diagnostic disable-next-line: undefined-field
+    local current_time = vim.uv.now()
+    local args = { ... }
+
+    local params_is_same = for_params and vim.deep_equal(args, last_args)
+    local time_not_done = current_time - last_time < ms
+    if params_is_same or time_not_done then
+      return
+    end
+
+    last_args = args
+    last_time = current_time
+
+    vim.defer_fn(function()
+      fn(UNPACK(args))
+    end, ms)
+  end
+end
