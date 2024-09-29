@@ -51,10 +51,10 @@ local filetype_to_runner = {
     "spectre_panel",
   }] = DEBOUNCE(function(event)
     BIND_QUIT(event.buf)
-  end, 100),
+  end),
   [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
     SET_OPT("list", false, event)
-  end, 100),
+  end),
   qf = DEBOUNCE(function(event)
     local opt = {
       buflisted = false,
@@ -64,7 +64,7 @@ local filetype_to_runner = {
     opt = { buffer = event.buf }
     KEY_MAP("n", "dd", remove_qf_item(true), opt)
     KEY_MAP("x", "d", remove_qf_item(), opt)
-  end, 100),
+  end),
   [{
     "lazy",
     "DressingInput",
@@ -79,7 +79,7 @@ local filetype_to_runner = {
         SET_OPT("cursorline", true, event)
       end
     end, 10)
-  end, 100),
+  end),
   [{
     "markdown",
     "gitcommit",
@@ -111,10 +111,10 @@ local filetype_to_runner = {
       end
       SET_OPTS(opts, event)
     end, 100)
-  end, 100),
+  end),
   ["Neogit*"] = DEBOUNCE(function(event)
     SET_OPT("foldcolumn", "0", event)
-  end, 100),
+  end),
 }
 
 local function close_alpha_when_open_file(event)

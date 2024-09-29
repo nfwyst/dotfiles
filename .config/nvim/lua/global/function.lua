@@ -746,6 +746,7 @@ end
 function DEBOUNCE(fn, ms, for_params)
   local last_args = nil
   local last_time = 0
+  ms = ms or 100
   if for_params == nil then
     for_params = true
   end

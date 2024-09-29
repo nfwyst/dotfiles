@@ -2,10 +2,7 @@
 local timer = vim.uv.new_timer()
 local is_disabled = false
 
-local function init(context)
-  USER_COMMAND("GoToContext", function()
-    context.go_to_context()
-  end)
+local function disable_context_when_move()
   AUTOCMD({ "CursorMoved", "CursorMovedI" }, {
     group = AUTOGROUP("__disable_context__", { clear = true }),
     callback = function(event)
@@ -25,6 +22,13 @@ local function init(context)
       end)
     end,
   })
+end
+
+local function init(context)
+  disable_context_when_move()
+  USER_COMMAND("GoToContext", function()
+    context.go_to_context()
+  end)
 end
 
 return {
