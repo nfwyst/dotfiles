@@ -49,7 +49,6 @@ local filetype_to_runner = {
     "DressingSelect",
     "DiffviewFileHistory",
     "spectre_panel",
-    "AvanteInput",
   }] = function(event)
     BIND_QUIT(event.buf)
   end,

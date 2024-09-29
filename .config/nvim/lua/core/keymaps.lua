@@ -38,10 +38,10 @@ SET_KEY_MAPS({
     { lhs = "<c-k>", rhs = "<c-w>k" },
     { lhs = "<c-l>", rhs = "<c-w>l" },
     -- resize with arrows
-    { lhs = "<m-up>", rhs = "<cmd>resize -2<cr>" },
-    { lhs = "<m-down>", rhs = "<cmd>resize +2<cr>" },
-    { lhs = "<m-left>", rhs = "<cmd>vertical resize -2<cr>" },
-    { lhs = "<m-right>", rhs = "<cmd>vertical resize +2<cr>" },
+    { lhs = "<s-up>", rhs = "<cmd>resize -2<cr>" },
+    { lhs = "<s-down>", rhs = "<cmd>resize +2<cr>" },
+    { lhs = "<s-left>", rhs = "<cmd>vertical resize -2<cr>" },
+    { lhs = "<s-right>", rhs = "<cmd>vertical resize +2<cr>" },
     -- buffers navigation
     { lhs = "<s-l>", rhs = "<cmd>bnext<cr>" },
     { lhs = "<s-h>", rhs = "<cmd>bprevious<cr>" },
