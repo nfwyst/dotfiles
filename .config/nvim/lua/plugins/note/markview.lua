@@ -28,7 +28,7 @@ return {
       list_items = {
         shift_width = 2,
       },
-      filetypes = { "markdown", "quarto", "rmd", "Avante" },
+      filetypes = { "markdown", "Avante" },
       buf_ignore = {},
       max_length = 99999,
     })

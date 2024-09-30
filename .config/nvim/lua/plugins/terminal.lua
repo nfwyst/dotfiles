@@ -39,7 +39,7 @@ local function set_commands()
   })
   AUTOCMD("TermOpen", {
     callback = function(event)
-      local is_lazygit = STRING_PATTERN_MATCHED(event.file, "lazygit")
+      local is_lazygit = STRING_PATTERN_MATCHED(event.file, "lazygit*", true)
       local rhs = [[<C-\><C-n>]]
       local opts = { buffer = event.buf }
       local keymap_config = {

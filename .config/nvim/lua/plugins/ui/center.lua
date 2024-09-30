@@ -6,6 +6,6 @@ return {
   priority = 1000,
   opts = {
     enabled = true,
-    skip_filetypes = MERGE_TABLE(INVALID_FILETYPE, { "Avante" }),
+    skip_filetypes = INVALID_FILETYPE,
   },
 }

@@ -439,88 +439,6 @@ function IS_GPT_PROMPT_CHAT(bufnr)
   return gp.not_chat(buf, buffer_path) == nil
 end
 
-function GET_CURRENT_MODE()
-  return string.lower(vim.fn.mode())
-end
-
-function GET_FILES_FROM_PATH(path, num)
-  local files = {}
-  local handle = io.popen("ls -a " .. path)
-  if not handle then
-    return files
-  end
-
-  for _ = 1, num do
-    local file = handle:read("*l")
-    if not file then
-      handle:close()
-      return files
-    end
-    table.insert(files, file)
-  end
-
-  handle:close()
-  return files
-end
-
-function IS_EMPTY_LINE(line)
-  line = line:gsub("[\r\n]+$", "")
-  return line == "" or line:match("^%s*$")
-end
-
-function GET_LINES_FROM_BUF(bufnr, line_num)
-  return api.nvim_buf_get_lines(bufnr, 0, line_num, false)
-end
-
-function LINES_TAB_MORE_THAN_SPACE(lines)
-  local tab_num = 0
-  local space_num = 0
-  for _, line in ipairs(lines) do
-    local empty = IS_EMPTY_LINE(line)
-    local start_with_tab = line:match("^\t")
-    if not empty and start_with_tab then
-      tab_num = tab_num + 1
-    end
-    if not empty and not start_with_tab and line:match("^%s") then
-      space_num = space_num + 1
-    end
-  end
-  return tab_num > space_num
-end
-
-function GET_LINES_FROM_FILE(file, num)
-  local lines = {}
-  for _ = 1, num do
-    local line = file:read("*l")
-    if not line then
-      return lines
-    end
-    table.insert(lines, line)
-  end
-  return lines
-end
-
-function IS_INDENT_WITH_TAB(params)
-  local filepath = params.filepath
-  local line_num = 50
-  if filepath then
-    local file = io.open(filepath, "r")
-    if not file then
-      return false
-    end
-    local lines = GET_LINES_FROM_FILE(file, line_num)
-    local is_tab_indent = LINES_TAB_MORE_THAN_SPACE(lines)
-    file:close()
-    return is_tab_indent
-  end
-  local bufnr = params.buf
-  if not bufnr then
-    bufnr = GET_CURRENT_BUFFER()
-  end
-  local lines = GET_LINES_FROM_BUF(bufnr, line_num)
-  return LINES_TAB_MORE_THAN_SPACE(lines)
-end
-
 function NEW_PICKER(title, theme, results, opts)
   theme.entry_parser = opts.entry_parser
   local pickers = require("telescope.pickers")
@@ -557,11 +475,6 @@ function FEED_KEYS(keys, mode)
   local special = true
   local keyscode = api.nvim_replace_termcodes(keys, from_part, do_lt, special)
   api.nvim_feedkeys(keyscode, mode, false)
-end
-
-function HIGHLIGHT_ROW(bufnr, row)
-  local hl_group = "CursorLine"
-  api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
 end
 
 function GET_VIEWPORT_HEIGHT(winnr)
@@ -697,20 +610,24 @@ function HAS_WILDCARD(str)
   return string.find(str, "[*?]") ~= nil
 end
 
-function STRING_TO_PATTERN(str)
+local function string_to_pattern(str, fuzzy)
   if not HAS_WILDCARD(str) then
     return str
   end
-  return "^" .. str:gsub("%.", "%%."):gsub("%*", ".*") .. "$"
+  local pattern = str:gsub("%.", "%%."):gsub("%*", ".*")
+  if fuzzy then
+    return pattern
+  end
+  return "^" .. pattern .. "$"
 end
 
-function STRING_PATTERN_MATCHED(str, patterns)
+function STRING_PATTERN_MATCHED(str, patterns, fuzzy)
   if type(patterns) == "string" then
     patterns = { patterns }
   end
   local function matcher(_str, pattern)
     if HAS_WILDCARD(pattern) then
-      return string.match(_str, STRING_TO_PATTERN(pattern))
+      return string.match(_str, string_to_pattern(pattern, fuzzy))
     end
     return _str == pattern
   end
@@ -729,18 +646,6 @@ end
 function BIND_QUIT(bufnr)
   local option = { silent = true, buffer = bufnr }
   KEY_MAP("n", "q", vim.cmd.close, option)
-end
-
-function SET_TIMER(tm, ms, callback, ...)
-  local args = { ... }
-  tm:stop()
-  tm:start(ms, 0, function()
-    pcall(vim.schedule_wrap(function(...)
-      callback(...)
-      tm:stop()
-    end))
-    UNPACK(args)
-  end)
 end
 
 function DEBOUNCE(fn, ms, for_params)

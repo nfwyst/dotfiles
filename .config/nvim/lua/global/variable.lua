@@ -3,6 +3,7 @@ CONFIG_PATH = vim.fn.stdpath("config")
 HOME_PATH = vim.fn.expand("~")
 AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
+---@diagnostic disable-next-line: undefined-field
 WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
 MAX_FILE_LENGTH = 5000
@@ -90,6 +91,7 @@ INVALID_FILETYPE = {
   "WhichKey",
   "TelescopeResults",
   "Outline",
+  "Avante",
   "",
   nil,
 }
@@ -242,6 +244,11 @@ local function defaulter(f, default_opts)
   }
 end
 
+function highlight_row(bufnr, row)
+  local hl_group = "CursorLine"
+  vim.api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
+end
+
 PREVIEWER = defaulter(function(options)
   local previewers = require("telescope.previewers")
   local from_entry = require("telescope.from_entry")
@@ -269,7 +276,7 @@ PREVIEWER = defaulter(function(options)
         return
       end
       SET_TIMEOUT(function()
-        HIGHLIGHT_ROW(bufnr, row)
+        highlight_row(bufnr, row)
         local win_height = GET_VIEWPORT_HEIGHT(winid)
         row = row - 1 - math.floor(win_height / 2)
         if row <= 0 then

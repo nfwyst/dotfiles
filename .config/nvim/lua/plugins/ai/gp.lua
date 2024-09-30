@@ -237,7 +237,8 @@ end
 local function init(gp)
   SET_USER_COMMANDS({
     GpPickCommand = function()
-      pick_command(GET_CURRENT_MODE())
+      local mode = string.lower(vim.fn.mode())
+      pick_command(mode)
     end,
     GpSelectAgent = function()
       select_agent(gp)

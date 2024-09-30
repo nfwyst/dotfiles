@@ -38,6 +38,64 @@ local function remove_qf_item(is_normal)
   end
 end
 
+function is_empty_line(line)
+  line = line:gsub("[\r\n]+$", "")
+  return line == "" or line:match("^%s*$")
+end
+
+function get_lines_from_file(file, num)
+  local lines = {}
+  for _ = 1, num do
+    local line = file:read("*l")
+    if not line then
+      return lines
+    end
+    table.insert(lines, line)
+  end
+  return lines
+end
+
+function lines_tab_more_than_space(lines)
+  local tab_num = 0
+  local space_num = 0
+  for _, line in ipairs(lines) do
+    local empty = is_empty_line(line)
+    local start_with_tab = line:match("^\t")
+    if not empty and start_with_tab then
+      tab_num = tab_num + 1
+    end
+    if not empty and not start_with_tab and line:match("^%s") then
+      space_num = space_num + 1
+    end
+  end
+  return tab_num > space_num
+end
+
+function get_lines_from_buf(bufnr, line_num)
+  return vim.api.nvim_buf_get_lines(bufnr, 0, line_num, false)
+end
+
+local function is_indent_with_tab(params)
+  local filepath = params.filepath
+  local line_num = 50
+  if filepath then
+    local file = io.open(filepath, "r")
+    if not file then
+      return false
+    end
+    local lines = get_lines_from_file(file, line_num)
+    local is_tab_indent = lines_tab_more_than_space(lines)
+    file:close()
+    return is_tab_indent
+  end
+  local bufnr = params.buf
+  if not bufnr then
+    bufnr = GET_CURRENT_BUFFER()
+  end
+  local lines = get_lines_from_buf(bufnr, line_num)
+  return lines_tab_more_than_space(lines)
+end
+
 local filetype_to_runner = {
   [{
     "qf",
@@ -203,7 +261,7 @@ SET_AUTOCMDS({
       callback = function(event)
         local expandtab = true
         local width = 2
-        if IS_INDENT_WITH_TAB(event) then
+        if is_indent_with_tab(event) then
           expandtab = false
           width = 4
         end
