@@ -39,18 +39,6 @@ local filetype = {
   icon = nil,
 }
 
-local filepath = {
-  "filename",
-  path = 3,
-  file_status = false,
-  cond = function()
-    return TABLE_CONTAINS(BIGFILES, GET_CURRENT_BUFFER())
-  end,
-  symbols = {
-    unnamed = "",
-  },
-}
-
 local branch = {
   "branch",
   icons_enabled = true,
@@ -172,12 +160,19 @@ return {
         globalstatus = true,
       },
       sections = {
-        lualine_a = { mode, noice_mode, branch },
+        lualine_a = {
+          mode,
+          noice_mode,
+          branch,
+          {
+            "tabs",
+            use_mode_colors = true,
+          },
+        },
         lualine_b = {
           diagnostics,
           filetype,
           lsps,
-          filepath,
           "searchcount",
         },
         lualine_c = {},

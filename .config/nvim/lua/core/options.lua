@@ -7,7 +7,7 @@ SET_OPTS({
   mouse = "a", -- allow the mouse to be used in neovim
   pumheight = 10, -- maximum number of entries in a popup
   showmode = false, -- dont show mode since use lualine
-  showtabline = 2, -- always show tabs
+  showtabline = 0, -- always hide tabs bar
   smartcase = true, -- smart case
   smartindent = true, -- make indenting smarter again
   splitbelow = true, -- force all horizontal splits to go below current window

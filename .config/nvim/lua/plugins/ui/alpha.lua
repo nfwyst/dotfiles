@@ -16,10 +16,7 @@ local function init()
     callback = function(event)
       ALPHA_BUF = event.buf
       SET_TIMEOUT(function()
-        SET_OPTS({
-          showtabline = 0,
-          laststatus = 0,
-        })
+        SET_OPT("laststatus", 0)
         SET_OPT("cursorline", true, event)
       end, 10)
       AUTOCMD("BufUnload", {
@@ -27,10 +24,7 @@ local function init()
         group = group,
         callback = function()
           SET_TIMEOUT(function()
-            SET_OPTS({
-              showtabline = 2,
-              laststatus = 3,
-            })
+            SET_OPT("laststatus", 3)
           end, 10)
         end,
       })

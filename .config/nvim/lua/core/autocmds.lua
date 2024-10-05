@@ -204,6 +204,23 @@ local function close_alpha_when_open_file(bufnr)
   end, 10)
 end
 
+local function update_winbar(event)
+  local bufnr = event.buf
+  local bar_path = GET_BUFFER_PATH(bufnr)
+  local is_file = IS_FILE_PATH(bar_path)
+  if not bufnr or not is_file then
+    return
+  end
+  vim.wo.winbar = "%#WinBar1#%m "
+    .. "%#WinBar2#("
+    .. #GET_ALL_BUFFERS(true)
+    .. ") "
+    .. "%#WinBar1#"
+    .. bar_path:gsub(HOME_PATH, "~")
+    .. "%*%=%#WinBar2#"
+    .. string.lower(vim.fn.systemlist("hostname")[1])
+end
+
 SET_AUTOCMDS({
   {
     "FileType",
@@ -228,6 +245,13 @@ SET_AUTOCMDS({
         pcall(vim.highlight.on_yank, { higroup = "Visual", timeout = 200 })
       end,
       group = group,
+    },
+  },
+  {
+    { "BufEnter", "BufWinEnter" },
+    {
+      group = group,
+      callback = update_winbar,
     },
   },
   {

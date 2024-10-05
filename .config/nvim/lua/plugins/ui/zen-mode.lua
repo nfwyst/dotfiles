@@ -3,11 +3,7 @@ local statuscolumn = ""
 return {
   "folke/zen-mode.nvim",
   cmd = "ZenMode",
-  dependencies = {
-    { "utilyre/barbecue.nvim", name = "barbecue" },
-  },
   config = function()
-    local bui = require("barbecue.ui")
     require("zen-mode").setup({
       window = {
         backdrop = 1,
@@ -30,13 +26,11 @@ return {
       },
       on_open = function()
         vim.diagnostic.enable(false)
-        bui.toggle(false)
         statuscolumn = vim.o.statuscolumn
         vim.o.statuscolumn = ""
       end,
       on_close = function()
         vim.diagnostic.enable()
-        bui.toggle(true)
         vim.o.statuscolumn = statuscolumn
       end,
     })

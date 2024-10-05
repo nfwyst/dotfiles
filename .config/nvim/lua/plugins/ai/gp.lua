@@ -194,9 +194,8 @@ end
 
 local function set_sidebar_width(multiple)
   SET_TIMEOUT(function()
-    local bufs = vim.api.nvim_list_bufs()
     local bufnr = nil
-    for _, buf in ipairs(bufs) do
+    for _, buf in ipairs(GET_ALL_BUFFERS()) do
       local is_gp_buf = IS_GPT_PROMPT_CHAT(buf)
       if is_gp_buf then
         bufnr = buf

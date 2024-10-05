@@ -22,7 +22,7 @@ local function delete_buffers(num, bufs, bd)
 end
 
 local function delete_old_buffers(bufnr, bd)
-  local bufs = vim.api.nvim_list_bufs()
+  local bufs = GET_ALL_BUFFERS()
   local num_to_delete = #bufs - MAX_BUFFER_NUM
   if num_to_delete <= 0 then
     return

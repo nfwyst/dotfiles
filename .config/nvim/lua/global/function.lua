@@ -233,8 +233,7 @@ function GET_PROJECT_NAME()
     local basename = vim.fs.basename
     if current_element == nil then
       local find = false
-      local bufs = api.nvim_list_bufs()
-      for _, bufnr in ipairs(bufs) do
+      for _, bufnr in ipairs(GET_ALL_BUFFERS()) do
         local buffer_path = GET_BUFFER_PATH(bufnr)
         if IS_FILE_PATH(buffer_path) then
           current_element = { path = buffer_path }
@@ -314,7 +313,7 @@ function SAVE_THEN_QUIT(force)
 end
 
 function GET_BUFFER_PATH(bufnr)
-  return api.nvim_buf_get_name(bufnr)
+  return api.nvim_buf_get_name(bufnr or 0)
 end
 
 function GET_OPT(optname, config)
@@ -673,4 +672,14 @@ function DEBOUNCE(fn, ms, for_params)
       fn(UNPACK(args))
     end, ms)
   end
+end
+
+function GET_ALL_BUFFERS(only_file)
+  local buffers = vim.api.nvim_list_bufs()
+  if not only_file then
+    return buffers
+  end
+  return FILTER_TABLE(buffers, function(bufnr)
+    return IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+  end)
 end
