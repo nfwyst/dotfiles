@@ -21,7 +21,7 @@ return {
   ["<leader>bu"] = { group = "Buffer" },
   ["<leader>buc"] = { "<cmd>Bdelete<cr>", desc = "Close Buffer" },
   ["<leader>bul"] = {
-    "<cmd>lua require('telescope.builtin').buffers(require('telescope.themes').get_dropdown{previewer = false})<cr>",
+    "<cmd>Buffers<cr>",
     desc = "List Buffer",
   },
 }

@@ -1,9 +1,9 @@
 local style = { padding = 0 }
 local preview_size = 0.5
-local blend = 3
-local size = { width = style, height = style }
-local layout_config = MERGE_TABLE(size, { preview_cutoff = 0 })
-local dropdown_config = { layout_config = layout_config, winblend = blend }
+local layout_config = MERGE_TABLE(
+  { width = style, height = style },
+  { preview_cutoff = 0 }
+)
 
 local function flash(prompt_bufnr)
   if not IS_PACKAGE_LOADED("flash") then
@@ -47,7 +47,6 @@ end
 
 local function find_text(builtin, themes, path, undercursor, extra)
   local theme = themes.get_ivy({
-    winblend = blend,
     layout_config = MERGE_TABLE(layout_config, {
       preview_width = preview_size,
       height = 0.6,
@@ -65,7 +64,7 @@ local function find_text(builtin, themes, path, undercursor, extra)
 end
 
 local function find_files(builtin, themes, config)
-  local theme = themes.get_dropdown(dropdown_config)
+  local theme = themes.get_dropdown({ layout_config = layout_config })
   theme.cwd = WORKSPACE_PATH
   if config ~= nil then
     theme = MERGE_TABLE(theme, config)
@@ -79,6 +78,7 @@ local function init(builtin, themes)
     FindText = function()
       find_text(builtin, themes, nil, false)
     end,
+    Buffers = builtin.buffers,
     FindTextCursor = function()
       find_text(builtin, themes, nil, true)
     end,
@@ -105,7 +105,7 @@ local function init(builtin, themes)
       find_files(builtin, themes, { no_ignore = true })
     end,
     FindRepoFiles = function()
-      local theme = themes.get_dropdown(dropdown_config)
+      local theme = themes.get_dropdown({ layout_config = layout_config })
       theme.cwd = WORKSPACE_PATH
       builtin.git_files(theme)
     end,
@@ -234,7 +234,14 @@ return {
         find_files = { hidden = true },
         buffers = {
           theme = "dropdown",
+          layout_strategy = "vertical",
+          layout_config = MERGE_TABLE(layout_config, {
+            preview_height = preview_size,
+            prompt_position = "top",
+          }),
           initial_mode = "normal",
+          sort_mru = true,
+          sort_lastused = true,
           mappings = {
             i = {
               ["<c-d>"] = act.delete_buffer,

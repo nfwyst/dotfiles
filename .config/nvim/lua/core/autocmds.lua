@@ -96,6 +96,18 @@ local function is_indent_with_tab(params)
   return lines_tab_more_than_space(lines)
 end
 
+local function restore_position(bufnr)
+  local ft = GET_FILETYPE(bufnr)
+  local last_known_line = vim.api.nvim_buf_get_mark(bufnr, '"')[1]
+  if
+    not (ft:match("commit") and ft:match("rebase"))
+    and last_known_line > 1
+    and last_known_line <= vim.api.nvim_buf_line_count(bufnr)
+  then
+    FEED_KEYS([[g`"]], "nx")
+  end
+end
+
 local filetype_to_runner = {
   [{
     "qf",
@@ -175,8 +187,8 @@ local filetype_to_runner = {
   end),
 }
 
-local function close_alpha_when_open_file(event)
-  local buffer_path = GET_BUFFER_PATH(event.buf)
+local function close_alpha_when_open_file(bufnr)
+  local buffer_path = GET_BUFFER_PATH(bufnr)
   if not ALPHA_BUF or not IS_FILE_PATH(buffer_path) then
     return
   end
@@ -237,17 +249,6 @@ SET_AUTOCMDS({
     },
   },
   {
-    "BufDelete",
-    {
-      callback = function(event)
-        local bufnr = event.buf
-        TABLE_REMOVE_BY_VAL(BIGFILES, bufnr)
-        TABLE_REMOVE_BY_KEY(BUFFER_OPENED_TIME, bufnr)
-      end,
-      group = group,
-    },
-  },
-  {
     "VimResized",
     {
       command = "silent!tabdo wincmd =",
@@ -269,7 +270,9 @@ SET_AUTOCMDS({
         vim.bo.tabstop = width
         vim.bo.softtabstop = width
         vim.bo.shiftwidth = width
-        close_alpha_when_open_file(event)
+        local bufnr = event.buf
+        close_alpha_when_open_file(bufnr)
+        restore_position(bufnr)
       end,
     },
   },

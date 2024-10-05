@@ -7,7 +7,7 @@ local function key_filter(config)
   local exclude_fts = KEYMAP_EXCLUDE_FTS[lhs]
   if exclude_fts and #exclude_fts > 0 then
     config[2] = function(...)
-      local ft = GET_OPT("filetype", { buf = GET_CURRENT_BUFFER() })
+      local ft = GET_FILETYPE(GET_CURRENT_BUFFER())
       local is_excluded = TABLE_CONTAINS(exclude_fts, ft)
       if is_excluded then
         LOG_INFO("keymap", "key " .. lhs .. " disabled for filetype " .. ft)
