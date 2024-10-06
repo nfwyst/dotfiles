@@ -14,10 +14,7 @@ local function get_toggle_context()
   ---@diagnostic disable-next-line: undefined-field
   local timer = vim.uv.new_timer()
   local is_disabled = false
-  return function(valid)
-    if valid == false then
-      return
-    end
+  return function()
     if not is_disabled then
       vim.cmd("TSContextDisable")
       is_disabled = true
@@ -38,12 +35,25 @@ local function should_attach(bufnr)
   end
 end
 
+local function is_move_up_or_down()
+  local cur_line = vim.fn.line(".")
+  local prev_line = vim.b.prev_cursor_line or cur_line
+  local is_same_line = cur_line == prev_line
+  vim.b.prev_cursor_line = cur_line
+  return not is_same_line
+end
+
 local function disable_context_when_move()
   local toggle_context = get_toggle_context()
   AUTOCMD({ "CursorMoved", "CursorMovedI" }, {
     group = AUTOGROUP("__disable_context__", { clear = true }),
     callback = function(event)
-      toggle_context(should_attach(event.buf))
+      local is_move_h = not is_move_up_or_down()
+      local no_attach = should_attach(event.buf) == false
+      if is_move_h or no_attach then
+        return
+      end
+      toggle_context()
     end,
   })
 end
