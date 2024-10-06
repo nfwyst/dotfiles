@@ -650,7 +650,7 @@ end
 function DEBOUNCE(fn, config)
   local last_time_of = {}
   config = config or {}
-  local delay = config.delay or 600
+  local delay = config.delay or 800
   local omitter = config.omitter
   return function(...)
     local original_args = { ... }

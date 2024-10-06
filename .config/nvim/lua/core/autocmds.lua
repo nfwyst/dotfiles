@@ -121,7 +121,7 @@ local filetype_to_runner = {
     "spectre_panel",
   }] = DEBOUNCE(function(event)
     BIND_QUIT(event.buf)
-  end),
+  end, { delay = 2000 }),
   [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
     SET_OPT("list", false, event)
   end),
