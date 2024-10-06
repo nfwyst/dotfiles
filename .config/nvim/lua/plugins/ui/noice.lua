@@ -108,7 +108,7 @@ return {
         },
         signature = {
           auto_open = {
-            enabled = true,
+            enabled = false,
           },
         },
       },

@@ -206,8 +206,9 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
+  local is_new = event.event == "BufNewFile"
   local bar_path = GET_BUFFER_PATH(bufnr)
-  local is_file = IS_FILE_PATH(bar_path)
+  local is_file = is_new or IS_FILE_PATH(bar_path)
   if not bufnr or not is_file then
     return
   end
@@ -220,6 +221,11 @@ local function update_winbar(event)
     .. "%*%=%#WinBar2#"
     .. string.lower(vim.fn.systemlist("hostname")[1])
 end
+
+SET_HL({
+  WinBar1 = { fg = "#04d1f9", bg = "#1E2030" },
+  WinBar2 = { fg = "#37f499", bg = "#1E2030" },
+})
 
 SET_AUTOCMDS({
   {
@@ -248,10 +254,14 @@ SET_AUTOCMDS({
     },
   },
   {
-    { "BufEnter", "BufWinEnter" },
+    { "BufEnter", "BufWinEnter", "BufNewFile" },
     {
       group = group,
-      callback = update_winbar,
+      callback = DEBOUNCE(update_winbar, {
+        omitter = function(_, key)
+          return key == "event"
+        end,
+      }),
     },
   },
   {

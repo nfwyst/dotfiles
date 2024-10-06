@@ -193,7 +193,11 @@ return {
     init(require("telescope.builtin"), require("telescope.themes"))
     telescope.setup({
       defaults = {
-        path_display = { "truncate" },
+        path_display = {
+          filename_first = {
+            reverse_directories = true,
+          },
+        },
         layout_strategy = "vertical",
         layout_config = {
           horizontal = MERGE_TABLE(layout_config, {

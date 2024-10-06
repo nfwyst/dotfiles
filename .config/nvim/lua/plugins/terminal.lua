@@ -145,7 +145,7 @@ return {
       shell = vim.o.shell,
       highlights = {
         FloatBorder = {
-          link = "FloatBorder",
+          link = "TelescopeBorder",
         },
       },
       float_opts = {

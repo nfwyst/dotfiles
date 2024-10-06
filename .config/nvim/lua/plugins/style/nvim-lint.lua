@@ -15,7 +15,7 @@ local linters = {
   eslint_d = {
     cmd = function()
       local binary_name = "eslint_d"
-      local config_file_dir = GET_DIR_MATCH_PATTERNS(ESLINT_CONFIG_NAMES)
+      local config_file_dir = GET_DIR_MATCH_PATTERNS(ESLINT_CONFIG_NAMES) or ""
       local local_binary = config_file_dir .. "/node_modules/.bin/eslint"
       ---@diagnostic disable-next-line: undefined-field
       return vim.uv.fs_stat(local_binary) and local_binary or binary_name

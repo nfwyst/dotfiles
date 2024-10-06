@@ -647,30 +647,36 @@ function BIND_QUIT(bufnr)
   KEY_MAP("n", "q", vim.cmd.close, option)
 end
 
-function DEBOUNCE(fn, ms, for_params)
-  local last_args = nil
-  local last_time = 0
-  ms = ms or 100
-  if for_params == nil then
-    for_params = true
-  end
+function DEBOUNCE(fn, config)
+  local last_time_of = {}
+  config = config or {}
+  local delay = config.delay or 600
+  local omitter = config.omitter
   return function(...)
+    local original_args = { ... }
+    local args = {}
+
+    if omitter then
+      for index, original_arg in ipairs(original_args) do
+        args[index] = OMIT_TABLE(original_arg, omitter)
+      end
+    else
+      args = original_args
+    end
+
+    local args_str = vim.inspect(args)
+    local last_time = last_time_of[args_str] or 0
     ---@diagnostic disable-next-line: undefined-field
     local current_time = vim.uv.now()
-    local args = { ... }
+    local delay_done = current_time - last_time > delay
 
-    local params_is_same = for_params and vim.deep_equal(args, last_args)
-    local time_not_done = current_time - last_time < ms
-    if params_is_same or time_not_done then
+    last_time_of[args_str] = current_time
+
+    if not delay_done then
       return
     end
 
-    last_args = args
-    last_time = current_time
-
-    vim.defer_fn(function()
-      fn(UNPACK(args))
-    end, ms)
+    fn(UNPACK(original_args))
   end
 end
 
@@ -681,5 +687,11 @@ function GET_ALL_BUFFERS(only_file)
   end
   return FILTER_TABLE(buffers, function(bufnr)
     return IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+  end)
+end
+
+function OMIT_TABLE(tbl, should_omit)
+  return FILTER_TABLE(tbl, function(value, key)
+    return not should_omit(value, key)
   end)
 end
