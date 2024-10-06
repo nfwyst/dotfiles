@@ -29,6 +29,9 @@ lazy.setup({
   defaults = {
     version = false,
   },
+  rocks = {
+    enabled = false,
+  },
   spec = {
     { import = "plugins" },
     { import = "plugins.lsp" },

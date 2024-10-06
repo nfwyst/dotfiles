@@ -6,6 +6,15 @@ fi
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
+# Function to check if a command can be executed
+command_exists() {
+  if command -v $1 &> /dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # set proxy
 function proxy ()
 {
@@ -102,15 +111,6 @@ export SHELL="$(which zsh)"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share",
 export OLLAMA_API_BASE="http://127.0.0.1:11434"
-
-# Function to check if a command can be executed
-command_exists() {
-  if command -v $1 &> /dev/null; then
-    return 0
-  else
-    return 1
-  fi
-}
 
 # Shell integrations
 if command_exists "fzf"; then
