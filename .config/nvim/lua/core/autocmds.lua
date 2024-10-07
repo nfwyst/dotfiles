@@ -212,6 +212,10 @@ local function update_winbar(event)
   if not bufnr or not is_file then
     return
   end
+  local postfix = vim.fn.systemlist("hostname")[1]
+  if IS_LEETING then
+    postfix = ""
+  end
   vim.wo.winbar = "%#WinBar1#%m "
     .. "%#WinBar2#("
     .. #GET_ALL_BUFFERS(true)
@@ -219,7 +223,7 @@ local function update_winbar(event)
     .. "%#WinBar1#"
     .. bar_path:gsub(HOME_PATH, "~")
     .. "%*%=%#WinBar2#"
-    .. string.lower(vim.fn.systemlist("hostname")[1])
+    .. string.lower(postfix)
 end
 
 SET_HL({

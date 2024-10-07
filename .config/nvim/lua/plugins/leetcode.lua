@@ -1,11 +1,12 @@
 return {
   "kawre/leetcode.nvim",
-  lazy = true,
+  cmd = { "Leet" },
   dependencies = {
     "nvim-telescope/telescope.nvim",
     "MunifTanjim/nui.nvim",
   },
   config = function()
+    IS_LEETING = true
     require("leetcode").setup({
       lang = "typescript",
       logging = false,

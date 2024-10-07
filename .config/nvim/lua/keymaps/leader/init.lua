@@ -5,7 +5,12 @@ local mappings = {
   ["<leader>F"] = { "<cmd>FindText<cr>", desc = "Find text" },
   ["<leader>G"] = { "<cmd>source $MYVIMRC<cr>", desc = "Reload nvim config" },
   ["<leader>H"] = { TOGGLE_INLAY_HINT, desc = "Toggle inlay hint" },
-  ["<leader><space>"] = { "<cmd>e #<cr>", desc = "Alternate buffer" },
+  ["<leader>'"] = {
+    function()
+      vim.cmd.edit("#")
+    end,
+    desc = "Alternate buffer",
+  },
   ["<leader>I"] = { "<cmd>set modifiable<cr>", desc = "Set modifiable" },
   ["<leader>L"] = { "<cmd>Lazy<cr>", desc = "Open lazy installer" },
   ["<leader>P"] = { "<cmd>FindTextWithPath<cr>", desc = "Find text by path" },

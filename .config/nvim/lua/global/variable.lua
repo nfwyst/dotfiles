@@ -3,6 +3,7 @@ CONFIG_PATH = vim.fn.stdpath("config")
 HOME_PATH = vim.fn.expand("~")
 AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
+IS_LEETING = false
 ---@diagnostic disable-next-line: undefined-field
 WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
@@ -52,6 +53,7 @@ TSX_COMMENT_INCLUDED_FILES = {
 LSP_SERVERS = {
   "jsonls",
   "lua_ls",
+  "ts_ls",
   "cssls",
   "gopls",
   "html",
