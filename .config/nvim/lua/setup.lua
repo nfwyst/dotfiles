@@ -1,3 +1,4 @@
+---@diagnostic disable-next-line: undefined-field
 if not vim.uv.fs_stat(LAZY_PATH) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local out = vim.fn.system({

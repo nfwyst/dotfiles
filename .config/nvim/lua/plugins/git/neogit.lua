@@ -23,8 +23,8 @@ return {
       },
       signs = {
         hunk = { "", "" },
-        item = { "", "" },
-        section = { "", "" },
+        item = { " ", " " },
+        section = { " ", " " },
       },
     })
   end,
