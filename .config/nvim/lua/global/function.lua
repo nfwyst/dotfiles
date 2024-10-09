@@ -605,8 +605,12 @@ function START_WITH(str, prefix)
   return string.sub(str, 1, #prefix) == prefix
 end
 
+function STRING_HAS(str, substr)
+  return vim.fn.stridx(str, substr) ~= -1
+end
+
 function HAS_WILDCARD(str)
-  return string.find(str, "[*?]") ~= nil
+  return STRING_HAS(str, "[*?]")
 end
 
 local function string_to_pattern(str, fuzzy)
@@ -686,7 +690,9 @@ function GET_ALL_BUFFERS(only_file)
     return buffers
   end
   return FILTER_TABLE(buffers, function(bufnr)
-    return IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+    local is_file = IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+    local is_in_list = GET_OPT("buflisted", { buf = bufnr })
+    return is_file and is_in_list
   end)
 end
 

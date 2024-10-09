@@ -102,7 +102,7 @@ fi
 export ZSH_TAB_TITLE_PREFIX=" "
 export GOPATH="$HOME/go"
 export CARGO_HOME="$HOME/.cargo"
-export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin:$CARGO_HOME/bin"
+export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin:$CARGO_HOME/bin:/usr/local/bin"
 if [[ "$(uname)" == "Linux" ]]; then
   export PATH="$PATH:$HOME/.fzf/bin:$HOME/.nvim/bin:$HOME/.local/share/fnm"
 fi

@@ -47,20 +47,22 @@ return {
   config = function()
     local config = require("avante.config")
     local providers = require("avante.providers")
+    local api_key_name = "DEEPSEEK_API_KEY"
+    local token = os.getenv(api_key_name) or ""
     require("avante").setup({
       provider = "deepseek",
       vendors = {
         deepseek = {
           endpoint = "https://api.deepseek.com/beta/chat/completions",
           model = "deepseek-chat",
-          api_key_name = "DEEPSEEK_API_KEY",
+          api_key_name = api_key_name,
           parse_curl_args = function(opts, code_opts)
             return {
               url = opts.endpoint,
               headers = {
                 ["Accept"] = "application/json",
                 ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. os.getenv(opts.api_key_name),
+                ["Authorization"] = "Bearer " .. token,
               },
               body = {
                 model = opts.model,

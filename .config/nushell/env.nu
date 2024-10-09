@@ -94,6 +94,7 @@ $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
 $env.XDG_DATA_HOME = ($env.HOME | path join ".local" "share")
 $env.PATH = (
   $env.PATH |
+  prepend "/usr/local/bin" |
   prepend ($env.GOPATH | path join "bin") |
   prepend ($env.HOME | path join ".local" "bin") |
   prepend ($env.CARGO_HOME | path join "bin")
