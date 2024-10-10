@@ -9,24 +9,24 @@ local my_feature = {
   end,
 }
 
+local white_table = {
+  help = true,
+  text = true,
+  markdown = true,
+  Avante = true,
+}
+
 return {
   "lunarvim/bigfile.nvim",
   event = { "FileReadPre", "BufReadPre", "User FileOpened" },
   config = function()
     require("bigfile").setup({
       pattern = function(bufnr, filesize_mib)
-        local file_contents = vim.fn.readfile(GET_BUFFER_PATH(bufnr))
-        local file_length = #file_contents
         local filetype = GET_FILETYPE(bufnr)
-        if TABLE_CONTAINS({ "help", "text", "markdown" }, filetype) then
+        if white_table[filetype] then
           return false
         end
-        local is_big_file = file_length > MAX_FILE_LENGTH
-          or filesize_mib > MAX_FILE_SIZE
-        if is_big_file then
-          table.insert(BIGFILES, bufnr)
-        end
-        return is_big_file
+        return IS_BIG_FILE(bufnr, filesize_mib)
       end,
       features = {
         "indent_blankline",

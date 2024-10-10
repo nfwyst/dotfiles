@@ -37,7 +37,6 @@ end
 
 local function toggle_alpha_and_close_tree(event)
   local bufnr = event.buf
-  TABLE_REMOVE_BY_VAL(BIGFILES, bufnr)
   TABLE_REMOVE_BY_KEY(BUFFER_OPENED_TIME, bufnr)
   local buffer_path = GET_BUFFER_PATH(bufnr)
   local buffer_filetype = GET_FILETYPE(bufnr)

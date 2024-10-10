@@ -10,9 +10,8 @@ function FILTER_TABLE(tbl, filter)
   local tb = {}
   for key, value in pairs(tbl) do
     local ok = filter(value, key)
-    local is_number = type(key) == "number"
     if ok then
-      if is_number then
+      if IS_NUMBER(key) then
         table.insert(tb, value)
       else
         tb[key] = value
@@ -148,14 +147,14 @@ function SET_OPT(k, v, config)
   function set_opt_for_win(bufnr)
     for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
       ---@diagnostic disable-next-line: deprecated
-      vim.api.nvim_win_set_option(win, k, v)
+      api.nvim_win_set_option(win, k, v)
     end
   end
   local buf = config.buf
   local win = config.win
   if win then
     ---@diagnostic disable-next-line: deprecated
-    vim.api.nvim_win_set_option(win, k, v)
+    api.nvim_win_set_option(win, k, v)
     return
   end
   if not buf then
@@ -163,7 +162,7 @@ function SET_OPT(k, v, config)
   end
   local ok, _ = pcall(function()
     ---@diagnostic disable-next-line: deprecated
-    vim.api.nvim_buf_set_option(buf, k, v)
+    api.nvim_buf_set_option(buf, k, v)
   end)
   if not ok then
     set_opt_for_win(buf)
@@ -685,7 +684,7 @@ function DEBOUNCE(fn, config)
 end
 
 function GET_ALL_BUFFERS(only_file)
-  local buffers = vim.api.nvim_list_bufs()
+  local buffers = api.nvim_list_bufs()
   if not only_file then
     return buffers
   end
@@ -700,4 +699,36 @@ function OMIT_TABLE(tbl, should_omit)
   return FILTER_TABLE(tbl, function(value, key)
     return not should_omit(value, key)
   end)
+end
+
+function IS_NUMBER(num)
+  return type(num) == "number"
+end
+
+function IS_BIG_FILE(bufnr, size, multiple)
+  if IS_NUMBER(size) and size > MAX_FILE_SIZE then
+    return true
+  end
+
+  local buffer_path = GET_BUFFER_PATH(bufnr)
+  if not IS_FILE_PATH(buffer_path) then
+    return false
+  end
+
+  local file_length = api.nvim_buf_line_count(bufnr)
+  if not multiple then
+    multiple = 1
+  end
+  if file_length > MAX_FILE_LENGTH * multiple then
+    return true
+  end
+
+  ---@diagnostic disable-next-line: undefined-field
+  local stats = vim.uv.fs_stat(buffer_path)
+  if not stats then
+    return false
+  end
+
+  local mb = stats.size / 1048576
+  return mb > MAX_FILE_SIZE
 end
