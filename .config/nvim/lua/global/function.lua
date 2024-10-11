@@ -206,7 +206,15 @@ function SET_WORKSPACE_PATH_GLOBAL()
   LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
 end
 
-function GET_PROJECT_NAME()
+function center_string_by_width(str, width, offset)
+  local padding = math.floor((width - #str) / 2)
+  if not offset then
+    offset = 0
+  end
+  return string.rep(" ", padding + offset) .. str
+end
+
+function GET_PROJECT_NAME(winid)
   local cached = {}
   local ok, util = pcall(require, "lspconfig.util")
   local basename = vim.fs.basename
@@ -217,8 +225,9 @@ function GET_PROJECT_NAME()
 
   return function(root_path)
     local root_name = basename(root_path)
+    local win_width = vim.api.nvim_win_get_width(winid())
     if not BAR_PATH then
-      return root_name
+      return center_string_by_width(root_name, win_width)
     end
 
     local result = cached[BAR_PATH]
@@ -227,18 +236,22 @@ function GET_PROJECT_NAME()
     end
 
     local name = basename(GET_WORKSPACE_PATH(BAR_PATH))
-
     result = root_name
-
+    local key
     if name ~= root_name then
-      result = root_name .. "  " .. name
+      key = root_name .. "  " .. name
+      if cached[key] then
+        return cached[key]
+      end
+      result = key
     end
 
-    local win_width = vim.api.nvim_win_get_width(0)
-    local padding = math.floor((win_width - #result) / 2)
-    vim.print(win_width)
-    result = string.rep(" ", padding + 2) .. result
+    result = center_string_by_width(result, win_width, 2)
     cached[BAR_PATH] = result
+    if key then
+      cached[key] = result
+    end
+
     return result
   end
 end

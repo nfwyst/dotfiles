@@ -135,6 +135,7 @@ return {
     "NvimTreeRefresh",
   },
   config = function()
+    local winid = require("nvim-tree.view").winid
     require("nvim-tree").setup({
       sync_root_with_cwd = true,
       respect_buf_cwd = true,
@@ -144,7 +145,7 @@ return {
       },
       renderer = {
         root_folder_modifier = ":t",
-        root_folder_label = GET_PROJECT_NAME(),
+        root_folder_label = GET_PROJECT_NAME(winid),
         icons = {
           show = {
             folder_arrow = false,

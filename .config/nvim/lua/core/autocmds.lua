@@ -209,7 +209,9 @@ local function update_winbar(event)
   local is_new = event.event == "BufNewFile"
   local bar_path = GET_BUFFER_PATH(bufnr)
   local is_file = is_new or IS_FILE_PATH(bar_path)
-  if not bufnr or not is_file then
+  local filetype = GET_FILETYPE(bufnr)
+  local is_invalid = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
+  if not bufnr or not is_file or is_invalid then
     return
   end
   local postfix = vim.fn.systemlist("hostname")[1]

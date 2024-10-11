@@ -30,7 +30,7 @@ local function should_attach(bufnr)
   local filetype = GET_FILETYPE(bufnr)
   local is_chat = IS_GPT_PROMPT_CHAT(bufnr)
   local invalid = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
-  if invalid or is_chat then
+  if invalid or is_chat or IS_BIG_FILE(bufnr, nil, 0.1) then
     return false
   end
 end
