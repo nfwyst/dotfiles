@@ -79,9 +79,9 @@ return {
         },
       },
       behaviour = {
-        auto_suggestions = true,
+        auto_suggestions = IS_MAC,
         auto_set_highlight_group = true,
-        auto_apply_diff_after_generation = true,
+        auto_apply_diff_after_generation = false,
         auto_set_keymaps = true,
         support_paste_from_clipboard = false,
       },
@@ -122,6 +122,9 @@ return {
           hint = "<leader>aiah",
           suggestion = "<leader>aias",
         },
+      },
+      hints = {
+        enabled = false,
       },
     })
     init(config)

@@ -216,6 +216,7 @@ local function update_winbar(event)
   if IS_LEETING then
     postfix = ""
   end
+  BAR_PATH = bar_path
   vim.wo.winbar = "%#WinBar1#%m "
     .. "%#WinBar2#("
     .. #GET_ALL_BUFFERS(true)

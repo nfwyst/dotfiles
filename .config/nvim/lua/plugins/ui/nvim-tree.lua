@@ -144,6 +144,7 @@ return {
       },
       renderer = {
         root_folder_modifier = ":t",
+        root_folder_label = GET_PROJECT_NAME(),
         icons = {
           show = {
             folder_arrow = false,

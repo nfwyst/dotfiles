@@ -207,48 +207,39 @@ function SET_WORKSPACE_PATH_GLOBAL()
 end
 
 function GET_PROJECT_NAME()
-  local cached_index = nil
-  return function()
-    local ok, util = pcall(require, "lspconfig.util")
-    if not ok then
-      LOG_ERROR("pcall error", util)
-      return
+  local cached = {}
+  local ok, util = pcall(require, "lspconfig.util")
+  local basename = vim.fs.basename
+  if not ok then
+    LOG_ERROR("pcall error", util)
+    return
+  end
+
+  return function(root_path)
+    local root_name = basename(root_path)
+    if not BAR_PATH then
+      return root_name
     end
-    local bf_ok, bufferline = pcall(require, "bufferline")
-    if not bf_ok then
-      LOG_ERROR("pcall error", bufferline)
-      return
+
+    local result = cached[BAR_PATH]
+    if result then
+      return result
     end
-    local lazy = require("bufferline.lazy")
-    local state = lazy.require("bufferline.state")
-    local commands = lazy.require("bufferline.commands")
-    local current_index = commands.get_current_element_index(state)
-    if current_index == nil then
-      current_index = cached_index
-    else
-      cached_index = current_index
+
+    local name = basename(GET_WORKSPACE_PATH(BAR_PATH))
+
+    result = root_name
+
+    if name ~= root_name then
+      result = root_name .. "  " .. name
     end
-    local current_element = bufferline.get_elements().elements[current_index]
-    local basename = vim.fs.basename
-    if current_element == nil then
-      local find = false
-      for _, bufnr in ipairs(GET_ALL_BUFFERS()) do
-        local buffer_path = GET_BUFFER_PATH(bufnr)
-        if IS_FILE_PATH(buffer_path) then
-          current_element = { path = buffer_path }
-          find = true
-          break
-        end
-      end
-      if not find then
-        return "文件浏览器"
-      end
-    end
-    ---@diagnostic disable-next-line: need-check-nil
-    local current_file_path = current_element.path
-    local name = basename(GET_WORKSPACE_PATH(current_file_path))
-    local repo_name = basename(GET_GIT_PATH(current_file_path))
-    return name ~= repo_name and name or "文件浏览器"
+
+    local win_width = vim.api.nvim_win_get_width(0)
+    local padding = math.floor((win_width - #result) / 2)
+    vim.print(win_width)
+    result = string.rep(" ", padding + 2) .. result
+    cached[BAR_PATH] = result
+    return result
   end
 end
 
