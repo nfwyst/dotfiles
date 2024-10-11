@@ -48,9 +48,11 @@ local function disable_context_when_move()
   AUTOCMD({ "CursorMoved", "CursorMovedI" }, {
     group = AUTOGROUP("__disable_context__", { clear = true }),
     callback = function(event)
-      local is_move_h = not is_move_up_or_down()
       local no_attach = should_attach(event.buf) == false
-      if is_move_h or no_attach then
+      if no_attach then
+        return
+      end
+      if not is_move_up_or_down() then
         return
       end
       toggle_context()
