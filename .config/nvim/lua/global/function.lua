@@ -432,6 +432,9 @@ function OPEN_LINK_OR_FILE(uri)
 end
 
 function IS_GPT_PROMPT_CHAT(bufnr)
+  if not IS_PACKAGE_LOADED("gp") then
+    return false
+  end
   local ok, gp = pcall(require, "gp")
   if not ok then
     return false

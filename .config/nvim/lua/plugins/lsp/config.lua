@@ -11,7 +11,7 @@ local function setup_diagnostic()
         [st.INFO] = " ",
       },
     },
-    update_in_insert = true,
+    update_in_insert = false,
     underline = false,
     severity_sort = true,
     float = {
@@ -84,11 +84,13 @@ return {
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
 
     for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { "nushell" })) do
-      local conf = lspconfig[server]
-      local opts = get_options(cmp_nvim_lsp, server)
-      if opts then
-        conf.setup(opts)
-        try_load(conf, opts.exclude_filetypes or {}, opts.include_filetypes)
+      if server ~= "ts_ls" then
+        local conf = lspconfig[server]
+        local opts = get_options(cmp_nvim_lsp, server)
+        if opts then
+          conf.setup(opts)
+          try_load(conf, opts.exclude_filetypes or {}, opts.include_filetypes)
+        end
       end
     end
 

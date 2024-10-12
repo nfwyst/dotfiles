@@ -247,7 +247,7 @@ end
 
 return {
   "robitx/gp.nvim",
-  event = "VeryLazy",
+  cmd = { "GpSelectAgent", "GpPickCommand" },
   config = function()
     local _hooks = {}
     for k, v in pairs(hooks) do

@@ -167,9 +167,6 @@ local filetype_to_runner = {
     }
     SET_TIMEOUT(function()
       if isAvante or isChat then
-        if isAvante then
-          AVANTE_BUF = buf
-        end
         opts = MERGE_TABLE(opts, {
           number = false,
           relativenumber = false,
@@ -207,11 +204,15 @@ end
 local function update_winbar(event)
   local bufnr = event.buf
   local is_new = event.event == "BufNewFile"
-  local bar_path = GET_BUFFER_PATH(bufnr)
-  local is_file = is_new or IS_FILE_PATH(bar_path)
   local filetype = GET_FILETYPE(bufnr)
   local is_invalid = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
-  if not bufnr or not is_file or is_invalid then
+  if not bufnr or is_invalid then
+    return
+  end
+  local bar_path = GET_BUFFER_PATH(bufnr)
+  local is_file = is_new or IS_FILE_PATH(bar_path)
+  local is_chat = IS_GPT_PROMPT_CHAT(bufnr)
+  if not is_file or is_chat then
     return
   end
   local postfix = vim.fn.systemlist("hostname")[1]
