@@ -14,10 +14,21 @@ return {
   ft = "markdown",
   config = function()
     local obsidian = require("obsidian")
+    local work_path = OBSIDIAN_WORK_DIR
+    local personal_path = OBSIDIAN_DIR
+    if not IS_FILE_PATH(work_path, true) then
+      LOG_WARN("obsidian path not exists", work_path)
+      work_path = HOME_PATH .. "/Documents"
+    end
+    if not IS_FILE_PATH(personal_path, true) then
+      LOG_WARN("obsidian path not exists", personal_path)
+      personal_path = HOME_PATH
+    end
+
     obsidian.setup({
       workspaces = {
-        { name = "work", path = OBSIDIAN_WORK_DIR },
-        { name = "personal", path = OBSIDIAN_DIR },
+        { name = "work", path = work_path },
+        { name = "personal", path = personal_path },
         {
           name = "no-vault",
           path = function()

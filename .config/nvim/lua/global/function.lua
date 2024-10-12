@@ -337,12 +337,18 @@ function SET_TIMEOUT(func, timeout)
   vim.defer_fn(func, timeout or 0)
 end
 
-function IS_FILE_PATH(path)
+function IS_FILE_PATH(path, include_dir)
   local ok, Path = pcall(require, "plenary.path")
   if not ok then
     return
   end
-  return Path:new(path):is_file()
+  path = Path:new(path)
+  local is_file = path:is_file()
+  local is_dir = path:is_dir()
+  if include_dir then
+    return is_dir or is_file
+  end
+  return is_file
 end
 
 function PCALL(f, ...)

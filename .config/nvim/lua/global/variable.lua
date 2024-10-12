@@ -36,7 +36,6 @@ function GEN_PATH(path)
   return vim.fn.fnamemodify(path, ":p")
 end
 
-NOTE_DIR = GEN_PATH(HOME_PATH .. "/Documents/notes")
 OBSIDIAN_DIR = GEN_PATH(HOME_PATH .. "/Documents/Obsidian/personal")
 OBSIDIAN_WORK_DIR = GEN_PATH(HOME_PATH .. "/Documents/Obsidian/work")
 LAZY_PATH = DATA_PATH .. GEN_PATH("/lazy/lazy.nvim")
