@@ -220,14 +220,16 @@ local function update_winbar(event)
     postfix = ""
   end
   BAR_PATH = bar_path
-  vim.wo.winbar = "%#WinBar1#%m "
-    .. "%#WinBar2#("
-    .. #GET_ALL_BUFFERS(true)
-    .. ") "
-    .. "%#WinBar1#"
-    .. bar_path:gsub(HOME_PATH, "~")
-    .. "%*%=%#WinBar2#"
-    .. string.lower(postfix)
+  SET_TIMEOUT(function()
+    vim.wo.winbar = "%#WinBar1#%m "
+      .. "%#WinBar2#("
+      .. #GET_ALL_BUFFERS(true)
+      .. ") "
+      .. "%#WinBar1#"
+      .. bar_path:gsub(HOME_PATH, "~")
+      .. "%*%=%#WinBar2#"
+      .. string.lower(postfix)
+  end, 10)
 end
 
 SET_HL({

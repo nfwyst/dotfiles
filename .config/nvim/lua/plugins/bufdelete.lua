@@ -49,7 +49,7 @@ local function toggle_alpha_and_close_tree(event)
     tree_api.tree.close()
   end
   RUN_CMD("Alpha")
-  RUN_CMD(event.buf .. "bwipeout")
+  RUN_CMD(event.buf .. "Bwipeout")
 end
 
 local function auto_remove_buf(bd)
@@ -94,7 +94,7 @@ end
 
 return {
   "famiu/bufdelete.nvim",
-  event = "VeryLazy",
+  cmd = { "Bdelete", "Bwipeout" },
   config = function()
     init(require("bufdelete"))
   end,
