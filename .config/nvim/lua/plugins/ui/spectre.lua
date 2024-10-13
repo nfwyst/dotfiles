@@ -26,6 +26,7 @@ end
 
 return {
   "nvim-pack/nvim-spectre",
+  cmd = { "ToggleSpectreCase", "ToggleSpectreHidden" },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "grapp-dev/nui-components.nvim",
