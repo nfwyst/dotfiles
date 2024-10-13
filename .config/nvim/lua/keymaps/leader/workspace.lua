@@ -1,21 +1,27 @@
+function get_buffer_extension()
+  local ext
+  if vim.bo.buftype == "" then
+    ext = vim.fn.expand("%:e")
+  end
+  if not ext or ext == "" then
+    return nil
+  end
+  return "*." .. ext
+end
+
+local function open_grug_far()
+  require("grug-far").open({
+    -- prefills = {
+    --   filesFilter = get_buffer_extension(),
+    -- },
+  })
+end
+
 return {
   ["<leader>w"] = { group = "Workspace" },
-  ["<leader>wf"] = { group = "Find and replace" },
-  ["<leader>wft"] = {
-    "<cmd>lua require('spectre').toggle()<cr>",
-    desc = "Toggle spectre",
-  },
-  ["<leader>wfu"] = {
-    "<cmd>lua require('pickers.spectre').toggle()<cr>",
-    desc = "Toggle spectre ui",
-  },
-  ["<leader>wfi"] = {
-    "<cmd>ToggleSpectreCase<cr>",
-    desc = "Toggle ignore case",
-  },
-  ["<leader>wfh"] = {
-    "<cmd>ToggleSpectreHidden<cr>",
-    desc = "Toggle search hidden",
+  ["<leader>wf"] = {
+    open_grug_far,
+    desc = "Search and replace",
   },
   ["<leader>wc"] = { "<cmd>SetWorkspacePathCustom<cr>", desc = "Custom path" },
   ["<leader>wg"] = {

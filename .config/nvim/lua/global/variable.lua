@@ -74,7 +74,7 @@ INVALID_FILETYPE = {
   "TelescopePrompt",
   "DressingInput",
   "DressingSelect",
-  "spectre_panel",
+  "grug-far",
   "startify",
   "Trouble",
   "toggleterm",

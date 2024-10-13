@@ -108,6 +108,16 @@ local function restore_position(bufnr)
   end
 end
 
+local function set_grug_far_fold_width(bufnr)
+  local filetype = GET_FILETYPE(bufnr)
+  if filetype ~= "grug-far" then
+    return
+  end
+  SET_TIMEOUT(function()
+    SET_OPT("foldcolumn", "2", { buf = bufnr })
+  end, 10)
+end
+
 local filetype_to_runner = {
   [{
     "qf",
@@ -118,9 +128,11 @@ local filetype_to_runner = {
     "DressingInput",
     "DressingSelect",
     "DiffviewFileHistory",
-    "spectre_panel",
+    "grug-far",
   }] = DEBOUNCE(function(event)
-    BIND_QUIT(event.buf)
+    local bufnr = event.buf
+    set_grug_far_fold_width(bufnr)
+    BIND_QUIT(bufnr)
   end, { delay = 2000 }),
   [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
     SET_OPT("list", false, event)
@@ -220,8 +232,9 @@ local function update_winbar(event)
     postfix = ""
   end
   BAR_PATH = bar_path
+  local winids = GET_WINDOWS_BY_BUF(bufnr)
   SET_TIMEOUT(function()
-    vim.wo.winbar = "%#WinBar1#%m "
+    local winbar = "%#WinBar1#%m "
       .. "%#WinBar2#("
       .. #GET_ALL_BUFFERS(true)
       .. ") "
@@ -229,6 +242,9 @@ local function update_winbar(event)
       .. bar_path:gsub(HOME_PATH, "~")
       .. "%*%=%#WinBar2#"
       .. string.lower(postfix)
+    for _, win in ipairs(winids) do
+      SET_OPT("winbar", winbar, { win = win })
+    end
   end, 10)
 end
 
