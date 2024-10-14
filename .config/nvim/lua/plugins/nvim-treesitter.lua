@@ -22,9 +22,6 @@ return {
     "TSBufDisable",
     "TSModuleInfo",
   },
-  dependencies = {
-    "nushell/tree-sitter-nu",
-  },
   config = function()
     local configs = require("nvim-treesitter.configs")
     local install = require("nvim-treesitter.install")

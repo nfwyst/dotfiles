@@ -35,7 +35,7 @@ return {
           jestCommand = "yarn run test",
           jestConfigFile = get_jest_config_path,
           cwd = function(filepath)
-            return vim.fs.dirname(get_jest_config_path(filepath))
+            return GET_DIR_PATH(get_jest_config_path(filepath))
           end,
         }),
       },

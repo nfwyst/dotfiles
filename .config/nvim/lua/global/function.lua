@@ -337,6 +337,10 @@ function SET_TIMEOUT(func, timeout)
   vim.defer_fn(func, timeout or 0)
 end
 
+function GET_DIR_PATH(path)
+  return vim.fs.dirname(path)
+end
+
 function IS_FILE_PATH(path, include_dir)
   local ok, Path = pcall(require, "plenary.path")
   if not ok then
@@ -510,14 +514,27 @@ function IS_CURSOR_HIDE()
   return GET_HIGHLIGHT("Cursor", "blend") == 100
 end
 
-function LOOKUP_FILE_PATH(file_names, start_filepath)
-  local dirname = vim.fs.dirname
+function LOOKUP_FILE_PATH(file_names, start_path, stop_dir)
+  if not stop_dir then
+    ---@diagnostic disable-next-line: undefined-field
+    stop_dir = vim.uv.os_homedir()
+  end
+
+  if start_path and IS_FILE_PATH(start_path) then
+    start_path = GET_DIR_PATH(start_path)
+  else
+    local start, is_dir = GET_CURRENT_BUFFER_PATH(true)
+    start_path = start
+    if not is_dir then
+      start_path = GET_DIR_PATH(start_path)
+    end
+  end
+
   for _, file_name in ipairs(file_names) do
     local pathes = vim.fs.find(file_name, {
       upward = true,
-      ---@diagnostic disable-next-line: undefined-field
-      stop = dirname(vim.uv.os_homedir()),
-      path = dirname(start_filepath or GET_CURRENT_BUFFER_PATH()),
+      stop = stop_dir,
+      path = start_path,
     })
     if #pathes > 0 then
       return pathes[1]
@@ -528,24 +545,32 @@ end
 function GET_DIR_MATCH_PATTERNS(file_name_patterns, start_filepath)
   local util = require("lspconfig.util")
   local get_root = util.root_pattern(UNPACK(file_name_patterns))
-  return get_root(start_filepath or GET_CURRENT_BUFFER_PATH())
+  return get_root(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
 
 function GET_WORKSPACE_PATH(start_filepath)
-  return GET_DIR_MATCH_PATTERNS(PROJECT_PATTERNS, start_filepath)
+  local w_path = GET_DIR_MATCH_PATTERNS(PROJECT_PATTERNS, start_filepath)
+  if not w_path then
+    return GET_GIT_PATH(start_filepath)
+  end
+  return w_path
 end
 
 function GET_GIT_PATH(start_filepath)
   local util = require("lspconfig.util")
-  if not start_filepath then
-    ---@diagnostic disable-next-line: undefined-field
-    return vim.uv.cwd()
-  end
-  return util.find_git_ancestor(start_filepath)
+  return util.find_git_ancestor(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
 
-function GET_CURRENT_BUFFER_PATH()
-  return GET_BUFFER_PATH(GET_CURRENT_BUFFER())
+function GET_CURRENT_BUFFER_PATH(fallback)
+  local buffer_path = GET_BUFFER_PATH(GET_CURRENT_BUFFER())
+  if buffer_path ~= "" and not IS_FILE_PATH(buffer_path) then
+    buffer_path = ""
+  end
+  if buffer_path == "" and fallback then
+    ---@diagnostic disable-next-line: undefined-field
+    return vim.uv.cwd(), true
+  end
+  return buffer_path, false
 end
 
 function SPLIT_STRING_BY_LEN(str, max_len)
