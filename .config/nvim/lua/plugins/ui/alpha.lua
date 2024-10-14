@@ -43,7 +43,7 @@ return {
   config = function()
     local alpha = require("alpha")
     local dashboard = require("alpha.themes.dashboard")
-    local current_path = GET_GIT_PATH()
+    local current_path = GET_WORKSPACE_PATH(nil, true)
     local git_path = GET_GIT_PATH(current_path)
     local val = {
       [[                               __                ]],

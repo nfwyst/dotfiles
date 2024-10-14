@@ -207,8 +207,8 @@ return {
       git = { ignore = false, enable = false },
       view = {
         width = {
-          max = "35%",
-          min = "1%",
+          max = "50%",
+          min = "15%",
         },
         side = "left",
         signcolumn = "auto",

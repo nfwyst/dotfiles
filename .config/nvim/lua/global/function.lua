@@ -227,7 +227,7 @@ function GET_PROJECT_NAME(winid)
     local root_name = basename(root_path)
     local win_width = vim.api.nvim_win_get_width(winid())
     if not BAR_PATH then
-      return CENTER_STRING_BY_WIDTH(root_name, win_width)
+      return CENTER_STRING_BY_WIDTH(root_name, win_width, 1)
     end
 
     local result = cached[BAR_PATH]
@@ -235,7 +235,7 @@ function GET_PROJECT_NAME(winid)
       return result
     end
 
-    local name = basename(GET_WORKSPACE_PATH(BAR_PATH))
+    local name = basename(GET_WORKSPACE_PATH(BAR_PATH, true))
     result = root_name
     local key
     if name ~= root_name then
@@ -548,10 +548,10 @@ function GET_DIR_MATCH_PATTERNS(file_name_patterns, start_filepath)
   return get_root(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
 
-function GET_WORKSPACE_PATH(start_filepath)
+function GET_WORKSPACE_PATH(start_filepath, no_git)
   local w_path = GET_DIR_MATCH_PATTERNS(PROJECT_PATTERNS, start_filepath)
   if not w_path then
-    return GET_GIT_PATH(start_filepath)
+    return no_git and CWD() or GET_GIT_PATH(start_filepath)
   end
   return w_path
 end
@@ -567,8 +567,7 @@ function GET_CURRENT_BUFFER_PATH(fallback)
     buffer_path = ""
   end
   if buffer_path == "" and fallback then
-    ---@diagnostic disable-next-line: undefined-field
-    return vim.uv.cwd(), true
+    return CWD(), true
   end
   return buffer_path, false
 end
@@ -769,4 +768,9 @@ function IS_BIG_FILE(bufnr, size, multiple)
 
   local mb = stats.size / 1048576
   return mb > MAX_FILE_SIZE
+end
+
+function CWD()
+  ---@diagnostic disable-next-line: undefined-field
+  return vim.uv.cwd()
 end

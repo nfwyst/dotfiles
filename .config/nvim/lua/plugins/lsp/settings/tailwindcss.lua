@@ -14,14 +14,10 @@ local function get_on_attach()
   return function(client)
     local from = GET_WORKSPACE_PATH()
     local to = GET_GIT_PATH()
-
     local key = from .. ":" .. to
 
     local result = cache[key]
     if result ~= nil then
-      if result then
-        client.stop()
-      end
       return
     end
 
