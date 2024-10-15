@@ -198,14 +198,15 @@ local filetype_to_runner = {
 
 local function close_alpha_when_open_file(bufnr)
   local buffer_path = GET_BUFFER_PATH(bufnr)
-  if not ALPHA_BUF or not IS_FILE_PATH(buffer_path) then
-    return
-  end
-  if not BUF_VALID(ALPHA_BUF) then
-    ALPHA_BUF = nil
+  local is_file = IS_FILE_PATH(buffer_path)
+  if not ALPHA_BUF or not is_file then
     return
   end
   SET_TIMEOUT(function()
+    if not BUF_VALID(ALPHA_BUF) then
+      ALPHA_BUF = nil
+      return
+    end
     vim.api.nvim_buf_call(ALPHA_BUF, function()
       vim.cmd("Alpha")
       ALPHA_BUF = nil
@@ -232,7 +233,6 @@ local function update_winbar(event)
     postfix = ""
   end
   BAR_PATH = bar_path
-  local winids = GET_WINDOWS_BY_BUF(bufnr)
   SET_TIMEOUT(function()
     local winbar = "%#WinBar1#%m "
       .. "%#WinBar2#("
@@ -242,7 +242,7 @@ local function update_winbar(event)
       .. bar_path:gsub(HOME_PATH, "~")
       .. "%*%=%#WinBar2#"
       .. string.lower(postfix)
-    for _, win in ipairs(winids) do
+    for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
       SET_OPT("winbar", winbar, { win = win })
     end
   end, 10)
