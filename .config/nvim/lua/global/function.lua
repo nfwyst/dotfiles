@@ -327,7 +327,8 @@ function GET_OPT(optname, config)
 end
 
 function RUN_CMD(command, check)
-  if check and vim.fn.exists(":" .. command) == 0 then
+  local name = ":" .. command:match("^%s*(%S+)")
+  if check and vim.fn.exists(name) == 0 then
     return
   end
   PCALL(vim.cmd, command)

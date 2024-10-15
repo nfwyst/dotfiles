@@ -18,6 +18,9 @@ local function get_on_attach()
 
     local result = cache[key]
     if result ~= nil then
+      if result then
+        client.stop()
+      end
       return
     end
 

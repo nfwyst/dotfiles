@@ -1,3 +1,10 @@
+local function get_prev_bufpath()
+  local alt_bufnr = vim.fn.bufnr("#")
+  if alt_bufnr ~= -1 then
+    return GET_BUFFER_PATH(alt_bufnr)
+  end
+end
+
 local mappings = {
   ["<leader>A"] = { "<cmd>Alpha<cr>", desc = "Alpha" },
   ["<leader>C"] = { "<cmd>FindTextCursor<cr>", desc = "Find text under cursor" },
@@ -7,7 +14,10 @@ local mappings = {
   ["<leader>H"] = { TOGGLE_INLAY_HINT, desc = "Toggle inlay hint" },
   ["<leader>'"] = {
     function()
-      vim.cmd.edit("#")
+      local bufpath = get_prev_bufpath()
+      if bufpath then
+        vim.cmd.edit(bufpath)
+      end
     end,
     desc = "Alternate buffer",
   },

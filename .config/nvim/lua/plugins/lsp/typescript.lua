@@ -77,12 +77,6 @@ return {
   },
   config = function()
     local api = require("typescript-tools.api")
-    local opt = {
-      border = "rounded",
-      width = "auto",
-      max_width = GET_MAX_WIDTH(),
-      silent = true,
-    }
     require("typescript-tools").setup({
       on_attach = function(client)
         if client.name == "typescript-tools" then
@@ -93,8 +87,6 @@ return {
       handlers = {
         ["textDocument/inlayHint"] = inlay_hint,
         ["textDocument/publishDiagnostics"] = api.filter_diagnostics(code),
-        ["textDocument/hover"] = lsp.with(hd.hover, opt),
-        ["textDocument/signatureHelp"] = lsp.with(hd.signature_help, opt),
         ["textDocument/definition"] = definition,
         ["textDocument/foldingRange"] = folding_range,
       },

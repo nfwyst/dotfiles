@@ -51,6 +51,7 @@ return {
     local token = os.getenv(api_key_name) or ""
     require("avante").setup({
       provider = "deepseek",
+      auto_suggestions_provider = "deepseek",
       vendors = {
         deepseek = {
           endpoint = "https://api.deepseek.com/beta/chat/completions",
