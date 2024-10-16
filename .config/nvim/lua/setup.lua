@@ -47,6 +47,6 @@ lazy.setup({
   },
   install = { colorscheme = { "tokyonight", "NeoSolarized" } },
   ui = { border = "rounded", backdrop = 100, wrap = false },
-  checker = { enabled = true, frequency = 3600 * 24, notify = false },
+  checker = { enabled = IS_MAC, frequency = 86400, notify = false },
   change_detection = { notify = false },
 })
