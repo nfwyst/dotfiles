@@ -36,19 +36,25 @@ local function buffer_chat_new(gp, _)
   vim.cmd("%" .. gp.config.cmd_prefix .. "ChatNew vsplit")
 end
 
+local function get_content()
+  local text = vim.fn.getreg("v")
+  vim.fn.setreg("v", {})
+  return text
+end
+
 local function translate(gp, params)
   local template = "你是一位出色的翻译专家, 我有以下内容:\n\n"
-    .. GET_RANGE_CONTENT()
+    .. get_content()
     .. "\n\n"
     .. "如果上述内容为非中文的请翻译为中文, 否则翻译为英文, 只输出翻译结果。"
   local agent = gp.get_chat_agent()
-  -- gp.Prompt(params, gp.Target.popup, agent, template)
+  gp.Prompt(params, gp.Target.popup, agent, template)
 end
 
 local function unit_tests(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n"
-    .. GET_RANGE_CONTENT()
+    .. get_content()
     .. "\n```\n\n"
     .. "请为上述代码编写表驱动的单元测试。"
   local agent = gp.get_command_agent()
@@ -58,7 +64,7 @@ end
 local function explain(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n"
-    .. GET_RANGE_CONTENT()
+    .. get_content()
     .. "\n```\n\n"
     .. "请解释上述代码。"
   local agent = gp.get_chat_agent()
@@ -68,7 +74,7 @@ end
 local function code_review(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
     .. "```{{filetype}}\n"
-    .. GET_RANGE_CONTENT()
+    .. get_content()
     .. "\n```\n\n"
     .. "请审查上述代码并提供反馈。"
   local agent = gp.get_chat_agent()
@@ -227,6 +233,7 @@ local function pick_command(mode)
     end
   end
 
+  vim.cmd('noau normal! "vy"')
   NEW_PICKER("Select command", {}, command_names, {
     on_select = function(selected)
       local command, str = selected:match("^%s*(.-)%s*-%s*(.-)%s*$")
