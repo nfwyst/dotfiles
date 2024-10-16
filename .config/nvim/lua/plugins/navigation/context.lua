@@ -48,6 +48,9 @@ local function disable_context_when_move()
   AUTOCMD({ "CursorMoved", "CursorMovedI" }, {
     group = AUTOGROUP("__disable_context__", { clear = true }),
     callback = function(event)
+      if event.event == "CursorMoved" then
+        ON_MOVE_IN_NORMAL(event)
+      end
       local no_attach = should_attach(event.buf) == false
       if no_attach then
         return

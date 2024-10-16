@@ -118,6 +118,27 @@ local function set_grug_far_fold_width(bufnr)
   end, 10)
 end
 
+local function get_markdown_options(event)
+  local not_avante = "Avante" ~= event.match
+  local opts = {
+    wrap = true,
+    tabstop = 2,
+    softtabstop = 2,
+    shiftwidth = 2,
+  }
+  if not_avante and not IS_GPT_PROMPT_CHAT(event.buf) then
+    return opts
+  end
+  return MERGE_TABLE(opts, {
+    number = false,
+    relativenumber = false,
+    statuscolumn = "",
+    foldcolumn = "0",
+    list = false,
+    showbreak = "NONE",
+  })
+end
+
 local filetype_to_runner = {
   [{
     "qf",
@@ -168,27 +189,12 @@ local filetype_to_runner = {
     "NeogitCommitMessage",
     "Avante",
   }] = DEBOUNCE(function(event)
-    local isAvante = "Avante" == event.match
-    local buf = event.buf
-    local isChat = IS_GPT_PROMPT_CHAT(buf)
-    local opts = {
-      wrap = true,
-      tabstop = 2,
-      softtabstop = 2,
-      shiftwidth = 2,
-    }
+    local ok = pcall(vim.cmd.startinsert)
     SET_TIMEOUT(function()
-      if isAvante or isChat then
-        opts = MERGE_TABLE(opts, {
-          number = false,
-          relativenumber = false,
-          statuscolumn = "",
-          foldcolumn = "0",
-          list = false,
-          showbreak = "NONE",
-        })
+      SET_OPTS(get_markdown_options(event), event)
+      if ok then
+        vim.cmd.stopinsert()
       end
-      SET_OPTS(opts, event)
     end, 100)
   end),
   ["Neogit*"] = DEBOUNCE(function(event)
@@ -288,24 +294,6 @@ SET_AUTOCMDS({
           return key == "event"
         end,
       }),
-    },
-  },
-  {
-    "BufWinEnter",
-    {
-      callback = function(event)
-        local bufnr = event.buf
-        if GET_OPT("buflisted", { buf = bufnr }) then
-          return
-        end
-        local buffer_path = GET_BUFFER_PATH(bufnr)
-        local is_file = IS_FILE_PATH(buffer_path)
-        if not is_file then
-          return
-        end
-        SET_OPT("buflisted", true, { buf = bufnr })
-      end,
-      group = group,
     },
   },
   {

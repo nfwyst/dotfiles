@@ -38,15 +38,18 @@ end
 
 local function translate(gp, params)
   local template = "你是一位出色的翻译专家, 我有以下内容:\n\n"
-    .. "{{selection}}\n\n"
+    .. GET_RANGE_CONTENT()
+    .. "\n\n"
     .. "如果上述内容为非中文的请翻译为中文, 否则翻译为英文, 只输出翻译结果。"
   local agent = gp.get_chat_agent()
-  gp.Prompt(params, gp.Target.popup, agent, template)
+  -- gp.Prompt(params, gp.Target.popup, agent, template)
 end
 
 local function unit_tests(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
-    .. "```{{filetype}}\n{{selection}}\n```\n\n"
+    .. "```{{filetype}}\n"
+    .. GET_RANGE_CONTENT()
+    .. "\n```\n\n"
     .. "请为上述代码编写表驱动的单元测试。"
   local agent = gp.get_command_agent()
   gp.Prompt(params, gp.Target.enew, agent, template)
@@ -54,7 +57,9 @@ end
 
 local function explain(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
-    .. "```{{filetype}}\n{{selection}}\n```\n\n"
+    .. "```{{filetype}}\n"
+    .. GET_RANGE_CONTENT()
+    .. "\n```\n\n"
     .. "请解释上述代码。"
   local agent = gp.get_chat_agent()
   gp.Prompt(params, gp.Target.popup, agent, template)
@@ -62,7 +67,9 @@ end
 
 local function code_review(gp, params)
   local template = "我有来自{{filename}}的以下代码:\n\n"
-    .. "```{{filetype}}\n{{selection}}\n```\n\n"
+    .. "```{{filetype}}\n"
+    .. GET_RANGE_CONTENT()
+    .. "\n```\n\n"
     .. "请审查上述代码并提供反馈。"
   local agent = gp.get_chat_agent()
   gp.Prompt(params, gp.Target.enew("markdown"), agent, template)

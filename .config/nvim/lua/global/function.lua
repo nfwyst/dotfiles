@@ -225,7 +225,7 @@ function GET_PROJECT_NAME(winid)
 
   return function(root_path)
     local root_name = basename(root_path)
-    local win_width = vim.api.nvim_win_get_width(winid())
+    local win_width = api.nvim_win_get_width(winid())
     if not BAR_PATH then
       return CENTER_STRING_BY_WIDTH(root_name, win_width, 1)
     end
@@ -774,4 +774,97 @@ end
 function CWD()
   ---@diagnostic disable-next-line: undefined-field
   return vim.uv.cwd()
+end
+
+local function get_visual_range(buf_id)
+  local fn = vim.fn
+  local vmode = fn.visualmode()
+
+  -- Ensure the visual selection is active
+  if not vim.api.nvim_get_mode().mode:match("^v") then
+    error("Visual mode is not active")
+  end
+
+  -- Get the current cursor position in the specified buffer
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local cursor_row = cursor_pos[1]
+  local cursor_col = cursor_pos[2]
+
+  -- Get the start position of the visual selection in the specified buffer
+  local start_pos = vim.api.nvim_buf_get_mark(buf_id, "v")
+  local start_row = start_pos[1]
+  local start_col = start_pos[2]
+
+  -- Determine the start and end positions based on the cursor and start positions
+  local start_row, start_col, end_row, end_col
+  if cursor_row < start_row or (cursor_row == start_row and cursor_col < start_col) then
+    start_row, start_col = cursor_row, cursor_col
+    end_row, end_col = start_row, start_col
+  else
+    start_row, start_col = start_row, start_col
+    end_row, end_col = cursor_row, cursor_col
+  end
+
+  -- Adjust end_col for linewise visual mode
+  if vmode == "V" then
+    end_col = #fn.getline(end_row)
+  end
+
+  return {
+    start_row = start_row,
+    start_col = start_col,
+    end_row = end_row,
+    end_col = end_col,
+  }
+end
+
+local function get_range(bufnr)
+  if not bufnr then
+    return
+  end
+  local start_pos = api.nvim_buf_get_mark(bufnr, "<")
+  local end_pos = api.nvim_buf_get_mark(bufnr, ">")
+  local sr = start_pos[1]
+  local sc = start_pos[2]
+  local er = end_pos[1]
+  local ec = end_pos[2]
+  local invalid_row = sr == 0 and sc == 0
+  local invalid_col = er == 0 and ec == 0
+  if invalid_col or invalid_row then
+    return
+  end
+  return {
+    start_row = sr,
+    start_col = sc,
+    end_row = er,
+    end_col = ec,
+  }
+end
+
+function GET_RANGE_CONTENT()
+  local range = get_range(VISUAL_BUF)
+  if not range then
+    return ""
+  end
+  local lines = api.nvim_buf_get_text(
+    VISUAL_BUF,
+    range.start_row - 1,
+    range.start_col - 1,
+    range.end_row - 1,
+    range.end_col,
+    {}
+  )
+  return table.concat(lines, "\n")
+end
+
+function ON_MOVE_IN_NORMAL(event)
+  local mode = string.lower(vim.fn.mode())
+  if mode ~= "v" then
+    return
+  end
+  local filetype = GET_FILETYPE(event.buf)
+  if STRING_HAS(filetype, "Telescope") then
+    return
+  end
+  VISUAL_BUF = event.buf
 end

@@ -26,7 +26,7 @@ local function key_filter(config)
 end
 
 local function format(conf)
-  local new_conf = { mode = { "n", "v" } }
+  local new_conf = { mode = { "n", "v", "x" } }
   for key, config in pairs(conf) do
     table.insert(config, 1, key)
     key_filter(config)
