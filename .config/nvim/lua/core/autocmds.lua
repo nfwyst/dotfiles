@@ -98,6 +98,9 @@ end
 
 local function restore_position(bufnr)
   local ft = GET_FILETYPE(bufnr)
+  if ft == "gitcommit" then
+    return
+  end
   local last_known_line = vim.api.nvim_buf_get_mark(bufnr, '"')[1]
   if
     not (ft:match("commit") and ft:match("rebase"))
