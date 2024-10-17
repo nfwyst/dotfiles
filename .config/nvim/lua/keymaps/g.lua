@@ -25,10 +25,6 @@ return function(wk)
       "<cmd>lua vim.lsp.buf.signature_help()<cr>",
       desc = "Show signature help",
     },
-    ["gX"] = {
-      "<cmd>OpenCurFile<cr>",
-      desc = "Open current file with default app",
-    },
     ["ga"] = {
       "<cmd>lua vim.lsp.buf.declaration()<cr>",
       desc = "Go to declaration",

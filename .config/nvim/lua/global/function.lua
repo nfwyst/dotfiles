@@ -438,10 +438,6 @@ function TOGGLE_INLAY_HINT()
   vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
 end
 
-function OPEN_LINK_OR_FILE(uri)
-  vim.fn.system({ "open", uri })
-end
-
 function IS_GPT_PROMPT_CHAT(bufnr)
   if not IS_PACKAGE_LOADED("gp") then
     return false

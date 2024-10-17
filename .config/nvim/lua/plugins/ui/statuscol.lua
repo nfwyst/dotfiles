@@ -23,7 +23,7 @@ return {
           sign = {
             namespace = { "diagnostic/signs" },
             maxwidth = 1,
-            auto = true,
+            auto = false,
           },
           click = "v:lua.ScSa",
         },
