@@ -18,30 +18,30 @@ local function open_grug_far()
 end
 
 return {
-  ["<leader>w"] = { group = "Workspace" },
-  ["<leader>wf"] = {
+  ["<leader>W"] = { group = "Workspace" },
+  ["<leader>Wf"] = {
     open_grug_far,
     desc = "Search and replace",
   },
-  ["<leader>wc"] = { "<cmd>SetWorkspacePathCustom<cr>", desc = "Custom path" },
-  ["<leader>wg"] = {
+  ["<leader>Wc"] = { "<cmd>SetWorkspacePathCustom<cr>", desc = "Custom path" },
+  ["<leader>Wg"] = {
     "<cmd>SetWorkspacePathGlobal<cr>",
     desc = "Path to global",
   },
-  ["<leader>wl"] = {
+  ["<leader>Wl"] = {
     "<cmd>SetWorkspacePathLocal<cr>",
     desc = "Path to local",
   },
-  ["<leader>wp"] = {
+  ["<leader>Wp"] = {
     "<cmd>ShowWorkspacePath<cr>",
     desc = "Preview workspace path",
   },
-  ["<leader>wS"] = { "<cmd>wa!<cr>", desc = "Save all content" },
-  ["<leader>wd"] = {
+  ["<leader>WS"] = { "<cmd>wa!<cr>", desc = "Save all content" },
+  ["<leader>Wd"] = {
     function()
       require("telescope.builtin").diagnostics({ root_dir = GET_GIT_PATH() })
     end,
     desc = "Workspace Diagnostics",
   },
-  ["<leader>ws"] = { "<cmd>WorkspaceSymbols<cr>", desc = "Workspace Symbols" },
+  ["<leader>Ws"] = { "<cmd>WorkspaceSymbols<cr>", desc = "Workspace Symbols" },
 }

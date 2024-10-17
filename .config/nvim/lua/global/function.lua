@@ -771,3 +771,17 @@ function CWD()
   ---@diagnostic disable-next-line: undefined-field
   return vim.uv.cwd()
 end
+
+function GET_HIDE_COLUMN_OPTS(status)
+  local opt = {
+    number = false,
+    relativenumber = false,
+    foldcolumn = "0",
+    list = false,
+    showbreak = "NONE",
+  }
+  if status then
+    opt.statuscolumn = ""
+  end
+  return opt
+end

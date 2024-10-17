@@ -20,6 +20,12 @@ return {
   },
   ["<leader>bu"] = { group = "Buffer" },
   ["<leader>buc"] = { "<cmd>Bdelete<cr>", desc = "Close Buffer" },
+  ["<leader>buh"] = {
+    function()
+      SET_OPTS(GET_HIDE_COLUMN_OPTS(true), { buf = GET_CURRENT_BUFFER() })
+    end,
+    desc = "Focus without left column",
+  },
   ["<leader>bul"] = {
     "<cmd>Buffers<cr>",
     desc = "List Buffer",

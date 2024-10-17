@@ -132,14 +132,7 @@ local function get_markdown_options(event)
   if not_avante and not IS_GPT_PROMPT_CHAT(event.buf) then
     return opts
   end
-  return MERGE_TABLE(opts, {
-    number = false,
-    relativenumber = false,
-    statuscolumn = "",
-    foldcolumn = "0",
-    list = false,
-    showbreak = "NONE",
-  })
+  return MERGE_TABLE(opts, GET_HIDE_COLUMN_OPTS(true))
 end
 
 local filetype_to_runner = {

@@ -55,7 +55,7 @@ local mappings = {
   ["<leader>s"] = { ":'<,'>!sort<cr>", desc = "Sort selected" },
   ["<leader>u"] = { "<cmd>nohlsearch<cr>", desc = "No highlight" },
   ["<leader>v"] = { "<cmd>ShowFilePath<cr>", desc = "Show file path" },
-  ["<leader>W"] = { "<cmd>Save<cr>", desc = "Save" },
+  ["<leader>w"] = { "<cmd>Save<cr>", desc = "Save" },
   ["<leader>x"] = { "<cmd>SaveThenQuit<cr>", desc = "Save and quit" },
   ["<leader>z"] = { "<cmd>ZenMode<cr>", desc = "Zen mode" },
   ["<leader>ot"] = { "<cmd>Outline<cr>", desc = "Toggle outline" },

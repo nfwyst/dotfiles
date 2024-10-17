@@ -11,13 +11,7 @@ return {
           return math.min(120, GET_EDITOR_WIDTH() * 0.75)
         end,
         height = 0.9,
-        options = {
-          number = false,
-          relativenumber = false,
-          foldcolumn = "0",
-          list = false,
-          showbreak = "NONE",
-        },
+        options = GET_HIDE_COLUMN_OPTS(),
       },
       plugins = {
         options = {
