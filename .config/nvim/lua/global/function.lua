@@ -11,7 +11,7 @@ function FILTER_TABLE(tbl, filter)
   for key, value in pairs(tbl) do
     local ok = filter(value, key)
     if ok then
-      if IS_NUMBER(key) then
+      if type(key) == "number" then
         table.insert(tb, value)
       else
         tb[key] = value
@@ -717,13 +717,14 @@ function DEBOUNCE(fn, config)
   end
 end
 
-function GET_ALL_BUFFERS(only_file)
+function GET_ALL_BUFFERS(only_file, new_buf)
   local buffers = api.nvim_list_bufs()
   if not only_file then
     return buffers
   end
   return FILTER_TABLE(buffers, function(bufnr)
-    local is_file = IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+    local is_new = new_buf and new_buf == bufnr
+    local is_file = is_new or IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
     local is_in_list = GET_OPT("buflisted", { buf = bufnr })
     return is_file and is_in_list
   end)
@@ -735,15 +736,7 @@ function OMIT_TABLE(tbl, should_omit)
   end)
 end
 
-function IS_NUMBER(num)
-  return type(num) == "number"
-end
-
-function IS_BIG_FILE(bufnr, size, multiple)
-  if IS_NUMBER(size) and size > MAX_FILE_SIZE then
-    return true
-  end
-
+function IS_BIG_FILE(bufnr, multiple)
   local buffer_path = GET_BUFFER_PATH(bufnr)
   if not IS_FILE_PATH(buffer_path) then
     return false
@@ -763,8 +756,7 @@ function IS_BIG_FILE(bufnr, size, multiple)
     return false
   end
 
-  local mb = stats.size / 1048576
-  return mb > MAX_FILE_SIZE
+  return stats.size > 131072 -- 128 Kib
 end
 
 function CWD()

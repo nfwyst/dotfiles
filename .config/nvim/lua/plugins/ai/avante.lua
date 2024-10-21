@@ -89,6 +89,9 @@ return {
       windows = {
         height = 100,
         input = { prefix = "➜ " },
+        sidebar_header = {
+          enabled = false,
+        },
       },
       mappings = {
         diff = {

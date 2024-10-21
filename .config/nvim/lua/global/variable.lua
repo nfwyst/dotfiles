@@ -8,7 +8,6 @@ IS_LEETING = false
 WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
 MAX_FILE_LENGTH = 5000
-MAX_FILE_SIZE = 0.125 -- MiB
 HAS_OPENAI_KEY = vim.env.OPENAI_API_KEY ~= nil
 OS = jit.os
 IS_MAC = OS == "OSX"

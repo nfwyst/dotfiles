@@ -8,7 +8,7 @@ local function bind_ft()
 end
 
 local function disable(_, bufnr)
-  return IS_BIG_FILE(bufnr, nil, 0.1)
+  return IS_BIG_FILE(bufnr, 0.1)
 end
 
 return {

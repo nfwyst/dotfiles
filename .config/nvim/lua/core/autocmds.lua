@@ -238,7 +238,7 @@ local function update_winbar(event)
   SET_TIMEOUT(function()
     local winbar = "%#WinBar1#%m "
       .. "%#WinBar2#("
-      .. #GET_ALL_BUFFERS(true)
+      .. #GET_ALL_BUFFERS(true, is_new and bufnr or nil)
       .. ") "
       .. "%#WinBar1#"
       .. bar_path:gsub(HOME_PATH, "~")

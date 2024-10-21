@@ -1,17 +1,8 @@
-local run_avante = function(use_api, name, subname)
-  local api
+local run_avante = function(mod, name, subname)
   local avante
-
   return function()
-    if use_api and not api then
-      api = require("avante.api")
-    end
-    if not use_api and not avante then
-      avante = require("avante")
-    end
-    if use_api then
-      api[name]()
-      return
+    if not avante then
+      avante = require(mod)
     end
     local fn = avante[name]
     if subname then
@@ -28,32 +19,36 @@ return {
   ["<leader>aig"] = { group = "GPT prompt" },
   ["<leader>aia"] = { group = "Avante" },
   ["<leader>aiaa"] = {
-    run_avante(true, "ask"),
+    run_avante("avante.api", "ask"),
     desc = "avante: ask",
   },
   ["<leader>aiae"] = {
-    run_avante(true, "edit"),
+    run_avante("avante.api", "edit"),
     desc = "avante: edit",
   },
   ["<leader>aiar"] = {
-    run_avante(true, "refresh"),
+    run_avante("avante.api", "refresh"),
     desc = "avante: refresh",
   },
   ["<leader>aiat"] = {
-    run_avante(false, "toggle"),
+    run_avante("avante", "toggle"),
     desc = "avante: toggle",
   },
   ["<leader>aiah"] = {
-    run_avante(false, "toggle", "hint"),
+    run_avante("avante", "toggle", "hint"),
     desc = "avante: toggle hint",
   },
   ["<leader>aiad"] = {
-    run_avante(false, "toggle", "debug"),
+    run_avante("avante", "toggle", "debug"),
     desc = "avante: toggle debug",
   },
   ["<leader>aias"] = {
-    run_avante(false, "toggle", "suggestion"),
+    run_avante("avante", "toggle", "suggestion"),
     desc = "avante: toggle suggestion",
+  },
+  ["<leader>aiaR"] = {
+    run_avante("avante.repo_map", "show"),
+    desc = "avante: show repo map",
   },
   ["<leader>aiaT"] = { "<cmd>TogglePrompt<cr>", desc = "Toggle system prompt" },
   ["<leader>aigc"] = { "<cmd>GpPickCommand<cr>", desc = "GPT select command" },

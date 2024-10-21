@@ -21,12 +21,12 @@ return {
   event = { "FileReadPre", "BufReadPre", "User FileOpened" },
   config = function()
     require("bigfile").setup({
-      pattern = function(bufnr, filesize_mib)
+      pattern = function(bufnr)
         local filetype = GET_FILETYPE(bufnr)
         if white_table[filetype] then
           return false
         end
-        return IS_BIG_FILE(bufnr, filesize_mib)
+        return IS_BIG_FILE(bufnr)
       end,
       features = {
         "indent_blankline",
