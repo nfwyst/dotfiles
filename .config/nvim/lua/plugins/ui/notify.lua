@@ -25,10 +25,10 @@ return {
       animate = true,
       stages = "fade_in_slide_out",
       max_height = function()
-        return math.floor(GET_EDITOR_HEIGHT() * 0.9)
+        return GET_MAX_HEIGHT(nil, 0.9)
       end,
       max_width = function()
-        return math.floor(GET_EDITOR_WIDTH() * 0.3)
+        return GET_MAX_WIDTH(nil, 0.3)
       end,
       render = "wrapped-compact",
     })

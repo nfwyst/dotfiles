@@ -8,7 +8,7 @@ return {
       window = {
         backdrop = 1,
         width = function()
-          return math.min(120, GET_EDITOR_WIDTH() * 0.75)
+          return math.min(120, GET_MAX_WIDTH(nil, 0.75))
         end,
         height = 0.9,
         options = GET_HIDE_COLUMN_OPTS(),

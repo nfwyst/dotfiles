@@ -91,10 +91,24 @@ function SET_KEY_MAPS(table)
   end
 end
 
-function GET_MAX_WIDTH(offset)
+function GET_MAX_WIDTH(offset, multiple)
+  local width = GET_EDITOR_WIDTH()
+  if multiple then
+    return math.floor(width * multiple)
+  end
   offset = offset or 20
-  local width = GET_EDITOR_WIDTH() - offset
+  width = width - offset
   return width > 0 and width or -width
+end
+
+function GET_MAX_HEIGHT(offset, multiple)
+  local height = GET_EDITOR_HEIGHT()
+  if multiple then
+    return math.floor(height * multiple)
+  end
+  offset = offset or 20
+  height = height - offset
+  return height > 0 and height or -height
 end
 
 local function key_exists(mode, lhs)
@@ -587,39 +601,6 @@ function SPLIT_STRING_BY_LEN(str, max_len)
   end
 
   return result
-end
-
-function TIP(message, timeout)
-  local editor_width = GET_EDITOR_WIDTH()
-  local max_width = math.floor(editor_width * 0.3)
-  local lines = SPLIT_STRING_BY_LEN(message, max_width)
-
-  local win_width = math.min(max_width, #message)
-  local win_height = #lines
-
-  local row = math.floor((GET_EDITOR_HEIGHT() - win_height) / 2)
-  local col = math.floor((editor_width - win_width) / 2)
-
-  local buf = api.nvim_create_buf(false, true)
-  local win = api.nvim_open_win(buf, false, {
-    relative = "editor",
-    width = win_width,
-    height = win_height,
-    row = row,
-    col = col,
-    style = "minimal",
-    border = "rounded",
-  })
-  api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-
-  SET_OPTS({
-    winhl = "Normal:Normal,FloatBorder:TelescopeBorder",
-    cursorline = false,
-  }, { win = win })
-
-  SET_TIMEOUT(function()
-    api.nvim_win_close(win, true)
-  end, timeout or 1000)
 end
 
 function GET_EDITOR_WIDTH()

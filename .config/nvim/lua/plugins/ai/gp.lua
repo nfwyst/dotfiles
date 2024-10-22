@@ -217,7 +217,7 @@ local function set_sidebar_width(multiple)
     end
     local wins = GET_WINDOWS_BY_BUF(bufnr)
     for _, win in ipairs(wins) do
-      local width = math.floor(GET_EDITOR_WIDTH() * multiple)
+      local width = GET_MAX_WIDTH(nil, multiple)
       vim.api.nvim_win_set_width(win, width)
       BIND_QUIT(bufnr)
       break

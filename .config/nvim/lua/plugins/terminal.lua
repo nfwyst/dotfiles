@@ -156,10 +156,10 @@ return {
           if ALPHA_BUF and BUF_VALID(ALPHA_BUF) then
             multiple = 1
           end
-          return math.floor(GET_EDITOR_WIDTH() * multiple)
+          return GET_MAX_WIDTH(nil, multiple)
         end,
         height = function()
-          return math.floor(GET_EDITOR_HEIGHT() * 0.9)
+          return GET_MAX_HEIGHT(nil, 0.9)
         end,
         col = 7,
       },

@@ -91,6 +91,7 @@ INVALID_FILETYPE = {
   "TelescopeResults",
   "Outline",
   "Avante",
+  "harpoon",
   "",
   nil,
 }
