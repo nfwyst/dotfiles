@@ -121,10 +121,6 @@ local hooks = {
     desc = "GPT prompt New Chat",
     selection = false,
   },
-  ChatToggle = {
-    desc = "GPT prompt Toggle Chat vertical",
-    selection = false,
-  },
   ChatFinder = {
     desc = "GPT prompt Chat Finder",
     selection = false,
@@ -205,22 +201,19 @@ local function select_agent(gp)
   })
 end
 
-local function set_sidebar_width(multiple)
+function SET_GPT_SIDEBAR_WIDTH()
   SET_TIMEOUT(function()
-    local bufnr = nil
     for _, buf in ipairs(GET_ALL_BUFFERS()) do
       local is_gp_buf = IS_GPT_PROMPT_CHAT(buf)
       if is_gp_buf then
-        bufnr = buf
-        break
+        local wins = GET_WINDOWS_BY_BUF(buf)
+        for _, win in ipairs(wins) do
+          local width = GET_MAX_WIDTH(nil, 0.3)
+          vim.api.nvim_win_set_width(win, width)
+          BIND_QUIT(buf)
+          break
+        end
       end
-    end
-    local wins = GET_WINDOWS_BY_BUF(bufnr)
-    for _, win in ipairs(wins) do
-      local width = GET_MAX_WIDTH(nil, multiple)
-      vim.api.nvim_win_set_width(win, width)
-      BIND_QUIT(bufnr)
-      break
     end
   end, 10)
 end
@@ -242,7 +235,7 @@ local function pick_command(mode)
       if not is_vertical then
         return
       end
-      set_sidebar_width(0.3)
+      SET_GPT_SIDEBAR_WIDTH()
     end,
   })
 end
@@ -261,7 +254,7 @@ end
 
 return {
   "robitx/gp.nvim",
-  cmd = { "GpSelectAgent", "GpPickCommand" },
+  cmd = { "GpSelectAgent", "GpPickCommand", "GpChatToggle" },
   config = function()
     local _hooks = {}
     for k, v in pairs(hooks) do

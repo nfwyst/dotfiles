@@ -53,6 +53,13 @@ return {
   ["<leader>aiaT"] = { "<cmd>TogglePrompt<cr>", desc = "Toggle system prompt" },
   ["<leader>aigc"] = { "<cmd>GpPickCommand<cr>", desc = "GPT select command" },
   ["<leader>aiga"] = { "<cmd>GpSelectAgent<cr>", desc = "GPT select agent" },
+  ["<leader>aigt"] = {
+    function()
+      vim.cmd("GpChatToggle")
+      SET_GPT_SIDEBAR_WIDTH()
+    end,
+    desc = "GPT toggle",
+  },
   ["<leader>asc"] = { "<cmd>TSContextToggle<cr>", desc = "Toggle code context" },
   ["<leader>ase"] = { "<cmd>EditQuery<cr>", desc = "Show live query editor" },
   ["<leader>ash"] = {

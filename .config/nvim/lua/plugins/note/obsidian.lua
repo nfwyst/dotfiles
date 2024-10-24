@@ -32,7 +32,7 @@ return {
         {
           name = "no-vault",
           path = function()
-            return assert(GET_GIT_PATH())
+            return GET_GIT_PATH() or CWD()
           end,
           overrides = {
             log_level = vim.log.levels.OFF,
