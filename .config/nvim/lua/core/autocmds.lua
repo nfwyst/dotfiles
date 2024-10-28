@@ -111,8 +111,7 @@ local function restore_position(bufnr)
   end
 end
 
-local function set_grug_far_fold_width(bufnr)
-  local filetype = GET_FILETYPE(bufnr)
+local function set_grug_far_fold_width(bufnr, filetype)
   if filetype ~= "grug-far" then
     return
   end
@@ -146,9 +145,10 @@ local filetype_to_runner = {
     "DressingSelect",
     "DiffviewFileHistory",
     "grug-far",
+    "neotest-output",
   }] = DEBOUNCE(function(event)
     local bufnr = event.buf
-    set_grug_far_fold_width(bufnr)
+    set_grug_far_fold_width(bufnr, event.file)
     BIND_QUIT(bufnr)
   end, { delay = 2000 }),
   [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
