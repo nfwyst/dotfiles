@@ -245,7 +245,11 @@ local function update_winbar(event)
       .. "%*%=%#WinBar2#"
       .. string.lower(postfix)
     for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
-      SET_OPT("winbar", winbar, { win = win })
+      local opt = { win = win }
+      if not GET_OPT("cursorline", opt) then
+        SET_OPT("cursorline", true, opt)
+      end
+      SET_OPT("winbar", winbar, opt)
     end
   end, 10)
 end

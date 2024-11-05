@@ -26,11 +26,6 @@ if DAP_DEBUG_ENABLED == nil then
   DAP_DEBUG_ENABLED = false
 end
 
---- Manual mode doesn't automatically change root directory
-if MANUAL_MODE == nil then
-  MANUAL_MODE = false
-end
-
 function GEN_PATH(path)
   return vim.fn.fnamemodify(path, ":p")
 end
@@ -89,7 +84,6 @@ INVALID_FILETYPE = {
   "mason",
   "WhichKey",
   "TelescopeResults",
-  "Outline",
   "Avante",
   "harpoon",
   "",

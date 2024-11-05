@@ -46,7 +46,6 @@ local mappings = {
   ["<leader>f"] = { "<cmd>FindFiles<cr>", desc = "Find files" },
   ["<leader>j"] = { "<cmd>Telescope jumplist<cr>", desc = "Jumplist" },
   ["<leader>m"] = { "<cmd>Mason<cr>", desc = "Open mason installer" },
-  ["<leader>p"] = { "<cmd>Telescope projects<cr>", desc = "Projects" },
   ["<leader>q"] = { "<cmd>Quit<cr>", desc = "Force quit" },
   ["<leader>r"] = {
     "<cmd>Telescope oldfiles only_cwd=true<cr>",
@@ -58,7 +57,6 @@ local mappings = {
   ["<leader>w"] = { "<cmd>Save<cr>", desc = "Save" },
   ["<leader>x"] = { "<cmd>SaveThenQuit<cr>", desc = "Save and quit" },
   ["<leader>z"] = { "<cmd>ZenMode<cr>", desc = "Zen mode" },
-  ["<leader>ot"] = { "<cmd>Outline<cr>", desc = "Toggle outline" },
 }
 
 local prefix = "keymaps.leader."

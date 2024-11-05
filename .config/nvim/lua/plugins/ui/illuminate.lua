@@ -4,7 +4,7 @@ return {
   config = function()
     require("illuminate").configure({
       modes_allowlist = { "n", "no", "nt" },
-      filetypes_denylist = INVALID_FILETYPE,
+      filetypes_denylist = MERGE_ARRAYS(INVALID_FILETYPE, { "markdown" }),
       large_file_cutoff = MAX_FILE_LENGTH,
       under_cursor = false,
     })

@@ -2,7 +2,7 @@ return {
   "folke/lazydev.nvim",
   dependencies = {
     { "Bilal2453/luvit-meta" },
-    { "justinsgithub/wezterm-types" },
+    { "justinsgithub/wezterm-types", cond = IS_MAC },
   },
   ft = "lua",
   opts = {

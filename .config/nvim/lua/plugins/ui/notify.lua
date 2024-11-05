@@ -1,10 +1,4 @@
 local function init(notify)
-  if MANUAL_MODE then
-    LOG_INFO(
-      "project.nvim is in manual mode",
-      "manual mode, project root will not detect automatically"
-    )
-  end
   SET_USER_COMMANDS({
     DissmissNotification = function()
       notify.dismiss({ silent = true, pending = true })

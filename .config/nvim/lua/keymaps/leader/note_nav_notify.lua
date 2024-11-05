@@ -43,7 +43,6 @@ return {
     end,
     desc = "Open snippets",
   },
-  ["<leader>nao"] = { "<cmd>Outline<cr>", desc = "Toggle outline" },
   ["<leader>no"] = { group = "Notification" },
   ["<leader>noD"] = { "<cmd>NoiceDisable<cr>", desc = "Noice Disable" },
   ["<leader>noE"] = { "<cmd>NoiceEnable<cr>", desc = "Noice Enable" },
