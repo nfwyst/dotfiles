@@ -1,3 +1,5 @@
+local api = vim.api
+
 SET_KEY_MAPS({
   -- rewrite space to nop
   [""] = {
@@ -5,6 +7,15 @@ SET_KEY_MAPS({
   },
   -- normal mode
   n = {
+    {
+      lhs = "p",
+      rhs = function()
+        local winid = GET_CURRENT_WIN()
+        local row, col = UNPACK(api.nvim_win_get_cursor(winid))
+        vim.cmd.put()
+        api.nvim_win_set_cursor(winid, { row + 1, col })
+      end,
+    },
     -- window navigation
     { lhs = "<c-h>", rhs = "<c-w>h" },
     { lhs = "<c-j>", rhs = "<c-w>j" },
@@ -68,5 +79,9 @@ SET_KEY_MAPS({
   i = {
     -- Press jk fast to exit insert mode
     { lhs = "jk", rhs = "<cmd>silent!ExitInsertMode<cr>" },
+    { lhs = "<c-h>", rhs = "<Left>" },
+    { lhs = "<c-l>", rhs = "<Right>" },
+    { lhs = "<c-j>", rhs = "<Down>" },
+    { lhs = "<c-k>", rhs = "<Up>" },
   },
 })
