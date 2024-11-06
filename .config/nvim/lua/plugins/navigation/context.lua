@@ -74,7 +74,7 @@ return {
     local context = require("treesitter-context")
     init(context)
     context.setup({
-      max_lines = 5,
+      max_lines = IS_MAC and 5 or 1,
       zindex = 30,
       on_attach = should_attach,
     })

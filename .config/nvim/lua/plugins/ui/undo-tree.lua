@@ -13,6 +13,7 @@ return {
           preview_height = 0.7,
           height = 0.999,
         },
+        saved_only = true,
       },
     },
   },

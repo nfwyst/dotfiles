@@ -102,7 +102,17 @@ local function init(builtin, themes)
       find_files(builtin, themes)
     end,
     FindIgnoredFiles = function()
-      find_files(builtin, themes, { no_ignore = true })
+      find_files(builtin, themes, {
+        no_ignore = true,
+        find_command = {
+          "rg",
+          "--files",
+          "--color",
+          "never",
+          "--glob",
+          "!node_modules",
+        },
+      })
     end,
     FindRepoFiles = function()
       local theme = themes.get_dropdown({ layout_config = layout_config })
