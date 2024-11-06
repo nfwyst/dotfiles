@@ -39,8 +39,6 @@ local function set_commands()
   })
   AUTOCMD("TermOpen", {
     callback = function(event)
-      local is_lazygit = STRING_PATTERN_MATCHED(event.file, "lazygit*", true)
-      local rhs = [[<C-\><C-n>]]
       local opts = { buffer = event.buf }
       local keymap_config = {
         { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]], opts = opts },
@@ -48,12 +46,6 @@ local function set_commands()
         { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]], opts = opts },
         { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]], opts = opts },
       }
-      if not is_lazygit then
-        keymap_config = MERGE_ARRAYS(keymap_config, {
-          { lhs = "<esc>", rhs = rhs, opts = opts },
-          { lhs = "jk", rhs = rhs, opts = opts },
-        })
-      end
       SET_KEY_MAPS({ t = keymap_config })
     end,
     pattern = "term://*",

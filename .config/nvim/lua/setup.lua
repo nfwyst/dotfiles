@@ -26,6 +26,26 @@ if not ok then
   return
 end
 
+local disabled_plugins = {
+  "rplugin",
+  "shada",
+  "spellfile",
+  "gzip",
+  "matchit",
+  "matchparen",
+  "netrwPlugin",
+  "tarPlugin",
+  "tutor",
+  "zipPlugin",
+  "tohtml",
+  "osc52",
+  "man",
+}
+
+if not IS_MAC then
+  table.insert(disabled_plugins, "editorconfig")
+end
+
 lazy.setup({
   defaults = {
     version = false,
@@ -50,24 +70,6 @@ lazy.setup({
   checker = { enabled = false, frequency = 86400, notify = false },
   change_detection = { notify = false },
   performance = {
-    rtp = {
-      disabled_plugins = {
-        "rplugin",
-        "shada",
-        "spellfile",
-        "gzip",
-        "matchit",
-        "matchparen",
-        "netrwPlugin",
-        "tarPlugin",
-        "tutor",
-        "zipPlugin",
-        -- lua
-        "tohtml",
-        "editorconfig",
-        "man",
-        "osc52",
-      },
-    },
+    rtp = { disabled_plugins = disabled_plugins },
   },
 })
