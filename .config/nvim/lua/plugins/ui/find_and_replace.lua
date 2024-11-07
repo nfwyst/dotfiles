@@ -4,13 +4,13 @@ return {
   config = function()
     require("grug-far").setup({
       minSearchChars = 3,
-      maxWorkers = 2,
+      maxWorkers = IS_MAC and 4 or 2,
       reportDuration = false,
       maxSearchMatches = 1000,
+      normalModeSearch = true,
       engines = {
         ripgrep = {
-          -- extraArgs = '--no-ignore --hidden --glob "!node_modules"',
-          extraArgs = "--no-ignore --hidden",
+          extraArgs = "--no-ignore --hidden --glob !node_modules",
         },
       },
     })

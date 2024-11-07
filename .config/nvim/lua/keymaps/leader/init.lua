@@ -5,6 +5,11 @@ local function get_prev_bufpath()
   end
 end
 
+function toggle_paste_mode()
+  local paste_mode = GET_OPT("paste")
+  SET_OPT("paste", not paste_mode)
+end
+
 local mappings = {
   ["<leader>A"] = { "<cmd>Alpha<cr>", desc = "Alpha" },
   ["<leader>C"] = { "<cmd>FindTextCursor<cr>", desc = "Find text under cursor" },
@@ -23,6 +28,7 @@ local mappings = {
   },
   ["<leader>I"] = { "<cmd>set modifiable<cr>", desc = "Set modifiable" },
   ["<leader>L"] = { "<cmd>Lazy<cr>", desc = "Open lazy installer" },
+  ["<leader>p"] = { toggle_paste_mode, desc = "Toggle paste" },
   ["<leader>P"] = { "<cmd>FindTextWithPath<cr>", desc = "Find text by path" },
   ["<leader>Q"] = { "<cmd>ccl<cr>", desc = "Close QuickFix" },
   ["<leader>R"] = {

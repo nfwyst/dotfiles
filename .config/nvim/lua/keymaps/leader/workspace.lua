@@ -1,20 +1,5 @@
-function get_buffer_extension()
-  local ext
-  if vim.bo.buftype == "" then
-    ext = vim.fn.expand("%:e")
-  end
-  if not ext or ext == "" then
-    return nil
-  end
-  return "*." .. ext
-end
-
 local function open_grug_far()
-  require("grug-far").open({
-    -- prefills = {
-    --   filesFilter = get_buffer_extension(),
-    -- },
-  })
+  require("grug-far").open()
 end
 
 return {
