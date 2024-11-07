@@ -1,5 +1,4 @@
 return {
-  -- "arnamak/stay-centered.nvim",
   "nfwyst/stay-centered.nvim",
   lazy = false,
   name = "stay-centered",
@@ -7,5 +6,6 @@ return {
   opts = {
     enabled = true,
     skip_filetypes = INVALID_FILETYPE,
+    disable_on_mouse = false,
   },
 }
