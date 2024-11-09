@@ -54,7 +54,7 @@ return {
         html = fe,
         json = fe,
         jsonc = fe,
-        markdown = { "vale" },
+        markdown = fe,
         yaml = fe,
         graphql = fe,
         c = c,

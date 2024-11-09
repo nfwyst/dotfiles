@@ -162,7 +162,10 @@ end
 
 local function get_maps(act)
   return {
-    ["<c-q>"] = act.send_selected_to_qflist + act.open_qflist,
+    ["<c-q>"] = function(...)
+      act.send_selected_to_qflist(...)
+      vim.cmd.copen()
+    end,
     ["<cr>"] = act.select_default,
     ["<c-x>"] = act.select_horizontal,
     ["<c-v>"] = act.select_vertical,
@@ -173,7 +176,10 @@ local function get_maps(act)
     ["<c-l>"] = act.preview_scrolling_right,
     ["<tab>"] = act.toggle_selection + act.move_selection_worse,
     ["<s-tab>"] = act.toggle_selection + act.move_selection_better,
-    ["<c-a>"] = act.send_to_qflist + act.open_qflist,
+    ["<c-a>"] = function(...)
+      act.smart_send_to_qflist(...)
+      vim.cmd.copen()
+    end,
     ["<c-g>"] = act.complete_tag,
   }
 end
