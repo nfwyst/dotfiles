@@ -24,3 +24,4 @@ Ensure you have the following installed on your system
 - nvim, better and powerful vim
 - zellij, pluggable terminal workspace, with terminal multiplexer as the base feature
 - difftastic, structural diff tool that understands syntax
+- fnm
