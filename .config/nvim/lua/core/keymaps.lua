@@ -5,12 +5,12 @@ local function custom_paste()
   local end_with_new_line = content:sub(-1) == "\n"
   local only_one_line = not content:sub(1, -2):find("\n")
   if end_with_new_line and only_one_line then
-    vim.cmd.put()
     local winid = GET_CURRENT_WIN()
     local row, col = UNPACK(api.nvim_win_get_cursor(winid))
+    vim.cmd.put()
     return api.nvim_win_set_cursor(winid, { row + 1, col })
   end
-  vim.cmd.put()
+  FEED_KEYS("p", "n")
 end
 
 SET_KEY_MAPS({

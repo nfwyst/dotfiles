@@ -13,16 +13,6 @@ function add_cmp_source(source, index)
   cmp.setup(config)
 end
 
-function get_proxy_port()
-  local proxy = os.getenv("http_proxy")
-  if not proxy then
-    return nil
-  end
-  local url_parts = vim.split(proxy, ":")
-  local port = url_parts[3]
-  return port
-end
-
 return {
   "milanglacier/minuet-ai.nvim",
   dependencies = {
@@ -37,7 +27,6 @@ return {
       notify = "error",
       request_timeout = 5,
       provider = "openai_fim_compatible",
-      proxy = get_proxy_port(),
       provider_options = {
         openai_fim_compatible = {
           model = "deepseek-chat",
