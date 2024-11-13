@@ -36,6 +36,14 @@ local function toggle_telescope(harpoon_files, entry_parser)
   })
 end
 
+local function get_ui_size(title)
+  return {
+    title = title,
+    ui_width_ratio = 0.7,
+    height_in_lines = 25,
+  }
+end
+
 local function init(harpoon)
   SET_HL({ HarpoonBorder = { link = "TelescopeBorder" } })
   SET_USER_COMMANDS({
@@ -75,7 +83,7 @@ local function init(harpoon)
         rhs = function()
           harpoon.ui:toggle_quick_menu(
             harpoon:list(),
-            { title = "Harpoon list" }
+            get_ui_size("Harpoon list")
           )
         end,
       },
@@ -84,7 +92,7 @@ local function init(harpoon)
         rhs = function()
           harpoon.ui:toggle_quick_menu(
             harpoon:list("bookmarks"),
-            { title = "Harpoon markbooks" }
+            get_ui_size("markbooks")
           )
         end,
       },

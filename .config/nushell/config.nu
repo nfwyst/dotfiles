@@ -932,6 +932,17 @@ def cx [param: string, ] {
   }
 }
 
+def create_worktree [target_dir, branch_name] {
+  if not ($target_dir | path exists) {
+    mkdir $target_dir
+  }
+  let branch_exists = (git branch --list $branch_name | lines | length) > 0
+  if not $branch_exists {
+    git branch $branch_name
+  }
+  git worktree add $target_dir $branch_name
+}
+
 # unset proxy
 def --env unproxy [] {
   hide-env https_proxy

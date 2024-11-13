@@ -1,5 +1,18 @@
 local api = vim.api
 
+local function custom_paste()
+  local content = vim.fn.getreg('"')
+  local end_with_new_line = content:sub(-1) == "\n"
+  local only_one_line = not content:sub(1, -2):find("\n")
+  if end_with_new_line and only_one_line then
+    vim.cmd.put()
+    local winid = GET_CURRENT_WIN()
+    local row, col = UNPACK(api.nvim_win_get_cursor(winid))
+    return api.nvim_win_set_cursor(winid, { row + 1, col })
+  end
+  vim.cmd.put()
+end
+
 SET_KEY_MAPS({
   -- rewrite space to nop
   [""] = {
@@ -7,15 +20,7 @@ SET_KEY_MAPS({
   },
   -- normal mode
   n = {
-    {
-      lhs = "p",
-      rhs = function()
-        local winid = GET_CURRENT_WIN()
-        local row, col = UNPACK(api.nvim_win_get_cursor(winid))
-        vim.cmd.put()
-        api.nvim_win_set_cursor(winid, { row + 1, col })
-      end,
-    },
+    { lhs = "p", rhs = custom_paste },
     -- window navigation
     { lhs = "<c-h>", rhs = "<c-w>h" },
     { lhs = "<c-j>", rhs = "<c-w>j" },

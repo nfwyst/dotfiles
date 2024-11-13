@@ -51,7 +51,6 @@ return {
     local token = os.getenv(api_key_name) or ""
     require("avante").setup({
       provider = "deepseek",
-      auto_suggestions_provider = "deepseek",
       vendors = {
         deepseek = {
           endpoint = "https://api.deepseek.com/beta/chat/completions",
@@ -80,7 +79,7 @@ return {
         },
       },
       behaviour = {
-        auto_suggestions = IS_MAC,
+        auto_suggestions = false,
         auto_set_highlight_group = true,
         auto_apply_diff_after_generation = false,
         auto_set_keymaps = false,
@@ -102,12 +101,6 @@ return {
           cursor = "cc",
           next = "]x",
           prev = "[x",
-        },
-        suggestion = {
-          accept = "<M-l>",
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<C-]>",
         },
         jump = {
           next = "]]",

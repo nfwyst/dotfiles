@@ -52,11 +52,13 @@ return {
           i = cmp.mapping.abort(),
           c = cmp.mapping.close(),
         }),
-        -- Accept currently selected item. If none selected, `select` first item.
-        -- Set `select` to `false` to only confirm explicitly selected items.
-        ["<CR>"] = cmp.mapping.confirm({
-          select = true,
-        }),
+        ["<CR>"] = cmp.mapping(function(fallback)
+          -- use the internal non-blocking call to check if cmp is visible to work with minuet
+          if cmp.core.view:visible() then
+            return cmp.confirm({ select = true })
+          end
+          fallback()
+        end),
         ["<Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_next_item()
@@ -89,6 +91,9 @@ return {
         disallow_fullfuzzy_matching = disable_fuzzy,
         disallow_partial_fuzzy_matching = disable_fuzzy,
         disallow_prefix_unmatching = disable_fuzzy,
+      },
+      performance = {
+        fetching_timeout = 2000,
       },
       sources = get_sources(cmp, {
         "luasnip",
