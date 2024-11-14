@@ -4,7 +4,7 @@ HOME_PATH = vim.fn.expand("~")
 AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
 IS_LEETING = false
----@diagnostic disable-next-line: undefined-field
+HAS_API_KEY = not not os.getenv("DEEPSEEK_API_KEY")
 WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
 MAX_FILE_LENGTH = 5000

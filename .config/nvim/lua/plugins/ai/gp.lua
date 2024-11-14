@@ -254,6 +254,7 @@ end
 
 return {
   "robitx/gp.nvim",
+  cond = HAS_API_KEY,
   cmd = { "GpSelectAgent", "GpPickCommand", "GpChatToggle" },
   config = function()
     local _hooks = {}

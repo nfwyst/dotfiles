@@ -19,7 +19,7 @@ return {
     { "nvim-lua/plenary.nvim" },
     { "hrsh7th/nvim-cmp" },
   },
-  cond = not not os.getenv("DEEPSEEK_API_KEY"),
+  cond = HAS_API_KEY,
   event = "InsertEnter",
   config = function()
     add_cmp_source("minuet", 2)

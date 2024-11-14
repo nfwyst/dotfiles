@@ -35,6 +35,7 @@ local build = IS_MAC and "make" or "make BUILD_FROM_SOURCE=true"
 
 return {
   "yetone/avante.nvim",
+  cond = HAS_API_KEY,
   cmd = { "TogglePrompt" },
   build = build,
   dependencies = {
