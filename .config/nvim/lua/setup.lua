@@ -58,6 +58,7 @@ lazy.setup({
     { import = "plugins.lsp" },
     { import = "plugins.dap" },
     { import = "plugins.colorscheme" },
+    { import = "plugins.complete" },
     { import = "plugins.ui" },
     { import = "plugins.ai" },
     { import = "plugins.note" },
