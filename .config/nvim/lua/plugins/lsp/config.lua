@@ -82,6 +82,7 @@ return {
     require("lspconfig.ui.windows").default_options.border = "rounded"
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
+    ADD_CMP_SOURCE("nvim_lsp")
 
     for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { "nushell" })) do
       if server ~= "ts_ls" then

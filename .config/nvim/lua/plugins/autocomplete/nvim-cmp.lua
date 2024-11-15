@@ -1,20 +1,9 @@
 local disable_fuzzy = true
 
-local function get_sources(cmp, names)
-  local sources = {}
-  for _, name in ipairs(names) do
-    table.insert(sources, { name = name, max_item_count = 3 })
-  end
-  return cmp.config.sources(sources)
-end
-
 return {
   "hrsh7th/nvim-cmp",
   event = "InsertEnter",
   dependencies = {
-    "hrsh7th/cmp-buffer",
-    "hrsh7th/cmp-path",
-    "hrsh7th/cmp-nvim-lua",
     "onsails/lspkind.nvim",
     { "L3MON4D3/LuaSnip", build = "make install_jsregexp" },
     "saadparwaiz1/cmp_luasnip",
@@ -95,13 +84,8 @@ return {
       performance = {
         fetching_timeout = 2000,
       },
-      sources = get_sources(cmp, {
-        "luasnip",
-        "nvim_lsp",
-        "nvim_lua",
-        "buffer",
-        "path",
-        "lazydev",
+      sources = cmp.config.sources({
+        { name = "luasnip", max_item_count = 3 },
       }),
       window = {
         completion = border,

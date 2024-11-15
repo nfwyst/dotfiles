@@ -758,3 +758,20 @@ function GET_HIDE_COLUMN_OPTS(status)
   end
   return opt
 end
+
+function ADD_CMP_SOURCE(source, index)
+  local has_cmp, cmp = pcall(require, "cmp")
+  if not has_cmp then
+    return
+  end
+  if index == nil then
+    index = 1
+  end
+  local config = cmp.get_config()
+  table.insert(config.sources, index, {
+    group_index = 1,
+    name = source,
+    max_item_count = 3,
+  })
+  cmp.setup(config)
+end

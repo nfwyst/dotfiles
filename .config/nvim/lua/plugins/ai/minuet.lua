@@ -1,18 +1,3 @@
-function add_cmp_source(source, index)
-  local has_cmp, cmp = pcall(require, "cmp")
-  if not has_cmp then
-    return
-  end
-  if index == nil then
-    index = 1
-  end
-  local config = cmp.get_config()
-  table.insert(config.sources, index, {
-    name = source,
-  })
-  cmp.setup(config)
-end
-
 return {
   "milanglacier/minuet-ai.nvim",
   dependencies = {
@@ -22,7 +7,7 @@ return {
   cond = HAS_API_KEY,
   event = "InsertEnter",
   config = function()
-    add_cmp_source("minuet", 2)
+    ADD_CMP_SOURCE("minuet", 2)
     require("minuet").setup({
       notify = "error",
       request_timeout = 5,
