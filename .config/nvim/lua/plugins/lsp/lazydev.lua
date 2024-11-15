@@ -6,7 +6,7 @@ return {
     { "justinsgithub/wezterm-types", cond = IS_MAC },
   },
   config = function()
-    ADD_CMP_SOURCE("lazydev")
+    ADD_CMP_SOURCE("lazydev", { group_index = 0, priority = 7 })
     require("lazydev").setup({
       library = {
         "lazy.nvim",

@@ -5,6 +5,6 @@ return {
     { "hrsh7th/nvim-cmp" },
   },
   config = function()
-    ADD_CMP_SOURCE("buffer")
+    ADD_CMP_SOURCE("buffer", { priority = 5 })
   end,
 }

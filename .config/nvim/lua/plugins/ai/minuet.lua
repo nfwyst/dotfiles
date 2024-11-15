@@ -7,7 +7,7 @@ return {
   cond = HAS_API_KEY,
   event = "InsertEnter",
   config = function()
-    ADD_CMP_SOURCE("minuet", 2)
+    ADD_CMP_SOURCE("minuet", { priority = 9 })
     require("minuet").setup({
       notify = "error",
       request_timeout = 5,

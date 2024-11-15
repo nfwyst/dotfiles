@@ -759,19 +759,19 @@ function GET_HIDE_COLUMN_OPTS(status)
   return opt
 end
 
-function ADD_CMP_SOURCE(source, index)
+function ADD_CMP_SOURCE(name, opt)
   local has_cmp, cmp = pcall(require, "cmp")
   if not has_cmp then
     return
   end
-  if index == nil then
-    index = 1
-  end
+  opt = opt or {}
   local config = cmp.get_config()
-  table.insert(config.sources, index, {
-    group_index = 1,
-    name = source,
+  local newSource = {
+    group_index = opt.group_index or 1,
+    priority = opt.priority,
+    name = name,
     max_item_count = 3,
-  })
+  }
+  table.insert(config.sources, newSource)
   cmp.setup(config)
 end

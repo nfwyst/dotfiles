@@ -85,7 +85,7 @@ return {
         fetching_timeout = 2000,
       },
       sources = cmp.config.sources({
-        { name = "luasnip", max_item_count = 3 },
+        { name = "luasnip", max_item_count = 3, priority = 8 },
       }),
       window = {
         completion = border,
