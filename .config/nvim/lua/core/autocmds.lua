@@ -107,9 +107,7 @@ local function restore_position(bufnr)
     and last_known_line > 1
     and last_known_line <= vim.api.nvim_buf_line_count(bufnr)
   then
-    SET_TIMEOUT(function()
-      FEED_KEYS([[g`"]], "nx")
-    end)
+    FEED_KEYS([[g`"]], "nx")
   end
 end
 
@@ -310,6 +308,11 @@ SET_AUTOCMDS({
     {
       group = AUTOGROUP("_indent_tab_", { clear = true }),
       callback = function(event)
+        local bufnr = event.buf
+        restore_position(bufnr)
+        SET_TIMEOUT(function()
+          vim.cmd("normal! zz")
+        end)
         local expandtab = true
         local width = 2
         if is_indent_with_tab(event) then
@@ -320,9 +323,7 @@ SET_AUTOCMDS({
         vim.bo.tabstop = width
         vim.bo.softtabstop = width
         vim.bo.shiftwidth = width
-        local bufnr = event.buf
         close_alpha_when_open_file(bufnr)
-        restore_position(bufnr)
       end,
     },
   },

@@ -184,6 +184,10 @@ local function get_maps(act)
   }
 end
 
+local history = {
+  limit = 10,
+}
+
 return {
   "nvim-telescope/telescope.nvim",
   cmd = {
@@ -209,6 +213,7 @@ return {
     init(require("telescope.builtin"), require("telescope.themes"))
     telescope.setup({
       defaults = {
+        history = IS_MAC and history or false,
         path_display = {
           filename_first = {
             reverse_directories = true,

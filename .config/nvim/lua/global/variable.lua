@@ -8,7 +8,6 @@ HAS_API_KEY = not not os.getenv("DEEPSEEK_API_KEY")
 WORKSPACE_PATH = vim.uv.cwd()
 SCHEME_BACKGROUND = "dark"
 MAX_FILE_LENGTH = 5000
-HAS_OPENAI_KEY = vim.env.OPENAI_API_KEY ~= nil
 OS = jit.os
 IS_MAC = OS == "OSX"
 DEFAULT_COLORSCHEME = "tokyonight"
