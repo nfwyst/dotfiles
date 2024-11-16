@@ -61,7 +61,11 @@ return {
     dashboard.section.header.val = val
     dashboard.section.buttons.val = {
       dashboard.button("f", "󰱼  Find file", "<cmd>FindFiles<cr>"),
-      dashboard.button("e", "  New file", "<cmd>ene <bar> startinsert<cr>"),
+      dashboard.button(
+        "e",
+        "  New file",
+        "<cmd>lua NEW_FILE(true, true)<cr>"
+      ),
       dashboard.button(
         "R",
         "  Recently used files global",

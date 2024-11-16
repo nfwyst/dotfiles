@@ -56,7 +56,7 @@ lazy.setup({
   spec = {
     { import = "plugins" },
     { import = "plugins.lsp" },
-    { import = "plugins.dap" },
+    { import = "plugins.debug" },
     { import = "plugins.colorscheme" },
     { import = "plugins.autocomplete" },
     { import = "plugins.ui" },

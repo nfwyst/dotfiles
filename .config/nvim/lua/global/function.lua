@@ -304,20 +304,27 @@ function IS_PACKAGE_LOADED(pkg)
   return not not package.loaded[pkg]
 end
 
+function NEW_FILE(bang, open)
+  vim.ui.input({ prompt = "Enter a file name: " }, function(fname)
+    if not fname then
+      LOG_ERROR("cant save", "file name missing")
+      return
+    end
+    if open then
+      vim.cmd.edit(fname)
+    end
+    vim.cmd.write({ fname, bang = bang })
+  end)
+end
+
 function SAVE(force)
   local bang = force ~= nil and force ~= false
-  local buffer_path = GET_CURRENT_BUFFER_PATH()
+  local buffer_path = GET_CURRENT_BUFFER_PATH(false, true)
   if buffer_path == "" then
-    vim.ui.input({ prompt = "Enter a file name: " }, function(fname)
-      if not fname then
-        LOG_ERROR("cant save", "file name missing")
-      else
-        vim.cmd.write({ fname, bang = bang })
-      end
-    end)
-  else
-    vim.cmd.write({ bang = bang })
+    NEW_FILE(bang)
+    return
   end
+  vim.cmd.write({ bang = bang })
 end
 
 function QUIT(force)
@@ -572,12 +579,14 @@ function GET_GIT_PATH(start_filepath)
   return util.find_git_ancestor(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
 
-function GET_CURRENT_BUFFER_PATH(fallback)
+function GET_CURRENT_BUFFER_PATH(use_fallback, dont_check_path)
   local buffer_path = GET_BUFFER_PATH(GET_CURRENT_BUFFER())
-  if buffer_path ~= "" and not IS_FILE_PATH(buffer_path) then
+  local check_path = not dont_check_path
+  local not_in_fs = not IS_FILE_PATH(buffer_path)
+  if buffer_path ~= "" and check_path and not_in_fs then
     buffer_path = ""
   end
-  if buffer_path == "" and fallback then
+  if buffer_path == "" and use_fallback then
     return CWD(), true
   end
   return buffer_path, false
