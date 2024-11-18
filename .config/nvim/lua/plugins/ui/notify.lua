@@ -3,9 +3,6 @@ local function init(notify)
     DissmissNotification = function()
       notify.dismiss({ silent = true, pending = true })
     end,
-    ShowWorkspacePath = function()
-      LOG_INFO("workspace path is", WORKSPACE_PATH)
-    end,
   })
   vim.notify = notify
 end

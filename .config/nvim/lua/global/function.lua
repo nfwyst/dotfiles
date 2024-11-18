@@ -210,16 +210,6 @@ function TABLE_REMOVE_BY_KEY(table, key)
   table[key] = nil
 end
 
-function SET_WORKSPACE_PATH_GLOBAL()
-  local ok, util = pcall(require, "lspconfig.util")
-  if not ok then
-    LOG_ERROR("pcall error", util)
-    return
-  end
-  WORKSPACE_PATH = GET_WORKSPACE_PATH()
-  LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
-end
-
 function CENTER_STRING_BY_WIDTH(str, width, offset)
   local padding = math.floor((width - #str) / 2)
   if not offset then
@@ -273,11 +263,6 @@ end
 function UNPACK(table)
   local up = table.unpack or unpack
   return up(table)
-end
-
-function IS_ABSOLUTE_PATH(path)
-  local seps = { "/", "\\" }
-  return TABLE_CONTAINS(seps, string.sub(path, 1, 1))
 end
 
 function SET_AUTOCMDS(list)

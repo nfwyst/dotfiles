@@ -52,7 +52,6 @@ local function find_text(builtin, themes, path, undercursor, extra)
       height = 0.6,
     }),
   })
-  theme.cwd = WORKSPACE_PATH
   if path then
     theme.search_dir = path
   end
@@ -65,7 +64,6 @@ end
 
 local function find_files(builtin, themes, config)
   local theme = themes.get_dropdown({ layout_config = layout_config })
-  theme.cwd = WORKSPACE_PATH
   if config ~= nil then
     theme = MERGE_TABLE(theme, config)
   end
@@ -116,7 +114,6 @@ local function init(builtin, themes)
     end,
     FindRepoFiles = function()
       local theme = themes.get_dropdown({ layout_config = layout_config })
-      theme.cwd = WORKSPACE_PATH
       builtin.git_files(theme)
     end,
     FindTextWithPath = function()
@@ -125,26 +122,6 @@ local function init(builtin, themes)
           return
         end
         find_text(builtin, themes, path)
-      end)
-    end,
-    SetWorkspacePathGlobal = SET_WORKSPACE_PATH_GLOBAL,
-    SetWorkspacePathLocal = function()
-      WORKSPACE_PATH = GET_GIT_PATH()
-      LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
-    end,
-    SetWorkspacePathCustom = function()
-      vim.ui.input({ prompt = "input path: " }, function(path)
-        if not path then
-          return
-        end
-        if IS_ABSOLUTE_PATH(path) then
-          WORKSPACE_PATH = path
-          LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
-          return
-        end
-        local relativePath = GET_GIT_PATH()
-        WORKSPACE_PATH = GEN_PATH(relativePath .. "/" .. path)
-        LOG_INFO("changing workspace path", "new path: " .. WORKSPACE_PATH)
       end)
     end,
     DocumentSymbols = function()
@@ -200,9 +177,6 @@ return {
     "FindRepoFiles",
     "FindTextWithPath",
     "Telescope",
-    "SetWorkspacePathGlobal",
-    "SetWorkspacePathLocal",
-    "SetWorkspacePathCustom",
     "DocumentSymbols",
     "WorkspaceSymbols",
   },
