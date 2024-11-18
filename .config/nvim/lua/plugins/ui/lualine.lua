@@ -122,6 +122,7 @@ local timer = {
   cond = function()
     return IS_PACKAGE_LOADED("nomodoro")
   end,
+  color = { fg = GET_COLOR().red },
   padding = { left = 0, right = 1 },
 }
 
@@ -175,7 +176,7 @@ return {
           lsps,
           "searchcount",
         },
-        lualine_c = {},
+        lualine_c = { timer },
         lualine_x = {
           {
             lazy_status.updates,
@@ -190,7 +191,6 @@ return {
           { cond = show_on_width, "encoding" },
           fileformat,
           location,
-          timer,
         },
         lualine_z = { progress },
       },

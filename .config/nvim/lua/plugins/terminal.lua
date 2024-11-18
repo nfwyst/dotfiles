@@ -144,7 +144,7 @@ return {
         border = "curved",
         winblend = 0,
         width = function()
-          local multiple = 0.96
+          local multiple = 0.95
           if ALPHA_BUF and BUF_VALID(ALPHA_BUF) then
             multiple = 1
           end
@@ -153,7 +153,7 @@ return {
         height = function()
           return GET_MAX_HEIGHT(nil, 0.9)
         end,
-        col = 7,
+        col = 8,
       },
     })
     init(require("toggleterm.terminal"))
