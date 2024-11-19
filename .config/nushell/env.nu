@@ -177,4 +177,4 @@ $env.OLLAMA_API_BASE = "http://127.0.0.1:11434"
 # uniq path
 $env.PATH = ($env.PATH | uniq)
 
-$env.NODE_OPTIONS = "--disable-warning=ExperimentalWarning"
+$env.NODE_OPTIONS = "--no-warnings=ExperimentalWarning"
