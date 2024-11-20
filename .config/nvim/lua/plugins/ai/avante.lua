@@ -113,7 +113,7 @@ return {
         },
       },
       hints = {
-        enabled = true,
+        enabled = false,
       },
       repo_map = {
         ignore_patterns = {

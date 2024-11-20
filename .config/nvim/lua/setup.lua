@@ -48,10 +48,13 @@ end
 
 lazy.setup({
   defaults = {
-    version = false,
+    version = nil,
   },
   rocks = {
     enabled = false,
+  },
+  git = {
+    timeout = 300,
   },
   spec = {
     { import = "plugins" },
