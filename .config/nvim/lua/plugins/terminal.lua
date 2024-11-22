@@ -40,11 +40,17 @@ local function set_commands()
   AUTOCMD("TermOpen", {
     callback = function(event)
       local opts = { buffer = event.buf }
+      local normal = [[<C-\><C-n>]]
+      local function key(lhs, rhs)
+        return { lhs = lhs, rhs = rhs, opts = opts }
+      end
       local keymap_config = {
-        { lhs = "<C-h>", rhs = [[<C-\><C-n><C-W>h]], opts = opts },
-        { lhs = "<C-j>", rhs = [[<C-\><C-n><C-W>j]], opts = opts },
-        { lhs = "<C-k>", rhs = [[<C-\><C-n><C-W>k]], opts = opts },
-        { lhs = "<C-l>", rhs = [[<C-\><C-n><C-W>l]], opts = opts },
+        key("<esc>", normal),
+        key("<C-[>", normal),
+        key("<C-h>", [[<C-\><C-n><C-W>h]]),
+        key("<C-j>", [[<C-\><C-n><C-W>j]]),
+        key("<C-k>", [[<C-\><C-n><C-W>k]]),
+        key("<C-l>", [[<C-\><C-n><C-W>l]]),
       }
       SET_KEY_MAPS({ t = keymap_config })
     end,

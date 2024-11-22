@@ -45,7 +45,7 @@ local function fix_quit_avante()
     return
   end
   SET_TIMEOUT(function()
-    ENABLE_CURSORLINE({ buf = GET_CURRENT_BUFFER() })
+    ENABLE_CURSORLINE({ win = GET_CURRENT_WIN() })
   end, 3)
 end
 
