@@ -175,7 +175,7 @@ local filetype_to_runner = {
         SHOW_CURSOR()
       end
       if event.match == "lazy" then
-        SET_OPT("cursorline", true, event)
+        ENABLE_CURSORLINE(event, true)
       end
     end, 10)
   end),
@@ -219,9 +219,7 @@ end
 local function update_winbar(event)
   local bufnr = event.buf
   local is_new = event.event == "BufNewFile"
-  local filetype = GET_FILETYPE(bufnr)
-  local is_invalid = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
-  if not bufnr or is_invalid then
+  if not bufnr or not FILETYPE_VALID(bufnr) then
     return
   end
   local bar_path = GET_BUFFER_PATH(bufnr)
@@ -246,9 +244,7 @@ local function update_winbar(event)
       .. string.lower(postfix)
     for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
       local opt = { win = win }
-      if not GET_OPT("cursorline", opt) then
-        SET_OPT("cursorline", true, opt)
-      end
+      ENABLE_CURSORLINE(opt, true)
       SET_OPT("winbar", winbar, opt)
     end
   end, 10)
@@ -340,14 +336,7 @@ SET_AUTOCMDS({
     "InsertLeave",
     {
       group = group,
-      callback = function(event)
-        local filetype = GET_FILETYPE(event.buf)
-        local exclude_filetype = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
-        if exclude_filetype then
-          return
-        end
-        SET_OPT("cursorline", true, event)
-      end,
+      callback = ENABLE_CURSORLINE,
     },
   },
 })

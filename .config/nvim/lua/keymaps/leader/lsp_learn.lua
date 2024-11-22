@@ -9,7 +9,7 @@ return {
     "<cmd>lua vim.diagnostic.enable()<cr>",
     desc = "Enable Lint",
   },
-  ["<leader>lsI"] = { "<cmd>LspInstallInfo<cr>", desc = "Installer Info" },
+  ["<leader>lsI"] = { "<cmd>LspInfo<cr>", desc = "LSP information" },
   ["<leader>lsQ"] = {
     "<cmd>lua vim.diagnostic.setqflist()<cr>",
     desc = "All Quickfix",

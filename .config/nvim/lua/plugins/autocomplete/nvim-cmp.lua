@@ -23,7 +23,7 @@ return {
     })
     cmp.setup({
       enabled = function()
-        return not TABLE_CONTAINS(INVALID_FILETYPE, vim.bo.filetype)
+        return FILETYPE_VALID(GET_CURRENT_BUFFER())
       end,
       snippet = {
         expand = function(args)

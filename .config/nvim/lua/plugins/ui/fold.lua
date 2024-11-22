@@ -37,12 +37,14 @@ return {
       close_fold_kinds_for_ft = { default = { "imports", "comment" } },
       enable_get_fold_virt_text = false,
       provider_selector = function(_, filetype, buftype)
-        if filetype == "git" or TABLE_CONTAINS(INVALID_FILETYPE, filetype) then
+        local is_git = filetype == "git"
+        local is_nofile = buftype == "nofile"
+        local filetype_invalid = INCLUDES(INVALID_FILETYPE, filetype)
+        local is_git_or_python = INCLUDES({ "vim", "python" }, filetype)
+        if is_git or filetype_invalid then
           return ""
         end
-        if
-          buftype == "nofile" or TABLE_CONTAINS({ "vim", "python" }, filetype)
-        then
+        if is_nofile or is_git_or_python then
           return "indent"
         end
 

@@ -84,7 +84,7 @@ return {
         auto_set_highlight_group = true,
         auto_apply_diff_after_generation = false,
         auto_set_keymaps = false,
-        support_paste_from_clipboard = false,
+        support_paste_from_clipboard = true,
       },
       windows = {
         height = 100,

@@ -7,10 +7,9 @@ local function key_filter(config)
   local exclude_fts = KEYMAP_EXCLUDE_FTS[lhs]
   if exclude_fts and #exclude_fts > 0 then
     config[2] = function(...)
-      local ft = GET_FILETYPE(GET_CURRENT_BUFFER())
-      local is_excluded = TABLE_CONTAINS(exclude_fts, ft)
-      if is_excluded then
-        LOG_INFO("keymap", "key " .. lhs .. " disabled for filetype " .. ft)
+      local buf = GET_CURRENT_BUFFER()
+      if not FILETYPE_VALID(buf, exclude_fts, lhs .. "invalid_filetype") then
+        LOG_INFO("keymap", "key " .. lhs .. " disabled for current filetype")
         return
       end
       if type(rhs) == "function" then
@@ -41,6 +40,15 @@ local function format(conf)
   return new_conf
 end
 
+local function fix_quit_avante()
+  if not IS_FILETYPE("AvanteInput") then
+    return
+  end
+  SET_TIMEOUT(function()
+    ENABLE_CURSORLINE({ buf = GET_CURRENT_BUFFER() })
+  end, 3)
+end
+
 local function init(wk)
   SET_USER_COMMANDS({
     Save = function()
@@ -50,6 +58,7 @@ local function init(wk)
       PCALL(SAVE_THEN_QUIT)
     end,
     Quit = function()
+      fix_quit_avante()
       PCALL(QUIT)
     end,
   })

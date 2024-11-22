@@ -54,10 +54,23 @@ LSP_SERVERS = {
   "bashls",
 }
 
+INVALID_CURSORLINE_FILETYPE = {
+  "TelescopePrompt",
+  "DressingInput",
+  "DressingSelect",
+  "toggleterm",
+  "noice",
+  "notify",
+  "WhichKey",
+  "Avante",
+  "AvanteInput",
+  "",
+  nil,
+}
+
 INVALID_FILETYPE = {
   "NvimTree",
   "alpha",
-  "dashboard",
   "qf",
   "help",
   "man",
@@ -67,7 +80,6 @@ INVALID_FILETYPE = {
   "DressingInput",
   "DressingSelect",
   "grug-far",
-  "startify",
   "Trouble",
   "toggleterm",
   "lazy",
@@ -237,8 +249,7 @@ local function defaulter(f, default_opts)
 end
 
 function highlight_row(bufnr, row)
-  local hl_group = "CursorLine"
-  vim.api.nvim_buf_add_highlight(bufnr, -1, hl_group, row - 1, 0, -1)
+  vim.api.nvim_buf_add_highlight(bufnr, -1, "CursorLine", row - 1, 0, -1)
 end
 
 PREVIEWER = defaulter(function(options)

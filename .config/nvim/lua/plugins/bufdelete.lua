@@ -38,9 +38,8 @@ end
 local function toggle_alpha_and_close_tree(event)
   local bufnr = event.buf
   TABLE_REMOVE_BY_KEY(BUFFER_OPENED_TIME, bufnr)
-  local buffer_path = GET_BUFFER_PATH(bufnr)
-  local buffer_filetype = GET_FILETYPE(bufnr)
-  local is_empty = buffer_path == "" and buffer_filetype == ""
+  local empty_path = GET_BUFFER_PATH(bufnr) == ""
+  local is_empty = empty_path and IS_FILETYPE("", { buf = bufnr })
   if not is_empty then
     return
   end

@@ -189,13 +189,34 @@ function SET_OPTS(opts, config)
   end
 end
 
-function TABLE_CONTAINS(table, value)
-  for _, v in pairs(table) do
-    if v == value then
-      return true
+local table_contains_cache = {}
+function INCLUDES(arr, value, cache_key)
+  local function process(cacher)
+    for _, v in ipairs(arr) do
+      if v == value then
+        if cacher then
+          cacher[value] = true
+        end
+        return true
+      end
     end
+    if cacher then
+      cacher[value] = false
+    end
+    return false
   end
-  return false
+  if not cache_key then
+    return process()
+  end
+  if not table_contains_cache[cache_key] then
+    table_contains_cache[cache_key] = {}
+  end
+  local cacher = table_contains_cache[cache_key]
+  local cached = cacher[value]
+  if cached ~= nil then
+    return cached
+  end
+  return process(cacher)
 end
 
 function TABLE_REMOVE_BY_VAL(table, value)
@@ -768,4 +789,47 @@ function ADD_CMP_SOURCE(name, opt)
   }
   table.insert(config.sources, newSource)
   cmp.setup(config)
+end
+
+function FILETYPE_VALID(buf, invalid_arr, cache_key)
+  local filetype = GET_FILETYPE(buf)
+  invalid_arr = invalid_arr or INVALID_FILETYPE
+  cache_key = cache_key or "INVALID_FILETYPE"
+  return not INCLUDES(invalid_arr, filetype, cache_key)
+end
+
+function ENABLE_CURSORLINE(opts, force)
+  local buf = opts.buf
+  local winid = opts.win
+  local invalid_arr = INVALID_CURSORLINE_FILETYPE
+  local cache_key = "INVALID_CURSORLINE_FILETYPE"
+  if not force then
+    buf = buf or GET_BUFFER_ID(winid)
+    if not FILETYPE_VALID(buf, invalid_arr, cache_key) then
+      return
+    end
+  end
+  local function process(win)
+    local opt = { win = win }
+    if not GET_OPT("cursorline", opt) then
+      SET_OPT("cursorline", true, opt)
+    end
+  end
+  if winid then
+    return process(winid)
+  end
+  local wins = GET_WINDOWS_BY_BUF(buf)
+  for _, win in ipairs(wins) do
+    process(win)
+  end
+end
+
+function IS_FILETYPE(filetype, opts)
+  opts = opts or {}
+  local buf = opts.buf
+  local win = opts.win
+  if not buf then
+    buf = win and GET_BUFFER_ID(win) or GET_CURRENT_BUFFER()
+  end
+  return GET_FILETYPE(buf) == filetype
 end

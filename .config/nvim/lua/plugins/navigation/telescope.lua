@@ -16,7 +16,7 @@ local function flash(prompt_bufnr)
       mode = "search",
       exclude = {
         function(win)
-          return GET_FILETYPE(GET_BUFFER_ID(win)) ~= "TelescopeResults"
+          return IS_FILETYPE("TelescopeResults", { win = win })
         end,
       },
     },

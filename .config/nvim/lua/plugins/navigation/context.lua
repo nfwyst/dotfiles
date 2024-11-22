@@ -27,10 +27,13 @@ local function get_toggle_context()
 end
 
 local function should_attach(bufnr)
-  local filetype = GET_FILETYPE(bufnr)
-  local is_chat = IS_GPT_PROMPT_CHAT(bufnr)
-  local invalid = TABLE_CONTAINS(INVALID_FILETYPE, filetype)
-  if invalid or is_chat or IS_BIG_FILE(bufnr, 0.1) then
+  if not FILETYPE_VALID(bufnr) then
+    return false
+  end
+  if IS_GPT_PROMPT_CHAT(bufnr) then
+    return false
+  end
+  if IS_BIG_FILE(bufnr, 0.1) then
     return false
   end
 end
