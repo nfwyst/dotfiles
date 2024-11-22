@@ -2,9 +2,9 @@ return {
   "tadaa/vimade",
   event = "VeryLazy",
   config = function()
-    local Minimalist = require("vimade.recipe.minimalist").Minimalist
-    local config = Minimalist({ animate = IS_MAC })
-    config.fadelevel = 0.8
+    local Ripple = require("vimade.recipe.ripple").Ripple
+    local config = Ripple({ animate = IS_MAC })
+    config.fadelevel = 0.6
     require("vimade").setup(config)
   end,
 }
