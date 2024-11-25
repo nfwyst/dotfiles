@@ -52,6 +52,7 @@ LSP_SERVERS = {
   "marksman",
   "svelte",
   "bashls",
+  "taplo",
 }
 
 INVALID_CURSORLINE_FILETYPE = {
@@ -64,8 +65,6 @@ INVALID_CURSORLINE_FILETYPE = {
   "WhichKey",
   "Avante",
   "AvanteInput",
-  "",
-  nil,
 }
 
 INVALID_FILETYPE = {
@@ -96,8 +95,6 @@ INVALID_FILETYPE = {
   "TelescopeResults",
   "Avante",
   "harpoon",
-  "",
-  nil,
 }
 
 TREESITTER_ENSURE_INSTALL = {

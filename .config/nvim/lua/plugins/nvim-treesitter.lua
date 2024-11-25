@@ -28,6 +28,7 @@ return {
     install.prefer_git = false
     configs.setup({
       ensure_installed = TREESITTER_ENSURE_INSTALL, -- one of "all" or a list of languages
+      ignore_install = not IS_MAC and { "nu" },
       sync_install = false,
       auto_install = true,
       illuminate = { disable = disable },

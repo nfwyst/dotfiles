@@ -1,0 +1,32 @@
+[env]
+SHELL = "nu"
+
+[terminal.shell]
+program = "zellij"
+
+[general]
+import = ["~/.config/alacritty/themes/themes/tokyo_night_enhanced.toml"]
+
+[window]
+decorations = "None"
+opacity = 0.8
+dynamic_title = false
+blur = true
+startup_mode = "Maximized"
+
+[scrolling]
+history = 1000
+
+[font]
+size = 18
+normal = { family = "0xProto Nerd Font" }
+bold = { family = "0xProto Nerd Font" }
+italic = { family = "0xProto Nerd Font" }
+offset = { x = 1, y = 0 }
+
+[colors]
+transparent_background_colors = true
+cursor = { text = "#000000", cursor = "CellForeground" }
+
+[cursor]
+style = { shape = "Block", blinking = "Off" }

@@ -62,6 +62,7 @@ return {
         sh = { "shfmt" },
         zsh = { "beautysh" },
         lua = { "stylua" },
+        toml = { "taplo" },
         ["_"] = { "trim_whitespace" },
       },
       formatters = {
