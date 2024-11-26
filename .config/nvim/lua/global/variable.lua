@@ -94,6 +94,7 @@ INVALID_FILETYPE = {
   "WhichKey",
   "TelescopeResults",
   "Avante",
+  "AvanteInput",
   "harpoon",
 }
 

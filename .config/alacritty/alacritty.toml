@@ -19,7 +19,7 @@ history = 1000
 
 [font]
 size = 18
-normal = { family = "0xProto Nerd Font" }
+normal = { family = "0xProto Nerd Font", style = "Bold" }
 bold = { family = "0xProto Nerd Font" }
 italic = { family = "0xProto Nerd Font" }
 offset = { x = 1, y = 0 }

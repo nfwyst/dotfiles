@@ -1,11 +1,11 @@
 format = """
 [░▒▓](#a3aed2)\
-[](bg:#769ff0 fg:#a3aed2)\
+[](fg:#a3aed2 bg:#769ff0)\
 $directory\
 [](fg:#769ff0 bg:#394260)\
 $git_branch\
 $git_status\
-[](fg:#212736 bg:#1d2230)\
+[](fg:#394260)\
 $all\
 [](fg:#1d2230)\
 $character"""
