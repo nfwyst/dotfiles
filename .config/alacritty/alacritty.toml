@@ -12,7 +12,8 @@ decorations = "None"
 opacity = 0.8
 dynamic_title = false
 blur = true
-startup_mode = "Maximized"
+dimensions = { columns = 80, lines = 60 }
+position = { x = 0, y = 0 }
 
 [scrolling]
 history = 1000
@@ -25,8 +26,30 @@ italic = { family = "0xProto Nerd Font" }
 offset = { x = 1, y = 0 }
 
 [colors]
-transparent_background_colors = true
 cursor = { text = "#000000", cursor = "CellForeground" }
 
 [cursor]
 style = { shape = "Block", blinking = "Off" }
+unfocused_hollow = true
+
+[keyboard]
+bindings = [
+  { key = "Escape", mods = "Control", action = "ToggleViMode" },
+  { key = "i", mods = "Control|Shift", action = "ToggleViMode" },
+  { key = "j", mods = "Control", mode = "Vi", action = "Down" },
+  { key = "k", mods = "Control", mode = "Vi", action = "Up" },
+  { key = "h", mods = "Control", mode = "Vi", action = "Left" },
+  { key = "l", mods = "Control", mode = "Vi", action = "Right" },
+  { key = "t", mods = "Control", mode = "Vi", action = "High" },
+  { key = "g", mods = "Control", mode = "Vi", action = "Low" },
+  { key = "m", mods = "Control", mode = "Vi", action = "Middle" },
+  { key = "6", mods = "Control", mode = "Vi", action = "First" },
+  { key = "4", mods = "Control", mode = "Vi", action = "Last" },
+  { key = "s", mods = "Control", mode = "Vi", action = "ToggleNormalSelection" },
+  { key = "c", mods = "Control", mode = "Vi", action = "Copy" },
+  { key = "0", mods = "Control", action = "DecreaseFontSize" },
+  { key = "Return", mods = "Control", action = "ToggleFullscreen" },
+]
+
+[mouse]
+hide_when_typing = true
