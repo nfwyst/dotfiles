@@ -1,3 +1,5 @@
 .gitmodules
+.git
+.gitignore
 README.md
 LICENSE
