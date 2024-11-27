@@ -21,7 +21,7 @@ local keys = {
    { key = 'c', mods = 'LEADER', action = act.ActivateCopyMode },
    { key = 'F2', mods = 'NONE', action = act.ActivateCommandPalette },
    { key = 'F3', mods = 'NONE', action = act.ShowLauncher },
-   { key = 'F4', mods = 'NONE', action = act.ShowLauncherArgs({ flags = 'FUZZY|TABS' }) },
+   { key = 'F4', mods = 'NONE', action = act.ShowLauncherArgs({ flags = 'FUZZY' }) },
    {
       key = 'F5',
       mods = 'NONE',
@@ -59,18 +59,6 @@ local keys = {
    { key = 'c',          mods = 'CTRL|SHIFT',  action = act.CopyTo('Clipboard') },
    { key = 'v',          mods = 'CTRL|SHIFT',  action = act.PasteFrom('Clipboard') },
 
-   -- tabs --
-   -- tabs: spawn+close
-   { key = 't',          mods = mod.SUPER,     action = act.SpawnTab('DefaultDomain') },
-   { key = 't',          mods = mod.SUPER_REV, action = act.ShowTabNavigator },
-   { key = 'w',          mods = mod.SUPER_REV, action = act.CloseCurrentTab({ confirm = false }) },
-
-   -- tabs: navigation
-   { key = '[',          mods = mod.SUPER,     action = act.ActivateTabRelative(-1) },
-   { key = ']',          mods = mod.SUPER,     action = act.ActivateTabRelative(1) },
-   { key = '[',          mods = mod.SUPER_REV, action = act.MoveTabRelative(-1) },
-   { key = ']',          mods = mod.SUPER_REV, action = act.MoveTabRelative(1) },
-
    -- window --
    -- spawn windows
    { key = 'n',          mods = mod.SUPER,     action = act.SpawnWindow },
@@ -79,21 +67,21 @@ local keys = {
    {
       key = [[/]],
       mods = mod.SUPER,
-      action = wezterm.action_callback(function(window, _pane)
+      action = wezterm.action_callback(function(window)
          backdrops:random(window)
       end),
    },
    {
       key = [[,]],
       mods = mod.SUPER,
-      action = wezterm.action_callback(function(window, _pane)
+      action = wezterm.action_callback(function(window)
          backdrops:cycle_back(window)
       end),
    },
    {
       key = [[.]],
       mods = mod.SUPER,
-      action = wezterm.action_callback(function(window, _pane)
+      action = wezterm.action_callback(function(window)
          backdrops:cycle_forward(window)
       end),
    },
@@ -105,40 +93,11 @@ local keys = {
          choices = backdrops:choices(),
          fuzzy = true,
          fuzzy_description = 'Select Background: ',
-         action = wezterm.action_callback(function(window, _pane, idx)
+         action = wezterm.action_callback(function(window, _, idx)
             ---@diagnostic disable-next-line: param-type-mismatch
             backdrops:set_img(window, tonumber(idx))
          end),
       }),
-   },
-
-   -- panes --
-   -- panes: split panes
-   {
-      key = [[\]],
-      mods = mod.SUPER,
-      action = act.SplitVertical({ domain = 'CurrentPaneDomain' }),
-   },
-   {
-      key = [[\]],
-      mods = mod.SUPER_REV,
-      action = act.SplitHorizontal({ domain = 'CurrentPaneDomain' }),
-   },
-
-   -- panes: zoom+close pane
-   { key = 'Enter', mods = mod.SUPER,     action = act.TogglePaneZoomState },
-   { key = 's', mods = mod.SUPER_REV,     action = act.RotatePanes('Clockwise') },
-   { key = 'w',     mods = mod.SUPER,     action = act.CloseCurrentPane({ confirm = false }) },
-
-   -- panes: navigation
-   { key = 'k',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Up') },
-   { key = 'j',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Down') },
-   { key = 'h',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Left') },
-   { key = 'l',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Right') },
-   {
-      key = 'p',
-      mods = mod.SUPER_REV,
-      action = act.PaneSelect({ alphabet = '1234567890', mode = 'SwapWithActiveKeepFocus' }),
    },
 
    -- key-tables --
@@ -152,26 +111,7 @@ local keys = {
          timemout_miliseconds = 1000,
       }),
    },
-   -- resize panes
-   {
-      key = 'p',
-      mods = 'LEADER',
-      action = act.ActivateKeyTable({
-         name = 'resize_pane',
-         one_shot = false,
-         timemout_miliseconds = 1000,
-      }),
-   },
 }
-
--- navigate tabs with index
-for i = 1, 9 do
-   table.insert(keys, {
-      key = tostring(i),
-      mods = mod.SUPER,
-      action = act.ActivateTab(i - 1),
-   })
-end
 
 -- stylua: ignore
 local key_tables = {
@@ -179,14 +119,6 @@ local key_tables = {
       { key = 'k',      action = act.IncreaseFontSize },
       { key = 'j',      action = act.DecreaseFontSize },
       { key = 'r',      action = act.ResetFontSize },
-      { key = 'Escape', action = 'PopKeyTable' },
-      { key = 'q',      action = 'PopKeyTable' },
-   },
-   resize_pane = {
-      { key = 'k',      action = act.AdjustPaneSize({ 'Up', 1 }) },
-      { key = 'j',      action = act.AdjustPaneSize({ 'Down', 1 }) },
-      { key = 'h',      action = act.AdjustPaneSize({ 'Left', 1 }) },
-      { key = 'l',      action = act.AdjustPaneSize({ 'Right', 1 }) },
       { key = 'Escape', action = 'PopKeyTable' },
       { key = 'q',      action = 'PopKeyTable' },
    },

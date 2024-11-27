@@ -36,13 +36,15 @@ return {
    cursor_blink_rate = 700,
 
    -- tab bar
-   enable_tab_bar = false,
+   enable_tab_bar = true,
    hide_tab_bar_if_only_one_tab = false,
    use_fancy_tab_bar = false,
    tab_bar_at_bottom = false,
    tab_max_width = 25,
    show_tab_index_in_tab_bar = false,
    switch_to_last_active_tab_when_closing_tab = true,
+   show_tabs_in_tab_bar = false,
+   show_new_tab_button_in_tab_bar = false,
 
    -- window
    window_decorations = 'RESIZE',

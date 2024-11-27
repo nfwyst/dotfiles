@@ -3,8 +3,8 @@ local wezterm = require('wezterm')
 local nf = wezterm.nerdfonts
 local M = {}
 
-local GLYPH_SEMI_CIRCLE_LEFT = nf.ple_left_half_circle_thick --[[ '' ]]
-local GLYPH_SEMI_CIRCLE_RIGHT = nf.ple_right_half_circle_thick --[[ '' ]]
+local GLYPH_SEMI_CIRCLE_LEFT = ' '
+local GLYPH_SEMI_CIRCLE_RIGHT = ' '
 local GLYPH_KEY_TABLE = nf.md_table_key --[[ '󱏅' ]]
 local GLYPH_KEY = nf.md_key --[[ '󰌆' ]]
 
@@ -38,12 +38,12 @@ M.setup = function()
          local gbg = g.bg
          local t = colors.text
          local tfg = t.fg
-         _push(GLYPH_SEMI_CIRCLE_LEFT, fg, gbg)
+         _push(GLYPH_SEMI_CIRCLE_LEFT, gbg, fg)
          if icon then
             _push(icon, tfg, bg)
          end
          _push(' ' .. text, tfg, bg)
-         _push(GLYPH_SEMI_CIRCLE_RIGHT, fg, gbg)
+         _push(GLYPH_SEMI_CIRCLE_RIGHT, gbg, fg)
       end
       local active_key = window:active_key_table()
       local is_leader = window:leader_is_active()
@@ -52,7 +52,7 @@ M.setup = function()
       local gy = colors.glyph_semi_circle
 
       if workspace then
-         render(workspace, gy.fg1, text.bg1)
+         render('workspace: ' .. workspace, text.bg2, text.bg2)
       end
 
       if active_key then
