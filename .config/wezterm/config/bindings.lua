@@ -264,5 +264,6 @@ return {
       XDG_CONFIG_HOME = os.getenv('HOME') .. '/.config',
       XDG_DATA_HOME = os.getenv('HOME') .. '/.local/share',
       PATH = directory_exists(brew_path) and (brew_path .. ':' .. PATH) or PATH,
+      SHELL = 'nu',
    },
 }

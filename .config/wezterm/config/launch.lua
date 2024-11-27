@@ -18,7 +18,7 @@ if platform.is_win then
       },
    }
 elseif platform.is_mac then
-   options.default_prog = { 'nu', '-l' }
+   options.default_prog = { 'zellij' }
    options.launch_menu = {
       { label = 'Nushell', args = { 'nu', '-l' } },
       { label = 'Zsh', args = { 'zsh', '-l' } },
