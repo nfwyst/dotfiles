@@ -11,6 +11,7 @@ local ft = {
   "typescriptreact",
   "svelte",
   "yaml",
+  "kdl",
 }
 
 return {
