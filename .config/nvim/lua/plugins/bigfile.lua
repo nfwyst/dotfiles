@@ -1,11 +1,11 @@
 local my_feature = {
-  name = "my_feature",
+  name = 'my_feature',
   opts = {
     defer = true,
   },
   disable = function()
-    RUN_CMD("ColorizerDetachFromBuffer", true)
-    RUN_CMD("UfoDetach", true)
+    RUN_CMD('ColorizerDetachFromBuffer', true)
+    RUN_CMD('UfoDetach', true)
   end,
 }
 
@@ -17,10 +17,10 @@ local white_table = {
 }
 
 return {
-  "lunarvim/bigfile.nvim",
-  event = { "FileReadPre", "BufReadPre", "User FileOpened" },
+  'lunarvim/bigfile.nvim',
+  event = { 'FileReadPre', 'BufReadPre', 'User FileOpened' },
   config = function()
-    require("bigfile").setup({
+    require('bigfile').setup({
       pattern = function(bufnr)
         local filetype = GET_FILETYPE(bufnr)
         if white_table[filetype] then
@@ -29,13 +29,13 @@ return {
         return IS_BIG_FILE(bufnr)
       end,
       features = {
-        "indent_blankline",
-        "illuminate",
-        "lsp",
-        "syntax",
-        "matchparen",
-        "vimopts",
-        "filetype",
+        'indent_blankline',
+        'illuminate',
+        'lsp',
+        'syntax',
+        'matchparen',
+        'vimopts',
+        'filetype',
         my_feature,
       },
     })

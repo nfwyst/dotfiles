@@ -1,21 +1,21 @@
-local name = "tokyonight"
-local fg = "#CBE0F0"
-local fg_dark = "#B4D0E9"
-local border = "#547998"
+local name = 'tokyonight'
+local fg = '#CBE0F0'
+local fg_dark = '#B4D0E9'
+local border = '#547998'
 
 return {
-  "folke/tokyonight.nvim",
+  'folke/tokyonight.nvim',
   name = name,
   cond = name == DEFAULT_COLORSCHEME,
   lazy = false,
   priority = 1000,
   config = function()
     require(name).setup({
-      light_style = "day",
+      light_style = 'day',
       transparent = true,
       styles = {
-        floats = "transparent",
-        sidebars = "transparent",
+        floats = 'transparent',
+        sidebars = 'transparent',
         comments = { italic = true },
         keywords = { italic = false },
       },

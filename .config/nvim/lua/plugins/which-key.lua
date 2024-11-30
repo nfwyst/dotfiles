@@ -1,5 +1,5 @@
-local leader = require("keymaps.leader")
-local g = require("keymaps.g")
+local leader = require('keymaps.leader')
+local g = require('keymaps.g')
 
 local function key_filter(config)
   local lhs = config[1]
@@ -8,24 +8,24 @@ local function key_filter(config)
   if exclude_fts and #exclude_fts > 0 then
     config[2] = function(...)
       local buf = GET_CURRENT_BUFFER()
-      if not FILETYPE_VALID(buf, exclude_fts, lhs .. "invalid_filetype") then
-        LOG_INFO("keymap", "key " .. lhs .. " disabled for current filetype")
+      if not FILETYPE_VALID(buf, exclude_fts, lhs .. 'invalid_filetype') then
+        LOG_INFO('keymap', 'key ' .. lhs .. ' disabled for current filetype')
         return
       end
-      if type(rhs) == "function" then
+      if type(rhs) == 'function' then
         return rhs(...)
       end
-      if START_WITH(rhs, "<cmd>") then
-        local command = rhs:gsub("<cmd>", ""):gsub("<cr>", "")
+      if START_WITH(rhs, '<cmd>') then
+        local command = rhs:gsub('<cmd>', ''):gsub('<cr>', '')
         return RUN_CMD(command)
       end
-      FEED_KEYS(rhs, "nx")
+      FEED_KEYS(rhs, 'nx')
     end
   end
 end
 
 local function format(conf)
-  local new_conf = { mode = { "n", "v" } }
+  local new_conf = { mode = { 'n', 'v' } }
   for key, config in pairs(conf) do
     table.insert(config, 1, key)
     key_filter(config)
@@ -41,7 +41,7 @@ local function format(conf)
 end
 
 local function fix_quit_avante()
-  if not IS_FILETYPE("AvanteInput") then
+  if not IS_FILETYPE('AvanteInput') then
     return
   end
   SET_TIMEOUT(function()
@@ -72,26 +72,26 @@ local function init(wk)
   leader(wk)
 
   wk.add({
-    ["[["] = {
+    ['[['] = {
       function()
-        require("illuminate").goto_prev_reference(false)
+        require('illuminate').goto_prev_reference(false)
       end,
-      desc = "Prev Matched Wrod",
+      desc = 'Prev Matched Wrod',
     },
-    ["]]"] = {
+    [']]'] = {
       function()
-        require("illuminate").goto_next_reference(false)
+        require('illuminate').goto_next_reference(false)
       end,
-      desc = "Next Matched Word",
+      desc = 'Next Matched Word',
     },
-    ["zp"] = { desc = "Fold Preview" },
+    ['zp'] = { desc = 'Fold Preview' },
   })
 end
 
 return {
-  "folke/which-key.nvim",
+  'folke/which-key.nvim',
   config = function()
-    local wk = require("which-key")
+    local wk = require('which-key')
     init(wk)
     wk.setup({
       plugins = {
@@ -114,18 +114,18 @@ return {
         },
       },
       icons = {
-        breadcrumb = "»", -- symbol used in the command line area that shows your active key combo
-        separator = "➜", -- symbol used between a key and it's label
-        group = "+", -- symbol prepended to a group
+        breadcrumb = '»', -- symbol used in the command line area that shows your active key combo
+        separator = '➜', -- symbol used between a key and it's label
+        group = '+', -- symbol prepended to a group
       },
       keys = {
-        scroll_down = "<c-d>", -- binding to scroll down inside the popup
-        scroll_up = "<c-u>", -- binding to scroll up inside the popup
+        scroll_down = '<c-d>', -- binding to scroll down inside the popup
+        scroll_up = '<c-u>', -- binding to scroll up inside the popup
       },
       win = {
         no_overlap = false,
         height = { min = 4, max = 25 }, -- min and max height of the columns
-        border = "rounded", -- none, single, double, shadow
+        border = 'rounded', -- none, single, double, shadow
         padding = { 1, 1 }, -- extra window padding [top/bottom, right/left]
         wo = {
           winblend = 0,
@@ -137,7 +137,7 @@ return {
       },
       show_help = true, -- show help message on the command line when the popup is visible
       triggers = {
-        { "<auto>", mode = "nixsotc" },
+        { '<auto>', mode = 'nixsotc' },
       },
     })
   end,

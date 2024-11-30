@@ -4,12 +4,12 @@ local gen_bookmark = function(postfix)
   local buffer_path = GET_CURRENT_BUFFER_PATH()
   local row = pos[1]
   local col = pos[2]
-  return buffer_path .. ":" .. row .. ":" .. col .. postfix
+  return buffer_path .. ':' .. row .. ':' .. col .. postfix
 end
 
 local parse_bookmark = function(value)
-  local pt = "(.-):(%d+):(%d+)(.*)"
-  local path, row, col, _ = string.match(value or "", pt)
+  local pt = '(.-):(%d+):(%d+)(.*)'
+  local path, row, col, _ = string.match(value or '', pt)
   return {
     filepath = path,
     row = tonumber(row),
@@ -29,7 +29,7 @@ local function toggle_telescope(harpoon_files, entry_parser)
     table.insert(file_paths, item.value)
   end
 
-  NEW_PICKER("Harpoon", {}, file_paths, {
+  NEW_PICKER('Harpoon', {}, file_paths, {
     preview = true,
     entry_parser = entry_parser,
     on_select = entry_parser and on_select or nil,
@@ -45,7 +45,7 @@ local function get_ui_size(title)
 end
 
 local function init(harpoon)
-  SET_HL({ HarpoonBorder = { link = "TelescopeBorder" } })
+  SET_HL({ HarpoonBorder = { link = 'TelescopeBorder' } })
   SET_USER_COMMANDS({
     AddHarpoonFile = function()
       harpoon:list():add()
@@ -54,7 +54,7 @@ local function init(harpoon)
       toggle_telescope(harpoon:list())
     end,
     ShowHarpoonBookmarks = function()
-      toggle_telescope(harpoon:list("bookmarks"), function(entry)
+      toggle_telescope(harpoon:list('bookmarks'), function(entry)
         local entity = entry[1]
         if entry.origin_entity then
           entity = entry.origin_entity
@@ -67,11 +67,11 @@ local function init(harpoon)
       end)
     end,
     AddHarpoonBookmark = function()
-      local postfix = vim.fn.input("Note: ")
-      if postfix ~= "" then
-        postfix = " -- " .. postfix
+      local postfix = vim.fn.input('Note: ')
+      if postfix ~= '' then
+        postfix = ' -- ' .. postfix
       end
-      local bookmarks = harpoon:list("bookmarks")
+      local bookmarks = harpoon:list('bookmarks')
       local item = bookmarks.config.create_list_item(bookmarks.config, postfix)
       bookmarks:prepend(item)
     end,
@@ -79,20 +79,20 @@ local function init(harpoon)
   SET_KEY_MAPS({
     n = {
       {
-        lhs = "<s-tab>",
+        lhs = '<s-tab>',
         rhs = function()
           harpoon.ui:toggle_quick_menu(
             harpoon:list(),
-            get_ui_size("Harpoon list")
+            get_ui_size('Harpoon list')
           )
         end,
       },
       {
-        lhs = "<tab>",
+        lhs = '<tab>',
         rhs = function()
           harpoon.ui:toggle_quick_menu(
-            harpoon:list("bookmarks"),
-            get_ui_size("markbooks")
+            harpoon:list('bookmarks'),
+            get_ui_size('markbooks')
           )
         end,
       },
@@ -101,22 +101,22 @@ local function init(harpoon)
 end
 
 return {
-  "ThePrimeagen/harpoon",
-  branch = "harpoon2",
+  'ThePrimeagen/harpoon',
+  branch = 'harpoon2',
   cmd = {
-    "Telescope harpoon",
-    "AddHarpoonFile",
-    "ToggleHarpoonQuickMenu",
-    "AddHarpoonBookmark",
-    "ShowHarpoonBookmarks",
+    'Telescope harpoon',
+    'AddHarpoonFile',
+    'ToggleHarpoonQuickMenu',
+    'AddHarpoonBookmark',
+    'ShowHarpoonBookmarks',
   },
-  keys = { "<tab>", "<s-tab>" },
+  keys = { '<tab>', '<s-tab>' },
   dependencies = {
-    "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope.nvim",
+    'nvim-lua/plenary.nvim',
+    'nvim-telescope/telescope.nvim',
   },
   config = function()
-    local harpoon = require("harpoon")
+    local harpoon = require('harpoon')
     harpoon:setup({
       menu = {
         width = vim.api.nvim_win_get_width(0) - 4,
@@ -134,7 +134,7 @@ return {
       },
     })
 
-    require("telescope").load_extension("harpoon")
+    require('telescope').load_extension('harpoon')
     init(harpoon)
   end,
 }

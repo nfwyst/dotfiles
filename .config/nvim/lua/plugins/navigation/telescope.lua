@@ -6,23 +6,23 @@ local layout_config = MERGE_TABLE(
 )
 
 local function flash(prompt_bufnr)
-  if not IS_PACKAGE_LOADED("flash") then
+  if not IS_PACKAGE_LOADED('flash') then
     return
   end
-  require("flash").jump({
-    pattern = "^",
+  require('flash').jump({
+    pattern = '^',
     label = { after = { 0, 0 } },
     search = {
-      mode = "search",
+      mode = 'search',
       exclude = {
         function(win)
-          return IS_FILETYPE("TelescopeResults", { win = win })
+          return IS_FILETYPE('TelescopeResults', { win = win })
         end,
       },
     },
     action = function(match)
       local picker =
-        require("telescope.actions.state").get_current_picker(prompt_bufnr)
+        require('telescope.actions.state').get_current_picker(prompt_bufnr)
       picker:set_selection(match.pos[1] - 1)
     end,
   })
@@ -31,7 +31,7 @@ end
 local function get_symbols(on_done)
   vim.ui.select(
     LSP_SYMBOLS,
-    { prompt = "select symbols type to filter" },
+    { prompt = 'select symbols type to filter' },
     function(symbol)
       if not symbol then
         return
@@ -71,7 +71,7 @@ local function find_files(builtin, themes, config)
 end
 
 local function init(builtin, themes)
-  SET_HL({ TelescopePromptBorder = { link = "TelescopeBorder" } })
+  SET_HL({ TelescopePromptBorder = { link = 'TelescopeBorder' } })
   SET_USER_COMMANDS({
     FindText = function()
       find_text(builtin, themes, nil, false)
@@ -81,7 +81,7 @@ local function init(builtin, themes)
       find_text(builtin, themes, nil, true)
     end,
     FindTextByFileType = function()
-      vim.ui.input({ prompt = "Enter file type to search:" }, function(type)
+      vim.ui.input({ prompt = 'Enter file type to search:' }, function(type)
         if not type then
           return
         end
@@ -89,7 +89,7 @@ local function init(builtin, themes)
       end)
     end,
     FindTextByPattern = function()
-      vim.ui.input({ prompt = "Enter pattern to search:" }, function(pattern)
+      vim.ui.input({ prompt = 'Enter pattern to search:' }, function(pattern)
         if not pattern then
           return
         end
@@ -103,12 +103,12 @@ local function init(builtin, themes)
       find_files(builtin, themes, {
         no_ignore = true,
         find_command = {
-          "rg",
-          "--files",
-          "--color",
-          "never",
-          "--glob",
-          "!node_modules",
+          'rg',
+          '--files',
+          '--color',
+          'never',
+          '--glob',
+          '!node_modules',
         },
       })
     end,
@@ -117,7 +117,7 @@ local function init(builtin, themes)
       builtin.git_files(theme)
     end,
     FindTextWithPath = function()
-      vim.ui.input({ prompt = "Enter search dir path:" }, function(path)
+      vim.ui.input({ prompt = 'Enter search dir path:' }, function(path)
         if not path then
           return
         end
@@ -139,25 +139,25 @@ end
 
 local function get_maps(act)
   return {
-    ["<c-q>"] = function(...)
+    ['<c-q>'] = function(...)
       act.send_selected_to_qflist(...)
       vim.cmd.copen()
     end,
-    ["<cr>"] = act.select_default,
-    ["<c-x>"] = act.select_horizontal,
-    ["<c-v>"] = act.select_vertical,
-    ["<c-t>"] = act.select_tab,
-    ["<c-u>"] = act.preview_scrolling_up,
-    ["<c-d>"] = act.preview_scrolling_down,
-    ["<c-h>"] = act.preview_scrolling_left,
-    ["<c-l>"] = act.preview_scrolling_right,
-    ["<tab>"] = act.toggle_selection + act.move_selection_worse,
-    ["<s-tab>"] = act.toggle_selection + act.move_selection_better,
-    ["<c-a>"] = function(...)
+    ['<cr>'] = act.select_default,
+    ['<c-x>'] = act.select_horizontal,
+    ['<c-v>'] = act.select_vertical,
+    ['<c-t>'] = act.select_tab,
+    ['<c-u>'] = act.preview_scrolling_up,
+    ['<c-d>'] = act.preview_scrolling_down,
+    ['<c-h>'] = act.preview_scrolling_left,
+    ['<c-l>'] = act.preview_scrolling_right,
+    ['<tab>'] = act.toggle_selection + act.move_selection_worse,
+    ['<s-tab>'] = act.toggle_selection + act.move_selection_better,
+    ['<c-a>'] = function(...)
       act.smart_send_to_qflist(...)
       vim.cmd.copen()
     end,
-    ["<c-g>"] = act.complete_tag,
+    ['<c-g>'] = act.complete_tag,
   }
 end
 
@@ -166,25 +166,25 @@ local history = {
 }
 
 return {
-  "nvim-telescope/telescope.nvim",
+  'nvim-telescope/telescope.nvim',
   cmd = {
-    "FindText",
-    "FindTextByFileType",
-    "FindTextByPattern",
-    "FindTextCursor",
-    "FindFiles",
-    "FindIgnoredFiles",
-    "FindRepoFiles",
-    "FindTextWithPath",
-    "Telescope",
-    "DocumentSymbols",
-    "WorkspaceSymbols",
+    'FindText',
+    'FindTextByFileType',
+    'FindTextByPattern',
+    'FindTextCursor',
+    'FindFiles',
+    'FindIgnoredFiles',
+    'FindRepoFiles',
+    'FindTextWithPath',
+    'Telescope',
+    'DocumentSymbols',
+    'WorkspaceSymbols',
   },
-  dependencies = { "nvim-lua/plenary.nvim" },
+  dependencies = { 'nvim-lua/plenary.nvim' },
   config = function()
-    local telescope = require("telescope")
-    local act = require("telescope.actions")
-    init(require("telescope.builtin"), require("telescope.themes"))
+    local telescope = require('telescope')
+    local act = require('telescope.actions')
+    init(require('telescope.builtin'), require('telescope.themes'))
     telescope.setup({
       defaults = {
         history = IS_MAC and history or false,
@@ -193,7 +193,7 @@ return {
             reverse_directories = true,
           },
         },
-        layout_strategy = "vertical",
+        layout_strategy = 'vertical',
         layout_config = {
           horizontal = MERGE_TABLE(layout_config, {
             preview_width = preview_size,
@@ -204,27 +204,27 @@ return {
         },
         mappings = {
           i = MERGE_TABLE(get_maps(act), {
-            ["<c-k>"] = act.move_selection_previous,
-            ["<c-j>"] = act.move_selection_next,
-            ["<c-c>"] = act.close,
-            ["<c-s>"] = flash,
-            ["<c-n>"] = act.cycle_history_next,
-            ["<c-p>"] = act.cycle_history_prev,
+            ['<c-k>'] = act.move_selection_previous,
+            ['<c-j>'] = act.move_selection_next,
+            ['<c-c>'] = act.close,
+            ['<c-s>'] = flash,
+            ['<c-n>'] = act.cycle_history_next,
+            ['<c-p>'] = act.cycle_history_prev,
           }),
           n = MERGE_TABLE(get_maps(act), {
-            ["k"] = act.move_selection_previous,
-            ["j"] = act.move_selection_next,
-            ["q"] = act.close,
+            ['k'] = act.move_selection_previous,
+            ['j'] = act.move_selection_next,
+            ['q'] = act.close,
             s = flash,
-            ["M"] = act.move_to_middle,
-            ["gg"] = act.move_to_top,
-            ["G"] = act.move_to_bottom,
-            ["?"] = act.which_key,
+            ['M'] = act.move_to_middle,
+            ['gg'] = act.move_to_top,
+            ['G'] = act.move_to_bottom,
+            ['?'] = act.which_key,
           }),
         },
-        prompt_prefix = " ",
-        selection_caret = " ",
-        set_env = { ["COLORTERM"] = "truecolor" },
+        prompt_prefix = ' ',
+        selection_caret = ' ',
+        set_env = { ['COLORTERM'] = 'truecolor' },
         wrap_results = true,
         preview = { filesize_limit = 5 },
         file_ignore_patterns = TELESCOPE_IGNORE_PATTERNS,
@@ -232,21 +232,21 @@ return {
       pickers = {
         find_files = { hidden = true },
         buffers = {
-          theme = "dropdown",
-          layout_strategy = "vertical",
+          theme = 'dropdown',
+          layout_strategy = 'vertical',
           layout_config = MERGE_TABLE(layout_config, {
             preview_height = preview_size,
-            prompt_position = "top",
+            prompt_position = 'top',
           }),
-          initial_mode = "normal",
+          initial_mode = 'normal',
           sort_mru = true,
           sort_lastused = true,
           mappings = {
             i = {
-              ["<c-d>"] = act.delete_buffer,
+              ['<c-d>'] = act.delete_buffer,
             },
             n = {
-              ["dd"] = act.delete_buffer,
+              ['dd'] = act.delete_buffer,
             },
           },
         },

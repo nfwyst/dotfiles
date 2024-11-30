@@ -1,122 +1,122 @@
 return {
-  ["<leader>t"] = { group = "Terminal/Test/Timer/Tab" },
-  ["<leader>tm"] = { group = "Terminal" },
-  ["<leader>tmH"] = {
-    "<cmd>ToggleTerminalHorizontal<cr>",
-    desc = "Open Horizontal with id and size",
+  ['<leader>t'] = { group = 'Terminal/Test/Timer/Tab' },
+  ['<leader>tm'] = { group = 'Terminal' },
+  ['<leader>tmH'] = {
+    '<cmd>ToggleTerminalHorizontal<cr>',
+    desc = 'Open Horizontal with id and size',
   },
-  ["<leader>tmV"] = {
-    "<cmd>ToggleTerminalVertical<cr>",
-    desc = "Open Vertical with id and size",
+  ['<leader>tmV'] = {
+    '<cmd>ToggleTerminalVertical<cr>',
+    desc = 'Open Vertical with id and size',
   },
-  ["<leader>tmf"] = {
-    "<cmd>ToggleTerm direction=float<cr>",
-    desc = "Open Float",
+  ['<leader>tmf'] = {
+    '<cmd>ToggleTerm direction=float<cr>',
+    desc = 'Open Float',
   },
-  ["<leader>tmh"] = {
-    "<cmd>ToggleTerm size=10 direction=horizontal<cr>",
-    desc = "Open Horizontal",
+  ['<leader>tmh'] = {
+    '<cmd>ToggleTerm size=10 direction=horizontal<cr>',
+    desc = 'Open Horizontal',
   },
-  ["<leader>tmn"] = { "<cmd>ToggleNode<cr>", desc = "Open Node" },
-  ["<leader>tmp"] = { "<cmd>TogglePython<cr>", desc = "Open Python" },
-  ["<leader>tmt"] = { "<cmd>ToggleHtop<cr>", desc = "Open Htop" },
-  ["<leader>tmu"] = { "<cmd>ToggleNcdu<cr>", desc = "Open NCDU" },
-  ["<leader>tmv"] = {
-    "<cmd>ToggleTerm size=80 direction=vertical<cr>",
-    desc = "Open Vertical",
+  ['<leader>tmn'] = { '<cmd>ToggleNode<cr>', desc = 'Open Node' },
+  ['<leader>tmp'] = { '<cmd>TogglePython<cr>', desc = 'Open Python' },
+  ['<leader>tmt'] = { '<cmd>ToggleHtop<cr>', desc = 'Open Htop' },
+  ['<leader>tmu'] = { '<cmd>ToggleNcdu<cr>', desc = 'Open NCDU' },
+  ['<leader>tmv'] = {
+    '<cmd>ToggleTerm size=80 direction=vertical<cr>',
+    desc = 'Open Vertical',
   },
-  ["<leader>te"] = { group = "Test" },
-  ["<leader>ter"] = {
+  ['<leader>te'] = { group = 'Test' },
+  ['<leader>ter'] = {
     function()
-      require("neotest").run.run()
+      require('neotest').run.run()
     end,
-    desc = "Test Run",
+    desc = 'Test Run',
   },
-  ["<leader>tes"] = {
+  ['<leader>tes'] = {
     function()
-      require("neotest").run.stop()
+      require('neotest').run.stop()
     end,
-    desc = "Test Stop",
+    desc = 'Test Stop',
   },
-  ["<leader>teo"] = {
+  ['<leader>teo'] = {
     function()
-      require("neotest").output.open()
+      require('neotest').output.open()
     end,
-    desc = "Test Open",
+    desc = 'Test Open',
   },
-  ["<leader>teO"] = {
+  ['<leader>teO'] = {
     function()
-      require("neotest").output.open({ enter = true })
+      require('neotest').output.open({ enter = true })
     end,
-    desc = "Test Open Enter",
+    desc = 'Test Open Enter',
   },
-  ["<leader>teS"] = {
+  ['<leader>teS'] = {
     function()
-      require("neotest").summary.toggle()
+      require('neotest').summary.toggle()
     end,
-    desc = "Test Toggle Summary",
+    desc = 'Test Toggle Summary',
   },
-  ["<leader>tef"] = {
+  ['<leader>tef'] = {
     function()
-      require("neotest").run.run(GET_CUR_BUF_TO_GIT_PATH())
+      require('neotest').run.run(GET_CUR_BUF_TO_GIT_PATH())
     end,
-    desc = "Test Run File",
+    desc = 'Test Run File',
   },
-  ["<leader>tep"] = {
+  ['<leader>tep'] = {
     function()
-      require("neotest").jump.prev({ status = "failed" })
+      require('neotest').jump.prev({ status = 'failed' })
     end,
-    desc = "Test Prev Failed",
+    desc = 'Test Prev Failed',
     { noremap = false },
   },
-  ["<leader>ten"] = {
+  ['<leader>ten'] = {
     function()
-      require("neotest").jump.next({ status = "failed" })
+      require('neotest').jump.next({ status = 'failed' })
     end,
-    desc = "Test Next Failed",
+    desc = 'Test Next Failed',
     { noremap = false },
   },
-  ["<leader>tej"] = {
+  ['<leader>tej'] = {
     function()
-      require("neotest").run.run({ jestCommand = "jest --watch ", suite = true })
+      require('neotest').run.run({ jestCommand = 'jest --watch ', suite = true })
     end,
-    desc = "Test Run Jest Watch",
+    desc = 'Test Run Jest Watch',
   },
-  ["<leader>tev"] = {
+  ['<leader>tev'] = {
     function()
-      require("neotest").run.run({
-        vitestCommand = "vitest --watch",
+      require('neotest').run.run({
+        vitestCommand = 'vitest --watch',
         suite = true,
       })
     end,
-    desc = "Test Run Vitest Watch",
+    desc = 'Test Run Vitest Watch',
   },
-  ["<leader>teV"] = {
+  ['<leader>teV'] = {
     function()
-      require("neotest").run.run({
+      require('neotest').run.run({
         GET_CUR_BUF_TO_GIT_PATH(),
-        vitestCommand = "vitest --watch",
+        vitestCommand = 'vitest --watch',
         suite = true,
       })
     end,
-    desc = "Test Run Vitest File Watch",
+    desc = 'Test Run Vitest File Watch',
   },
-  ["<leader>ti"] = { group = "Timer" },
-  ["<leader>tii"] = {
+  ['<leader>ti'] = { group = 'Timer' },
+  ['<leader>tii'] = {
     function()
-      vim.ui.input({ prompt = "Enter minutes: " }, function(minutes)
+      vim.ui.input({ prompt = 'Enter minutes: ' }, function(minutes)
         if not minutes then
-          LOG_ERROR("no time", "run failed")
+          LOG_ERROR('no time', 'run failed')
         else
-          RUN_CMD("NomoTimer " .. minutes, true)
+          RUN_CMD('NomoTimer ' .. minutes, true)
         end
       end)
     end,
-    desc = "Timer input",
+    desc = 'Timer input',
   },
-  ["<leader>tim"] = { "<cmd>NomoMenu<cr>", desc = "Timer Menu" },
-  ["<leader>ta"] = { group = "Tab" },
-  ["<leader>tap"] = { "<cmd>tabprevious<cr>", desc = "Prev Tab" },
-  ["<leader>tan"] = { "<cmd>tabNext<cr>", desc = "Next Tab" },
-  ["<leader>tac"] = { "<cmd>tabclose<cr>", desc = "Close Tab" },
+  ['<leader>tim'] = { '<cmd>NomoMenu<cr>', desc = 'Timer Menu' },
+  ['<leader>ta'] = { group = 'Tab' },
+  ['<leader>tap'] = { '<cmd>tabprevious<cr>', desc = 'Prev Tab' },
+  ['<leader>tan'] = { '<cmd>tabNext<cr>', desc = 'Next Tab' },
+  ['<leader>tac'] = { '<cmd>tabclose<cr>', desc = 'Close Tab' },
 }

@@ -1,10 +1,10 @@
 return {
-  "hrsh7th/cmp-buffer",
-  event = "InsertEnter",
+  'hrsh7th/cmp-buffer',
+  event = 'InsertEnter',
   dependencies = {
-    { "hrsh7th/nvim-cmp" },
+    { 'hrsh7th/nvim-cmp' },
   },
   config = function()
-    ADD_CMP_SOURCE("buffer", { priority = 5 })
+    ADD_CMP_SOURCE('buffer', { priority = 5 })
   end,
 }

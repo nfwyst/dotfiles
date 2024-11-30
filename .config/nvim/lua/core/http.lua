@@ -1,15 +1,15 @@
-local curl = require("plenary.curl")
+local curl = require('plenary.curl')
 local json = vim.json
 
 local http = {}
 
 function http.request(options, on_chunk)
-  local method = options.method or "GET"
+  local method = options.method or 'GET'
   local url = options.url
   local headers = options.headers or {}
   local body = options.body
 
-  if type(body) == "table" then
+  if type(body) == 'table' then
     body = json.encode(body)
   end
 

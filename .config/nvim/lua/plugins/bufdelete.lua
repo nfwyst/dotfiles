@@ -1,4 +1,4 @@
-local group = AUTOGROUP("_alpha_and_bufferline_", { clear = true })
+local group = AUTOGROUP('_alpha_and_bufferline_', { clear = true })
 
 local function delete_buffers(num, bufs, bd)
   local compare = function(cur, next)
@@ -28,7 +28,7 @@ local function delete_old_buffers(bufnr, bd)
     return
   end
   bufs = FILTER_TABLE(bufs, function(buf)
-    local unsaved = GET_OPT("modified", { buf = buf })
+    local unsaved = GET_OPT('modified', { buf = buf })
     local is_current_buffer = buf == bufnr
     return not unsaved and not is_current_buffer
   end)
@@ -38,23 +38,23 @@ end
 local function toggle_alpha_and_close_tree(event)
   local bufnr = event.buf
   TABLE_REMOVE_BY_KEY(BUFFER_OPENED_TIME, bufnr)
-  local empty_path = GET_BUFFER_PATH(bufnr) == ""
-  local is_empty = empty_path and IS_FILETYPE("", { buf = bufnr })
+  local empty_path = GET_BUFFER_PATH(bufnr) == ''
+  local is_empty = empty_path and IS_FILETYPE('', { buf = bufnr })
   if not is_empty then
     return
   end
-  local tree_ok, tree_api = pcall(require, "nvim-tree.api")
+  local tree_ok, tree_api = pcall(require, 'nvim-tree.api')
   if tree_ok then
     tree_api.tree.close()
   end
-  RUN_CMD("Alpha")
-  RUN_CMD(event.buf .. "Bwipeout")
+  RUN_CMD('Alpha')
+  RUN_CMD(event.buf .. 'Bwipeout')
 end
 
 local function auto_remove_buf(bd)
   return function(event)
     local bufnr = event.buf
-    AUTOCMD("BufWinEnter", {
+    AUTOCMD('BufWinEnter', {
       group = group,
       buffer = bufnr,
       callback = function()
@@ -74,15 +74,15 @@ end
 local function init(bd)
   SET_AUTOCMDS({
     {
-      "User",
+      'User',
       {
-        pattern = "BDeletePost*",
+        pattern = 'BDeletePost*',
         group = group,
         callback = toggle_alpha_and_close_tree,
       },
     },
     {
-      { "BufRead", "BufNewFile" },
+      { 'BufRead', 'BufNewFile' },
       {
         group = group,
         callback = auto_remove_buf(bd),
@@ -92,9 +92,9 @@ local function init(bd)
 end
 
 return {
-  "famiu/bufdelete.nvim",
-  cmd = { "Bdelete", "Bwipeout" },
+  'famiu/bufdelete.nvim',
+  cmd = { 'Bdelete', 'Bwipeout' },
   config = function()
-    init(require("bufdelete"))
+    init(require('bufdelete'))
   end,
 }

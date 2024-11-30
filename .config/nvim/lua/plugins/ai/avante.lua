@@ -1,6 +1,6 @@
 local image = {
-  "HakonHarnes/img-clip.nvim",
-  event = "VeryLazy",
+  'HakonHarnes/img-clip.nvim',
+  event = 'VeryLazy',
   enabled = false,
   opts = {
     default = {
@@ -15,7 +15,7 @@ local image = {
 }
 
 local function init(config)
-  local default_prompt = "你是一位出色的编程专家。"
+  local default_prompt = '你是一位出色的编程专家。'
   local function setup_prompt(custom)
     local prompt = default_prompt
     if config.options.system_prompt == default_prompt then
@@ -27,43 +27,43 @@ local function init(config)
       system_prompt = custom or prompt,
     })
   end
-  USER_COMMAND("TogglePrompt", setup_prompt)
+  USER_COMMAND('TogglePrompt', setup_prompt)
   setup_prompt(PROMPT)
 end
 
-local build = IS_MAC and "make" or "make BUILD_FROM_SOURCE=true"
+local build = IS_MAC and 'make' or 'make BUILD_FROM_SOURCE=true'
 
 return {
-  "yetone/avante.nvim",
+  'yetone/avante.nvim',
   cond = HAS_API_KEY,
-  cmd = { "TogglePrompt" },
+  cmd = { 'TogglePrompt' },
   build = build,
   dependencies = {
-    "stevearc/dressing.nvim",
-    "nvim-lua/plenary.nvim",
-    "MunifTanjim/nui.nvim",
-    "nvim-tree/nvim-web-devicons",
+    'stevearc/dressing.nvim',
+    'nvim-lua/plenary.nvim',
+    'MunifTanjim/nui.nvim',
+    'nvim-tree/nvim-web-devicons',
     image,
   },
   config = function()
-    local config = require("avante.config")
-    local providers = require("avante.providers")
-    local api_key_name = "DEEPSEEK_API_KEY"
-    local token = os.getenv(api_key_name) or ""
-    require("avante").setup({
-      provider = "deepseek",
+    local config = require('avante.config')
+    local providers = require('avante.providers')
+    local api_key_name = 'DEEPSEEK_API_KEY'
+    local token = os.getenv(api_key_name) or ''
+    require('avante').setup({
+      provider = 'deepseek',
       vendors = {
         deepseek = {
-          endpoint = "https://api.deepseek.com/beta/chat/completions",
-          model = "deepseek-chat",
+          endpoint = 'https://api.deepseek.com/beta/chat/completions',
+          model = 'deepseek-chat',
           api_key_name = api_key_name,
           parse_curl_args = function(opts, code_opts)
             return {
               url = opts.endpoint,
               headers = {
-                ["Accept"] = "application/json",
-                ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. token,
+                ['Accept'] = 'application/json',
+                ['Content-Type'] = 'application/json',
+                ['Authorization'] = 'Bearer ' .. token,
               },
               body = {
                 model = opts.model,
@@ -88,28 +88,28 @@ return {
       },
       windows = {
         height = 100,
-        input = { prefix = "➜ " },
+        input = { prefix = '➜ ' },
         sidebar_header = {
           enabled = false,
         },
       },
       mappings = {
         diff = {
-          ours = "co",
-          theirs = "ct",
-          all_theirs = "ca",
-          both = "cb",
-          cursor = "cc",
-          next = "]x",
-          prev = "[x",
+          ours = 'co',
+          theirs = 'ct',
+          all_theirs = 'ca',
+          both = 'cb',
+          cursor = 'cc',
+          next = ']x',
+          prev = '[x',
         },
         jump = {
-          next = "]]",
-          prev = "[[",
+          next = ']]',
+          prev = '[[',
         },
         submit = {
-          normal = "<cr>",
-          insert = "<C-s>",
+          normal = '<cr>',
+          insert = '<C-s>',
         },
       },
       hints = {
@@ -117,33 +117,33 @@ return {
       },
       repo_map = {
         ignore_patterns = {
-          "%.git",
-          "%.worktree",
-          "__pycache__",
-          "node_modules",
-          "__tests__",
-          "e2e-tests",
-          "%.github",
-          "%.husky",
-          "%.vscode",
-          "fonts",
-          "%.ttf",
-          "images",
-          "img",
-          "%.png",
-          "%.gif",
-          "%.zip",
-          "%.jar",
-          "%.min.js",
-          "%.svg",
-          "%lock.json",
-          "docker",
-          "%.platform",
-          "%.htaccess",
-          "%.storybook",
-          "dist",
-          "%.lock",
-          "locales",
+          '%.git',
+          '%.worktree',
+          '__pycache__',
+          'node_modules',
+          '__tests__',
+          'e2e-tests',
+          '%.github',
+          '%.husky',
+          '%.vscode',
+          'fonts',
+          '%.ttf',
+          'images',
+          'img',
+          '%.png',
+          '%.gif',
+          '%.zip',
+          '%.jar',
+          '%.min.js',
+          '%.svg',
+          '%lock.json',
+          'docker',
+          '%.platform',
+          '%.htaccess',
+          '%.storybook',
+          'dist',
+          '%.lock',
+          'locales',
         },
       },
     })

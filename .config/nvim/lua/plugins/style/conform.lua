@@ -1,9 +1,9 @@
-local c = { "clang_format" }
+local c = { 'clang_format' }
 local is_fixing = false
 
 local function setup_eslint()
-  local eslint_d = require("conform.formatters.eslint_d")
-  eslint_d.cwd = require("conform.util").root_file(ESLINT_CONFIG_NAMES)
+  local eslint_d = require('conform.formatters.eslint_d')
+  eslint_d.cwd = require('conform.util').root_file(ESLINT_CONFIG_NAMES)
   eslint_d.require_cwd = true
 end
 
@@ -11,7 +11,7 @@ local function init(conform)
   setup_eslint()
   local function run()
     conform.format({
-      lsp_format = "fallback",
+      lsp_format = 'fallback',
       timeout_ms = 1000,
       async = true,
     })
@@ -30,16 +30,16 @@ end
 
 local function fe()
   if is_fixing then
-    return { "eslint_d" }
+    return { 'eslint_d' }
   end
-  return { "prettierd" }
+  return { 'prettierd' }
 end
 
 return {
-  "stevearc/conform.nvim",
-  cmd = { "Format", "ConformInfo" },
+  'stevearc/conform.nvim',
+  cmd = { 'Format', 'ConformInfo' },
   config = function()
-    local conform = require("conform")
+    local conform = require('conform')
     init(conform)
     conform.setup({
       log_level = vim.log.levels.OFF,
@@ -59,20 +59,20 @@ return {
         graphql = fe,
         c = c,
         cpp = c,
-        sh = { "shfmt" },
-        zsh = { "beautysh" },
-        lua = { "stylua" },
-        toml = { "taplo" },
-        ["_"] = { "trim_whitespace" },
+        sh = { 'shfmt' },
+        zsh = { 'beautysh' },
+        lua = { 'stylua' },
+        toml = { 'taplo' },
+        ['_'] = { 'trim_whitespace' },
       },
       formatters = {
         beautysh = function()
           return {
-            command = "beautysh",
+            command = 'beautysh',
             args = {
-              "-i",
+              '-i',
               vim.opt.shiftwidth:get(),
-              "$FILENAME",
+              '$FILENAME',
             },
             stdin = false,
           }

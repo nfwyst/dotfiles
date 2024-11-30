@@ -5,17 +5,17 @@ return {
         enable = false,
       },
       diagnostics = {
-        globals = { "vim" },
-        disable = { "lowercase-global" },
+        globals = { 'vim' },
+        disable = { 'lowercase-global' },
       },
       runtime = {
-        version = "LuaJIT",
+        version = 'LuaJIT',
       },
       workspace = {
-        checkThirdParty = "Disable",
+        checkThirdParty = 'Disable',
         library = {
-          [os.getenv("VIMRUNTIME") .. "/lua"] = true,
-          [CONFIG_PATH .. "/lua"] = true,
+          [os.getenv('VIMRUNTIME') .. '/lua'] = true,
+          [CONFIG_PATH .. '/lua'] = true,
         },
       },
       telemetry = {

@@ -1,8 +1,8 @@
 local config_files = {
-  "tailwind.config.js",
-  "tailwind.config.ts",
-  "tailwind.config.cjs",
-  "tailwind.config.mjs",
+  'tailwind.config.js',
+  'tailwind.config.ts',
+  'tailwind.config.cjs',
+  'tailwind.config.mjs',
 }
 
 local function no_tailwind_config(from, to)
@@ -14,7 +14,7 @@ local function get_on_attach()
   return function(client)
     local from = GET_WORKSPACE_PATH()
     local to = GET_GIT_PATH()
-    local key = from .. ":" .. to
+    local key = from .. ':' .. to
 
     local result = cache[key]
     if result ~= nil then
@@ -33,6 +33,6 @@ local function get_on_attach()
 end
 
 return {
-  include_filetypes = { "javascriptreact", "typescriptreact", "svelte" },
+  include_filetypes = { 'javascriptreact', 'typescriptreact', 'svelte' },
   on_attach = get_on_attach(),
 }

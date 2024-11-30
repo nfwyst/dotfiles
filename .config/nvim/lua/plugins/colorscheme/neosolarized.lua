@@ -1,7 +1,7 @@
-local name = "NeoSolarized"
+local name = 'NeoSolarized'
 
 return {
-  "Tsuzat/NeoSolarized.nvim",
+  'Tsuzat/NeoSolarized.nvim',
   name = name,
   lazy = false,
   priority = 1000,

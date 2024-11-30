@@ -5,10 +5,10 @@ local function setup_diagnostic()
     virtual_text = false,
     signs = {
       text = {
-        [st.ERROR] = " ",
-        [st.WARN] = " ",
-        [st.HINT] = " ",
-        [st.INFO] = " ",
+        [st.ERROR] = ' ',
+        [st.WARN] = ' ',
+        [st.HINT] = ' ',
+        [st.INFO] = ' ',
       },
     },
     update_in_insert = false,
@@ -16,9 +16,9 @@ local function setup_diagnostic()
     severity_sort = true,
     float = {
       focusable = false,
-      style = "minimal",
-      border = "rounded",
-      source = "always",
+      style = 'minimal',
+      border = 'rounded',
+      source = 'always',
     },
   }
   vim.diagnostic.config(config)
@@ -30,8 +30,8 @@ local function init()
   local methods = lsp.protocol.Methods
   local hd = lsp.handlers
   local opt = {
-    border = "rounded",
-    width = "auto",
+    border = 'rounded',
+    width = 'auto',
     max_width = GET_MAX_WIDTH(),
     silent = true,
   }
@@ -44,7 +44,7 @@ local function get_options(cmp_nvim_lsp, server)
     capabilities = cmp_nvim_lsp.default_capabilities(),
   }
   local has_custom_opts, server_custom_opts =
-    pcall(require, "plugins.lsp.settings." .. server)
+    pcall(require, 'plugins.lsp.settings.' .. server)
   if has_custom_opts then
     if server_custom_opts.disabled then
       return nil
@@ -70,20 +70,20 @@ local function try_load(conf, opts)
 end
 
 return {
-  "neovim/nvim-lspconfig",
-  event = { "BufReadPre", "BufNewFile" },
+  'neovim/nvim-lspconfig',
+  event = { 'BufReadPre', 'BufNewFile' },
   dependencies = {
-    "hrsh7th/cmp-nvim-lsp",
-    "b0o/schemastore.nvim",
+    'hrsh7th/cmp-nvim-lsp',
+    'b0o/schemastore.nvim',
   },
   config = function()
-    require("lspconfig.ui.windows").default_options.border = "rounded"
-    local lspconfig = require("lspconfig")
-    local cmp_nvim_lsp = require("cmp_nvim_lsp")
-    ADD_CMP_SOURCE("nvim_lsp", { priority = 6 })
+    require('lspconfig.ui.windows').default_options.border = 'rounded'
+    local lspconfig = require('lspconfig')
+    local cmp_nvim_lsp = require('cmp_nvim_lsp')
+    ADD_CMP_SOURCE('nvim_lsp', { priority = 6 })
 
-    for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { "nushell" })) do
-      if server ~= "ts_ls" then
+    for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { 'nushell' })) do
+      if server ~= 'ts_ls' then
         local conf = lspconfig[server]
         local opts = get_options(cmp_nvim_lsp, server)
         if opts then

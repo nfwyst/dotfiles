@@ -1,10 +1,10 @@
-local statuscolumn = ""
+local statuscolumn = ''
 
 return {
-  "folke/zen-mode.nvim",
-  cmd = "ZenMode",
+  'folke/zen-mode.nvim',
+  cmd = 'ZenMode',
   config = function()
-    require("zen-mode").setup({
+    require('zen-mode').setup({
       window = {
         backdrop = 1,
         width = function()
@@ -21,7 +21,7 @@ return {
       on_open = function()
         vim.diagnostic.enable(false)
         statuscolumn = vim.o.statuscolumn
-        vim.o.statuscolumn = ""
+        vim.o.statuscolumn = ''
       end,
       on_close = function()
         vim.diagnostic.enable()

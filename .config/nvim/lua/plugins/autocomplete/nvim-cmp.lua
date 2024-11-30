@@ -1,20 +1,20 @@
 local disable_fuzzy = true
 
 return {
-  "hrsh7th/nvim-cmp",
-  event = "InsertEnter",
+  'hrsh7th/nvim-cmp',
+  event = 'InsertEnter',
   dependencies = {
-    "onsails/lspkind.nvim",
-    { "L3MON4D3/LuaSnip", build = "make install_jsregexp" },
-    "saadparwaiz1/cmp_luasnip",
-    "rafamadriz/friendly-snippets",
+    'onsails/lspkind.nvim',
+    { 'L3MON4D3/LuaSnip', build = 'make install_jsregexp' },
+    'saadparwaiz1/cmp_luasnip',
+    'rafamadriz/friendly-snippets',
   },
   config = function()
-    local cmp = require("cmp")
-    local luasnip = require("luasnip")
-    luasnip.log.set_loglevel("error")
-    local lspkind = require("lspkind")
-    local snip_loader = require("luasnip.loaders.from_vscode")
+    local cmp = require('cmp')
+    local luasnip = require('luasnip')
+    luasnip.log.set_loglevel('error')
+    local lspkind = require('lspkind')
+    local snip_loader = require('luasnip.loaders.from_vscode')
     snip_loader.lazy_load()
     snip_loader.lazy_load({ paths = { SNIPPET_PATH } })
     local border = MERGE_TABLE(cmp.config.window.bordered(), {
@@ -31,24 +31,24 @@ return {
         end,
       },
       mapping = cmp.mapping.preset.insert({
-        ["<C-p>"] = cmp.mapping.select_prev_item(),
-        ["<C-n>"] = cmp.mapping.select_next_item(),
-        ["<C-b>"] = cmp.mapping(cmp.mapping.scroll_docs(-1), { "i", "c" }),
-        ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(1), { "i", "c" }),
-        ["<C-c>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
-        ["<C-y>"] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
-        ["<C-e>"] = cmp.mapping({
+        ['<C-p>'] = cmp.mapping.select_prev_item(),
+        ['<C-n>'] = cmp.mapping.select_next_item(),
+        ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-1), { 'i', 'c' }),
+        ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(1), { 'i', 'c' }),
+        ['<C-c>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+        ['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
+        ['<C-e>'] = cmp.mapping({
           i = cmp.mapping.abort(),
           c = cmp.mapping.close(),
         }),
-        ["<CR>"] = cmp.mapping(function(fallback)
+        ['<CR>'] = cmp.mapping(function(fallback)
           -- use the internal non-blocking call to check if cmp is visible to work with minuet
           if cmp.core.view:visible() then
             return cmp.confirm({ select = true })
           end
           fallback()
         end),
-        ["<Tab>"] = cmp.mapping(function(fallback)
+        ['<Tab>'] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_next_item()
           elseif luasnip.jumpable(1) then
@@ -56,8 +56,8 @@ return {
           else
             fallback()
           end
-        end, { "s", "i" }),
-        ["<S-Tab>"] = cmp.mapping(function(fallback)
+        end, { 's', 'i' }),
+        ['<S-Tab>'] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_prev_item()
           elseif luasnip.jumpable(-1) then
@@ -65,14 +65,14 @@ return {
           else
             fallback()
           end
-        end, { "s", "i" }),
+        end, { 's', 'i' }),
       }),
       formatting = {
         expandable_indicator = true,
-        fields = { "abbr", "kind", "menu" },
+        fields = { 'abbr', 'kind', 'menu' },
         format = lspkind.cmp_format({
           maxwidth = 50,
-          ellipsis_char = "...",
+          ellipsis_char = '...',
         }),
       },
       matching = {
@@ -85,7 +85,7 @@ return {
         fetching_timeout = 2000,
       },
       sources = cmp.config.sources({
-        { name = "luasnip", max_item_count = 3, priority = 8 },
+        { name = 'luasnip', max_item_count = 3, priority = 8 },
       }),
       window = {
         completion = border,

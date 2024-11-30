@@ -1,30 +1,30 @@
 local function footer()
-  local handle = io.popen("fortune")
+  local handle = io.popen('fortune')
   if not handle then
-    return " "
+    return ' '
   end
-  local fortune = handle:read("*a")
+  local fortune = handle:read('*a')
   handle:close()
   return fortune
 end
 
 local function init()
-  local group = AUTOGROUP("_alpha_", { clear = true })
-  AUTOCMD("User", {
-    pattern = "AlphaReady",
+  local group = AUTOGROUP('_alpha_', { clear = true })
+  AUTOCMD('User', {
+    pattern = 'AlphaReady',
     group = group,
     callback = function(event)
       ALPHA_BUF = event.buf
       SET_TIMEOUT(function()
-        SET_OPT("laststatus", 0)
+        SET_OPT('laststatus', 0)
         ENABLE_CURSORLINE({ buf = ALPHA_BUF }, true)
       end, 10)
-      AUTOCMD("BufUnload", {
+      AUTOCMD('BufUnload', {
         buffer = event.buf,
         group = group,
         callback = function()
           SET_TIMEOUT(function()
-            SET_OPT("laststatus", 3)
+            SET_OPT('laststatus', 3)
           end, 10)
         end,
       })
@@ -33,16 +33,16 @@ local function init()
 end
 
 local function expand_home_path(path)
-  return path:gsub("^" .. HOME_PATH, "~")
+  return path:gsub('^' .. HOME_PATH, '~')
 end
 
 return {
-  "goolord/alpha-nvim",
-  event = "VimEnter",
-  dependencies = { "nvim-tree/nvim-web-devicons" },
+  'goolord/alpha-nvim',
+  event = 'VimEnter',
+  dependencies = { 'nvim-tree/nvim-web-devicons' },
   config = function()
-    local alpha = require("alpha")
-    local dashboard = require("alpha.themes.dashboard")
+    local alpha = require('alpha')
+    local dashboard = require('alpha.themes.dashboard')
     local current_path = GET_WORKSPACE_PATH(nil, true)
     local git_path = GET_GIT_PATH(current_path)
     local val = {
@@ -53,37 +53,37 @@ return {
       [[\ \_\ \_\ \____\ \____/\ \___/  \ \_\ \_\ \_\ \_\]],
       [[ \/_/\/_/\/____/\/___/  \/__/    \/_/\/_/\/_/\/_/]],
       [[]],
-      " : " .. expand_home_path(current_path),
+      ' : ' .. expand_home_path(current_path),
     }
     if git_path and current_path ~= git_path then
-      table.insert(val, " : " .. expand_home_path(git_path))
+      table.insert(val, ' : ' .. expand_home_path(git_path))
     end
     dashboard.section.header.val = val
     dashboard.section.buttons.val = {
-      dashboard.button("f", "󰱼  Find file", "<cmd>FindFiles<cr>"),
+      dashboard.button('f', '󰱼  Find file', '<cmd>FindFiles<cr>'),
       dashboard.button(
-        "e",
-        "  New file",
-        "<cmd>lua NEW_FILE(true, true)<cr>"
+        'e',
+        '  New file',
+        '<cmd>lua NEW_FILE(true, true)<cr>'
       ),
       dashboard.button(
-        "R",
-        "  Recently used files global",
-        "<cmd>Telescope oldfiles<cr>"
+        'R',
+        '  Recently used files global',
+        '<cmd>Telescope oldfiles<cr>'
       ),
       dashboard.button(
-        "r",
-        "  Recently used files",
-        "<cmd>Telescope oldfiles only_cwd=true<cr>"
+        'r',
+        '  Recently used files',
+        '<cmd>Telescope oldfiles only_cwd=true<cr>'
       ),
-      dashboard.button("t", "󰊄  Find text", "<cmd>FindText<cr>"),
-      dashboard.button("c", "  Configuration", "<cmd>e $MYVIMRC<cr>"),
-      dashboard.button("q", "󰅙  Quit Neovim", "<cmd>qa<cr>"),
+      dashboard.button('t', '󰊄  Find text', '<cmd>FindText<cr>'),
+      dashboard.button('c', '  Configuration', '<cmd>e $MYVIMRC<cr>'),
+      dashboard.button('q', '󰅙  Quit Neovim', '<cmd>qa<cr>'),
     }
     dashboard.section.footer.val = footer()
-    dashboard.section.footer.opts.hl = ""
-    dashboard.section.header.opts.hl = "Include"
-    dashboard.section.buttons.opts.hl = "Keyword"
+    dashboard.section.footer.opts.hl = ''
+    dashboard.section.header.opts.hl = 'Include'
+    dashboard.section.buttons.opts.hl = 'Keyword'
     dashboard.config.opts.noautocmd = true
     alpha.setup(dashboard.config)
     init()

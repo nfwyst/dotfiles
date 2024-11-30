@@ -3,7 +3,7 @@ local cmd = api.nvim_create_user_command
 local cursor = vim.opt.guicursor
 
 function MERGE_TABLE(...)
-  return vim.tbl_deep_extend("force", ...)
+  return vim.tbl_deep_extend('force', ...)
 end
 
 function FILTER_TABLE(tbl, filter)
@@ -11,7 +11,7 @@ function FILTER_TABLE(tbl, filter)
   for key, value in pairs(tbl) do
     local ok = filter(value, key)
     if ok then
-      if type(key) == "number" then
+      if type(key) == 'number' then
         table.insert(tb, value)
       else
         tb[key] = value
@@ -33,8 +33,8 @@ end
 
 function DEFINE_SIGNS(signs)
   for name, sign in pairs(signs) do
-    local opt = { text = sign, numhl = "" }
-    if type(sign) == "table" then
+    local opt = { text = sign, numhl = '' }
+    if type(sign) == 'table' then
       opt = MERGE_TABLE(opt, sign)
     end
     vim.fn.sign_define(name, opt)
@@ -67,12 +67,12 @@ end
 
 function SHOW_CURSOR()
   SET_HL(CURSOR_HILIGHT_OPTS)
-  cursor:remove("a:Cursor/lCursor")
+  cursor:remove('a:Cursor/lCursor')
 end
 
 function HIDE_CURSOR()
   SET_HL({ Cursor = { blend = 100 } })
-  cursor:append("a:Cursor/lCursor")
+  cursor:append('a:Cursor/lCursor')
 end
 
 function GET_HIGHLIGHT(name, opt)
@@ -113,7 +113,7 @@ end
 
 local function key_exists(mode, lhs)
   local ok, exists = pcall(function(...)
-    local keys = require("lazy.core.handler").handlers.keys
+    local keys = require('lazy.core.handler').handlers.keys
     if keys.active[keys.parse(...).id] then
       return true
     end
@@ -128,7 +128,7 @@ end
 function KEY_MAP(mode, lhs, rhs, opts)
   local has_key = key_exists(mode, lhs)
   if has_key then
-    LOG_ERROR("key map error", "key" .. lhs .. "already exists")
+    LOG_ERROR('key map error', 'key' .. lhs .. 'already exists')
     return
   end
   opts = opts or {}
@@ -236,15 +236,15 @@ function CENTER_STRING_BY_WIDTH(str, width, offset)
   if not offset then
     offset = 0
   end
-  return string.rep(" ", padding + offset) .. str
+  return string.rep(' ', padding + offset) .. str
 end
 
 function GET_PROJECT_NAME(winid)
   local cached = {}
-  local ok, util = pcall(require, "lspconfig.util")
+  local ok, util = pcall(require, 'lspconfig.util')
   local basename = vim.fs.basename
   if not ok then
-    LOG_ERROR("pcall error", util)
+    LOG_ERROR('pcall error', util)
     return
   end
 
@@ -264,7 +264,7 @@ function GET_PROJECT_NAME(winid)
     result = root_name
     local key
     if name ~= root_name then
-      key = root_name .. "  " .. name
+      key = root_name .. '  ' .. name
       if cached[key] then
         return cached[key]
       end
@@ -311,9 +311,9 @@ function IS_PACKAGE_LOADED(pkg)
 end
 
 function NEW_FILE(bang, open)
-  vim.ui.input({ prompt = "Enter a file name: " }, function(fname)
+  vim.ui.input({ prompt = 'Enter a file name: ' }, function(fname)
     if not fname then
-      LOG_ERROR("cant save", "file name missing")
+      LOG_ERROR('cant save', 'file name missing')
       return
     end
     if open then
@@ -326,7 +326,7 @@ end
 function SAVE(force)
   local bang = force ~= nil and force ~= false
   local buffer_path = GET_CURRENT_BUFFER_PATH(false, true)
-  if buffer_path == "" then
+  if buffer_path == '' then
     NEW_FILE(bang)
     return
   end
@@ -354,7 +354,7 @@ function GET_OPT(optname, config)
 end
 
 function RUN_CMD(command, check)
-  local name = ":" .. command:match("^%s*(%S+)")
+  local name = ':' .. command:match('^%s*(%S+)')
   if check and vim.fn.exists(name) == 0 then
     return
   end
@@ -370,7 +370,7 @@ function GET_DIR_PATH(path)
 end
 
 function IS_FILE_PATH(path, include_dir)
-  local ok, Path = pcall(require, "plenary.path")
+  local ok, Path = pcall(require, 'plenary.path')
   if not ok then
     return
   end
@@ -388,13 +388,13 @@ function PCALL(f, ...)
   if ok or not err then
     return err
   end
-  LOG_ERROR("pcall error", err)
+  LOG_ERROR('pcall error', err)
 end
 
 function LOG_INFO(title, message, timeout)
   -- fix that vim.notify has not rewrite by noice
   SET_TIMEOUT(function()
-    vim.notify(message or "", vim.log.levels.INFO, {
+    vim.notify(message or '', vim.log.levels.INFO, {
       title = title,
       timeout = timeout ~= nil and timeout or 3000,
     })
@@ -443,7 +443,7 @@ function QUICKSORT(arr, low, high, compare)
 end
 
 function GET_COLOR()
-  local colors = require("NeoSolarized.colors")
+  local colors = require('NeoSolarized.colors')
   return colors[SCHEME_BACKGROUND]
 end
 
@@ -451,8 +451,8 @@ function INIT_HL()
   local color = GET_COLOR()
   SET_HL(MERGE_TABLE(CURSOR_HILIGHT_OPTS, {
     CursorLine = { bg = color.fg1 },
-    CursorLineNr = { fg = "#388bfd" },
-    ["@variable"] = { fg = color.fg0 },
+    CursorLineNr = { fg = '#388bfd' },
+    ['@variable'] = { fg = color.fg0 },
     Normal = { fg = color.fg0 },
     Comment = { fg = color.fg2 },
     LineNrAbove = { fg = color.fg1 },
@@ -466,10 +466,10 @@ function TOGGLE_INLAY_HINT()
 end
 
 function IS_GPT_PROMPT_CHAT(bufnr)
-  if not IS_PACKAGE_LOADED("gp") then
+  if not IS_PACKAGE_LOADED('gp') then
     return false
   end
-  local ok, gp = pcall(require, "gp")
+  local ok, gp = pcall(require, 'gp')
   if not ok then
     return false
   end
@@ -480,11 +480,11 @@ end
 
 function NEW_PICKER(title, theme, results, opts)
   theme.entry_parser = opts.entry_parser
-  local pickers = require("telescope.pickers")
-  local finders = require("telescope.finders")
-  local conf = require("telescope.config").values
-  local actions = require("telescope.actions")
-  local action_state = require("telescope.actions.state")
+  local pickers = require('telescope.pickers')
+  local finders = require('telescope.finders')
+  local conf = require('telescope.config').values
+  local actions = require('telescope.actions')
+  local action_state = require('telescope.actions.state')
 
   local function attach_mappings(prompt_bufnr, _)
     actions.select_default:replace(function()
@@ -518,7 +518,7 @@ end
 
 function GET_VIEWPORT_HEIGHT(winnr)
   local win_height = api.nvim_win_get_height(winnr)
-  local scrolloff = GET_OPT("scrolloff", { win = winnr })
+  local scrolloff = GET_OPT('scrolloff', { win = winnr })
   return win_height - 2 * scrolloff
 end
 
@@ -535,7 +535,7 @@ function GET_BUFFER_ID(winid)
 end
 
 function IS_CURSOR_HIDE()
-  return GET_HIGHLIGHT("Cursor", "blend") == 100
+  return GET_HIGHLIGHT('Cursor', 'blend') == 100
 end
 
 function LOOKUP_FILE_PATH(file_names, start_path, stop_dir)
@@ -567,7 +567,7 @@ function LOOKUP_FILE_PATH(file_names, start_path, stop_dir)
 end
 
 function GET_DIR_MATCH_PATTERNS(file_name_patterns, start_filepath)
-  local util = require("lspconfig.util")
+  local util = require('lspconfig.util')
   local get_root = util.root_pattern(UNPACK(file_name_patterns))
   return get_root(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
@@ -581,7 +581,7 @@ function GET_WORKSPACE_PATH(start_filepath, no_git)
 end
 
 function GET_GIT_PATH(start_filepath)
-  local util = require("lspconfig.util")
+  local util = require('lspconfig.util')
   return util.find_git_ancestor(start_filepath or GET_CURRENT_BUFFER_PATH(true))
 end
 
@@ -589,10 +589,10 @@ function GET_CURRENT_BUFFER_PATH(use_fallback, dont_check_path)
   local buffer_path = GET_BUFFER_PATH(GET_CURRENT_BUFFER())
   local check_path = not dont_check_path
   local not_in_fs = not IS_FILE_PATH(buffer_path)
-  if buffer_path ~= "" and check_path and not_in_fs then
-    buffer_path = ""
+  if buffer_path ~= '' and check_path and not_in_fs then
+    buffer_path = ''
   end
-  if buffer_path == "" and use_fallback then
+  if buffer_path == '' and use_fallback then
     return CWD(), true
   end
   return buffer_path, false
@@ -639,22 +639,22 @@ function STRING_HAS(str, substr)
 end
 
 function HAS_WILDCARD(str)
-  return STRING_HAS(str, "[*?]")
+  return STRING_HAS(str, '[*?]')
 end
 
 local function string_to_pattern(str, fuzzy)
   if not HAS_WILDCARD(str) then
     return str
   end
-  local pattern = str:gsub("%.", "%%."):gsub("%*", ".*")
+  local pattern = str:gsub('%.', '%%.'):gsub('%*', '.*')
   if fuzzy then
     return pattern
   end
-  return "^" .. pattern .. "$"
+  return '^' .. pattern .. '$'
 end
 
 function STRING_PATTERN_MATCHED(str, patterns, fuzzy)
-  if type(patterns) == "string" then
+  if type(patterns) == 'string' then
     patterns = { patterns }
   end
   local function matcher(_str, pattern)
@@ -672,12 +672,12 @@ function STRING_PATTERN_MATCHED(str, patterns, fuzzy)
 end
 
 function GET_CUR_BUF_TO_GIT_PATH()
-  return vim.fn.expand("%")
+  return vim.fn.expand('%')
 end
 
 function BIND_QUIT(bufnr)
   local option = { silent = true, buffer = bufnr }
-  KEY_MAP("n", "q", vim.cmd.close, option)
+  KEY_MAP('n', 'q', vim.cmd.close, option)
 end
 
 function DEBOUNCE(fn, config)
@@ -721,7 +721,7 @@ function GET_ALL_BUFFERS(only_file, new_buf)
   return FILTER_TABLE(buffers, function(bufnr)
     local is_new = new_buf and new_buf == bufnr
     local is_file = is_new or IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
-    local is_in_list = GET_OPT("buflisted", { buf = bufnr })
+    local is_in_list = GET_OPT('buflisted', { buf = bufnr })
     return is_file and is_in_list
   end)
 end
@@ -764,18 +764,18 @@ function GET_HIDE_COLUMN_OPTS(status)
   local opt = {
     number = false,
     relativenumber = false,
-    foldcolumn = "0",
+    foldcolumn = '0',
     list = false,
-    showbreak = "NONE",
+    showbreak = 'NONE',
   }
   if status then
-    opt.statuscolumn = ""
+    opt.statuscolumn = ''
   end
   return opt
 end
 
 function ADD_CMP_SOURCE(name, opt)
-  local has_cmp, cmp = pcall(require, "cmp")
+  local has_cmp, cmp = pcall(require, 'cmp')
   if not has_cmp then
     return
   end
@@ -794,7 +794,7 @@ end
 function FILETYPE_VALID(buf, invalid_arr, cache_key)
   local filetype = GET_FILETYPE(buf)
   invalid_arr = invalid_arr or INVALID_FILETYPE
-  cache_key = cache_key or "INVALID_FILETYPE"
+  cache_key = cache_key or 'INVALID_FILETYPE'
   return not INCLUDES(invalid_arr, filetype, cache_key)
 end
 
@@ -802,7 +802,7 @@ function ENABLE_CURSORLINE(opts, force)
   local buf = opts.buf
   local winid = opts.win
   local invalid_arr = INVALID_CURSORLINE_FILETYPE
-  local cache_key = "INVALID_CURSORLINE_FILETYPE"
+  local cache_key = 'INVALID_CURSORLINE_FILETYPE'
   if not force then
     buf = buf or GET_BUFFER_ID(winid)
     if not FILETYPE_VALID(buf, invalid_arr, cache_key) then
@@ -811,8 +811,8 @@ function ENABLE_CURSORLINE(opts, force)
   end
   local function process(win)
     local opt = { win = win }
-    if not GET_OPT("cursorline", opt) then
-      SET_OPT("cursorline", true, opt)
+    if not GET_OPT('cursorline', opt) then
+      SET_OPT('cursorline', true, opt)
     end
   end
   if winid then

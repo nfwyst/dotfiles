@@ -1,8 +1,8 @@
 return {
-  "MagicDuck/grug-far.nvim",
+  'MagicDuck/grug-far.nvim',
   lazy = true,
   config = function()
-    require("grug-far").setup({
+    require('grug-far').setup({
       minSearchChars = 3,
       maxWorkers = IS_MAC and 4 or 2,
       reportDuration = false,
@@ -10,7 +10,7 @@ return {
       normalModeSearch = true,
       engines = {
         ripgrep = {
-          extraArgs = "--no-ignore --hidden --glob !node_modules",
+          extraArgs = '--no-ignore --hidden --glob !node_modules',
         },
       },
     })

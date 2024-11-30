@@ -1,68 +1,68 @@
 return function(wk)
   wk.add({
-    ["gC"] = { "<cmd>GoToContext<cr>", desc = "Jump to upper context" },
-    ["gD"] = {
-      "<cmd>Telescope lsp_definitions<cr>",
-      desc = "Go to telescope definitions",
+    ['gC'] = { '<cmd>GoToContext<cr>', desc = 'Jump to upper context' },
+    ['gD'] = {
+      '<cmd>Telescope lsp_definitions<cr>',
+      desc = 'Go to telescope definitions',
     },
-    ["gF"] = {
-      "<cmd>TSToolsFileReferences<cr>",
-      desc = "Go to file references(TS)",
+    ['gF'] = {
+      '<cmd>TSToolsFileReferences<cr>',
+      desc = 'Go to file references(TS)',
     },
-    ["gI"] = {
-      "<cmd>lua vim.lsp.buf.implementation()<cr>",
-      desc = "Go to implementation",
+    ['gI'] = {
+      '<cmd>lua vim.lsp.buf.implementation()<cr>',
+      desc = 'Go to implementation',
     },
-    ["gL"] = {
-      "<cmd>lua vim.lsp.buf.references()<cr>",
-      desc = "Go to references list",
+    ['gL'] = {
+      '<cmd>lua vim.lsp.buf.references()<cr>',
+      desc = 'Go to references list',
     },
-    ["gR"] = {
-      "<cmd>Telescope lsp_references<cr>",
-      desc = "Go to telescope references",
+    ['gR'] = {
+      '<cmd>Telescope lsp_references<cr>',
+      desc = 'Go to telescope references',
     },
-    ["gS"] = {
-      "<cmd>lua vim.lsp.buf.signature_help()<cr>",
-      desc = "Show signature help",
+    ['gS'] = {
+      '<cmd>lua vim.lsp.buf.signature_help()<cr>',
+      desc = 'Show signature help',
     },
-    ["ga"] = {
-      "<cmd>lua vim.lsp.buf.declaration()<cr>",
-      desc = "Go to declaration",
+    ['ga'] = {
+      '<cmd>lua vim.lsp.buf.declaration()<cr>',
+      desc = 'Go to declaration',
     },
-    ["gb"] = { "<c-t>", desc = "Go back" },
-    ["gd"] = {
-      "<cmd>lua vim.lsp.buf.definition()<cr>",
-      desc = "Go to definition",
+    ['gb'] = { '<c-t>', desc = 'Go back' },
+    ['gd'] = {
+      '<cmd>lua vim.lsp.buf.definition()<cr>',
+      desc = 'Go to definition',
     },
-    ["gh"] = { "<cmd>lua vim.lsp.buf.hover()<cr>", desc = "Show hover info" },
-    ["gj"] = {
-      "<cmd>lua vim.diagnostic.goto_next()<cr>",
-      desc = "Go to next diagnostic",
+    ['gh'] = { '<cmd>lua vim.lsp.buf.hover()<cr>', desc = 'Show hover info' },
+    ['gj'] = {
+      '<cmd>lua vim.diagnostic.goto_next()<cr>',
+      desc = 'Go to next diagnostic',
     },
-    ["gk"] = {
-      "<cmd>lua vim.diagnostic.goto_prev()<cr>",
-      desc = "Go to prev diagnostic",
+    ['gk'] = {
+      '<cmd>lua vim.diagnostic.goto_prev()<cr>',
+      desc = 'Go to prev diagnostic',
     },
-    ["gl"] = {
+    ['gl'] = {
       '<cmd>lua vim.diagnostic.open_float({ border = "rounded", focusable = true })<cr>',
-      desc = "Show diagnostic",
+      desc = 'Show diagnostic',
     },
-    ["go"] = { "<c-o>", desc = "Jump back" },
-    ["gs"] = {
-      "<cmd>TSToolsGoToSourceDefinition<cr>",
-      desc = "Go to source(TS)",
+    ['go'] = { '<c-o>', desc = 'Jump back' },
+    ['gs'] = {
+      '<cmd>TSToolsGoToSourceDefinition<cr>',
+      desc = 'Go to source(TS)',
     },
-    ["gw"] = { "<c-i>", desc = "Jump forward" },
-    ["gr"] = { group = "Refactor" },
-    ["gra"] = {
-      "<cmd>lua vim.lsp.buf.code_action()<cr>",
-      desc = "Show code action",
+    ['gw'] = { '<c-i>', desc = 'Jump forward' },
+    ['gr'] = { group = 'Refactor' },
+    ['gra'] = {
+      '<cmd>lua vim.lsp.buf.code_action()<cr>',
+      desc = 'Show code action',
     },
-    ["grn"] = { "<cmd>TSToolsRenameFile<cr>", desc = "Rename file(TS)" },
-    ["grr"] = {
-      "<cmd>lua vim.lsp.buf.rename()<cr>",
-      desc = "Rename identifier",
+    ['grn'] = { '<cmd>TSToolsRenameFile<cr>', desc = 'Rename file(TS)' },
+    ['grr'] = {
+      '<cmd>lua vim.lsp.buf.rename()<cr>',
+      desc = 'Rename identifier',
     },
-    ["grs"] = { "<cmd>TSToolsSortImports<cr>", desc = "Sort imports(TS)" },
+    ['grs'] = { '<cmd>TSToolsSortImports<cr>', desc = 'Sort imports(TS)' },
   })
 end

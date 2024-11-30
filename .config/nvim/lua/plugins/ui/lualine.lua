@@ -1,8 +1,8 @@
 local diagnostics = {
-  "diagnostics",
-  sources = { "nvim_diagnostic" },
-  sections = { "error", "warn" },
-  symbols = { error = " ", warn = " " },
+  'diagnostics',
+  sources = { 'nvim_diagnostic' },
+  sections = { 'error', 'warn' },
+  symbols = { error = ' ', warn = ' ' },
   colored = false,
   update_in_insert = false,
   always_visible = true,
@@ -19,14 +19,14 @@ local show_on_width = function(width)
 end
 
 local diff = {
-  "diff",
+  'diff',
   colored = true,
-  symbols = { added = " ", modified = " ", removed = " " }, -- changes diff symbols
+  symbols = { added = ' ', modified = ' ', removed = ' ' }, -- changes diff symbols
   cond = show_on_width,
 }
 
 local mode = {
-  "mode",
+  'mode',
   fmt = function(str)
     return str
   end,
@@ -34,37 +34,37 @@ local mode = {
 }
 
 local filetype = {
-  "filetype",
+  'filetype',
   icons_enabled = false,
   icon = nil,
 }
 
 local branch = {
-  "branch",
+  'branch',
   icons_enabled = true,
-  icon = "",
+  icon = '',
 }
 
 local location = {
-  "location",
+  'location',
   padding = 1,
 }
 
 -- cool function for progress
 local progress = {
   function()
-    local current_line = vim.fn.line(".")
-    local total_lines = vim.fn.line("$")
+    local current_line = vim.fn.line('.')
+    local total_lines = vim.fn.line('$')
     local chars = {
-      "  ",
-      "▁▁",
-      "▂▂",
-      "▃▃",
-      "▄▄",
-      "▅▅",
-      "▆▆",
-      "▇▇",
-      "██",
+      '  ',
+      '▁▁',
+      '▂▂',
+      '▃▃',
+      '▄▄',
+      '▅▅',
+      '▆▆',
+      '▇▇',
+      '██',
     }
     local line_ratio = current_line / total_lines
     local index = math.ceil(line_ratio * #chars)
@@ -76,51 +76,51 @@ local progress = {
 local spaces = function()
   local width = GET_EDITOR_WIDTH()
   if width < 56 then
-    return ""
+    return ''
   end
-  return "space:" .. GET_OPT("shiftwidth", { buf = GET_CURRENT_BUFFER() })
+  return 'space:' .. GET_OPT('shiftwidth', { buf = GET_CURRENT_BUFFER() })
 end
 
 local noice_mode = {
   function()
-    return require("noice").api.status.mode.get()
+    return require('noice').api.status.mode.get()
   end,
   cond = function()
-    return require("noice").api.status.mode.has()
+    return require('noice').api.status.mode.has()
   end,
-  color = { fg = "#ffffff" },
+  color = { fg = '#ffffff' },
 }
 
 local lsps = function()
   local clients = vim.lsp.get_clients({ bufnr = GET_CURRENT_BUFFER() })
   local width = GET_EDITOR_WIDTH()
   if next(clients) == nil or width < 66 then
-    return ""
+    return ''
   end
 
   local c = {}
   for _, client in pairs(clients) do
     table.insert(c, client.name)
   end
-  return "󱓞 " .. table.concat(c, "•")
+  return '󱓞 ' .. table.concat(c, '•')
 end
 
 local debugger = {
   function()
-    return "  " .. require("dap").status()
+    return '  ' .. require('dap').status()
   end,
   cond = function()
-    return IS_PACKAGE_LOADED("dap") and require("dap").status() ~= ""
+    return IS_PACKAGE_LOADED('dap') and require('dap').status() ~= ''
   end,
-  color = { fg = "#ff9e64" },
+  color = { fg = '#ff9e64' },
 }
 
 local timer = {
   function()
-    return require("nomodoro").status()
+    return require('nomodoro').status()
   end,
   cond = function()
-    return IS_PACKAGE_LOADED("nomodoro")
+    return IS_PACKAGE_LOADED('nomodoro')
   end,
   color = { fg = GET_COLOR().red },
   padding = { left = 0, right = 1 },
@@ -129,14 +129,14 @@ local timer = {
 local fileformat = {
   function()
     if IS_MAC then
-      return ""
+      return ''
     end
     local format = vim.bo.fileformat
-    if format == "dos" then
-      return ""
+    if format == 'dos' then
+      return ''
     end
-    if format == "unix" then
-      return ""
+    if format == 'unix' then
+      return ''
     end
     return format
   end,
@@ -144,19 +144,19 @@ local fileformat = {
 }
 
 return {
-  "nvim-lualine/lualine.nvim",
-  dependencies = { "nvim-tree/nvim-web-devicons" },
-  event = "VeryLazy",
+  'nvim-lualine/lualine.nvim',
+  dependencies = { 'nvim-tree/nvim-web-devicons' },
+  event = 'VeryLazy',
   config = function()
-    local lualine = require("lualine")
-    local lazy_status = require("lazy.status")
+    local lualine = require('lualine')
+    local lazy_status = require('lazy.status')
     lualine.setup({
       options = {
         icons_enabled = true,
-        theme = DEFAULT_COLORSCHEME or "auto",
-        component_separators = { left = "", right = "" },
-        section_separators = { left = "", right = "" },
-        ignore_focus = { "NvimTree" },
+        theme = DEFAULT_COLORSCHEME or 'auto',
+        component_separators = { left = '', right = '' },
+        section_separators = { left = '', right = '' },
+        ignore_focus = { 'NvimTree' },
         globalstatus = true,
       },
       sections = {
@@ -165,7 +165,7 @@ return {
           noice_mode,
           branch,
           {
-            "tabs",
+            'tabs',
             use_mode_colors = true,
           },
         },
@@ -173,21 +173,21 @@ return {
           diagnostics,
           filetype,
           lsps,
-          "searchcount",
+          'searchcount',
         },
         lualine_c = { timer },
         lualine_x = {
           {
             lazy_status.updates,
             cond = lazy_status.has_updates,
-            color = { fg = "#ff9e64" },
+            color = { fg = '#ff9e64' },
           },
         },
         lualine_y = {
           diff,
           debugger,
           spaces,
-          { cond = show_on_width, "encoding" },
+          { cond = show_on_width, 'encoding' },
           fileformat,
           location,
         },

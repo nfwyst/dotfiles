@@ -1,14 +1,14 @@
 return {
-  "debugloop/telescope-undo.nvim",
-  cmd = { "Telescope undo" },
+  'debugloop/telescope-undo.nvim',
+  cmd = { 'Telescope undo' },
   dependencies = {
-    "nvim-telescope/telescope.nvim",
+    'nvim-telescope/telescope.nvim',
   },
   opts = {
     extensions = {
       undo = {
         side_by_side = true,
-        layout_strategy = "vertical",
+        layout_strategy = 'vertical',
         layout_config = {
           preview_height = 0.7,
           height = 0.999,
@@ -18,7 +18,7 @@ return {
     },
   },
   config = function(_, opts)
-    require("telescope").setup(opts)
-    require("telescope").load_extension("undo")
+    require('telescope').setup(opts)
+    require('telescope').load_extension('undo')
   end,
 }

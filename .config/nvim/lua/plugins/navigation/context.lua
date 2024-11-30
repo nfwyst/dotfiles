@@ -16,11 +16,11 @@ local function get_toggle_context()
   local is_disabled = false
   return function()
     if not is_disabled then
-      vim.cmd("TSContextDisable")
+      vim.cmd('TSContextDisable')
       is_disabled = true
     end
     set_timer(timer, IS_MAC and 500 or 1500, function()
-      vim.cmd("TSContextEnable")
+      vim.cmd('TSContextEnable')
       is_disabled = false
     end)
   end
@@ -39,7 +39,7 @@ local function should_attach(bufnr)
 end
 
 local function is_move_up_or_down()
-  local cur_line = vim.fn.line(".")
+  local cur_line = vim.fn.line('.')
   local prev_line = vim.b.prev_cursor_line or cur_line
   local is_same_line = cur_line == prev_line
   vim.b.prev_cursor_line = cur_line
@@ -48,8 +48,8 @@ end
 
 local function disable_context_when_move()
   local toggle_context = get_toggle_context()
-  AUTOCMD({ "CursorMoved", "CursorMovedI" }, {
-    group = AUTOGROUP("__disable_context__", { clear = true }),
+  AUTOCMD({ 'CursorMoved', 'CursorMovedI' }, {
+    group = AUTOGROUP('__disable_context__', { clear = true }),
     callback = function(event)
       local no_attach = should_attach(event.buf) == false
       if no_attach then
@@ -65,16 +65,16 @@ end
 
 local function init(context)
   disable_context_when_move()
-  USER_COMMAND("GoToContext", function()
+  USER_COMMAND('GoToContext', function()
     context.go_to_context()
   end)
 end
 
 return {
-  "nvim-treesitter/nvim-treesitter-context",
-  event = { "BufReadPre", "BufNewFile" },
+  'nvim-treesitter/nvim-treesitter-context',
+  event = { 'BufReadPre', 'BufNewFile' },
   config = function()
-    local context = require("treesitter-context")
+    local context = require('treesitter-context')
     init(context)
     context.setup({
       max_lines = IS_MAC and 5 or 1,

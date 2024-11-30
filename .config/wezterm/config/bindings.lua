@@ -6,11 +6,11 @@ local act = wezterm.action
 local mod = {}
 
 if platform.is_mac then
-   mod.SUPER = 'SUPER'
-   mod.SUPER_REV = 'SUPER|CTRL'
+  mod.SUPER = 'SUPER'
+  mod.SUPER_REV = 'SUPER|CTRL'
 elseif platform.is_win or platform.is_linux then
-   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
-   mod.SUPER_REV = 'ALT|CTRL'
+  mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
+  mod.SUPER_REV = 'ALT|CTRL'
 end
 
 -- stylua: ignore
@@ -125,77 +125,77 @@ local key_tables = {
 }
 
 local mouse_bindings = {
-   -- Ctrl-click will open the link under the mouse cursor
-   {
-      event = { Up = { streak = 1, button = 'Left' } },
-      mods = 'CTRL',
-      action = act.OpenLinkAtMouseCursor,
-   },
-   -- no copy
-   {
-      event = { Up = { streak = 1, button = 'Left' } },
-      mods = 'NONE',
-      action = act.ExtendSelectionToMouseCursor('Cell'),
-   },
-   {
-      event = { Down = { streak = 1, button = 'Left' } },
-      mods = 'NONE',
-      action = act.SelectTextAtMouseCursor('Cell'),
-   },
-   {
-      event = { Drag = { streak = 1, button = 'Left' } },
-      mods = 'NONE',
-      action = act.ExtendSelectionToMouseCursor('Cell'),
-   },
-   -- double click select word
-   {
-      event = { Up = { streak = 2, button = 'Left' } },
-      mods = 'NONE',
-      action = act.SelectTextAtMouseCursor('Word'),
-   },
-   {
-      event = { Down = { streak = 2, button = 'Left' } },
-      mods = 'NONE',
-      action = act.SelectTextAtMouseCursor('Word'),
-   },
-   -- click 3 times select one line
-   {
-      event = { Up = { streak = 3, button = 'Left' } },
-      mods = 'NONE',
-      action = act.SelectTextAtMouseCursor('Line'),
-   },
-   {
-      event = { Down = { streak = 3, button = 'Left' } },
-      mods = 'NONE',
-      action = act.SelectTextAtMouseCursor('Line'),
-   },
+  -- Ctrl-click will open the link under the mouse cursor
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    action = act.OpenLinkAtMouseCursor,
+  },
+  -- no copy
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.ExtendSelectionToMouseCursor('Cell'),
+  },
+  {
+    event = { Down = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor('Cell'),
+  },
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.ExtendSelectionToMouseCursor('Cell'),
+  },
+  -- double click select word
+  {
+    event = { Up = { streak = 2, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor('Word'),
+  },
+  {
+    event = { Down = { streak = 2, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor('Word'),
+  },
+  -- click 3 times select one line
+  {
+    event = { Up = { streak = 3, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor('Line'),
+  },
+  {
+    event = { Down = { streak = 3, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor('Line'),
+  },
 }
 
 function directory_exists(path)
-   local ok, err, code = os.rename(path, path)
-   if not ok then
-      if code == 13 then
-         return true
-      end
-      return false
-   end
-   return true
+  local ok, err, code = os.rename(path, path)
+  if not ok then
+    if code == 13 then
+      return true
+    end
+    return false
+  end
+  return true
 end
 
 local brew_path = '/opt/homebrew/bin'
 local PATH = os.getenv('PATH')
 
 return {
-   disable_default_key_bindings = true,
-   disable_default_mouse_bindings = false,
-   leader = { key = ',', mods = mod.SUPER_REV, timemout_miliseconds = 1000 },
-   keys = keys,
-   key_tables = key_tables,
-   mouse_bindings = mouse_bindings,
-   set_environment_variables = {
-      XDG_CONFIG_HOME = os.getenv('HOME') .. '/.config',
-      XDG_DATA_HOME = os.getenv('HOME') .. '/.local/share',
-      PATH = directory_exists(brew_path) and (brew_path .. ':' .. PATH) or PATH,
-      SHELL = 'nu',
-   },
+  disable_default_key_bindings = true,
+  disable_default_mouse_bindings = false,
+  leader = { key = ',', mods = mod.SUPER_REV, timemout_miliseconds = 1000 },
+  keys = keys,
+  key_tables = key_tables,
+  mouse_bindings = mouse_bindings,
+  set_environment_variables = {
+    XDG_CONFIG_HOME = os.getenv('HOME') .. '/.config',
+    XDG_DATA_HOME = os.getenv('HOME') .. '/.local/share',
+    PATH = directory_exists(brew_path) and (brew_path .. ':' .. PATH) or PATH,
+    SHELL = 'nu',
+  },
 }

@@ -1,14 +1,14 @@
 return {
-  "RRethy/vim-illuminate",
-  event = { "BufReadPost", "BufNewFile" },
+  'RRethy/vim-illuminate',
+  event = { 'BufReadPost', 'BufNewFile' },
   config = function()
-    require("illuminate").configure({
-      modes_allowlist = { "n", "no", "nt" },
-      filetypes_denylist = MERGE_ARRAYS(INVALID_FILETYPE, { "markdown" }),
+    require('illuminate').configure({
+      modes_allowlist = { 'n', 'no', 'nt' },
+      filetypes_denylist = MERGE_ARRAYS(INVALID_FILETYPE, { 'markdown' }),
       large_file_cutoff = MAX_FILE_LENGTH,
       under_cursor = false,
     })
-    local illuminate = { bg = "#B2D4FC", fg = "#4d2b03", bold = true }
+    local illuminate = { bg = '#B2D4FC', fg = '#4d2b03', bold = true }
     SET_HL({
       IlluminatedWord = illuminate,
       IlluminatedCurWord = illuminate,

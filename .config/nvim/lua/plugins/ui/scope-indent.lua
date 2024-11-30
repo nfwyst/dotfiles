@@ -1,17 +1,17 @@
 return {
-  "lukas-reineke/indent-blankline.nvim",
-  event = "VimEnter",
+  'lukas-reineke/indent-blankline.nvim',
+  event = 'VimEnter',
   config = function()
-    local hooks = require("ibl.hooks")
+    local hooks = require('ibl.hooks')
     hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
-      vim.api.nvim_set_hl(0, "MyIndent", { fg = GET_COLOR().fg2 })
+      vim.api.nvim_set_hl(0, 'MyIndent', { fg = GET_COLOR().fg2 })
     end)
-    require("ibl").setup({
+    require('ibl').setup({
       indent = {
-        char = "│",
-        tab_char = "│",
+        char = '│',
+        tab_char = '│',
         highlight = {
-          "MyIndent",
+          'MyIndent',
         },
       },
       scope = {

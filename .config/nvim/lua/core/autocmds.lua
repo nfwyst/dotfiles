@@ -1,20 +1,20 @@
-local group = AUTOGROUP("_general_settings_", { clear = true })
+local group = AUTOGROUP('_general_settings_', { clear = true })
 local fn = vim.fn
 local v = vim.v
 
 local function remove_qf_normal()
-  local start_index = fn.line(".")
+  local start_index = fn.line('.')
   local count = v.count > 0 and v.count or 1
   return start_index, count
 end
 
 local function remove_qf_visual()
-  local v_start_idx = fn.line("v")
-  local v_end_idx = fn.line(".")
+  local v_start_idx = fn.line('v')
+  local v_end_idx = fn.line('.')
 
   local start_index = math.min(v_start_idx, v_end_idx)
   local count = math.abs(v_end_idx - v_start_idx) + 1
-  FEED_KEYS("<esc>", "x")
+  FEED_KEYS('<esc>', 'x')
   return start_index, count
 end
 
@@ -33,20 +33,20 @@ local function remove_qf_item(is_normal)
       table.remove(qflist, start_index)
     end
 
-    fn.setqflist(qflist, "r")
+    fn.setqflist(qflist, 'r')
     fn.cursor(start_index, 1)
   end
 end
 
 function is_empty_line(line)
-  line = line:gsub("[\r\n]+$", "")
-  return line == "" or line:match("^%s*$")
+  line = line:gsub('[\r\n]+$', '')
+  return line == '' or line:match('^%s*$')
 end
 
 function get_lines_from_file(file, num)
   local lines = {}
   for _ = 1, num do
-    local line = file:read("*l")
+    local line = file:read('*l')
     if not line then
       return lines
     end
@@ -60,11 +60,11 @@ function lines_tab_more_than_space(lines)
   local space_num = 0
   for _, line in ipairs(lines) do
     local empty = is_empty_line(line)
-    local start_with_tab = line:match("^\t")
+    local start_with_tab = line:match('^\t')
     if not empty and start_with_tab then
       tab_num = tab_num + 1
     end
-    if not empty and not start_with_tab and line:match("^%s") then
+    if not empty and not start_with_tab and line:match('^%s') then
       space_num = space_num + 1
     end
   end
@@ -79,7 +79,7 @@ local function is_indent_with_tab(params)
   local filepath = params.filepath
   local line_num = 50
   if filepath then
-    local file = io.open(filepath, "r")
+    local file = io.open(filepath, 'r')
     if not file then
       return false
     end
@@ -98,30 +98,30 @@ end
 
 local function restore_position(bufnr)
   local ft = GET_FILETYPE(bufnr)
-  if ft == "gitcommit" then
+  if ft == 'gitcommit' then
     return
   end
   local last_known_line = vim.api.nvim_buf_get_mark(bufnr, '"')[1]
   if
-    not (ft:match("commit") and ft:match("rebase"))
+    not (ft:match('commit') and ft:match('rebase'))
     and last_known_line > 1
     and last_known_line <= vim.api.nvim_buf_line_count(bufnr)
   then
-    FEED_KEYS([[g`"]], "nx")
+    FEED_KEYS([[g`"]], 'nx')
   end
 end
 
 local function set_grug_far_fold_width(bufnr, filetype)
-  if filetype ~= "grug-far" then
+  if filetype ~= 'grug-far' then
     return
   end
   SET_TIMEOUT(function()
-    SET_OPT("foldcolumn", "2", { buf = bufnr })
+    SET_OPT('foldcolumn', '2', { buf = bufnr })
   end, 10)
 end
 
 local function get_markdown_options(event)
-  local not_avante = "Avante" ~= event.match
+  local not_avante = 'Avante' ~= event.match
   local opts = {
     wrap = true,
     tabstop = 2,
@@ -136,23 +136,23 @@ end
 
 local filetype_to_runner = {
   [{
-    "qf",
-    "help",
-    "man",
-    "notify",
-    "lspinfo",
-    "DressingInput",
-    "DressingSelect",
-    "DiffviewFileHistory",
-    "grug-far",
-    "neotest-output",
+    'qf',
+    'help',
+    'man',
+    'notify',
+    'lspinfo',
+    'DressingInput',
+    'DressingSelect',
+    'DiffviewFileHistory',
+    'grug-far',
+    'neotest-output',
   }] = DEBOUNCE(function(event)
     local bufnr = event.buf
     set_grug_far_fold_width(bufnr, event.file)
     BIND_QUIT(bufnr)
   end, { delay = 2000 }),
-  [{ "help", "gitconfig" }] = DEBOUNCE(function(event)
-    SET_OPT("list", false, event)
+  [{ 'help', 'gitconfig' }] = DEBOUNCE(function(event)
+    SET_OPT('list', false, event)
   end),
   qf = DEBOUNCE(function(event)
     local opt = {
@@ -161,29 +161,29 @@ local filetype_to_runner = {
     }
     SET_OPTS(opt, event)
     opt = { buffer = event.buf }
-    KEY_MAP("n", "dd", remove_qf_item(true), opt)
-    KEY_MAP("x", "d", remove_qf_item(), opt)
+    KEY_MAP('n', 'dd', remove_qf_item(true), opt)
+    KEY_MAP('x', 'd', remove_qf_item(), opt)
   end),
   [{
-    "lazy",
-    "DressingInput",
-    "DressingSelect",
+    'lazy',
+    'DressingInput',
+    'DressingSelect',
   }] = DEBOUNCE(function(event)
     SET_TIMEOUT(function()
-      SET_OPT("wrap", true, event)
+      SET_OPT('wrap', true, event)
       if IS_CURSOR_HIDE() then
         SHOW_CURSOR()
       end
-      if event.match == "lazy" then
+      if event.match == 'lazy' then
         ENABLE_CURSORLINE(event, true)
       end
     end, 10)
   end),
   [{
-    "markdown",
-    "gitcommit",
-    "NeogitCommitMessage",
-    "Avante",
+    'markdown',
+    'gitcommit',
+    'NeogitCommitMessage',
+    'Avante',
   }] = DEBOUNCE(function(event)
     local ok = pcall(vim.cmd.startinsert)
     SET_TIMEOUT(function()
@@ -193,8 +193,8 @@ local filetype_to_runner = {
       end
     end, 100)
   end),
-  ["Neogit*"] = DEBOUNCE(function(event)
-    SET_OPT("foldcolumn", "0", event)
+  ['Neogit*'] = DEBOUNCE(function(event)
+    SET_OPT('foldcolumn', '0', event)
   end),
 }
 
@@ -210,7 +210,7 @@ local function close_alpha_when_open_file(bufnr)
       return
     end
     vim.api.nvim_buf_call(ALPHA_BUF, function()
-      vim.cmd("Alpha")
+      vim.cmd('Alpha')
       ALPHA_BUF = nil
     end)
   end, 10)
@@ -218,7 +218,7 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
-  local is_new = event.event == "BufNewFile"
+  local is_new = event.event == 'BufNewFile'
   if not bufnr or not FILETYPE_VALID(bufnr) then
     return
   end
@@ -228,36 +228,36 @@ local function update_winbar(event)
   if not is_file or is_chat then
     return
   end
-  local postfix = vim.fn.systemlist("hostname")[1]
+  local postfix = vim.fn.systemlist('hostname')[1]
   if IS_LEETING then
-    postfix = ""
+    postfix = ''
   end
   BAR_PATH = bar_path
   SET_TIMEOUT(function()
-    local winbar = "%#WinBar1#%m "
-      .. "%#WinBar2#("
+    local winbar = '%#WinBar1#%m '
+      .. '%#WinBar2#('
       .. #GET_ALL_BUFFERS(true, is_new and bufnr or nil)
-      .. ") "
-      .. "%#WinBar1#"
-      .. bar_path:gsub(HOME_PATH, "~")
-      .. "%*%=%#WinBar2#"
+      .. ') '
+      .. '%#WinBar1#'
+      .. bar_path:gsub(HOME_PATH, '~')
+      .. '%*%=%#WinBar2#'
       .. string.lower(postfix)
     for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
       local opt = { win = win }
       ENABLE_CURSORLINE(opt, true)
-      SET_OPT("winbar", winbar, opt)
+      SET_OPT('winbar', winbar, opt)
     end
   end, 10)
 end
 
 SET_HL({
-  WinBar1 = { fg = "#04d1f9", bg = "#1E2030" },
-  WinBar2 = { fg = "#37f499", bg = "#1E2030" },
+  WinBar1 = { fg = '#04d1f9', bg = '#1E2030' },
+  WinBar2 = { fg = '#37f499', bg = '#1E2030' },
 })
 
 SET_AUTOCMDS({
   {
-    "FileType",
+    'FileType',
     {
       pattern = vim.iter(vim.tbl_keys(filetype_to_runner)):flatten(1):totable(),
       group = group,
@@ -273,41 +273,41 @@ SET_AUTOCMDS({
     },
   },
   {
-    "TextYankPost",
+    'TextYankPost',
     {
       callback = function()
-        pcall(vim.highlight.on_yank, { higroup = "Visual", timeout = 200 })
+        pcall(vim.highlight.on_yank, { higroup = 'Visual', timeout = 200 })
       end,
       group = group,
     },
   },
   {
-    { "BufEnter", "BufWinEnter", "BufNewFile" },
+    { 'BufEnter', 'BufWinEnter', 'BufNewFile' },
     {
       group = group,
       callback = DEBOUNCE(update_winbar, {
         omitter = function(_, key)
-          return key == "event"
+          return key == 'event'
         end,
       }),
     },
   },
   {
-    "VimResized",
+    'VimResized',
     {
-      command = "silent!tabdo wincmd =",
-      group = AUTOGROUP("_auto_resize_", { clear = true }),
+      command = 'silent!tabdo wincmd =',
+      group = AUTOGROUP('_auto_resize_', { clear = true }),
     },
   },
   {
-    "BufReadPost",
+    'BufReadPost',
     {
-      group = AUTOGROUP("_indent_tab_", { clear = true }),
+      group = AUTOGROUP('_indent_tab_', { clear = true }),
       callback = function(event)
         local bufnr = event.buf
         restore_position(bufnr)
         SET_TIMEOUT(function()
-          vim.cmd("normal! zz")
+          vim.cmd('normal! zz')
         end)
         local expandtab = true
         local width = 2
@@ -324,16 +324,16 @@ SET_AUTOCMDS({
     },
   },
   {
-    "InsertEnter",
+    'InsertEnter',
     {
       group = group,
       callback = function(event)
-        SET_OPT("cursorline", false, event)
+        SET_OPT('cursorline', false, event)
       end,
     },
   },
   {
-    "InsertLeave",
+    'InsertLeave',
     {
       group = group,
       callback = ENABLE_CURSORLINE,

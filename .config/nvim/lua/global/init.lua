@@ -1,3 +1,3 @@
-require("global.variable")
-require("global.function")
-require("global.command")
+require('global.variable')
+require('global.function')
+require('global.command')

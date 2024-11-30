@@ -8,20 +8,20 @@ local function init(notify)
 end
 
 return {
-  "rcarriga/nvim-notify",
+  'rcarriga/nvim-notify',
   config = function()
-    local notify = require("notify")
+    local notify = require('notify')
     notify.setup({
       timeout = 3000,
       animate = true,
-      stages = "fade_in_slide_out",
+      stages = 'fade_in_slide_out',
       max_height = function()
         return GET_MAX_HEIGHT(nil, 0.9)
       end,
       max_width = function()
         return GET_MAX_WIDTH(nil, 0.3)
       end,
-      render = "wrapped-compact",
+      render = 'wrapped-compact',
     })
     init(notify)
   end,

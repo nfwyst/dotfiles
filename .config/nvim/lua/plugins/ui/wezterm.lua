@@ -1,5 +1,5 @@
 return {
-  "willothy/wezterm.nvim",
+  'willothy/wezterm.nvim',
   cond = IS_MAC,
   lazy = true,
   opts = {

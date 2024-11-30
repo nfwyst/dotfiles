@@ -3,9 +3,9 @@ return {
     yaml = {
       schemaStore = {
         enable = false,
-        url = "",
+        url = '',
       },
-      schemas = require("schemastore").yaml.schemas(),
+      schemas = require('schemastore').yaml.schemas(),
       validate = true,
     },
   },
