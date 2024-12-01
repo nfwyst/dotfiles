@@ -4,10 +4,14 @@ local backdrops = require('utils.backdrops')
 local act = wezterm.action
 
 local mod = {}
+local PATH = os.getenv('PATH')
+local HOME = os.getenv('HOME')
+local brew_path = '/opt/homebrew/bin'
 
 if platform.is_mac then
   mod.SUPER = 'SUPER'
   mod.SUPER_REV = 'SUPER|CTRL'
+  PATH = brew_path .. ':' .. PATH
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'
@@ -171,20 +175,6 @@ local mouse_bindings = {
   },
 }
 
-function directory_exists(path)
-  local ok, err, code = os.rename(path, path)
-  if not ok then
-    if code == 13 then
-      return true
-    end
-    return false
-  end
-  return true
-end
-
-local brew_path = '/opt/homebrew/bin'
-local PATH = os.getenv('PATH')
-
 return {
   disable_default_key_bindings = true,
   disable_default_mouse_bindings = false,
@@ -193,9 +183,9 @@ return {
   key_tables = key_tables,
   mouse_bindings = mouse_bindings,
   set_environment_variables = {
-    XDG_CONFIG_HOME = os.getenv('HOME') .. '/.config',
-    XDG_DATA_HOME = os.getenv('HOME') .. '/.local/share',
-    PATH = directory_exists(brew_path) and (brew_path .. ':' .. PATH) or PATH,
+    XDG_CONFIG_HOME =  HOME .. '/.config',
+    XDG_DATA_HOME = HOME .. '/.local/share',
+    PATH = PATH,
     SHELL = 'nu',
   },
 }
