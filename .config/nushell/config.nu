@@ -919,6 +919,7 @@ alias gc- = git checkout -
 alias c = clear
 alias python = python3
 alias pip = python3 -m pip
+alias xcopy = xclip -selection clipboard
 
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {
@@ -966,22 +967,23 @@ def ff [] {
   }
 }
 
-if $env.UNAME == "Darwin" {
-  # remove unused app icons in mac
-  def removeDuplicatedAppIcon [] {
-    defaults write com.apple.dock ResetLaunchPad -bool true;
-    killall Dock
+# remove unused app icons in mac
+def removeDuplicatedAppIcon [] {
+  if $env.UNAME != "Darwin" {
+    return
   }
+  defaults write com.apple.dock ResetLaunchPad -bool true;
+  killall Dock
 }
 
-if $env.UNAME == "Linux" {
-  alias pbcopy = xclip -selection clipboard
-  def switch_ctrl_caps_lock [] {
-    let map_exists = $env.HOME | path join ".xmodmap" | path exists
-    let cmd_exsits = which xmodmap | is-not-empty
-    if $map_exists and $cmd_exsits {
-      xmodmap ~/.xmodmap
-    }
+def switch_ctrl_caps_lock [] {
+  if $env.UNAME != "Linux" {
+    return
+  }
+  let map_exists = $env.HOME | path join ".xmodmap" | path exists
+  let cmd_exsits = which xmodmap | is-not-empty
+  if $map_exists and $cmd_exsits {
+    xmodmap ~/.xmodmap
   }
 }
 

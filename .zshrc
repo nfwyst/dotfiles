@@ -1,18 +1,14 @@
-if [[ -f "/opt/homebrew/bin/brew" ]] then
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
   # If you're using macOS, you'll want this enabled
   eval "$(/opt/homebrew/bin/brew shellenv)"
-  function removeDuplicatedAppIcon () {
-    defaults write com.apple.dock ResetLaunchPad -bool true;
-    killall Dock
-  }
 fi
 
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
 # Function to check if a command can be executed
-command_exists() {
-  if command -v $1 &> /dev/null; then
+function command_exists() {
+  if command -v "$1" &> /dev/null; then
     return 0
   else
     return 1
@@ -20,8 +16,7 @@ command_exists() {
 }
 
 # set proxy
-function proxy ()
-{
+function proxy () {
   export {https,http}_proxy=http://127.0.0.1:7897
   export all_proxy=socks5://127.0.0.1:7897
   if command_exists "npm"; then
@@ -35,7 +30,7 @@ proxy
 
 # Download Zinit, if it's not there yet
 if [ ! -d "$ZINIT_HOME" ]; then
-  mkdir -p "$(dirname $ZINIT_HOME)"
+  mkdir -p "$(dirname "$ZINIT_HOME")"
   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 fi
 
@@ -126,6 +121,7 @@ alias gc-="git checkout -"
 alias ys="yarn start"
 alias python="python3"
 alias pip="python3 -m pip"
+alias xcopy="xclip -selection clipboard"
 
 function create_worktree() {
   local target_dir=$1
@@ -145,12 +141,20 @@ function unproxy() {
   npm config delete proxy --global
 }
 
-if [[ "$(uname)" == "Linux" ]]; then
-  alias pbcopy="xclip -selection clipboard"
-  function switch_ctrl_caps_lock() {
-    if [[ -f "$HOME/.xmodmap" ]] && command_exists "xmodmap"; then
-      xmodmap ~/.xmodmap
-    fi
-  }
-fi
+function removeDuplicatedAppIcon () {
+  if [[ "$(uname)" != "Darwin" ]]; then
+    return
+  fi
+  defaults write com.apple.dock ResetLaunchPad -bool true;
+  killall Dock
+}
+
+function switch_ctrl_caps_lock() {
+  if [[ "$(uname)" != "Linux" ]]; then
+    return
+  fi
+  if [[ -f "$HOME/.xmodmap" ]] && command_exists "xmodmap"; then
+    xmodmap ~/.xmodmap
+  fi
+}
 

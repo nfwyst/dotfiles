@@ -183,7 +183,7 @@ return {
   key_tables = key_tables,
   mouse_bindings = mouse_bindings,
   set_environment_variables = {
-    XDG_CONFIG_HOME =  HOME .. '/.config',
+    XDG_CONFIG_HOME = HOME .. '/.config',
     XDG_DATA_HOME = HOME .. '/.local/share',
     PATH = PATH,
     SHELL = 'nu',
