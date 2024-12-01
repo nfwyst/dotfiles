@@ -4,8 +4,10 @@
 /lua_modules
 /.luarocks
 .config/nushell/history.txt
-.config/zellij/plugins
 .aider*
 todo.md
 shell_gpt/
 .gp.md
+cache
+zjframes.rs
+zjstatus/target/

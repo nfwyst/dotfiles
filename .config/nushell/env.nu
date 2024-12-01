@@ -92,83 +92,40 @@ $env.GOPATH = ($env.HOME | path join "go")
 $env.CARGO_HOME = ($env.HOME | path join ".cargo")
 $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
 $env.XDG_DATA_HOME = ($env.HOME | path join ".local" "share")
-$env.PATH = (
-  $env.PATH |
-  prepend "/usr/local/bin" |
-  prepend ($env.GOPATH | path join "bin") |
-  prepend ($env.HOME | path join ".local" "bin") |
-  prepend ($env.CARGO_HOME | path join "bin")
-)
+
+use std "path add"
+path add ($env.GOPATH | path join "bin")
+path add ($env.CARGO_HOME | path join "bin")
+
 if $env.UNAME == "Darwin" {
   let brew = "/opt/homebrew"
-  let brew_path = $"($brew)/bin"
+  let brew_bin = $"($brew)/bin"
   let brew_sbin = $"($brew)/sbin"
-  let path_exists = $brew_path | path exists
+  let path_exists = $brew_bin | path exists
   if $path_exists {
-    $env.PATH = (
-      $env.PATH |
-      prepend $brew_path |
-      prepend $brew_sbin
-    )
+    path add $brew_bin
+    path add $brew_sbin
   }
 }
-if $env.UNAME == "Linux" {
-  $env.PATH = (
-    $env.PATH |
-    prepend ($env.HOME | path join ".fzf" "bin") |
-    prepend ($env.HOME | path join ".nushell") |
-    prepend ($env.HOME | path join ".nvim" "bin") |
-    prepend ($env.HOME | path join ".local" "share" "fnm")
-  )
-}
+
 $env.EDITOR = (which nvim | get path | first)
 $env.SHELL = (which nu | get path | first)
-
-# set proxy
-def --env proxy [] {
-  let host = "http://127.0.0.1"
-  let all_host = "socks5://127.0.0.1"
-  let port = "7897"
-  let address = $"($host):($port)"
-  let all_address = $"($all_host):($port)"
-  $env.http_proxy = $address
-  $env.https_proxy = $address
-  $env.all_proxy = $all_address
-  $env.no_proxy = $"($host),http://localhost,https://www.apple.com"
-  let npm_exists = command -v "npm" &> /dev/null | is-not-empty
-  if $npm_exists {
-    npm config set proxy $address --global
-  }
-}
-
-# init network proxy
-proxy
 
 # To load from a custom file you can use:
 # source ($nu.default-config-dir | path join 'custom.nu')
 
 # prepare for starship
-mkdir ~/.cache/starship
-starship init nu | save -f ~/.cache/starship/init.nu
+mkdir ~/.config/nushell/cache/starship
+starship init nu | save -f ~/.config/nushell/cache/starship/init.nu
 
 # prepare for zoxide
-mkdir ~/.cache/zoxide
-zoxide init nushell | save -f ~/.cache/zoxide/init.nu
+mkdir ~/.config/nushell/cache/zoxide
+zoxide init nushell | save -f ~/.config/nushell/cache/zoxide/init.nu
 
 # load fnm env
-if (which fnm | is-empty) {
-  let url = "https://fnm.vercel.app/install"
-  curl -fsSL $url | bash -s -- --install-dir $"($env.HOME)/.local/share/fnm" --skip-shell
-} else {
-  fnm env --shell bash | lines | str replace 'export ' '' | str replace -a '"' '' | split column "=" |
-    rename name value | where name != "FNM_ARCH" and name != "PATH" | reduce -f {} {|it, acc| $acc |
-    upsert $it.name $it.value } | load-env
-
-  # set fnm path
-  $env.PATH = (
-    $env.PATH |
-    prepend ($env.FNM_MULTISHELL_PATH | path join "bin")
-  )
+if (which fnm | is-not-empty) {
+  fnm env --json | from json | load-env
+  path add ($env.FNM_MULTISHELL_PATH | path join "bin")
 }
 
 # llm

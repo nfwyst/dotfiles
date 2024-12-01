@@ -17,18 +17,12 @@ if platform.is_win then
       args = { 'C:\\Users\\kevin\\scoop\\apps\\git\\current\\bin\\bash.exe' },
     },
   }
-elseif platform.is_mac then
+else
   options.default_prog = { 'zellij' }
   options.launch_menu = {
     { label = 'Nushell', args = { 'nu', '-l' } },
     { label = 'Zsh', args = { 'zsh', '-l' } },
-  }
-elseif platform.is_linux then
-  options.default_prog = { 'fish', '-l' }
-  options.launch_menu = {
     { label = 'Bash', args = { 'bash', '-l' } },
-    { label = 'Fish', args = { 'fish', '-l' } },
-    { label = 'Zsh', args = { 'zsh', '-l' } },
   }
 end
 

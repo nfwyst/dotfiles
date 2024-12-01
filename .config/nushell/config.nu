@@ -902,35 +902,22 @@ $env.config = {
 }
 
 # integration with starship prompt
-use ~/.cache/starship/init.nu
+use ~/.config/nushell/cache/starship/init.nu
 
 # integration with zoxide filesystem navigator
-source ~/.cache/zoxide/init.nu
+source ~/.config/nushell/cache/zoxide/init.nu
 
 # load git alias
-source ./aliases/git.nu
+source ~/.config/nushell/aliases/git.nu
 
 # alias
 alias e = nvim
 alias vim = nvim
+alias vi = nvim
 alias ys = yarn start
 alias c = clear
 alias python = python3
 alias pip = python3 -m pip
-if $env.UNAME == "Linux" {
-  alias pbcopy = xclip -selection clipboard
-}
-
-# into directory and list all contents
-def cx [param: string, ] {
-  let has_param = $param | is-not-empty
-  if $has_param {
-    cd $param
-    ls -als
-  } else {
-    echo "Please provide a directory name."
-  }
-}
 
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {
@@ -943,6 +930,23 @@ def create_worktree [target_dir, branch_name] {
   git worktree add $target_dir $branch_name
 }
 
+# set proxy
+def --env proxy [] {
+  let host = "http://127.0.0.1"
+  let all_host = "socks5://127.0.0.1"
+  let port = "7897"
+  let address = $"($host):($port)"
+  let all_address = $"($all_host):($port)"
+  $env.http_proxy = $address
+  $env.https_proxy = $address
+  $env.all_proxy = $all_address
+  $env.no_proxy = $"($host),http://localhost,https://www.apple.com"
+  let npm_exists = command -v "npm" &> /dev/null | is-not-empty
+  if $npm_exists {
+    npm config set proxy $address --global
+  }
+}
+
 # unset proxy
 def --env unproxy [] {
   hide-env https_proxy
@@ -952,73 +956,22 @@ def --env unproxy [] {
   npm config delete proxy --global
 }
 
-# run app with sudo in mac
-def appSudo [param: string,] {
-  if $env.UNAME != "Darwin" {
-    return
-  }
-  let has_param = $param | is-not-empty
-  if $has_param {
-    let appPath = $"/Applications/($param).app/Contents/MacOS/($param)"
-    let appPath1 = $"/Applications/($param).app/Contents/MacOS/stable"
-    if ($appPath | path exists) {
-      sudo $appPath
-      return
-    }
-    if ($appPath1 | path exists) {
-      sudo $appPath1
-      return
-    }
-    echo "no path find"
-  }
-}
-
-# remove unused app icons in mac
-def removeDuplicatedAppIcon [] {
-  if $env.UNAME == "Darwin" {
+if $env.UNAME == "Darwin" {
+  # remove unused app icons in mac
+  def removeDuplicatedAppIcon [] {
     defaults write com.apple.dock ResetLaunchPad -bool true;
     killall Dock
   }
 }
 
-# auto load zellij in linux
-def start_zellij [] {
-  let envs = ($env | columns)
-  let not_start = 'ZELLIJ' not-in $envs
-  if $not_start {
-    mut auto_attach = 'ZELLIJ_AUTO_ATTACH' in $envs
-    $auto_attach = $auto_attach and $env.ZELLIJ_AUTO_ATTACH == 'true'
-    if $auto_attach {
-      zellij attach -c
-    } else {
-      try { zellij } catch {}
-    }
-
-    mut auto_exit = 'ZELLIJ_AUTO_EXIT' in $envs
-    $auto_exit = $auto_exit and $env.ZELLIJ_AUTO_EXIT == 'true'
-    if $auto_exit {
-      exit
+if $env.UNAME == "Linux" {
+  alias pbcopy = xclip -selection clipboard
+  def switch_ctrl_caps_lock [] {
+    let map_exists = $env.HOME | path join ".xmodmap" | path exists
+    let cmd_exsits = which xmodmap | is-not-empty
+    if $map_exists and $cmd_exsits {
+      xmodmap ~/.xmodmap
     }
   }
 }
-
-# bind keymap in linux
-def key [] {
-  let map_exists = $env.HOME | path join ".xmodmap" | path exists
-  let cmd_exsits = which xmodmap | is-not-empty
-  if $map_exists and $cmd_exsits {
-    xmodmap ~/.xmodmap
-  }
-}
-
-# function run in linux
-def run_in_linux [] {
-  if $env.UNAME == "Linux" {
-    start_zellij
-    key
-  }
-}
-
-# auto run linux function
-run_in_linux
 

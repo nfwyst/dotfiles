@@ -1,3 +1,6 @@
 [submodule ".config/alacritty/themes"]
 	path = .config/alacritty/themes
 	url = https://github.com/alacritty/alacritty-theme.git
+[submodule ".config/zellij/plugins/zjstatus"]
+	path = .config/zellij/plugins/zjstatus
+	url = https://github.com/dj95/zjstatus.git
