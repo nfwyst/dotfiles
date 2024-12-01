@@ -1,6 +1,10 @@
 if [[ -f "/opt/homebrew/bin/brew" ]] then
   # If you're using macOS, you'll want this enabled
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  function removeDuplicatedAppIcon () {
+    defaults write com.apple.dock ResetLaunchPad -bool true;
+    killall Dock
+  }
 fi
 
 # Set the directory we want to store zinit and plugins
@@ -85,93 +89,68 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
+# env variable
+export ZSH_TAB_TITLE_PREFIX=" "
+export GOPATH="$HOME/go"
+export CARGO_HOME="$HOME/.cargo"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share",
+
+export PATH="$PATH:$GOPATH/bin"
+export PATH="$PATH:$CARGO_HOME/bin"
+
+if [[ "$(uname)" == "Linux" ]]; then
+  export PATH="$PATH:$HOME/.local/bin"
+fi
+
+export EDITOR="$(which nvim)"
+export SHELL="$(which zsh)"
+export OLLAMA_API_BASE="http://127.0.0.1:11434"
+export NODE_OPTIONS="--no-warnings=ExperimentalWarning"
+
+# Shell integrations
+source <(starship init zsh)
+source <(zoxide init zsh)
+eval "$(fnm env)"
+if command_exists "fzf"; then
+  source <(fzf --zsh)
+fi
+
 # Aliases
 alias ls='ls --color'
 alias vim='nvim'
+alias vi='nvim'
 alias c='clear'
 alias e="nvim"
 alias gc-="git checkout -"
 alias ys="yarn start"
 alias python="python3"
 alias pip="python3 -m pip"
-if [[ "$uname" == "Linux" ]]; then
-  alias pbcopy = "xclip -selection clipboard"
-fi
 
-# env variable
-export ZSH_TAB_TITLE_PREFIX=" "
-export GOPATH="$HOME/go"
-export CARGO_HOME="$HOME/.cargo"
-export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin:$CARGO_HOME/bin:/usr/local/bin"
-if [[ "$(uname)" == "Linux" ]]; then
-  export PATH="$PATH:$HOME/.fzf/bin:$HOME/.nvim/bin:$HOME/.local/share/fnm"
-fi
-export EDITOR="$(which nvim)"
-export SHELL="$(which zsh)"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share",
-export OLLAMA_API_BASE="http://127.0.0.1:11434"
-
-# Shell integrations
-if command_exists "fzf"; then
-  source <(fzf --zsh)
-fi
-source <(starship init zsh)
-source <(zoxide init zsh)
-eval "$(fnm env)"
-
-# into directory and list all contents
-function cx() {
-  if [[ -n "$1" ]]; then
-    cd "$1" && ls -als
-  else
-    echo "Please provide a directory name."
+function create_worktree() {
+  local target_dir=$1
+  local branch_name=$2
+  if [[ ! -d "$target_dir" ]]; then
+    mkdir -p "$target_dir"
   fi
+  if ! git rev-parse --verify --quiet "refs/heads/$branch_name" >/dev/null 2>&1; then
+    git branch "$branch_name"
+  fi
+  git worktree add "$target_dir" "$branch_name"
 }
 
 # unset proxy
-function unproxy()
-{
+function unproxy() {
   unset {https,http,all,no}_proxy
   npm config delete proxy --global
 }
 
 if [[ "$(uname)" == "Linux" ]]; then
-  # bind keymap
-  function key() {
-    if [[ -f "~/.xmodmap" ]]; then
+  alias pbcopy="xclip -selection clipboard"
+  function switch_ctrl_caps_lock() {
+    if [[ -f "$HOME/.xmodmap" ]] && command_exists "xmodmap"; then
       xmodmap ~/.xmodmap
     fi
   }
-  key
-else
-  # remove unused app icons
-  function removeDuplicatedAppIcon ()
-  {
-    defaults write com.apple.dock ResetLaunchPad -bool true;
-    killall Dock
-  }
-  # run app with sudo
-  function appSudo()
-  {
-    local name=$1
-    local appPath="/Applications/${name}.app/Contents/MacOS/${name}"
-    local appPath1="/Applications/${name}.app/Contents/MacOS/stable"
-    if [[ -f $appPath ]]; then
-      sudo $appPath
-      return
-    fi
-    if [[ -f $appPath1 ]]; then
-      sudo $appPath1
-      return
-    fi
-    echo "no path find"
-  }
 fi
 
-
-export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-export NODE_OPTIONS="--no-warnings=ExperimentalWarning"

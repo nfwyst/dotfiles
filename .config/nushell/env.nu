@@ -91,7 +91,7 @@ $env.UNAME = (uname | get kernel-name)
 $env.GOPATH = ($env.HOME | path join "go")
 $env.CARGO_HOME = ($env.HOME | path join ".cargo")
 $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
-$env.XDG_DATA_HOME = ($env.HOME | path join ".local" "share")
+$env.XDG_DATA_HOME = ($env.HOME | path join ".local/share")
 
 use std "path add"
 path add ($env.GOPATH | path join "bin")
@@ -106,6 +106,10 @@ if $env.UNAME == "Darwin" {
     path add $brew_bin
     path add $brew_sbin
   }
+}
+
+if $env.UNAME == "Linux" {
+  path add ($env.HOME | path join ".local/bin")
 }
 
 $env.EDITOR = (which nvim | get path | first)
