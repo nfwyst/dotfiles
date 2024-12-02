@@ -16,18 +16,8 @@ local function init()
     callback = function(event)
       ALPHA_BUF = event.buf
       SET_TIMEOUT(function()
-        SET_OPT('laststatus', 0)
         ENABLE_CURSORLINE({ buf = ALPHA_BUF }, true)
       end, 10)
-      AUTOCMD('BufUnload', {
-        buffer = event.buf,
-        group = group,
-        callback = function()
-          SET_TIMEOUT(function()
-            SET_OPT('laststatus', 3)
-          end, 10)
-        end,
-      })
     end,
   })
 end

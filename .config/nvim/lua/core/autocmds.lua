@@ -218,6 +218,9 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
+  if GET_FILETYPE(bufnr) == 'alpha' then
+    return ENABLE_CURSORLINE({ buf = bufnr }, true)
+  end
   local is_new = event.event == 'BufNewFile'
   if not bufnr or not FILETYPE_VALID(bufnr) then
     return
