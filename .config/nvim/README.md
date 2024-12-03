@@ -6,7 +6,7 @@ make neovim as a perfect ide for development
 
 1. nodejs
 2. neovim 0.9+
-3. lazygit -- awesome termial ui for git
+3. gitui -- awesome ui for git
 4. ncdu -- list file by size
 5. htop -- an interactive process viewer
 6. python3

@@ -201,7 +201,8 @@ local filetype_to_runner = {
 local function close_alpha_when_open_file(bufnr)
   local buffer_path = GET_BUFFER_PATH(bufnr)
   local is_file = IS_FILE_PATH(buffer_path)
-  if not ALPHA_BUF or not is_file then
+  local is_help = GET_FILETYPE(bufnr) == 'help'
+  if is_help or not ALPHA_BUF or not is_file then
     return
   end
   SET_TIMEOUT(function()

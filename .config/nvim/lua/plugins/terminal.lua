@@ -66,9 +66,9 @@ local function init_instance(terminal)
   end
 
   SET_USER_COMMANDS({
-    ToggleLazygit = function()
-      local lazygit = newT('lazygit')
-      lazygit:toggle()
+    ToggleGitUi = function()
+      local gitui = newT('gitui')
+      gitui:toggle()
     end,
     ToggleNode = function()
       local node = newT('node')
@@ -124,7 +124,7 @@ return {
     'ToggleTerm',
     'ToggleTerminalHorizontal',
     'ToggleTerminalVertical',
-    'ToggleLazygit',
+    'ToggleGitUi',
   },
   keys = [[<c-\>]],
   config = function()

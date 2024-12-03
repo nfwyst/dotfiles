@@ -68,5 +68,5 @@ return {
     '<cmd>DiffviewFileHistory %<cr>',
     desc = 'Diffview current file history',
   },
-  ['<leader>gz'] = { '<cmd>ToggleLazygit<cr>', desc = 'Lazygit' },
+  ['<leader>gz'] = { '<cmd>ToggleGitUi<cr>', desc = 'Git Ui' },
 }
