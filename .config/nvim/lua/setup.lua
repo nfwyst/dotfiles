@@ -32,7 +32,6 @@ local disabled_plugins = {
   'spellfile',
   'gzip',
   'matchit',
-  'matchparen',
   'netrwPlugin',
   'tarPlugin',
   'tutor',

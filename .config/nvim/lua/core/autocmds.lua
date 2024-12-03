@@ -218,6 +218,7 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
+  RUN_CMD('VimadeFadeActive', true)
   if GET_FILETYPE(bufnr) == 'alpha' then
     return ENABLE_CURSORLINE({ buf = bufnr }, true)
   end

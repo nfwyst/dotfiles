@@ -117,6 +117,7 @@ TREESITTER_ENSURE_INSTALL = {
   'lua',
   'svelte',
   'latex',
+  'vimdoc',
 }
 
 TELESCOPE_IGNORE_PATTERNS = {

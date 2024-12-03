@@ -458,6 +458,7 @@ function INIT_HL()
     LineNrAbove = { fg = color.fg1 },
     LineNr = { fg = color.fg1 },
     LineNrBelow = { fg = color.fg1 },
+    MatchParen = { bg = '#000000' },
   }))
 end
 

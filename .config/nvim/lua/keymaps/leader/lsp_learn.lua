@@ -2,7 +2,7 @@ return {
   ['<leader>l'] = { group = 'LSP/Learn' },
   ['<leader>ls'] = { group = 'LSP' },
   ['<leader>lsD'] = {
-    '<cmd>lua vim.diagnostic.disable()<cr>',
+    '<cmd>lua vim.diagnostic.enable(false)<cr>',
     desc = 'Disable Lint',
   },
   ['<leader>lsE'] = {
