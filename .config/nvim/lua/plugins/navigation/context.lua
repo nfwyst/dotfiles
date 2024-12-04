@@ -33,9 +33,8 @@ local function should_attach(bufnr)
   if IS_GPT_PROMPT_CHAT(bufnr) then
     return false
   end
-  if IS_BIG_FILE(bufnr, 0.1) then
-    return false
-  end
+  local is_big_file, is_file = IS_BIG_FILE(bufnr, 0.1)
+  return is_file and not is_big_file
 end
 
 local function is_move_up_or_down()
@@ -51,11 +50,9 @@ local function disable_context_when_move()
   AUTOCMD({ 'CursorMoved', 'CursorMovedI' }, {
     group = AUTOGROUP('__disable_context__', { clear = true }),
     callback = function(event)
-      local no_attach = should_attach(event.buf) == false
-      if no_attach then
-        return
-      end
-      if not is_move_up_or_down() then
+      local attach = should_attach(event.buf)
+      local move_v = is_move_up_or_down()
+      if not attach or not move_v then
         return
       end
       toggle_context()

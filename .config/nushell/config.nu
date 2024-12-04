@@ -920,6 +920,8 @@ alias c = clear
 alias python = python3
 alias pip = python3 -m pip
 alias xcopy = xclip -selection clipboard
+alias cat = bat
+alias find = fd
 
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {

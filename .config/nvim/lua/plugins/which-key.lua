@@ -54,6 +54,13 @@ local function init(wk)
     Save = function()
       PCALL(SAVE)
     end,
+    Refresh = function()
+      local unsaved = GET_OPT('modified', { buf = GET_CURRENT_BUFFER() })
+      if unsaved then
+        PCALL(SAVE)
+      end
+      vim.cmd.edit()
+    end,
     SaveThenQuit = function()
       PCALL(SAVE_THEN_QUIT)
     end,

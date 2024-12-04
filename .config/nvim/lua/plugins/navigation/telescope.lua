@@ -67,6 +67,17 @@ local function find_files(builtin, themes, config)
   if config ~= nil then
     theme = MERGE_TABLE(theme, config)
   end
+  theme.find_command = {
+    'fd',
+    '--type',
+    'f',
+    '--color',
+    'never',
+    '--exclude',
+    '.git',
+    '--exclude',
+    'node_modules',
+  }
   builtin.find_files(theme)
 end
 
@@ -100,17 +111,7 @@ local function init(builtin, themes)
       find_files(builtin, themes)
     end,
     FindIgnoredFiles = function()
-      find_files(builtin, themes, {
-        no_ignore = true,
-        find_command = {
-          'rg',
-          '--files',
-          '--color',
-          'never',
-          '--glob',
-          '!node_modules',
-        },
-      })
+      find_files(builtin, themes, { no_ignore = true })
     end,
     FindRepoFiles = function()
       local theme = themes.get_dropdown({ layout_config = layout_config })

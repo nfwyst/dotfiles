@@ -736,7 +736,7 @@ end
 function IS_BIG_FILE(bufnr, multiple)
   local buffer_path = GET_BUFFER_PATH(bufnr)
   if not IS_FILE_PATH(buffer_path) then
-    return false
+    return false, false
   end
 
   local file_length = api.nvim_buf_line_count(bufnr)
@@ -744,16 +744,16 @@ function IS_BIG_FILE(bufnr, multiple)
     multiple = 1
   end
   if file_length > MAX_FILE_LENGTH * multiple then
-    return true
+    return true, true
   end
 
   ---@diagnostic disable-next-line: undefined-field
   local stats = vim.uv.fs_stat(buffer_path)
   if not stats then
-    return false
+    return false, true
   end
 
-  return stats.size > 131072 -- 128 Kib
+  return stats.size > 131072, true -- 128 Kib
 end
 
 function CWD()
