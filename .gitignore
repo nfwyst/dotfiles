@@ -3,6 +3,7 @@
 /lua.bat
 /lua_modules
 /.luarocks
+/legacy
 .config/nushell/history.txt
 .aider*
 todo.md
