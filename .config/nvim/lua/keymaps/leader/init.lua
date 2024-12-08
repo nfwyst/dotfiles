@@ -61,7 +61,7 @@ local mappings = {
   ['<leader>u'] = { '<cmd>nohlsearch<cr>', desc = 'No highlight' },
   ['<leader>v'] = { '<cmd>ShowFilePath<cr>', desc = 'Show file path' },
   ['<leader>w'] = { '<cmd>Save<cr>', desc = 'Save' },
-  ['<leader>i'] = { '<cmd>Refresh<cr>', desc = 'Refresh content' },
+  ['<leader>h'] = { '<cmd>Refresh<cr>', desc = 'Refresh content' },
   ['<leader>x'] = { '<cmd>SaveThenQuit<cr>', desc = 'Save and quit' },
   ['<leader>z'] = { '<cmd>ZenMode<cr>', desc = 'Zen mode' },
 }

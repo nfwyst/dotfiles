@@ -71,4 +71,5 @@ return {
   },
   adjust_window_size_when_changing_font_size = false,
   macos_window_background_blur = 20,
+  enable_kitty_graphics = true,
 }

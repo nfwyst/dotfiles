@@ -1,19 +1,3 @@
-local image = {
-  'HakonHarnes/img-clip.nvim',
-  event = 'VeryLazy',
-  enabled = false,
-  opts = {
-    default = {
-      embed_image_as_base64 = false,
-      prompt_for_file_name = false,
-      drag_and_drop = {
-        insert_mode = true,
-      },
-      use_absolute_path = true,
-    },
-  },
-}
-
 local function init(config)
   local default_prompt = '你是一位出色的编程专家。'
   local function setup_prompt(custom)
@@ -43,7 +27,6 @@ return {
     'nvim-lua/plenary.nvim',
     'MunifTanjim/nui.nvim',
     'nvim-tree/nvim-web-devicons',
-    image,
   },
   config = function()
     local config = require('avante.config')
@@ -84,7 +67,8 @@ return {
         auto_set_highlight_group = true,
         auto_apply_diff_after_generation = false,
         auto_set_keymaps = false,
-        support_paste_from_clipboard = true,
+        support_paste_from_clipboard = false,
+        minimize_diff = true,
       },
       windows = {
         height = 100,

@@ -50,7 +50,7 @@ lazy.setup({
     version = nil,
   },
   rocks = {
-    enabled = false,
+    hererocks = true,
   },
   git = {
     timeout = 300,

@@ -37,6 +37,7 @@ SET_OPTS({
   titlestring = "%{fnamemodify(getcwd(), ':t')} - nvim(%{getpid()})",
   ch = 0, -- automatically hide and show command line
   spell = false, -- enable builtin spell check that work with treesitter, so it can do well in comment spell checking
+  spelllang = { 'en', 'cjk' },
   laststatus = 3, -- enable global status line
   foldcolumn = '1',
   foldlevel = 99, -- dont open fold at starting up
@@ -62,7 +63,7 @@ SET_OPTS({
     precedes = '«',
     nbsp = '░',
   },
-  sessionoptions = { 'buffers', 'curdir', 'tabpages', 'winsize' }, -- seesions that will save when exiting
+  sessionoptions = {}, -- seesions that will save when save to session file
   shiftround = true, -- round indent to multiple of shiftwidth
   splitkeep = 'cursor', -- keep the same relative cursor position
   undolevels = 300, -- more big, more undo can do

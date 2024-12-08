@@ -356,7 +356,7 @@ end
 function RUN_CMD(command, check)
   local name = ':' .. command:match('^%s*(%S+)')
   if check and vim.fn.exists(name) == 0 then
-    return
+    return false
   end
   PCALL(vim.cmd, command)
 end
