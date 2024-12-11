@@ -1,4 +1,5 @@
 local api = vim.api
+local fn = vim.fn
 local cmd = api.nvim_create_user_command
 local cursor = vim.opt.guicursor
 
@@ -37,7 +38,7 @@ function DEFINE_SIGNS(signs)
     if type(sign) == 'table' then
       opt = MERGE_TABLE(opt, sign)
     end
-    vim.fn.sign_define(name, opt)
+    fn.sign_define(name, opt)
   end
 end
 
@@ -355,7 +356,7 @@ end
 
 function RUN_CMD(command, check)
   local name = ':' .. command:match('^%s*(%S+)')
-  if check and vim.fn.exists(name) == 0 then
+  if check and fn.exists(name) == 0 then
     return false
   end
   PCALL(vim.cmd, command)
@@ -636,7 +637,7 @@ function START_WITH(str, prefix)
 end
 
 function STRING_HAS(str, substr)
-  return vim.fn.stridx(str, substr) ~= -1
+  return fn.stridx(str, substr) ~= -1
 end
 
 function HAS_WILDCARD(str)
@@ -673,7 +674,7 @@ function STRING_PATTERN_MATCHED(str, patterns, fuzzy)
 end
 
 function GET_CUR_BUF_TO_GIT_PATH()
-  return vim.fn.expand('%')
+  return fn.expand('%')
 end
 
 function BIND_QUIT(bufnr)
@@ -833,4 +834,21 @@ function IS_FILETYPE(filetype, opts)
     buf = win and GET_BUFFER_ID(win) or GET_CURRENT_BUFFER()
   end
   return GET_FILETYPE(buf) == filetype
+end
+
+function CREATE_FOLDER(dir_path, confirm)
+  local choice = 1
+  if confirm then
+    local msg = "The folder '" .. dir_path .. "' does not exist. Create it?"
+    choice = fn.confirm(msg, '&Yes\n&No', 1)
+  end
+  if choice ~= 1 then
+    return
+  end
+  local ok, Path = pcall(require, 'plenary.path')
+  if not ok then
+    return
+  end
+  Path:new(dir_path):mkdir({ parents = true, mode = 493 })
+  return true
 end

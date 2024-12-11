@@ -110,6 +110,8 @@ if $env.UNAME == "Darwin" {
 
 if $env.UNAME == "Linux" {
   path add ($env.HOME | path join ".local/bin")
+  $env.PKG_CONFIG_PATH = "/usr/lib64/pkgconfig"
+  $env.OPENSSL_DIR = "/usr"
 }
 
 $env.EDITOR = (which nvim | get path | first)

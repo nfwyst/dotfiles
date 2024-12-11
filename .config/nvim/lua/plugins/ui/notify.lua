@@ -22,6 +22,9 @@ return {
         return GET_MAX_WIDTH(nil, 0.3)
       end,
       render = 'wrapped-compact',
+      on_open = function(win)
+        vim.api.nvim_win_set_config(win, { zindex = 51 })
+      end,
     })
     init(notify)
   end,

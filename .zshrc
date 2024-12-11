@@ -17,12 +17,12 @@ function command_exists() {
 
 # set proxy
 function proxy () {
-  export {https,http}_proxy=http://127.0.0.1:7897
-  export all_proxy=socks5://127.0.0.1:7897
+  export {https,http}_proxy="http://127.0.0.1:7897"
+  export all_proxy="socks5://127.0.0.1:7897"
   if command_exists "npm"; then
     npm config set proxy http://127.0.0.1:7897
   fi
-  export no_proxy=127.0.0.1,localhost,apple.com
+  export no_proxy="127.0.0.1,localhost,apple.com"
 }
 
 # init proxy
@@ -96,6 +96,8 @@ export PATH="$PATH:$CARGO_HOME/bin"
 
 if [[ "$(uname)" == "Linux" ]]; then
   export PATH="$PATH:$HOME/.local/bin"
+  export PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
+  export OPENSSL_DIR="/usr"
 fi
 
 export EDITOR="$(which nvim)"
@@ -112,18 +114,18 @@ if command_exists "fzf"; then
 fi
 
 # Aliases
-alias ls='ls --color'
-alias vim='nvim'
-alias vi='nvim'
-alias c='clear'
+alias ls="ls --color"
+alias vim="nvim"
+alias vi="nvim"
+alias c="clear"
 alias e="nvim"
 alias gc-="git checkout -"
 alias ys="yarn start"
 alias python="python3"
 alias pip="python3 -m pip"
 alias xcopy="xclip -selection clipboard"
-alias cat=bat
-alias find=fd
+alias cat="bat"
+alias find="fd"
 
 function create_worktree() {
   local target_dir=$1

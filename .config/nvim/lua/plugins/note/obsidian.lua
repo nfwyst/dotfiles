@@ -17,12 +17,16 @@ return {
     local work_path = OBSIDIAN_WORK_DIR
     local personal_path = OBSIDIAN_DIR
     if not IS_FILE_PATH(work_path, true) then
-      LOG_WARN('obsidian path not exists', work_path)
-      work_path = HOME_PATH .. '/Documents'
+      local created = CREATE_FOLDER(work_path, true)
+      if not created then
+        work_path = HOME_PATH .. '/Documents'
+      end
     end
     if not IS_FILE_PATH(personal_path, true) then
-      LOG_WARN('obsidian path not exists', personal_path)
-      personal_path = HOME_PATH
+      local created = CREATE_FOLDER(personal_path, true)
+      if not created then
+        personal_path = HOME_PATH
+      end
     end
 
     obsidian.setup({

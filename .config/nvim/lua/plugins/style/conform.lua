@@ -57,6 +57,7 @@ return {
         markdown = fe,
         yaml = fe,
         graphql = fe,
+        nu = { 'nufmt' },
         c = c,
         cpp = c,
         sh = { 'shfmt' },
