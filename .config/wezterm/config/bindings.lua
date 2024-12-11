@@ -175,6 +175,17 @@ local mouse_bindings = {
   },
 }
 
+local env = {
+  XDG_CONFIG_HOME = HOME .. '/.config',
+  XDG_DATA_HOME = HOME .. '/.local/share',
+  PATH = PATH,
+  SHELL = 'nu',
+}
+
+if platform.is_mac then
+  env.DEEPSEEK_API_KEY = require('env').DEEPSEEK_API_KEY
+end
+
 return {
   disable_default_key_bindings = true,
   disable_default_mouse_bindings = false,
@@ -182,10 +193,5 @@ return {
   keys = keys,
   key_tables = key_tables,
   mouse_bindings = mouse_bindings,
-  set_environment_variables = {
-    XDG_CONFIG_HOME = HOME .. '/.config',
-    XDG_DATA_HOME = HOME .. '/.local/share',
-    PATH = PATH,
-    SHELL = 'nu',
-  },
+  set_environment_variables = env,
 }

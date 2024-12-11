@@ -12,3 +12,4 @@ shell_gpt/
 cache
 zjframes.rs
 zjstatus/target/
+env.lua
