@@ -133,8 +133,8 @@ return {
         end,
       },
     })
+    init(harpoon)
 
     require('telescope').load_extension('harpoon')
-    init(harpoon)
   end,
 }

@@ -783,7 +783,7 @@ function ADD_CMP_SOURCE(name, opt)
     group_index = opt.group_index or 1,
     priority = opt.priority,
     name = name,
-    max_item_count = 3,
+    max_item_count = opt.max_item_count or 3,
   }
   table.insert(config.sources, newSource)
   cmp.setup(config)

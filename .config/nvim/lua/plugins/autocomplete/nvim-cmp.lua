@@ -1,5 +1,20 @@
 local disable_fuzzy = true
 
+local function get_onjump(step, cmp, luasnip)
+  return function(fallback)
+    if cmp.visible() then
+      if step < 0 then
+        return cmp.select_prev_item()
+      end
+      return cmp.select_next_item()
+    end
+    if luasnip.jumpable(step) then
+      return luasnip.jump(step)
+    end
+    return fallback()
+  end
+end
+
 return {
   'hrsh7th/nvim-cmp',
   event = 'InsertEnter',
@@ -31,41 +46,25 @@ return {
         end,
       },
       mapping = cmp.mapping.preset.insert({
-        ['<C-p>'] = cmp.mapping.select_prev_item(),
-        ['<C-n>'] = cmp.mapping.select_next_item(),
-        ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-1), { 'i', 'c' }),
-        ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(1), { 'i', 'c' }),
-        ['<C-c>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
-        ['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
-        ['<C-e>'] = cmp.mapping({
+        ['<c-p>'] = cmp.mapping.select_prev_item(),
+        ['<c-n>'] = cmp.mapping.select_next_item(),
+        ['<c-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-1), { 'i', 'c' }),
+        ['<c-f>'] = cmp.mapping(cmp.mapping.scroll_docs(1), { 'i', 'c' }),
+        ['<c-c>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+        ['<c-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<c-y>` mapping.
+        ['<c-e>'] = cmp.mapping({
           i = cmp.mapping.abort(),
           c = cmp.mapping.close(),
         }),
-        ['<CR>'] = cmp.mapping(function(fallback)
+        ['<cr>'] = cmp.mapping(function(fallback)
           -- use the internal non-blocking call to check if cmp is visible to work with minuet
           if cmp.core.view:visible() then
             return cmp.confirm({ select = true })
           end
           fallback()
         end),
-        ['<Tab>'] = cmp.mapping(function(fallback)
-          if cmp.visible() then
-            cmp.select_next_item()
-          elseif luasnip.jumpable(1) then
-            luasnip.jump(1)
-          else
-            fallback()
-          end
-        end, { 's', 'i' }),
-        ['<S-Tab>'] = cmp.mapping(function(fallback)
-          if cmp.visible() then
-            cmp.select_prev_item()
-          elseif luasnip.jumpable(-1) then
-            luasnip.jump(-1)
-          else
-            fallback()
-          end
-        end, { 's', 'i' }),
+        ['<tab>'] = cmp.mapping(get_onjump(1, cmp, luasnip), { 's', 'i' }),
+        ['<s-tab>'] = cmp.mapping(get_onjump(-1, cmp, luasnip), { 's', 'i' }),
       }),
       formatting = {
         expandable_indicator = true,

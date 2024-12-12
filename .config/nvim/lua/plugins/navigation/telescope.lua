@@ -181,11 +181,15 @@ return {
     'DocumentSymbols',
     'WorkspaceSymbols',
   },
-  dependencies = { 'nvim-lua/plenary.nvim' },
+  dependencies = {
+    'nvim-lua/plenary.nvim',
+    { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
+  },
   config = function()
     local telescope = require('telescope')
     local act = require('telescope.actions')
-    init(require('telescope.builtin'), require('telescope.themes'))
+    local builtin = require('telescope.builtin')
+    local themes = require('telescope.themes')
     telescope.setup({
       defaults = {
         history = IS_MAC and history or false,
@@ -252,6 +256,26 @@ return {
           },
         },
       },
+      extensions = {
+        fzf = {
+          fuzzy = true,
+          override_generic_sorter = true,
+          override_file_sorter = true,
+          case_mode = 'smart_case',
+        },
+        undo = {
+          side_by_side = true,
+          layout_strategy = 'vertical',
+          layout_config = {
+            preview_height = 0.7,
+            height = 0.999,
+          },
+          saved_only = true,
+        },
+      },
     })
+    init(builtin, themes)
+
+    telescope.load_extension('fzf')
   end,
 }
