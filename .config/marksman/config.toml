@@ -1,0 +1,5 @@
+[core]
+incremental_references = true
+
+[completion]
+candidates = 7

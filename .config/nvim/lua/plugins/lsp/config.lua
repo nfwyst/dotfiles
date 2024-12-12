@@ -43,29 +43,28 @@ local function get_options(cmp_nvim_lsp, server)
   local opts = {
     capabilities = cmp_nvim_lsp.default_capabilities(),
   }
-  local has_custom_opts, server_custom_opts =
-    pcall(require, 'plugins.lsp.settings.' .. server)
-  if has_custom_opts then
-    if server_custom_opts.disabled then
-      return nil
-    end
-    opts = MERGE_TABLE(opts, server_custom_opts)
+  local ok, setting = pcall(require, 'plugins.lsp.settings.' .. server)
+  if not ok then
+    return opts
   end
-  return opts
+  if setting.disabled then
+    return nil
+  end
+  return MERGE_TABLE(opts, setting)
 end
 
-local function try_load(conf, opts)
-  local original_try_add = conf.manager.try_add
+local function try_load(server, opts)
+  local original_try_add = server.manager.try_add
   local exclude = opts.exclude_filetypes
   local include = opts.include_filetypes
-  local filetype = GET_FILETYPE(GET_CURRENT_BUFFER())
-  conf.manager.try_add = function(config)
+  server.manager.try_add = function(...)
+    local filetype = GET_FILETYPE(GET_CURRENT_BUFFER())
     local disabled = exclude and INCLUDES(exclude, filetype)
     local not_enabled = include and not INCLUDES(include, filetype)
     if disabled or not_enabled then
       return
     end
-    return original_try_add(config)
+    return original_try_add(...)
   end
 end
 
@@ -82,13 +81,13 @@ return {
     local cmp_nvim_lsp = require('cmp_nvim_lsp')
     ADD_CMP_SOURCE('nvim_lsp', { priority = 6 })
 
-    for _, server in pairs(MERGE_ARRAYS(LSP_SERVERS, { 'nushell' })) do
-      if server ~= 'ts_ls' then
-        local conf = lspconfig[server]
-        local opts = get_options(cmp_nvim_lsp, server)
+    for _, name in pairs(MERGE_ARRAYS(LSP_SERVERS, { 'nushell' })) do
+      if name ~= 'ts_ls' then
+        local server = lspconfig[name]
+        local opts = get_options(cmp_nvim_lsp, name)
         if opts then
-          conf.setup(opts)
-          try_load(conf, opts)
+          server.setup(opts)
+          try_load(server, opts)
         end
       end
     end

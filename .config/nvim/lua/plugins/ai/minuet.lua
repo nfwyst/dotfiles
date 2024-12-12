@@ -10,7 +10,6 @@ return {
     ADD_CMP_SOURCE('minuet', { priority = 9 })
     require('minuet').setup({
       notify = 'error',
-      request_timeout = 5,
       provider = 'openai_fim_compatible',
       provider_options = {
         openai_fim_compatible = {
@@ -20,7 +19,7 @@ return {
           name = '󱗻',
           stream = true,
           optional = {
-            max_tokens = 128,
+            max_tokens = 80,
             stop = { '\n\n' },
           },
         },

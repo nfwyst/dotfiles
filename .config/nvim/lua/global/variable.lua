@@ -5,6 +5,7 @@ AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
 IS_LEETING = false
 HAS_API_KEY = not not os.getenv('DEEPSEEK_API_KEY')
+IS_GIT_REPO = false
 SCHEME_BACKGROUND = 'dark'
 MAX_FILE_LENGTH = 5000
 OS = jit.os

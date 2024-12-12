@@ -1,5 +1,6 @@
 return {
   'lewis6991/gitsigns.nvim',
+  cond = IS_GIT_REPO,
   event = { 'BufReadPre', 'BufNewFile' },
   opts = {
     signs = {

@@ -1,3 +1,17 @@
+<!--toc:start-->
+- [💤 perfect-neovim-config](#💤-perfect-neovim-config)
+- [Requirements](#requirements)
+- [Optional dependencies](#optional-dependencies)
+- [Install](#install)
+- [Use](#use)
+- [Features](#features)
+- [Nerd Font](#nerd-font)
+- [Vscode integration](#vscode-integration)
+- [Custom snippets](#custom-snippets)
+  - [create snippets template](#create-snippets-template)
+- [find and replace all](#find-and-replace-all)
+<!--toc:end-->
+
 # 💤 perfect-neovim-config
 
 make neovim as a perfect ide for development

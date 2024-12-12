@@ -74,7 +74,6 @@ return function(wk)
     require(prefix .. 'bookmark_buffer'),
     require(prefix .. 'comment_copy'),
     require(prefix .. 'debug_doc'),
-    require(prefix .. 'git'),
     require(prefix .. 'lsp_learn'),
     require(prefix .. 'note_nav_notify'),
     require(prefix .. 'term_test_timer_tab'),
@@ -83,4 +82,8 @@ return function(wk)
   for _, config in ipairs(configs) do
     wk.add(config)
   end
+  if not IS_GIT_REPO then
+    return
+  end
+  wk.add(require(prefix .. 'git'))
 end

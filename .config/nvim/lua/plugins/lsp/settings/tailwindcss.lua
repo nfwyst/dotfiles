@@ -5,28 +5,21 @@ local config_files = {
   'tailwind.config.mjs',
 }
 
-local function no_tailwind_config(from, to)
-  return not LOOKUP_FILE_PATH(config_files, from, to)
-end
-
 local function get_on_attach()
   local cache = {}
   return function(client)
+    -- only git repo go here
     local from = GET_WORKSPACE_PATH()
     local to = GET_GIT_PATH()
     local key = from .. ':' .. to
 
-    local result = cache[key]
-    if result ~= nil then
-      if result then
-        client.stop()
-      end
-      return
+    local should_stop = cache[key]
+    if should_stop then
+      return client.stop()
     end
 
-    local should_stop = no_tailwind_config(from, to)
-    cache[key] = should_stop
-    if should_stop then
+    cache[key] = not LOOKUP_FILE_PATH(config_files, from, to)
+    if cache[key] then
       client.stop()
     end
   end

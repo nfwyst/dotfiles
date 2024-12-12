@@ -2,6 +2,7 @@ local kd = { kind = 'auto' }
 
 return {
   'neogitorg/neogit',
+  cond = IS_GIT_REPO,
   dependencies = {
     'nvim-lua/plenary.nvim',
     'nvim-telescope/telescope.nvim',

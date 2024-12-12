@@ -540,26 +540,20 @@ function IS_CURSOR_HIDE()
   return GET_HIGHLIGHT('Cursor', 'blend') == 100
 end
 
-function LOOKUP_FILE_PATH(file_names, start_path, stop_dir)
-  if not stop_dir then
-    ---@diagnostic disable-next-line: undefined-field
-    stop_dir = vim.uv.os_homedir()
+function LOOKUP_FILE_PATH(file_names, start_path, stop_path)
+  if not start_path then
+    start_path = GET_CURRENT_BUFFER_PATH(true)
   end
 
-  if start_path and IS_FILE_PATH(start_path) then
-    start_path = GET_DIR_PATH(start_path)
-  else
-    local start, is_dir = GET_CURRENT_BUFFER_PATH(true)
-    start_path = start
-    if not is_dir then
-      start_path = GET_DIR_PATH(start_path)
-    end
+  if not stop_path then
+    ---@diagnostic disable-next-line: undefined-field
+    stop_path = vim.uv.os_homedir()
   end
 
   for _, file_name in ipairs(file_names) do
     local pathes = vim.fs.find(file_name, {
       upward = true,
-      stop = stop_dir,
+      stop = stop_path,
       path = start_path,
     })
     if #pathes > 0 then
@@ -568,23 +562,20 @@ function LOOKUP_FILE_PATH(file_names, start_path, stop_dir)
   end
 end
 
-function GET_DIR_MATCH_PATTERNS(file_name_patterns, start_filepath)
-  local util = require('lspconfig.util')
-  local get_root = util.root_pattern(UNPACK(file_name_patterns))
-  return get_root(start_filepath or GET_CURRENT_BUFFER_PATH(true))
-end
-
-function GET_WORKSPACE_PATH(start_filepath, no_git)
-  local w_path = GET_DIR_MATCH_PATTERNS(PROJECT_PATTERNS, start_filepath)
-  if not w_path then
-    return no_git and CWD() or GET_GIT_PATH(start_filepath)
+function GET_WORKSPACE_PATH(start_path, no_git)
+  local project_file_path = LOOKUP_FILE_PATH(PROJECT_PATTERNS, start_path)
+  if project_file_path then
+    return GET_DIR_PATH(project_file_path)
   end
-  return w_path
+  if no_git then
+    return CWD()
+  end
+  return GET_GIT_PATH(start_path)
 end
 
-function GET_GIT_PATH(start_filepath)
-  local util = require('lspconfig.util')
-  return util.find_git_ancestor(start_filepath or GET_CURRENT_BUFFER_PATH(true))
+function CWD()
+  ---@diagnostic disable-next-line: undefined-field
+  return vim.uv.cwd()
 end
 
 function GET_CURRENT_BUFFER_PATH(use_fallback, dont_check_path)
@@ -595,10 +586,20 @@ function GET_CURRENT_BUFFER_PATH(use_fallback, dont_check_path)
     buffer_path = ''
   end
   if buffer_path == '' and use_fallback then
-    return CWD(), true
+    return CWD()
   end
-  return buffer_path, false
+  return buffer_path
 end
+
+function GET_GIT_PATH(start_path)
+  start_path = start_path or GET_CURRENT_BUFFER_PATH(true)
+  local dot_git_path = LOOKUP_FILE_PATH({ '.git' }, start_path)
+  if dot_git_path then
+    return GET_DIR_PATH(dot_git_path)
+  end
+  return nil
+end
+IS_GIT_REPO = GET_GIT_PATH()
 
 function SPLIT_STRING_BY_LEN(str, max_len)
   if #str < max_len then
@@ -755,11 +756,6 @@ function IS_BIG_FILE(bufnr, multiple)
   end
 
   return stats.size > 131072, true -- 128 Kib
-end
-
-function CWD()
-  ---@diagnostic disable-next-line: undefined-field
-  return vim.uv.cwd()
 end
 
 function GET_HIDE_COLUMN_OPTS(status)

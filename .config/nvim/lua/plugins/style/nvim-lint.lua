@@ -14,16 +14,32 @@ end
 local linters = {
   eslint_d = {
     cmd = function()
-      local binary_name = 'eslint_d'
-      local config_file_dir = GET_DIR_MATCH_PATTERNS(ESLINT_CONFIG_NAMES) or ''
-      local local_binary = config_file_dir .. '/node_modules/.bin/eslint'
-      ---@diagnostic disable-next-line: undefined-field
-      return vim.uv.fs_stat(local_binary) and local_binary or binary_name
+      local global_bin = 'eslint_d'
+      local config_file_path = LOOKUP_FILE_PATH(ESLINT_CONFIG_NAMES)
+      local config_file_dir
+      local postfix
+      local subpath = '/.bin/eslint'
+      if config_file_path then
+        config_file_dir = GET_DIR_PATH(config_file_path)
+        postfix = '/node_modules' .. subpath
+      end
+      if not config_file_dir then
+        config_file_dir = LOOKUP_FILE_PATH({ 'node_modules' })
+        postfix = subpath
+      end
+      local bin_path
+      if config_file_dir then
+        bin_path = config_file_dir .. postfix
+      end
+      return IS_FILE_PATH(bin_path) and bin_path or global_bin
     end,
     args = {
-      '--config',
       function()
-        return LOOKUP_FILE_PATH(ESLINT_CONFIG_NAMES)
+        local config_file_path = LOOKUP_FILE_PATH(ESLINT_CONFIG_NAMES)
+        if not config_file_path then
+          return nil
+        end
+        return '--config ' .. config_file_path
       end,
     },
   },
