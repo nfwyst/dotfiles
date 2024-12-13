@@ -9,7 +9,7 @@ return {
   config = function()
     ADD_CMP_SOURCE('minuet', { priority = 9, max_item_count = 1 })
     require('minuet').setup({
-      notify = 'error',
+      notify = false,
       n_completions = 1,
       provider = 'openai_fim_compatible',
       provider_options = {

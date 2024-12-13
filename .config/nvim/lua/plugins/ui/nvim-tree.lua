@@ -93,21 +93,19 @@ local function on_attach(bufnr)
   SET_KEY_MAPS({ n = n })
 end
 
-SET_GLOBAL_OPTS({
-  loaded = true,
-  loaded_netrw = true,
-  loaded_netrwPlugin = true,
-})
+SET_GLOBAL_OPTS({ loaded = true })
 
 local function init()
   local nvim_cursor_group = AUTOGROUP('_nvim_cursor_hide', { clear = true })
   SET_AUTOCMDS({
     {
-      { 'WinEnter', 'BufWinEnter' },
+      { 'WinEnter', 'BufWinEnter', 'VimEnter' },
       {
         pattern = 'NvimTree*',
         group = nvim_cursor_group,
-        callback = HIDE_CURSOR,
+        callback = function()
+          SET_TIMEOUT(HIDE_CURSOR)
+        end,
       },
     },
     {
@@ -115,7 +113,9 @@ local function init()
       {
         pattern = 'NvimTree*',
         group = nvim_cursor_group,
-        callback = SHOW_CURSOR,
+        callback = function()
+          SET_TIMEOUT(SHOW_CURSOR)
+        end,
       },
     },
   })
@@ -127,13 +127,6 @@ end
 return {
   'nvim-tree/nvim-tree.lua',
   dependencies = { 'nvim-tree/nvim-web-devicons' },
-  cmd = {
-    'NvimTreeToggle',
-    'NvimTreeOpen',
-    'NvimTreeFindFile',
-    'NvimTreeFindFileToggle',
-    'NvimTreeRefresh',
-  },
   config = function()
     local winid = require('nvim-tree.view').winid
     require('nvim-tree').setup({

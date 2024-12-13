@@ -76,6 +76,9 @@ return {
         sidebar_header = {
           enabled = false,
         },
+        ask = {
+          start_insert = false,
+        },
       },
       mappings = {
         diff = {

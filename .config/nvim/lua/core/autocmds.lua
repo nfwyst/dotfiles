@@ -185,12 +185,8 @@ local filetype_to_runner = {
     'NeogitCommitMessage',
     'Avante',
   }] = DEBOUNCE(function(event)
-    local ok = pcall(vim.cmd.startinsert)
     SET_TIMEOUT(function()
       SET_OPTS(get_markdown_options(event), event)
-      if ok then
-        vim.cmd.stopinsert()
-      end
     end, 100)
   end),
   ['Neogit*'] = DEBOUNCE(function(event)
@@ -217,42 +213,107 @@ local function close_alpha_when_open_file(bufnr)
   end, 10)
 end
 
-local function update_winbar(event)
-  local bufnr = event.buf
+local function dim_current_buffer()
   RUN_CMD('VimadeFadeActive', true)
-  if GET_FILETYPE(bufnr) == 'alpha' then
-    return ENABLE_CURSORLINE({ buf = bufnr }, true)
-  end
-  local is_new = event.event == 'BufNewFile'
-  if not bufnr or not FILETYPE_VALID(bufnr) then
+end
+
+local function check_avante_md_syntax(filetype, bufnr)
+  if filetype ~= 'Avante' then
     return
   end
-  local bar_path = GET_BUFFER_PATH(bufnr)
-  local is_file = is_new or IS_FILE_PATH(bar_path)
-  local is_chat = IS_GPT_PROMPT_CHAT(bufnr)
-  if not is_file or is_chat then
-    return
-  end
-  local postfix = vim.fn.systemlist('hostname')[1]
-  if IS_LEETING then
-    postfix = ''
-  end
-  BAR_PATH = bar_path
+  local opt = { win = GET_FIRST_WINDOW_BY_BUF(bufnr) }
+  SET_OPT('modifiable', true, opt)
+  vim.cmd.startinsert()
   SET_TIMEOUT(function()
-    local winbar = '%#WinBar1#%m '
-      .. '%#WinBar2#('
-      .. #GET_ALL_BUFFERS(true, is_new and bufnr or nil)
-      .. ') '
-      .. '%#WinBar1#'
-      .. bar_path:gsub(HOME_PATH, '~')
-      .. '%*%=%#WinBar2#'
-      .. string.lower(postfix)
-    for _, win in ipairs(GET_WINDOWS_BY_BUF(bufnr)) do
+    vim.cmd.stopinsert()
+    SET_OPT('modifiable', false, opt)
+  end)
+  return true
+end
+
+local function check_alpha_cursor_visible(filetype, bufnr)
+  if filetype ~= 'alpha' then
+    return
+  end
+  ENABLE_CURSORLINE({ buf = bufnr }, true)
+  return true
+end
+
+local function is_valid_filetype(bufnr)
+  return bufnr and FILETYPE_VALID(bufnr)
+end
+
+local function is_valid_file(bufnr, current_path, is_new_file)
+  local current_is_file = IS_FILE_PATH(current_path)
+  local is_file = is_new_file or current_is_file
+  local is_chat_file = IS_GPT_PROMPT_CHAT(bufnr)
+  return is_file and not is_chat_file
+end
+
+local function get_extra_msg()
+  if IS_LEETING then
+    return ''
+  end
+  return vim.fn.systemlist('hostname')[1]
+end
+
+local function get_winbar(new_file_bufnr, current_path, extra)
+  return '%#WinBar1#%m '
+    .. '%#WinBar2#('
+    .. #GET_ALL_BUFFERS(true, new_file_bufnr)
+    .. ') '
+    .. '%#WinBar1#'
+    .. SHORT_HOME_PATH(current_path)
+    .. '%*%=%#WinBar2#'
+    .. extra
+end
+
+local function set_winbar_for_all_window(wins, winbar)
+  return function()
+    for _, win in ipairs(wins) do
       local opt = { win = win }
       ENABLE_CURSORLINE(opt, true)
       SET_OPT('winbar', winbar, opt)
     end
-  end, 10)
+  end
+end
+
+local function delay_set_winbar(is_new_file, current_path, bufnr)
+  local extra = string.lower(get_extra_msg())
+  local new_file_bufnr
+  if is_new_file then
+    new_file_bufnr = bufnr
+  end
+  local wins = GET_WINDOWS_BY_BUF(bufnr)
+  local winbar = get_winbar(new_file_bufnr, current_path, extra)
+  SET_TIMEOUT(set_winbar_for_all_window(wins, winbar), 10)
+end
+
+local function update_winbar(event)
+  local bufnr = event.buf
+
+  dim_current_buffer()
+
+  local filetype = GET_FILETYPE(bufnr)
+  local is_avante = check_avante_md_syntax(filetype, bufnr)
+  local is_alpha = check_alpha_cursor_visible(filetype, bufnr)
+  if is_alpha or is_avante then
+    return
+  end
+
+  if not is_valid_filetype(bufnr) then
+    return
+  end
+
+  local is_new_file = event.event == 'BufNewFile'
+  local current_path = GET_BUFFER_PATH(bufnr)
+  if not is_valid_file(bufnr, current_path, is_new_file) then
+    return
+  end
+
+  delay_set_winbar(is_new_file, current_path, bufnr)
+
+  BAR_PATH = current_path
 end
 
 SET_HL({

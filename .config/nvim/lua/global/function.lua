@@ -144,6 +144,14 @@ function SET_GLOBAL_OPTS(opts)
   end
 end
 
+function GET_FIRST_WINDOW_BY_BUF(bufnr)
+  return fn.bufwinid(bufnr)
+end
+
+function SHORT_HOME_PATH(path)
+  return path:gsub('^' .. HOME_PATH, '~')
+end
+
 function GET_WINDOWS_BY_BUF(bufnr)
   local windows = {}
   for _, win in ipairs(api.nvim_list_wins()) do

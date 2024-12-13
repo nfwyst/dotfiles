@@ -22,10 +22,6 @@ local function init()
   })
 end
 
-local function expand_home_path(path)
-  return path:gsub('^' .. HOME_PATH, '~')
-end
-
 return {
   'goolord/alpha-nvim',
   event = 'VimEnter',
@@ -43,10 +39,10 @@ return {
       [[\ \_\ \_\ \____\ \____/\ \___/  \ \_\ \_\ \_\ \_\]],
       [[ \/_/\/_/\/____/\/___/  \/__/    \/_/\/_/\/_/\/_/]],
       [[]],
-      ' : ' .. expand_home_path(current_path),
+      ' : ' .. SHORT_HOME_PATH(current_path),
     }
     if git_path and current_path ~= git_path then
-      table.insert(val, ' : ' .. expand_home_path(git_path))
+      table.insert(val, ' : ' .. SHORT_HOME_PATH(git_path))
     end
     dashboard.section.header.val = val
     dashboard.section.buttons.val = {
