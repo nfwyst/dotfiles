@@ -2,7 +2,7 @@ local disable_fuzzy = true
 
 local function get_onjump(step, cmp, luasnip)
   return function(fallback)
-    if cmp.visible() then
+    if cmp.core.view:visible() then
       if step < 0 then
         return cmp.select_prev_item()
       end
@@ -26,6 +26,8 @@ return {
   },
   config = function()
     local cmp = require('cmp')
+    local view = cmp.core.view
+    local map = cmp.mapping
     local luasnip = require('luasnip')
     luasnip.log.set_loglevel('error')
     local lspkind = require('lspkind')
@@ -45,20 +47,25 @@ return {
           luasnip.lsp_expand(args.body) -- For `luasnip` users.
         end,
       },
-      mapping = cmp.mapping.preset.insert({
-        ['<c-p>'] = cmp.mapping.select_prev_item(),
-        ['<c-n>'] = cmp.mapping.select_next_item(),
-        ['<c-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-1), { 'i', 'c' }),
-        ['<c-f>'] = cmp.mapping(cmp.mapping.scroll_docs(1), { 'i', 'c' }),
-        ['<c-c>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+      mapping = map.preset.insert({
+        ['<c-p>'] = map.select_prev_item(),
+        ['<c-n>'] = map.select_next_item(),
+        ['<c-b>'] = map(map.scroll_docs(-1), { 'i', 'c' }),
+        ['<c-f>'] = map(map.scroll_docs(1), { 'i', 'c' }),
+        ['<c-c>'] = map(map.complete(), { 'i', 'c' }),
         ['<c-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<c-y>` mapping.
-        ['<c-e>'] = cmp.mapping({
-          i = cmp.mapping.abort(),
-          c = cmp.mapping.close(),
+        ['<c-e>'] = map({
+          i = map.abort(),
+          c = map.close(),
         }),
-        ['<cr>'] = cmp.mapping.confirm({ select = true }),
-        ['<tab>'] = cmp.mapping(get_onjump(1, cmp, luasnip), { 's', 'i' }),
-        ['<s-tab>'] = cmp.mapping(get_onjump(-1, cmp, luasnip), { 's', 'i' }),
+        ['<cr>'] = map(function(fallback)
+          if view:visible() then
+            return cmp.confirm({ select = true })
+          end
+          fallback()
+        end),
+        ['<tab>'] = map(get_onjump(1, cmp, luasnip), { 's', 'i' }),
+        ['<s-tab>'] = map(get_onjump(-1, cmp, luasnip), { 's', 'i' }),
       }),
       formatting = {
         expandable_indicator = true,

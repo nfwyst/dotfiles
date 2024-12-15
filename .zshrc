@@ -1,6 +1,7 @@
 if [[ -f "/opt/homebrew/bin/brew" ]]; then
   # If you're using macOS, you'll want this enabled
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  export SSL_CERT_FILE="/etc/ssl/cert.pem"
 fi
 
 # Set the directory we want to store zinit and plugins

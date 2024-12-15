@@ -259,8 +259,9 @@ function GET_PROJECT_NAME(winid)
     return
   end
 
-  return function(child_dir)
-    local title = basename(child_dir)
+  return function(working_dir)
+    local title = basename(working_dir)
+    local working_dir_name = title
     local win_width = api.nvim_win_get_width(winid())
     if not BAR_PATH then
       return center_string_by_width(title, win_width, 1)
@@ -272,14 +273,16 @@ function GET_PROJECT_NAME(winid)
       return cached
     end
 
-    child_dir = GET_PROJECT_ROOT(BAR_PATH)
-    title = basename(child_dir)
-    local child_dir_parent = GET_DIR_PATH(child_dir)
+    working_dir = GET_PROJECT_ROOT(BAR_PATH)
+    title = basename(working_dir)
+    local child_dir_parent = GET_DIR_PATH(working_dir)
     local parent_project_root = GET_PROJECT_ROOT(child_dir_parent)
 
     if parent_project_root then
       local parent_name = basename(parent_project_root)
       title = parent_name .. '  ' .. title
+    elseif title ~= working_dir_name then
+      title = title .. '  ' .. working_dir_name
     end
 
     title = center_string_by_width(title, win_width, 1)

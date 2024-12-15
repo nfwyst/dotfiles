@@ -106,6 +106,7 @@ if $env.UNAME == "Darwin" {
     path add $brew_bin
     path add $brew_sbin
   }
+  $env.SSL_CERT_FILE = "/etc/ssl/cert.pem"
 }
 
 if $env.UNAME == "Linux" {

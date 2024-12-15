@@ -1,11 +1,10 @@
 return {
   'milanglacier/minuet-ai.nvim',
-  cmd = 'MinuetToggleVirtualText',
+  cmd = { 'MinuetToggleVirtualText', 'MinuetToggleCmp' },
   dependencies = {
     { 'nvim-lua/plenary.nvim' },
   },
   cond = HAS_API_KEY,
-  event = 'InsertEnter',
   config = function()
     require('minuet').setup({
       notify = false,
