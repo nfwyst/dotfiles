@@ -196,9 +196,9 @@ local filetype_to_runner = {
 
 local function close_alpha_when_open_file(bufnr)
   local buffer_path = GET_BUFFER_PATH(bufnr)
-  local is_file = IS_FILE_PATH(buffer_path)
+  local is_file_in_fs = IS_FILE_IN_FS(buffer_path)
   local is_help = GET_FILETYPE(bufnr) == 'help'
-  if is_help or not ALPHA_BUF or not is_file then
+  if is_help or not ALPHA_BUF or not is_file_in_fs then
     return
   end
   SET_TIMEOUT(function()
@@ -244,8 +244,8 @@ local function is_valid_filetype(bufnr)
 end
 
 local function is_valid_file(bufnr, current_path, is_new_file)
-  local current_is_file = IS_FILE_PATH(current_path)
-  local is_file = is_new_file or current_is_file
+  local is_file_in_fs = IS_FILE_IN_FS(current_path)
+  local is_file = is_new_file or is_file_in_fs
   local is_chat_file = IS_GPT_PROMPT_CHAT(bufnr)
   return is_file and not is_chat_file
 end
@@ -291,6 +291,7 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
+  DISABLE_DIAGNOSTIC(event.buf)
 
   dim_current_buffer()
 

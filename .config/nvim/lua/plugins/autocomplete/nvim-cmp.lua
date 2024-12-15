@@ -56,13 +56,7 @@ return {
           i = cmp.mapping.abort(),
           c = cmp.mapping.close(),
         }),
-        ['<cr>'] = cmp.mapping(function(fallback)
-          -- use the internal non-blocking call to check if cmp is visible to work with minuet
-          if cmp.core.view:visible() then
-            return cmp.confirm({ select = true })
-          end
-          fallback()
-        end),
+        ['<cr>'] = cmp.mapping.confirm({ select = true }),
         ['<tab>'] = cmp.mapping(get_onjump(1, cmp, luasnip), { 's', 'i' }),
         ['<s-tab>'] = cmp.mapping(get_onjump(-1, cmp, luasnip), { 's', 'i' }),
       }),

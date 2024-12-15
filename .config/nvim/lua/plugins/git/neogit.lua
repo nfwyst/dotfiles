@@ -2,7 +2,7 @@ local kd = { kind = 'auto' }
 
 return {
   'neogitorg/neogit',
-  cond = IS_GIT_REPO,
+  cond = HAS_GIT_ROOT,
   dependencies = {
     'nvim-lua/plenary.nvim',
     'nvim-telescope/telescope.nvim',

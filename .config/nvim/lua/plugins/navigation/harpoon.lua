@@ -2,6 +2,10 @@ local gen_bookmark = function(postfix)
   local win = GET_CURRENT_WIN()
   local pos = vim.api.nvim_win_get_cursor(win)
   local buffer_path = GET_CURRENT_BUFFER_PATH()
+  local is_file_in_fs = IS_FILE_IN_FS(buffer_path)
+  if not is_file_in_fs then
+    return
+  end
   local row = pos[1]
   local col = pos[2]
   return buffer_path .. ':' .. row .. ':' .. col .. postfix
@@ -73,7 +77,9 @@ local function init(harpoon)
       end
       local bookmarks = harpoon:list('bookmarks')
       local item = bookmarks.config.create_list_item(bookmarks.config, postfix)
-      bookmarks:prepend(item)
+      if item then
+        bookmarks:prepend(item)
+      end
     end,
   })
   SET_KEY_MAPS({
@@ -126,7 +132,10 @@ return {
       },
       bookmarks = {
         create_list_item = function(_, postfix)
-          return { value = gen_bookmark(postfix) }
+          local value = gen_bookmark(postfix)
+          if value then
+            return { value = value }
+          end
         end,
         select = function(list_item, _, _)
           on_select(list_item.value)

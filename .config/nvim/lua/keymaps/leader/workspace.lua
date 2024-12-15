@@ -11,7 +11,7 @@ return {
   ['<leader>WS'] = { '<cmd>wa!<cr>', desc = 'Save all content' },
   ['<leader>Wd'] = {
     function()
-      require('telescope.builtin').diagnostics({ root_dir = GET_GIT_PATH() })
+      require('telescope.builtin').diagnostics({ root_dir = GET_GIT_ROOT() })
     end,
     desc = 'Workspace Diagnostics',
   },

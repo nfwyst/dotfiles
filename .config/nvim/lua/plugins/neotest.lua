@@ -1,5 +1,5 @@
 local function get_jest_config_path(filepath)
-  return LOOKUP_FILE_PATH({
+  return FIND_FIRST_FILE_OR_DIR_PATH({
     'jest.config.js',
     'jest.config.ts',
     'jest.config.mjs',
@@ -35,11 +35,15 @@ return {
           jestCommand = 'yarn run test',
           jestConfigFile = get_jest_config_path,
           cwd = function(filepath)
-            return GET_DIR_PATH(get_jest_config_path(filepath))
+            local config_file_path = get_jest_config_path(filepath)
+            if config_file_path then
+              return GET_DIR_PATH(config_file_path)
+            end
+            return GET_PROJECT_ROOT(filepath)
           end,
         }),
       },
-      log_level = vim.log.levels.OFF,
+      log_level = OFF,
     })
   end,
 }

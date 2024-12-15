@@ -29,8 +29,9 @@ return {
   config = function()
     local alpha = require('alpha')
     local dashboard = require('alpha.themes.dashboard')
-    local current_path = GET_WORKSPACE_PATH(nil, true)
-    local git_path = GET_GIT_PATH(current_path)
+    local working_dir = GET_WORKING_DIR()
+    local project_root = GET_PROJECT_ROOT(working_dir, true) or working_dir
+    local git_root = GET_GIT_ROOT(project_root)
     local val = {
       [[                               __                ]],
       [[  ___     ___    ___   __  __ /\_\    ___ ___    ]],
@@ -39,10 +40,10 @@ return {
       [[\ \_\ \_\ \____\ \____/\ \___/  \ \_\ \_\ \_\ \_\]],
       [[ \/_/\/_/\/____/\/___/  \/__/    \/_/\/_/\/_/\/_/]],
       [[]],
-      ' : ' .. SHORT_HOME_PATH(current_path),
+      ' : ' .. SHORT_HOME_PATH(project_root),
     }
-    if git_path and current_path ~= git_path then
-      table.insert(val, ' : ' .. SHORT_HOME_PATH(git_path))
+    if git_root and project_root ~= git_root then
+      table.insert(val, ' : ' .. SHORT_HOME_PATH(git_root))
     end
     dashboard.section.header.val = val
     dashboard.section.buttons.val = {

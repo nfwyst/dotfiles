@@ -1,6 +1,6 @@
 return {
   'kawre/leetcode.nvim',
-  cmd = { 'Leet' },
+  cmd = 'Leet',
   dependencies = {
     'nvim-telescope/telescope.nvim',
     'MunifTanjim/nui.nvim',

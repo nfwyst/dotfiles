@@ -1,5 +1,7 @@
 local api = vim.api
 local fn = vim.fn
+local dst = vim.diagnostic
+local fs = vim.fs
 local cmd = api.nvim_create_user_command
 local cursor = vim.opt.guicursor
 
@@ -240,7 +242,7 @@ function TABLE_REMOVE_BY_KEY(table, key)
   table[key] = nil
 end
 
-function CENTER_STRING_BY_WIDTH(str, width, offset)
+local function center_string_by_width(str, width, offset)
   local padding = math.floor((width - #str) / 2)
   if not offset then
     offset = 0
@@ -249,44 +251,40 @@ function CENTER_STRING_BY_WIDTH(str, width, offset)
 end
 
 function GET_PROJECT_NAME(winid)
-  local cached = {}
+  local cache = {}
   local ok, util = pcall(require, 'lspconfig.util')
-  local basename = vim.fs.basename
+  local basename = fs.basename
   if not ok then
     LOG_ERROR('pcall error', util)
     return
   end
 
-  return function(root_path)
-    local root_name = basename(root_path)
+  return function(child_dir)
+    local title = basename(child_dir)
     local win_width = api.nvim_win_get_width(winid())
     if not BAR_PATH then
-      return CENTER_STRING_BY_WIDTH(root_name, win_width, 1)
+      return center_string_by_width(title, win_width, 1)
     end
 
-    local result = cached[BAR_PATH]
-    if result then
-      return result
+    local cache_key = BAR_PATH .. win_width
+    local cached = cache[cache_key]
+    if cached then
+      return cached
     end
 
-    local name = basename(GET_WORKSPACE_PATH(BAR_PATH, true))
-    result = root_name
-    local key
-    if name ~= root_name then
-      key = root_name .. '  ' .. name
-      if cached[key] then
-        return cached[key]
-      end
-      result = key
+    child_dir = GET_PROJECT_ROOT(BAR_PATH)
+    title = basename(child_dir)
+    local child_dir_parent = GET_DIR_PATH(child_dir)
+    local parent_project_root = GET_PROJECT_ROOT(child_dir_parent)
+
+    if parent_project_root then
+      local parent_name = basename(parent_project_root)
+      title = parent_name .. '  ' .. title
     end
 
-    result = CENTER_STRING_BY_WIDTH(result, win_width, 2)
-    cached[BAR_PATH] = result
-    if key then
-      cached[key] = result
-    end
-
-    return result
+    title = center_string_by_width(title, win_width, 1)
+    cache[cache_key] = title
+    return title
   end
 end
 
@@ -334,7 +332,7 @@ end
 
 function SAVE(force)
   local bang = force ~= nil and force ~= false
-  local buffer_path = GET_CURRENT_BUFFER_PATH(false, true)
+  local buffer_path = GET_CURRENT_BUFFER_PATH()
   if buffer_path == '' then
     NEW_FILE(bang)
     return
@@ -352,7 +350,7 @@ function SAVE_THEN_QUIT(force)
 end
 
 function GET_BUFFER_PATH(bufnr)
-  return api.nvim_buf_get_name(bufnr or 0)
+  return api.nvim_buf_get_name(bufnr or GET_CURRENT_BUFFER())
 end
 
 function GET_OPT(optname, config)
@@ -375,21 +373,23 @@ function SET_TIMEOUT(func, timeout)
 end
 
 function GET_DIR_PATH(path)
-  return vim.fs.dirname(path)
+  return fs.dirname(path)
 end
 
-function IS_FILE_PATH(path, include_dir)
+function IS_FILE_IN_FS(filepath)
   local ok, Path = pcall(require, 'plenary.path')
   if not ok then
-    return
+    return false
   end
-  path = Path:new(path)
-  local is_file = path:is_file()
-  local is_dir = path:is_dir()
-  if include_dir then
-    return is_dir or is_file
+  return Path:new(filepath):is_file()
+end
+
+function IS_DIR_IN_FS(dirpath)
+  local ok, Path = pcall(require, 'plenary.path')
+  if not ok then
+    return false
   end
-  return is_file
+  return Path:new(dirpath):is_dir()
 end
 
 function PCALL(f, ...)
@@ -403,7 +403,7 @@ end
 function LOG_INFO(title, message, timeout)
   -- fix that vim.notify has not rewrite by noice
   SET_TIMEOUT(function()
-    vim.notify(message or '', vim.log.levels.INFO, {
+    vim.notify(message or '', INFO, {
       title = title,
       timeout = timeout ~= nil and timeout or 3000,
     })
@@ -413,7 +413,7 @@ end
 function LOG_ERROR(title, message)
   -- fix that vim.notify has not rewrite by noice
   SET_TIMEOUT(function()
-    vim.notify(message, vim.log.levels.ERROR, {
+    vim.notify(message, ERROR, {
       title = title,
     })
   end)
@@ -422,7 +422,7 @@ end
 function LOG_WARN(title, message)
   -- fix that vim.notify has not rewrite by noice
   SET_TIMEOUT(function()
-    vim.notify(message, vim.log.levels.WARN, {
+    vim.notify(message, WARN, {
       title = title,
     })
   end)
@@ -548,66 +548,67 @@ function IS_CURSOR_HIDE()
   return GET_HIGHLIGHT('Cursor', 'blend') == 100
 end
 
-function LOOKUP_FILE_PATH(file_names, start_path, stop_path)
-  if not start_path then
-    start_path = GET_CURRENT_BUFFER_PATH(true)
-  end
-
-  if not stop_path then
-    ---@diagnostic disable-next-line: undefined-field
-    stop_path = vim.uv.os_homedir()
-  end
-
-  for _, file_name in ipairs(file_names) do
-    local pathes = vim.fs.find(file_name, {
-      upward = true,
-      stop = stop_path,
-      path = start_path,
-    })
-    if #pathes > 0 then
-      return pathes[1]
-    end
-  end
+function FIND_FIRST_FILE_OR_DIR_PATH(file_or_dirs, start_path, stop_path)
+  local path_wraper = fs.find(file_or_dirs, {
+    upward = true,
+    path = start_path or GET_CURRENT_FILE_OR_DIR_PATH(),
+    stop = stop_path or HOME_PATH,
+    limit = 1,
+  })
+  return path_wraper[1]
 end
 
-function GET_WORKSPACE_PATH(start_path, no_git)
-  local project_file_path = LOOKUP_FILE_PATH(PROJECT_PATTERNS, start_path)
-  if project_file_path then
-    return GET_DIR_PATH(project_file_path)
+local project_root_cache = {}
+function GET_PROJECT_ROOT(start_path, exclude_git_root)
+  local marker = PROJECT_PATTERNS
+  local cache_key = exclude_git_root and start_path .. '_no_git' or start_path
+  local cached = project_root_cache[cache_key]
+  if cached then
+    return cached
   end
-  if no_git then
-    return CWD()
+  if exclude_git_root then
+    marker = SLICE(PROJECT_PATTERNS, 1, #PROJECT_PATTERNS - 1)
   end
-  return GET_GIT_PATH(start_path)
+  local root = fs.root(start_path, marker)
+  project_root_cache[cache_key] = root
+  return root
 end
 
-function CWD()
+function SLICE(arr, from, to)
+  return { unpack(arr, from, to) }
+end
+
+function GET_WORKING_DIR()
   ---@diagnostic disable-next-line: undefined-field
   return vim.uv.cwd()
 end
 
-function GET_CURRENT_BUFFER_PATH(use_fallback, dont_check_path)
-  local buffer_path = GET_BUFFER_PATH(GET_CURRENT_BUFFER())
-  local check_path = not dont_check_path
-  local not_in_fs = not IS_FILE_PATH(buffer_path)
-  if buffer_path ~= '' and check_path and not_in_fs then
-    buffer_path = ''
-  end
-  if buffer_path == '' and use_fallback then
-    return CWD()
-  end
-  return buffer_path
+function GET_CURRENT_BUFFER_PATH()
+  return GET_BUFFER_PATH(GET_CURRENT_BUFFER())
 end
 
-function GET_GIT_PATH(start_path)
-  start_path = start_path or GET_CURRENT_BUFFER_PATH(true)
-  local dot_git_path = LOOKUP_FILE_PATH({ '.git' }, start_path)
-  if dot_git_path then
-    return GET_DIR_PATH(dot_git_path)
+function GET_CURRENT_FILE_OR_DIR_PATH()
+  local current_buffer_path = GET_CURRENT_BUFFER_PATH()
+  if IS_FILE_IN_FS(current_buffer_path) then
+    return current_buffer_path
   end
-  return nil
+  return GET_WORKING_DIR()
 end
-IS_GIT_REPO = GET_GIT_PATH()
+
+local git_root_cache = {}
+function GET_GIT_ROOT(start_path)
+  if not start_path then
+    start_path = GET_CURRENT_FILE_OR_DIR_PATH()
+  end
+  local cached = git_root_cache[start_path]
+  if cached then
+    return cached
+  end
+  local root = fs.root(start_path, '.git')
+  git_root_cache[start_path] = root
+  return root
+end
+HAS_GIT_ROOT = GET_GIT_ROOT()
 
 function SPLIT_STRING_BY_LEN(str, max_len)
   if #str < max_len then
@@ -731,7 +732,7 @@ function GET_ALL_BUFFERS(only_file, new_buf)
   end
   return FILTER_TABLE(buffers, function(bufnr)
     local is_new = new_buf and new_buf == bufnr
-    local is_file = is_new or IS_FILE_PATH(GET_BUFFER_PATH(bufnr))
+    local is_file = is_new or IS_FILE_IN_FS(GET_BUFFER_PATH(bufnr))
     local is_in_list = GET_OPT('buflisted', { buf = bufnr })
     return is_file and is_in_list
   end)
@@ -745,7 +746,7 @@ end
 
 function IS_BIG_FILE(bufnr, multiple)
   local buffer_path = GET_BUFFER_PATH(bufnr)
-  if not IS_FILE_PATH(buffer_path) then
+  if not IS_FILE_IN_FS(buffer_path) then
     return false, false
   end
 
@@ -840,19 +841,18 @@ function IS_FILETYPE(filetype, opts)
   return GET_FILETYPE(buf) == filetype
 end
 
-function CREATE_FOLDER(dir_path, confirm)
-  local choice = 1
-  if confirm then
-    local msg = "The folder '" .. dir_path .. "' does not exist. Create it?"
-    choice = fn.confirm(msg, '&Yes\n&No', 1)
-  end
-  if choice ~= 1 then
+function ENABLE_DIAGNOSTIC(bufnr)
+  local opt = bufnr and { bufnr = bufnr } or nil
+  if dst.is_enabled(opt) then
     return
   end
-  local ok, Path = pcall(require, 'plenary.path')
-  if not ok then
+  dst.enable(true, opt)
+end
+
+function DISABLE_DIAGNOSTIC(bufnr)
+  local opt = bufnr and { bufnr = bufnr } or nil
+  if not dst.is_enabled(opt) then
     return
   end
-  Path:new(dir_path):mkdir({ parents = true, mode = 493 })
-  return true
+  dst.enable(false, opt)
 end

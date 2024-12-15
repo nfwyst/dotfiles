@@ -6,7 +6,7 @@ local my_feature = {
   disable = function()
     RUN_CMD('ColorizerDetachFromBuffer', true)
     RUN_CMD('UfoDetach', true)
-    vim.diagnostic.enable(false, { bufnr = GET_CURRENT_BUFFER() })
+    DISABLE_DIAGNOSTIC(GET_CURRENT_BUFFER())
   end,
 }
 

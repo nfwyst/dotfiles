@@ -1,6 +1,6 @@
 return {
   'lewis6991/gitsigns.nvim',
-  cond = IS_GIT_REPO,
+  cond = HAS_GIT_ROOT,
   event = { 'BufReadPre', 'BufNewFile' },
   opts = {
     signs = {
@@ -12,7 +12,7 @@ return {
       untracked = { text = '┆' },
     },
     max_file_length = MAX_FILE_LENGTH,
-    update_debounce = 200,
+    update_debounce = 500,
     preview_config = {
       border = 'rounded',
     },

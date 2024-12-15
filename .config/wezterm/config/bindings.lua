@@ -7,11 +7,18 @@ local mod = {}
 local PATH = os.getenv('PATH')
 local HOME = os.getenv('HOME')
 local brew_path = '/opt/homebrew/bin'
+local env = {
+  XDG_CONFIG_HOME = HOME .. '/.config',
+  XDG_DATA_HOME = HOME .. '/.local/share',
+  PATH = PATH,
+  SHELL = 'nu',
+}
 
 if platform.is_mac then
   mod.SUPER = 'SUPER'
   mod.SUPER_REV = 'SUPER|CTRL'
-  PATH = brew_path .. ':' .. PATH
+  env.PATH = brew_path .. ':' .. env.PATH
+  env.DEEPSEEK_API_KEY = require('env').DEEPSEEK_API_KEY
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'
@@ -174,17 +181,6 @@ local mouse_bindings = {
     action = act.SelectTextAtMouseCursor('Line'),
   },
 }
-
-local env = {
-  XDG_CONFIG_HOME = HOME .. '/.config',
-  XDG_DATA_HOME = HOME .. '/.local/share',
-  PATH = PATH,
-  SHELL = 'nu',
-}
-
-if platform.is_mac then
-  env.DEEPSEEK_API_KEY = require('env').DEEPSEEK_API_KEY
-end
 
 return {
   disable_default_key_bindings = true,

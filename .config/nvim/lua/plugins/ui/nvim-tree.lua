@@ -175,9 +175,7 @@ return {
       diagnostics = {
         enable = false,
         show_on_open_dirs = true,
-        severity = {
-          min = vim.diagnostic.severity.ERROR,
-        },
+        severity = { min = DERROR },
         icons = {
           hint = '',
           info = '',

@@ -18,6 +18,10 @@ return {
   ['<leader>as'] = { group = 'AST' },
   ['<leader>aig'] = { group = 'GPT prompt' },
   ['<leader>aia'] = { group = 'Avante' },
+  ['<leader>ait'] = {
+    '<cmd>MinuetToggleVirtualText<cr>',
+    desc = 'Toggle ai virtual text completion',
+  },
   ['<leader>aiaa'] = {
     run_avante('avante.api', 'ask'),
     desc = 'avante: ask',

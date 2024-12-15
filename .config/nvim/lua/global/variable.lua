@@ -5,7 +5,7 @@ AUTOCMD = vim.api.nvim_create_autocmd
 AUTOGROUP = vim.api.nvim_create_augroup
 IS_LEETING = false
 HAS_API_KEY = not not os.getenv('DEEPSEEK_API_KEY')
-IS_GIT_REPO = false
+HAS_GIT_ROOT = false
 SCHEME_BACKGROUND = 'dark'
 MAX_FILE_LENGTH = 5000
 OS = jit.os
@@ -33,6 +33,17 @@ OBSIDIAN_DIR = GEN_PATH(HOME_PATH .. '/Documents/Obsidian/personal')
 OBSIDIAN_WORK_DIR = GEN_PATH(HOME_PATH .. '/Documents/Obsidian/work')
 LAZY_PATH = DATA_PATH .. GEN_PATH('/lazy/lazy.nvim')
 SNIPPET_PATH = CONFIG_PATH .. GEN_PATH('/snippets')
+
+local svt = vim.diagnostic.severity
+local lv = vim.log.levels
+DERROR = svt.ERROR
+DWARN = svt.WARN
+DINFO = svt.INFO
+DHINT = svt.HINT
+INFO = lv.INFO
+WARN = lv.WARN
+ERROR = lv.ERROR
+OFF = lv.OFF
 
 TSX_COMMENT_INCLUDED_FILES = {
   'javascriptreact',

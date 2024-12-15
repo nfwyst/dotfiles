@@ -1,42 +1,37 @@
-local st = vim.diagnostic.severity
-
-local function setup_diagnostic()
-  local config = {
-    virtual_text = false,
-    signs = {
-      text = {
-        [st.ERROR] = ' ',
-        [st.WARN] = ' ',
-        [st.HINT] = ' ',
-        [st.INFO] = ' ',
-      },
+local config = {
+  virtual_text = IS_MAC,
+  signs = {
+    text = {
+      [DERROR] = ' ',
+      [DWARN] = ' ',
+      [DHINT] = ' ',
+      [DINFO] = ' ',
     },
-    update_in_insert = false,
-    underline = false,
-    severity_sort = true,
-    float = {
-      focusable = false,
-      style = 'minimal',
-      border = 'rounded',
-      source = 'always',
-    },
-  }
-  vim.diagnostic.config(config)
-end
+  },
+  update_in_insert = false,
+  underline = false,
+  severity_sort = true,
+  float = {
+    focusable = false,
+    style = 'minimal',
+    border = 'rounded',
+    source = 'always',
+  },
+}
+local opt = {
+  border = 'rounded',
+  width = 'auto',
+  silent = true,
+}
 
 local function init()
-  setup_diagnostic()
   local lsp = vim.lsp
-  local methods = lsp.protocol.Methods
+  local mts = lsp.protocol.Methods
   local hd = lsp.handlers
-  local opt = {
-    border = 'rounded',
-    width = 'auto',
-    max_width = GET_MAX_WIDTH(),
-    silent = true,
-  }
-  hd[methods.textDocument_hover] = lsp.with(hd.hover, opt)
-  hd[methods.textDocument_signatureHelp] = lsp.with(hd.signature_help, opt)
+  opt.max_width = GET_MAX_WIDTH()
+  hd[mts.textDocument_hover] = lsp.with(hd.hover, opt)
+  hd[mts.textDocument_signatureHelp] = lsp.with(hd.signature_help, opt)
+  vim.diagnostic.config(config)
 end
 
 local function get_options(cmp_nvim_lsp, server)

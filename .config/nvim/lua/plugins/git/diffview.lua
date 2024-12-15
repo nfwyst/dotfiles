@@ -1,6 +1,6 @@
 return {
   'sindrets/diffview.nvim',
-  cond = IS_GIT_REPO,
+  cond = HAS_GIT_ROOT,
   cmd = {
     'DiffviewOpen',
     'DiffviewClose',

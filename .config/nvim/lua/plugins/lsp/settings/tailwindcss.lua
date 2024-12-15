@@ -6,22 +6,13 @@ local config_files = {
 }
 
 local function get_on_attach()
-  local cache = {}
-  return function(client)
+  return function(client, bufnr)
     -- only git repo go here
-    local from = GET_WORKSPACE_PATH()
-    local to = GET_GIT_PATH()
-    local key = from .. ':' .. to
-
-    local should_stop = cache[key]
-    if should_stop then
-      return client.stop()
+    local config_root = vim.fs.root(bufnr, config_files)
+    if config_root then
+      return
     end
-
-    cache[key] = not LOOKUP_FILE_PATH(config_files, from, to)
-    if cache[key] then
-      client.stop()
-    end
+    client.stop()
   end
 end
 

@@ -90,4 +90,4 @@ SET_GLOBAL_OPTS({
   skip_ts_context_commentstring_module = true,
 })
 
-vim.lsp.set_log_level(vim.log.levels.OFF)
+vim.lsp.set_log_level(OFF)

@@ -82,7 +82,7 @@ return function(wk)
   for _, config in ipairs(configs) do
     wk.add(config)
   end
-  if not IS_GIT_REPO then
+  if not HAS_GIT_ROOT then
     return
   end
   wk.add(require(prefix .. 'git'))

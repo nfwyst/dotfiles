@@ -1,16 +1,14 @@
 return {
   'milanglacier/minuet-ai.nvim',
+  cmd = 'MinuetToggleVirtualText',
   dependencies = {
     { 'nvim-lua/plenary.nvim' },
-    { 'hrsh7th/nvim-cmp' },
   },
   cond = HAS_API_KEY,
   event = 'InsertEnter',
   config = function()
-    ADD_CMP_SOURCE('minuet', { priority = 9, max_item_count = 1 })
     require('minuet').setup({
       notify = false,
-      n_completions = 1,
       provider = 'openai_fim_compatible',
       provider_options = {
         openai_fim_compatible = {
@@ -20,9 +18,18 @@ return {
           name = '󱗻',
           stream = true,
           optional = {
-            max_tokens = 128,
-            stop = { '\n' },
+            max_tokens = 256,
+            stop = { '\n\n' },
           },
+        },
+      },
+      virtualtext = {
+        keymap = {
+          accept = '<c-a>',
+          accept_line = '<c-y>',
+          prev = '<c-v>',
+          next = '<c-x>',
+          dismiss = '<c-s>',
         },
       },
     })

@@ -2,12 +2,12 @@ return {
   ['<leader>l'] = { group = 'LSP/Learn' },
   ['<leader>ls'] = { group = 'LSP' },
   ['<leader>lsD'] = {
-    '<cmd>lua vim.diagnostic.enable(false)<cr>',
-    desc = 'Disable Lint',
+    DISABLE_DIAGNOSTIC,
+    desc = 'Disable Diagnostic Globally',
   },
   ['<leader>lsE'] = {
-    '<cmd>lua vim.diagnostic.enable()<cr>',
-    desc = 'Enable Lint',
+    ENABLE_DIAGNOSTIC,
+    desc = 'Enable Diagnostic Globally',
   },
   ['<leader>lsI'] = { '<cmd>LspInfo<cr>', desc = 'LSP information' },
   ['<leader>lsQ'] = {
@@ -20,8 +20,10 @@ return {
     desc = 'Document Diagnostics',
   },
   ['<leader>lse'] = {
-    '<cmd>lua vim.diagnostic.enable(0)<cr>',
-    desc = 'Enable Lint Local',
+    function()
+      ENABLE_DIAGNOSTIC(GET_CURRENT_BUFFER())
+    end,
+    desc = 'Enable Diagnostic Locally',
   },
   ['<leader>lsf'] = { '<cmd>Format<cr>', desc = 'Format' },
   ['<leader>lsF'] = { '<cmd>FixAll<cr>', desc = 'Fix all' },

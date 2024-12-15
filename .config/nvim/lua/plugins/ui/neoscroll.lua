@@ -1,3 +1,4 @@
+-- must use uppercase
 local keys = {
   '<C-u>',
   '<C-d>',

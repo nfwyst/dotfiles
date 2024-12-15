@@ -19,12 +19,12 @@ return {
         },
       },
       on_open = function()
-        vim.diagnostic.enable(false)
+        DISABLE_DIAGNOSTIC()
         statuscolumn = vim.o.statuscolumn
         vim.o.statuscolumn = ''
       end,
       on_close = function()
-        vim.diagnostic.enable()
+        ENABLE_DIAGNOSTIC()
         vim.o.statuscolumn = statuscolumn
       end,
     })
