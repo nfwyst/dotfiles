@@ -114,3 +114,19 @@ you can find and replace all with telescope and quickfix list, here is the steps
 
 1. press ctrl+q add the search result to the quickfix list above telescope view
 2. enter `:cfdo %s/old/new/g | update | bd`, update will write the buffer to disk after replace finished.
+
+# reading pdf
+
+> use uv manage python package, convert pdf to markdown by docling. build rag with ell-ai agent
+
+```sh
+brew install uv
+uv init
+uv python install 3.11
+uv add --dev ruff # linter and formatter for python
+uv add docling # convert a pdf into markdown through a web link
+uv add ell-ai # agent
+uv run docling url # convert pdf
+uv run chat.py
+uv run input.md output.md
+```
