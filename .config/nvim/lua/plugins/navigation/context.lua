@@ -38,9 +38,10 @@ local function should_attach(bufnr)
 end
 
 local function is_move_up_or_down(bufnr)
-  local prev_line = GET_BUFFER_VARIABLE(bufnr, 'prev_cursor_line')
+  local var_key = CONSTANTS.PREV_CURSOR_LINE
+  local prev_line = GET_BUFFER_VARIABLE(bufnr, var_key)
   local cur_line = vim.fn.line('.')
-  SET_BUFFER_VARIABLE(bufnr, 'prev_cursor_line', cur_line)
+  SET_BUFFER_VARIABLE(bufnr, var_key, cur_line)
   if not prev_line then
     return false
   end

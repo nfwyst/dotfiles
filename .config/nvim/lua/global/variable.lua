@@ -294,7 +294,7 @@ PREVIEWER = defaulter(function(options)
         if row <= 0 then
           return
         end
-        vim.api.nvim_win_call(winid, function()
+        RUN_IN_WINDOW(winid, function()
           vim.cmd.normal({ row .. '', bang = true })
         end)
       end, 50)
@@ -346,4 +346,12 @@ ESLINT_CONFIG_NAMES = {
   'eslint.config.mts',
   'eslint.config.cts',
   'package.json',
+}
+
+CONSTANTS = {
+  INVALID_FILETYPE = 'INVALID_FILETYPE',
+  INVALID_CURSORLINE_FILETYPE = 'INVALID_CURSORLINE_FILETYPE',
+  DST_INITIALIZED = 'DIAGNOSTIC_INITIALIZED',
+  PREV_CURSOR_LINE = 'PREV_CURSOR_LINE',
+  VIMADE_FADE_CCTIVE = 'VIMADE_FADE_CCTIVE',
 }

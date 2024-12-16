@@ -96,6 +96,17 @@ local function is_indent_with_tab(params)
   return lines_tab_more_than_space(lines)
 end
 
+local function adjustfy_buffer_indent_settings(event)
+  local is_use_tab = is_indent_with_tab(event)
+  local wd = is_use_tab and 4 or 2
+  SET_OPTS({
+    expandtab = not is_use_tab,
+    tabstop = wd,
+    softtabstop = wd,
+    shiftwidth = wd,
+  }, { buf = event.buf })
+end
+
 local function restore_position(bufnr)
   local ft = GET_FILETYPE(bufnr)
   if ft == 'gitcommit' then
@@ -120,7 +131,7 @@ local function set_grug_far_fold_width(bufnr, filetype)
   end, 10)
 end
 
-local function get_markdown_options(event)
+local function get_fix_wrap_indent_opts(event)
   local not_avante = 'Avante' ~= event.match
   local opts = {
     wrap = true,
@@ -132,6 +143,35 @@ local function get_markdown_options(event)
     return opts
   end
   return MERGE_TABLE(opts, GET_HIDE_COLUMN_OPTS(true))
+end
+
+local function toggle_markview(bufnr, set_modifiable)
+  local win = GET_FIRST_WINDOW_BY_BUF(bufnr)
+  if set_modifiable then
+    local opt = { win = win }
+    SET_OPT('modifiable', true, opt)
+  end
+  RUN_IN_WINDOW(win, vim.cmd.startinsert)
+  SET_TIMEOUT(function()
+    if WIN_VALID(win) then
+      RUN_IN_WINDOW(win, vim.cmd.stopinsert)
+    end
+  end, 100)
+end
+
+local function fix_markdown_syntax(event)
+  if event.match ~= 'markdown' then
+    return
+  end
+  toggle_markview(event.buf)
+end
+
+local function check_avante_syntax(filetype, bufnr)
+  if filetype ~= 'Avante' then
+    return
+  end
+  toggle_markview(bufnr, true)
+  return true
 end
 
 local filetype_to_runner = {
@@ -186,7 +226,9 @@ local filetype_to_runner = {
     'Avante',
   }] = DEBOUNCE(function(event)
     SET_TIMEOUT(function()
-      SET_OPTS(get_markdown_options(event), event)
+      local options = get_fix_wrap_indent_opts(event)
+      SET_OPTS(options, event)
+      fix_markdown_syntax(event)
     end, 100)
   end),
   ['Neogit*'] = DEBOUNCE(function(event)
@@ -206,29 +248,24 @@ local function close_alpha_when_open_file(bufnr)
       ALPHA_BUF = nil
       return
     end
-    vim.api.nvim_buf_call(ALPHA_BUF, function()
+    RUN_IN_BUFFER(ALPHA_BUF, function()
       vim.cmd('Alpha')
       ALPHA_BUF = nil
     end)
   end, 10)
 end
 
-local function dim_current_buffer()
-  RUN_CMD('VimadeFadeActive', true)
-end
-
-local function check_avante_md_syntax(filetype, bufnr)
-  if filetype ~= 'Avante' then
+local function dim_current_buffer(bufnr)
+  local var_key = CONSTANTS.VIMADE_FADE_CCTIVE
+  local is_actived = GET_BUFFER_VARIABLE(bufnr, var_key)
+  if is_actived then
     return
   end
-  local opt = { win = GET_FIRST_WINDOW_BY_BUF(bufnr) }
-  SET_OPT('modifiable', true, opt)
-  vim.cmd.startinsert()
-  SET_TIMEOUT(function()
-    vim.cmd.stopinsert()
-    SET_OPT('modifiable', false, opt)
+  local win = GET_FIRST_WINDOW_BY_BUF(bufnr)
+  RUN_IN_WINDOW(win, function()
+    RUN_CMD('VimadeFadeActive', true)
   end)
-  return true
+  SET_BUFFER_VARIABLE(bufnr, var_key, true)
 end
 
 local function check_alpha_cursor_visible(filetype, bufnr)
@@ -289,8 +326,9 @@ local function delay_set_winbar(is_new_file, current_path, bufnr)
   SET_TIMEOUT(set_winbar_for_all_window(wins, winbar), 10)
 end
 
-local function disable_diagnostic_when_first_enter_buffer(bufnr)
-  local initialized = GET_BUFFER_VARIABLE(bufnr, 'dst_initialized')
+local function disable_buffer_diagnostic(bufnr)
+  local var_key = CONSTANTS.DST_INITIALIZED
+  local initialized = GET_BUFFER_VARIABLE(bufnr, var_key)
   if not initialized then
     DISABLE_DIAGNOSTIC(bufnr)
   end
@@ -298,13 +336,10 @@ end
 
 local function update_winbar(event)
   local bufnr = event.buf
-
-  disable_diagnostic_when_first_enter_buffer(bufnr)
-  dim_current_buffer()
-
+  dim_current_buffer(bufnr)
   local filetype = GET_FILETYPE(bufnr)
-  local is_avante = check_avante_md_syntax(filetype, bufnr)
   local is_alpha = check_alpha_cursor_visible(filetype, bufnr)
+  local is_avante = check_avante_syntax(filetype, bufnr)
   if is_alpha or is_avante then
     return
   end
@@ -322,6 +357,14 @@ local function update_winbar(event)
   delay_set_winbar(is_new_file, current_path, bufnr)
 
   BAR_PATH = current_path
+end
+
+local function restore_center_when_enter_buffer(bufnr)
+  SET_TIMEOUT(function()
+    RUN_IN_BUFFER(bufnr, function()
+      vim.cmd('normal! zz')
+    end)
+  end)
 end
 
 SET_HL({
@@ -380,19 +423,9 @@ SET_AUTOCMDS({
       callback = function(event)
         local bufnr = event.buf
         restore_position(bufnr)
-        SET_TIMEOUT(function()
-          vim.cmd('normal! zz')
-        end)
-        local expandtab = true
-        local width = 2
-        if is_indent_with_tab(event) then
-          expandtab = false
-          width = 4
-        end
-        vim.bo.expandtab = expandtab
-        vim.bo.tabstop = width
-        vim.bo.softtabstop = width
-        vim.bo.shiftwidth = width
+        restore_center_when_enter_buffer(bufnr)
+        disable_buffer_diagnostic(bufnr)
+        adjustfy_buffer_indent_settings(event)
         close_alpha_when_open_file(bufnr)
       end,
     },

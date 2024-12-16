@@ -1,5 +1,5 @@
 local function on_done(bufnr)
-  SET_BUFFER_VARIABLE(bufnr, 'dst_initialized', true)
+  SET_BUFFER_VARIABLE(bufnr, CONSTANTS.DST_INITIALIZED, true)
 end
 
 AUTOCMD('BufWritePost', {

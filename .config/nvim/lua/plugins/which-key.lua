@@ -5,22 +5,25 @@ local function key_filter(config)
   local lhs = config[1]
   local rhs = config[2]
   local exclude_fts = KEYMAP_EXCLUDE_FTS[lhs]
-  if exclude_fts and #exclude_fts > 0 then
-    config[2] = function(...)
-      local buf = GET_CURRENT_BUFFER()
-      if not FILETYPE_VALID(buf, exclude_fts, lhs .. 'invalid_filetype') then
-        LOG_INFO('keymap', 'key ' .. lhs .. ' disabled for current filetype')
-        return
-      end
-      if type(rhs) == 'function' then
-        return rhs(...)
-      end
-      if START_WITH(rhs, '<cmd>') then
-        local command = rhs:gsub('<cmd>', ''):gsub('<cr>', '')
-        return RUN_CMD(command)
-      end
-      FEED_KEYS(rhs, 'nx')
+  local has_exclude = exclude_fts and #exclude_fts > 0
+  if not has_exclude then
+    return
+  end
+  config[2] = function(...)
+    local buf = GET_CURRENT_BUFFER()
+    local cache_key = lhs .. CONSTANTS.INVALID_FILETYPE
+    if not FILETYPE_VALID(buf, exclude_fts, cache_key) then
+      LOG_INFO('keymap', 'key ' .. lhs .. ' disabled for current filetype')
+      return
     end
+    if type(rhs) == 'function' then
+      return rhs(...)
+    end
+    if START_WITH(rhs, '<cmd>') then
+      local command = rhs:gsub('<cmd>', ''):gsub('<cr>', '')
+      return RUN_CMD(command)
+    end
+    FEED_KEYS(rhs, 'nx')
   end
 end
 

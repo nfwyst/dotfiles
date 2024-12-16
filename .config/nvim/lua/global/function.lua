@@ -539,8 +539,12 @@ function BUF_VALID(bufnr)
   return api.nvim_buf_is_valid(bufnr)
 end
 
+function WIN_VALID(win)
+  return api.nvim_win_is_valid(win)
+end
+
 function GET_FILETYPE(bufnr)
-  return vim.filetype.match({ buf = bufnr }) or vim.bo[bufnr].filetype
+  return GET_OPT('filetype', { buf = bufnr })
 end
 
 function GET_BUFFER_ID(winid)
@@ -804,7 +808,7 @@ end
 function FILETYPE_VALID(buf, invalid_arr, cache_key)
   local filetype = GET_FILETYPE(buf)
   invalid_arr = invalid_arr or INVALID_FILETYPE
-  cache_key = cache_key or 'INVALID_FILETYPE'
+  cache_key = cache_key or CONSTANTS.INVALID_FILETYPE
   return not INCLUDES(invalid_arr, filetype, cache_key)
 end
 
@@ -812,7 +816,7 @@ function ENABLE_CURSORLINE(opts, force)
   local buf = opts.buf
   local winid = opts.win
   local invalid_arr = INVALID_CURSORLINE_FILETYPE
-  local cache_key = 'INVALID_CURSORLINE_FILETYPE'
+  local cache_key = CONSTANTS.INVALID_CURSORLINE_FILETYPE
   if not force then
     buf = buf or GET_BUFFER_ID(winid)
     if not FILETYPE_VALID(buf, invalid_arr, cache_key) then
@@ -872,4 +876,12 @@ function DISABLE_DIAGNOSTIC(bufnr)
     return
   end
   dst.enable(false, opt)
+end
+
+function RUN_IN_BUFFER(bufnr, callback)
+  api.nvim_buf_call(bufnr, callback)
+end
+
+function RUN_IN_WINDOW(win, callback)
+  api.nvim_win_call(win, callback)
 end
