@@ -289,10 +289,17 @@ local function delay_set_winbar(is_new_file, current_path, bufnr)
   SET_TIMEOUT(set_winbar_for_all_window(wins, winbar), 10)
 end
 
+local function disable_diagnostic_when_first_enter_buffer(bufnr)
+  local initialized = GET_BUFFER_VARIABLE(bufnr, 'dst_initialized')
+  if not initialized then
+    DISABLE_DIAGNOSTIC(bufnr)
+  end
+end
+
 local function update_winbar(event)
   local bufnr = event.buf
-  DISABLE_DIAGNOSTIC(event.buf)
 
+  disable_diagnostic_when_first_enter_buffer(bufnr)
   dim_current_buffer()
 
   local filetype = GET_FILETYPE(bufnr)

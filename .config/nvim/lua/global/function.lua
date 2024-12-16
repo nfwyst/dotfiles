@@ -844,12 +844,26 @@ function IS_FILETYPE(filetype, opts)
   return GET_FILETYPE(buf) == filetype
 end
 
-function ENABLE_DIAGNOSTIC(bufnr)
+function ENABLE_DIAGNOSTIC(bufnr, on_done)
   local opt = bufnr and { bufnr = bufnr } or nil
   if dst.is_enabled(opt) then
     return
   end
   dst.enable(true, opt)
+  if on_done then
+    on_done(bufnr)
+  end
+end
+
+function GET_BUFFER_VARIABLE(bufnr, name)
+  local ok, value = pcall(api.nvim_buf_get_var, bufnr, name)
+  if ok then
+    return value
+  end
+end
+
+function SET_BUFFER_VARIABLE(bufnr, name, value)
+  api.nvim_buf_set_var(bufnr, name, value)
 end
 
 function DISABLE_DIAGNOSTIC(bufnr)

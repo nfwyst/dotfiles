@@ -1,6 +1,10 @@
+local function on_done(bufnr)
+  SET_BUFFER_VARIABLE(bufnr, 'dst_initialized', true)
+end
+
 AUTOCMD('BufWritePost', {
   callback = function(event)
-    ENABLE_DIAGNOSTIC(event.buf)
+    ENABLE_DIAGNOSTIC(event.buf, on_done)
     vim.cmd.Lint()
   end,
   group = AUTOGROUP('_lint_', { clear = true }),
@@ -34,12 +38,12 @@ local linters = {
       end
       return IS_FILE_IN_FS(bin_path) and bin_path or global_bin
     end,
-    args = function()
-      local config_file_path = FIND_FIRST_FILE_OR_DIR_PATH(ESLINT_CONFIG_NAMES)
-      if config_file_path then
-        return { '--config', config_file_path }
-      end
-    end,
+    args = {
+      '--config',
+      function()
+        return FIND_FIRST_FILE_OR_DIR_PATH(ESLINT_CONFIG_NAMES)
+      end,
+    },
   },
 }
 

@@ -37,12 +37,14 @@ local function should_attach(bufnr)
   return is_file and not is_big_file
 end
 
-local function is_move_up_or_down()
+local function is_move_up_or_down(bufnr)
+  local prev_line = GET_BUFFER_VARIABLE(bufnr, 'prev_cursor_line')
   local cur_line = vim.fn.line('.')
-  local prev_line = vim.b.prev_cursor_line or cur_line
-  local is_same_line = cur_line == prev_line
-  vim.b.prev_cursor_line = cur_line
-  return not is_same_line
+  SET_BUFFER_VARIABLE(bufnr, 'prev_cursor_line', cur_line)
+  if not prev_line then
+    return false
+  end
+  return prev_line ~= cur_line
 end
 
 local function disable_context_when_move()
@@ -53,7 +55,7 @@ local function disable_context_when_move()
       if not should_attach(event.buf) then
         return
       end
-      if not is_move_up_or_down() then
+      if not is_move_up_or_down(event.buf) then
         return
       end
       toggle_context()
