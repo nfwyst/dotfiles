@@ -495,7 +495,7 @@ function NEW_PICKER(title, theme, results, opts)
   theme.entry_parser = opts.entry_parser
   local pickers = require('telescope.pickers')
   local finders = require('telescope.finders')
-  local conf = require('telescope.config').values
+  local extensions = require('telescope').extensions
   local actions = require('telescope.actions')
   local action_state = require('telescope.actions.state')
 
@@ -515,7 +515,7 @@ function NEW_PICKER(title, theme, results, opts)
         results = results,
       }),
       previewer = opts.preview and PREVIEWER.new(theme) or nil,
-      sorter = conf.generic_sorter(theme),
+      sorter = extensions.fzf.native_fzf_sorter(),
       attach_mappings = opts.on_select and attach_mappings or nil,
     })
     :find()

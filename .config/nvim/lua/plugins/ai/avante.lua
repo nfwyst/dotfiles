@@ -20,13 +20,14 @@ local build = IS_MAC and 'make' or 'make BUILD_FROM_SOURCE=true'
 return {
   'yetone/avante.nvim',
   cond = HAS_API_KEY,
-  cmd = 'TogglePrompt',
+  cmd = { 'TogglePrompt', 'AvanteClear' },
   build = build,
   dependencies = {
     'stevearc/dressing.nvim',
     'nvim-lua/plenary.nvim',
     'MunifTanjim/nui.nvim',
     'nvim-tree/nvim-web-devicons',
+    'nvim-telescope/telescope.nvim',
   },
   config = function()
     local config = require('avante.config')
@@ -98,6 +99,9 @@ return {
           normal = '<cr>',
           insert = '<C-s>',
         },
+        files = {
+          add_current = '<leader>aiac',
+        },
       },
       hints = {
         enabled = false,
@@ -131,6 +135,16 @@ return {
           'dist',
           '%.lock',
           'locales',
+        },
+      },
+      file_selector = {
+        provider = 'telescope',
+        provider_opts = {
+          finder = require('telescope.finders').new_oneshot_job(
+            { 'fd', '--type', 'f' },
+            { cwd = require('avante.utils').get_project_root() }
+          ),
+          sorter = require('telescope').extensions.fzf.native_fzf_sorter(),
         },
       },
     })

@@ -28,37 +28,63 @@ return {
   },
   ['<leader>aiaa'] = {
     run_avante('avante.api', 'ask'),
-    desc = 'avante: ask',
+    desc = 'Avante: Ask',
   },
   ['<leader>aiae'] = {
     run_avante('avante.api', 'edit'),
-    desc = 'avante: edit',
+    desc = 'Avante: Edit',
   },
   ['<leader>aiar'] = {
     run_avante('avante.api', 'refresh'),
-    desc = 'avante: refresh',
+    desc = 'Avante: Refresh',
   },
   ['<leader>aiat'] = {
     run_avante('avante', 'toggle'),
-    desc = 'avante: toggle',
+    desc = 'Avante: Toggle',
   },
   ['<leader>aiah'] = {
     run_avante('avante', 'toggle', 'hint'),
-    desc = 'avante: toggle hint',
+    desc = 'Avante: Toggle Hint',
   },
   ['<leader>aiad'] = {
     run_avante('avante', 'toggle', 'debug'),
-    desc = 'avante: toggle debug',
+    desc = 'Avante: Toggle Debug',
   },
   ['<leader>aias'] = {
     run_avante('avante', 'toggle', 'suggestion'),
-    desc = 'avante: toggle suggestion',
+    desc = 'Avante: Toggle Suggestion',
   },
   ['<leader>aiaR'] = {
     run_avante('avante.repo_map', 'show'),
-    desc = 'avante: show repo map',
+    desc = 'Avante: Show Repo Map',
   },
-  ['<leader>aiaT'] = { '<cmd>TogglePrompt<cr>', desc = 'Toggle system prompt' },
+  ['<leader>aiab'] = {
+    desc = 'Avante: Add Current Buffer To Context',
+  },
+  ['<leader>aiaT'] = {
+    '<cmd>TogglePrompt<cr>',
+    desc = 'Avante: Toggle System Prompt',
+  },
+  ['<leader>aiay'] = {
+    '<cmd>AvanteClear history<cr>',
+    desc = 'Avante: Clear History',
+  },
+  ['<leader>aiam'] = {
+    '<cmd>AvanteClear memory<cr>',
+    desc = 'Avante: Clear Memory',
+  },
+  ['<leader>aiac'] = {
+    '<cmd>AvanteClear cache<cr>',
+    desc = 'Avante: Clear Cache',
+  },
+  ['<leader>aiaC'] = {
+    function()
+      vim.cmd.AvanteClear('history')
+      vim.cmd.AvanteClear('memory')
+      vim.cmd.AvanteClear('cache')
+    end,
+    desc = 'Avante: Clear All',
+  },
   ['<leader>aigc'] = { '<cmd>GpPickCommand<cr>', desc = 'GPT select command' },
   ['<leader>aiga'] = { '<cmd>GpSelectAgent<cr>', desc = 'GPT select agent' },
   ['<leader>aigt'] = {
