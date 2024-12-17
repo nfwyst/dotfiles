@@ -42,6 +42,16 @@ local function init(noice, lsp)
   })
 end
 
+local function get_size(multiple)
+  local max_width = GET_MAX_WIDTH(multiple)
+  local min_width = 10
+  if min_width >= max_width then
+    min_width = max_width - 2
+  end
+  min_width = min_width < 0 and 0 or min_width
+  return { max_width = max_width, min_width = min_width, width = 'auto' }
+end
+
 return {
   'folke/noice.nvim',
   dependencies = {
@@ -119,11 +129,11 @@ return {
             style = 'rounded',
             padding = { 0, 1 },
           },
-          size = { width = 'auto', max_width = GET_MAX_WIDTH() },
+          size = get_size(),
           position = { row = 2, col = 2 },
         },
         cmdline_popup = {
-          size = { width = 'auto', max_width = GET_MAX_WIDTH(4) },
+          size = get_size(4),
         },
       },
       presets = {

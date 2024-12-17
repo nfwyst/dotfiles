@@ -95,13 +95,13 @@ function SET_KEY_MAPS(table)
 end
 
 function GET_MAX_WIDTH(offset, multiple)
-  local width = GET_EDITOR_WIDTH()
+  local editor_width = GET_EDITOR_WIDTH()
   if multiple then
-    return math.floor(width * multiple)
+    return math.floor(editor_width * multiple)
   end
   offset = offset or 20
-  width = width - offset
-  return width > 0 and width or -width
+  local width = editor_width - offset
+  return width > 0 and width or editor_width
 end
 
 function GET_MAX_HEIGHT(offset, multiple)

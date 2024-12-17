@@ -135,6 +135,7 @@ local function get_fix_wrap_indent_opts(event)
   local not_avante = 'Avante' ~= event.match
   local opts = {
     wrap = true,
+    linebreak = false,
     tabstop = 2,
     softtabstop = 2,
     shiftwidth = 2,
