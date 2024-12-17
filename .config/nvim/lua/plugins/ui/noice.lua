@@ -44,7 +44,7 @@ end
 
 local function get_size(multiple)
   local max_width = GET_MAX_WIDTH(multiple)
-  local min_width = 10
+  local min_width = 15
   if min_width >= max_width then
     min_width = max_width - 2
   end
