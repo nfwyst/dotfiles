@@ -6,9 +6,13 @@ return {
   },
   cond = HAS_API_KEY,
   config = function()
+    ADD_CMP_SOURCE('minuet', { priority = 9 })
     require('minuet').setup({
       notify = false,
       provider = 'openai_fim_compatible',
+      cmp = {
+        enable_auto_complete = false,
+      },
       provider_options = {
         openai_fim_compatible = {
           model = 'deepseek-chat',
