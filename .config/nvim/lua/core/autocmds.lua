@@ -288,7 +288,8 @@ local function is_valid_file(bufnr, current_path, is_new_file)
 end
 
 local function get_extra_msg()
-  if IS_LEETING then
+  local width = GET_CURRENT_WIN_WIDTH()
+  if IS_LEETING or width <= 71 then
     return ''
   end
   return vim.fn.systemlist('hostname')[1]

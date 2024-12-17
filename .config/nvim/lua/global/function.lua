@@ -259,25 +259,34 @@ function GET_PROJECT_NAME(winid)
     return
   end
 
+  function caching_and_get_title(title, win_width, cache_key)
+    title = center_string_by_width(title, win_width, 1)
+    cache[cache_key] = title
+    return title
+  end
+
   return function(working_dir)
     local title = basename(working_dir)
     local working_dir_name = title
     local win_width = api.nvim_win_get_width(winid())
-    if not BAR_PATH then
-      return center_string_by_width(title, win_width, 1)
-    end
-
-    local cache_key = BAR_PATH .. win_width
+    local cache_key = (BAR_PATH or GET_CURRENT_BUFFER_PATH()) .. win_width
     local cached = cache[cache_key]
     if cached then
       return cached
     end
 
+    local single_title = caching_and_get_title(title, win_width, cache_key)
+    if not BAR_PATH then
+      return single_title
+    end
     working_dir = GET_PROJECT_ROOT(BAR_PATH)
-    title = basename(working_dir)
-    local child_dir_parent = GET_DIR_PATH(working_dir)
-    local parent_project_root = GET_PROJECT_ROOT(child_dir_parent)
+    if not working_dir then
+      return single_title
+    end
 
+    title = basename(working_dir)
+    local working_dir_parent = GET_DIR_PATH(working_dir)
+    local parent_project_root = GET_PROJECT_ROOT(working_dir_parent)
     if parent_project_root then
       local parent_name = basename(parent_project_root)
       title = parent_name .. '  ' .. title
@@ -285,9 +294,7 @@ function GET_PROJECT_NAME(winid)
       title = title .. '  ' .. working_dir_name
     end
 
-    title = center_string_by_width(title, win_width, 1)
-    cache[cache_key] = title
-    return title
+    return caching_and_get_title(title, win_width, cache_key)
   end
 end
 
@@ -639,6 +646,10 @@ end
 
 function GET_EDITOR_WIDTH()
   return vim.o.columns
+end
+
+function GET_CURRENT_WIN_WIDTH()
+  return fn.winwidth(GET_CURRENT_WIN())
 end
 
 function GET_EDITOR_HEIGHT()
