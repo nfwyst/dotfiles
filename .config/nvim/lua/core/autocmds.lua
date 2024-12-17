@@ -152,11 +152,10 @@ local function toggle_markview(bufnr, set_modifiable)
     local opt = { win = win }
     SET_OPT('modifiable', true, opt)
   end
-  RUN_IN_WINDOW(win, vim.cmd.startinsert)
+  local opt = { silent = true }
+  RUN_IN_BUFFER(bufnr, vim.cmd.startinsert, opt)
   SET_TIMEOUT(function()
-    if WIN_VALID(win) then
-      RUN_IN_WINDOW(win, vim.cmd.stopinsert)
-    end
+    RUN_IN_BUFFER(bufnr, vim.cmd.stopinsert, opt)
   end, 100)
 end
 
@@ -237,6 +236,15 @@ local filetype_to_runner = {
   end),
 }
 
+local function close_alpha()
+  vim.cmd('Alpha')
+  ALPHA_BUF = nil
+end
+
+local function on_invalid_alpha_buffer()
+  ALPHA_BUF = nil
+end
+
 local function close_alpha_when_open_file(bufnr)
   local buffer_path = GET_BUFFER_PATH(bufnr)
   local is_file_in_fs = IS_FILE_IN_FS(buffer_path)
@@ -245,14 +253,11 @@ local function close_alpha_when_open_file(bufnr)
     return
   end
   SET_TIMEOUT(function()
-    if not BUF_VALID(ALPHA_BUF) then
-      ALPHA_BUF = nil
-      return
-    end
-    RUN_IN_BUFFER(ALPHA_BUF, function()
-      vim.cmd('Alpha')
-      ALPHA_BUF = nil
-    end)
+    RUN_IN_BUFFER(
+      ALPHA_BUF,
+      close_alpha,
+      { on_invalid = on_invalid_alpha_buffer, silent = true }
+    )
   end, 10)
 end
 

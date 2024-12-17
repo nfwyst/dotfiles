@@ -889,10 +889,30 @@ function DISABLE_DIAGNOSTIC(bufnr)
   dst.enable(false, opt)
 end
 
-function RUN_IN_BUFFER(bufnr, callback)
+function RUN_IN_BUFFER(bufnr, callback, opt)
+  opt = opt or {}
+  if not BUF_VALID(bufnr) then
+    if opt.on_invalid then
+      opt.on_invalid()
+    end
+    if opt.silent then
+      return
+    end
+    return LOG_WARN('buf call', 'invalid buffer ' .. bufnr)
+  end
   api.nvim_buf_call(bufnr, callback)
 end
 
-function RUN_IN_WINDOW(win, callback)
+function RUN_IN_WINDOW(win, callback, opt)
+  opt = opt or {}
+  if not WIN_VALID(win) then
+    if opt.on_invalid then
+      opt.on_invalid()
+    end
+    if opt.silent then
+      return
+    end
+    return LOG_WARN('win call', 'invalid win ' .. win)
+  end
   api.nvim_win_call(win, callback)
 end
