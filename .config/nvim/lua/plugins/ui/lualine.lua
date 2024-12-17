@@ -7,7 +7,8 @@ local diagnostics = {
   update_in_insert = false,
   always_visible = true,
   cond = function()
-    return vim.diagnostic.is_enabled()
+    local bufnr = GET_CURRENT_BUFFER()
+    return GET_BUFFER_VARIABLE(bufnr, CONSTANTS.DST_INITIALIZED)
   end,
 }
 
