@@ -100,7 +100,7 @@ return {
           insert = '<C-s>',
         },
         files = {
-          add_current = '<leader>aiac',
+          add_current = '<leader>aiab',
         },
       },
       hints = {
