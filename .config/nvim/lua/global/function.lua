@@ -835,6 +835,9 @@ function ENABLE_CURSORLINE(opts, force)
     end
   end
   local function process(win)
+    if not WIN_VALID(win) then
+      return
+    end
     local opt = { win = win }
     if not GET_OPT('cursorline', opt) then
       SET_OPT('cursorline', true, opt)
