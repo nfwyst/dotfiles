@@ -21,11 +21,30 @@ function IS_DIRPATH(path)
   return fn.isdirectory(path) == 1
 end
 
-function ASSIGN(to, from)
-  for key, value in pairs(from) do
-    to[key] = value
+function KEYS_TO_CMD(keys, cmd)
+  cmd = cmd or {}
+  for _, key in ipairs(keys) do
+    if type(key[2]) == "string" then
+      cmd[#cmd + 1] = key.desc
+    end
   end
-  return to
+  return cmd
+end
+
+function NOTIFY(...)
+  local args = { ... }
+  defer(function()
+    vim.notify(unpack(args))
+  end, 0)
+end
+
+function GET_USER_INPUT(title, on_submit)
+  vim.ui.input({ prompt = title }, function(result)
+    if not result then
+      return
+    end
+    on_submit(result)
+  end)
 end
 
 function MAP(mode, from, to, opt)
@@ -66,6 +85,12 @@ function SET_OPTS(opts, scope)
   end
 end
 
+function SET_LOCAL_OPTS(opts, buf)
+  for k, v in pairs(opts) do
+    api.nvim_set_option_value(k, v, { buf = buf })
+  end
+end
+
 function WIN_CURSOR(win, value)
   if not value then
     return api.nvim_win_get_cursor(win)
@@ -75,5 +100,13 @@ end
 
 function PRESS_KEYS(keys, mode)
   local codes = api.nvim_replace_termcodes(keys, false, true, true)
-  vim.api.nvim_feedkeys(codes, mode, false)
+  api.nvim_feedkeys(codes, mode, false)
+end
+
+function BUF_COUNT(bufnr)
+  return api.nvim_buf_line_count(bufnr)
+end
+
+function BUF_LINES(bufnr, total_line)
+  return api.nvim_buf_get_lines(bufnr, 0, total_line, false)
 end

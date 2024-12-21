@@ -19,7 +19,7 @@ local function set_winbar(bufpath)
   vim.opt_local.winbar = title
 end
 
-CMD({ "BufWinEnter", "BufNewFile" }, {
+AUCMD({ "BufWinEnter", "BufNewFile" }, {
   group = GROUP("WinbarUpdate", { clear = true }),
   callback = function(event)
     local bufpath = BUF_PATH(event.buf)

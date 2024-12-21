@@ -179,7 +179,9 @@ function SET_OPT(k, v, config)
   local win = config.win
   if win then
     ---@diagnostic disable-next-line: deprecated
-    api.nvim_win_set_option(win, k, v)
+    if WIN_VALID(win) then
+      api.nvim_win_set_option(win, k, v)
+    end
     return
   end
   if not buf then

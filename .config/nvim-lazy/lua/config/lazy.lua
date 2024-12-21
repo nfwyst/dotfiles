@@ -20,7 +20,7 @@ local function install_pkg_manager()
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local command = { "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath }
   local output = fn.system(command)
-  local err = vim.v.shell_error ~= 0
+  local err = v.shell_error ~= 0
 
   if not err then
     vim.opt.rtp:prepend(lazypath)
@@ -64,6 +64,10 @@ require("lazy").setup({
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     { import = "plugins" },
     { import = "plugins.lsp" },
+    { import = "plugins.editor" },
+    { import = "plugins.ui" },
+    { import = "plugins.ai" },
+    { import = "plugins.lang" },
   },
   defaults = {
     version = nil,
