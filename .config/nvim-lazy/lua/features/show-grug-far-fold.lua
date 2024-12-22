@@ -12,6 +12,6 @@ AUCMD("FileType", {
     timer = defer(function()
       local win = fn.bufwinid(event.buf)
       vim.wo[win].statuscolumn = ""
-    end, 50)
+    end, 30)
   end,
 })

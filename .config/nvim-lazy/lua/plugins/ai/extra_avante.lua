@@ -35,7 +35,7 @@ local keys = {
   { "<leader>aB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
   { "<leader>ac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
   { "<leader>aH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
-  { "<leader>am", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
+  { "<leader>aM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
   { "<leader>aC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
   { "<leader>ae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
   { "<leader>ar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },

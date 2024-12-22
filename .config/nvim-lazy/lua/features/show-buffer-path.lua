@@ -19,6 +19,11 @@ local function set_winbar(bufpath)
   vim.opt_local.winbar = title
 end
 
+SET_HLS({
+  WinBar1 = { fg = "#04d1f9", bg = "#1E2030" },
+  WinBar2 = { fg = "#37f499", bg = "#1E2030" },
+})
+
 AUCMD({ "BufWinEnter", "BufNewFile" }, {
   group = GROUP("WinbarUpdate", { clear = true }),
   callback = function(event)

@@ -1,4 +1,5 @@
 require("features.show-buffer-path")
 require("features.remove-quickfix-item")
-require("features.indent-with-tab")
+require("features.reset_buffer")
 require("features.show-grug-far-fold")
+require("features.enable-cursorline-in-lazy-markdown")

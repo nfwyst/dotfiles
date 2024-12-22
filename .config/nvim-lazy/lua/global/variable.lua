@@ -4,12 +4,19 @@ _G.g = vim.g
 _G.keymap = vim.keymap
 _G.lsp = vim.lsp
 _G.levels = vim.log.levels
-_G.severity = vim.diagnostic.severity
+_G.diagnostic = vim.diagnostic
+_G.severity = diagnostic.severity
 _G.snippet = vim.snippet
 _G.v = vim.v
 _G.defer = vim.defer_fn
 _G.bo = vim.bo
-_G.assign = vim.list_extend
+_G.push = vim.list_extend
+_G.merge = vim.tbl_deep_extend
+_G.language = vim.treesitter.language
+_G.fs = vim.fs
+_G.uv = vim.uv
+_G.filter = vim.tbl_filter
+_G.contains = vim.tbl_contains
 
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
@@ -18,6 +25,12 @@ GROUP = api.nvim_create_augroup
 HAS_AI_KEY = os.getenv("DEEPSEEK_API_KEY")
 LINUX = jit.os == "Linux"
 DATA_PATH = fn.stdpath("data")
+MAX_FILE_LENGTH = 5000
+STAY_CENTER = true
+CONSTANTS = {
+  LINT_INITED = "LINT_INITED",
+  WIN_DIMED = "WIN_DIMED",
+}
 
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。

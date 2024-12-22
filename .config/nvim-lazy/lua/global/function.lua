@@ -110,3 +110,116 @@ end
 function BUF_LINES(bufnr, total_line)
   return api.nvim_buf_get_lines(bufnr, 0, total_line, false)
 end
+
+local white_list = {
+  help = true,
+  text = true,
+  markdown = true,
+  Avante = true,
+}
+function IS_BIG_FILE(bufnr)
+  local filetype = bo[bufnr].filetype
+  if white_list[filetype] then
+    return false
+  end
+  if filetype == "bigfile" then
+    return true
+  end
+  local line_numbers = BUF_COUNT(bufnr)
+  if line_numbers > MAX_FILE_LENGTH then
+    return true
+  end
+end
+
+function GET_GIT_ROOT(bufnr)
+  return fs.root(bufnr or CUR_BUF(), ".git")
+end
+
+function GET_MAX_WIDTH(offset, multiple)
+  local editor_width = vim.o.columns
+  if multiple then
+    return math.floor(editor_width * multiple)
+  end
+  local width = editor_width - (offset or 20)
+  return width > 0 and width or editor_width
+end
+
+function EXCLUDE_LIST(list, excludes)
+  return filter(function(item)
+    return not contains(excludes or {}, item)
+  end, list)
+end
+
+function ENABLE_CURSORLINE(bufnr)
+  local win = fn.bufwinid(bufnr)
+  vim.wo[win].cursorline = true
+end
+
+function RUN_IN_BUF(bufnr, callback, opt)
+  opt = opt or {}
+  if not api.nvim_buf_is_valid(bufnr) then
+    if opt.on_invalid then
+      opt.on_invalid()
+    end
+    if opt.silent then
+      return
+    end
+    return NOTIFY("RUN_IN_BUFFER: invalid buffer " .. bufnr, levels.ERROR)
+  end
+  api.nvim_buf_call(bufnr, callback)
+end
+
+function RUN_IN_WIN(win, callback, opt)
+  opt = opt or {}
+  if not api.nvim_win_is_valid(win) then
+    if opt.on_invalid then
+      opt.on_invalid()
+    end
+    if opt.silent then
+      return
+    end
+    return NOTIFY("RUN_IN_WIN: invalid win " .. win, levels.ERROR)
+  end
+  api.nvim_win_call(win, callback)
+end
+
+function BUF_VAR(bufnr, name, value)
+  if value then
+    return api.nvim_buf_set_var(bufnr, name, value)
+  end
+  local ok, value = pcall(api.nvim_buf_get_var, bufnr, name)
+  if ok then
+    return value
+  end
+end
+
+function FIND_FILE(file_or_dirs, opts)
+  opts = opts or {}
+  local bufpath = BUF_PATH(CUR_BUF())
+  local is_file = IS_FILEPATH(bufpath)
+  local from = opts.from
+  if not from and is_file then
+    from = bufpath
+  end
+  local path_wraper = fs.find(file_or_dirs, {
+    upward = true,
+    path = from,
+    stop = opts.to or HOME_PATH,
+    limit = 1,
+  })
+  return path_wraper[1]
+end
+
+function GET_HL(group_name)
+  return api.nvim_get_hl(0, { name = group_name })
+end
+
+function SET_HLS(highlights)
+  for group, highlight in pairs(highlights) do
+    if highlight.force == nil then
+      highlight.force = true
+    end
+    local old_value = GET_HL(group)
+    api.nvim_set_hl(0, group, merge("force", highlight, old_value))
+  end
+end

@@ -1,3 +1,3 @@
 require("global")
-require("config.lazy")
 require("features")
+require("config.lazy")

@@ -31,5 +31,3 @@ SET_OPTS({
   showcmd = false,
   breakindent = true,
 })
-
-lsp.set_log_level(levels.OFF)
