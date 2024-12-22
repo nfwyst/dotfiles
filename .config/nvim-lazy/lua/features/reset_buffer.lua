@@ -44,7 +44,7 @@ local function center(bufnr)
     RUN_IN_BUF(bufnr, function()
       vim.cmd("normal! zz")
     end)
-  end, 0)
+  end, 10)
 end
 
 local function disable_lint(bufnr)

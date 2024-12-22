@@ -2,6 +2,12 @@ return {
   "ibhagwan/fzf-lua",
   cmd = "FzfLua",
   opts = {
+    winopts = {
+      backdrop = 100,
+      preview = {
+        scrollbar = "border",
+      },
+    },
     oldfiles = {
       include_current_session = true,
     },

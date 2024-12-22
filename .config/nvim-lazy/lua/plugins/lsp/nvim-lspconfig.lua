@@ -63,7 +63,7 @@ return {
   init = function()
     lsp.set_log_level(levels.OFF)
   end,
-  opts = function()
+  opts = function(_, opts)
     override()
 
     local icons = LazyVim.config.icons.diagnostics
@@ -73,7 +73,7 @@ return {
     hl[md.textDocument_hover] = lsp.with(hl.hover, opt)
     hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, opt)
 
-    return {
+    local opt = {
       servers = get_servers(),
       diagnostics = {
         underline = false,
@@ -95,28 +95,6 @@ return {
           },
         },
       },
-      inlay_hints = {
-        enabled = false,
-        exclude = { "vue" },
-      },
-      codelens = {
-        enabled = false,
-      },
-      -- any global capabilities here
-      capabilities = {
-        workspace = {
-          fileOperations = {
-            didRename = true,
-            willRename = true,
-          },
-        },
-      },
-      -- options for vim.lsp.buf.format
-      -- bufnr and filter can be also overridden when specified
-      format = {
-        formatting_options = nil,
-        timeout_ms = nil,
-      },
       setup = {
         tailwindcss = function(_, opts)
           local tw = LazyVim.lsp.get_raw_config("tailwindcss")
@@ -134,5 +112,7 @@ return {
         -- end,
       },
     }
+
+    return merge("force", opts, opt)
   end,
 }

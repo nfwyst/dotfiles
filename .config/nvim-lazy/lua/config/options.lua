@@ -4,6 +4,7 @@ SET_OPTS({
   snacks_scroll = not LINUX,
   ai_cmp = false,
   editorconfig = true,
+  lazyvim_picker = "fzf",
 }, "g")
 
 SET_OPTS({
