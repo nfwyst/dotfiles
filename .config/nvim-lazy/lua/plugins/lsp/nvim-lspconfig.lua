@@ -48,7 +48,11 @@ end
 local virtual_text = {
   spacing = 4,
   source = "if_many",
-  prefix = "icons",
+  prefix = "",
+  suffix = "",
+  format = function(diagnostic)
+    return "● " .. diagnostic.message
+  end,
 }
 
 local opt = {
