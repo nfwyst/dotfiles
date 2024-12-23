@@ -3,7 +3,6 @@ local lsp_servers = {
   "lua_ls",
   "ts_ls",
   "cssls",
-  "gopls",
   "html",
   "yamlls",
   "tailwindcss",
@@ -12,6 +11,10 @@ local lsp_servers = {
   "bashls",
   "taplo",
 }
+
+if not LINUX then
+  PUSH(lsp_servers, "gopls")
+end
 
 local function get_servers()
   local servers = {}
@@ -54,6 +57,9 @@ local virtual_text = {
     return "● " .. diagnostic.message
   end,
 }
+if LINUX then
+  virtual_text = nil
+end
 
 local opt = {
   border = "rounded",
@@ -77,12 +83,12 @@ return {
     hl[md.textDocument_hover] = lsp.with(hl.hover, opt)
     hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, opt)
 
-    local opt = {
+    local override_opts = {
       servers = get_servers(),
       diagnostics = {
         underline = false,
         update_in_insert = false,
-        virtual_text = LINUX and false or virtual_text,
+        virtual_text = virtual_text or false,
         severity_sort = true,
         float = {
           focusable = false,
@@ -117,6 +123,6 @@ return {
       },
     }
 
-    return merge("force", opts, opt)
+    return merge("force", opts, override_opts)
   end,
 }

@@ -6,15 +6,20 @@ local ensure_installed = {
   "shfmt",
   "beautysh",
   "js-debug-adapter",
-  "stylua",
   "gitui",
 }
 
+if not LINUX then
+  PUSH(ensure_installed, "stylua")
+end
+
 return {
   "williamboman/mason.nvim",
-  opts = {
-    ensure_installed = ensure_installed,
-  },
+  opts = function()
+    return {
+      ensure_installed = ensure_installed,
+    }
+  end,
   keys = {
     {
       "<leader>gG",

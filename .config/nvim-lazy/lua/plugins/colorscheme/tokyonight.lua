@@ -4,7 +4,7 @@ return {
   opts = function(_, opts)
     local opt = {
       light_style = "day",
-      transparent = vim.g.transparent_enabled,
+      transparent = g.transparent_enabled,
       styles = {
         floats = "transparent",
         sidebars = "transparent",

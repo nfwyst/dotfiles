@@ -220,6 +220,10 @@ function SET_HLS(highlights)
       highlight.force = true
     end
     local old_value = GET_HL(group)
-    api.nvim_set_hl(0, group, merge("force", highlight, old_value))
+    api.nvim_set_hl(0, group, merge("force", old_value, highlight))
   end
+end
+
+function PUSH(dest, from)
+  dest[#dest + 1] = from
 end

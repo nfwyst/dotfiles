@@ -5,6 +5,7 @@ SET_OPTS({
   ai_cmp = false,
   editorconfig = true,
   lazyvim_picker = "fzf",
+  transparent_enabled = true,
 }, "g")
 
 SET_OPTS({
@@ -31,4 +32,5 @@ SET_OPTS({
   undolevels = 1000,
   showcmd = false,
   breakindent = true,
+  background = "dark",
 })

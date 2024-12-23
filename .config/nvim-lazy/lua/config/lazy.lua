@@ -79,7 +79,7 @@ require("lazy").setup({
     hererocks = true,
   },
   git = {
-    timeout = 300,
+    timeout = 1000,
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
   ui = { border = "rounded", backdrop = 100, wrap = false },

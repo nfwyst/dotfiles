@@ -1,5 +1,6 @@
 return {
   "tadaa/vimade",
+  cond = not LINUX,
   event = "VeryLazy",
   config = function()
     require("vimade").setup({
