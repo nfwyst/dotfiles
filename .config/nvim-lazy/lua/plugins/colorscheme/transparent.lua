@@ -20,7 +20,7 @@ local function set_custom_highlight()
   })
 end
 
-set_custom_highlight()
+defer(set_custom_highlight, 0)
 
 return {
   "xiyaowong/transparent.nvim",
@@ -66,10 +66,9 @@ return {
         "LineNr",
         "LineNrBelow",
         "MatchParen",
+        "iCursor",
+        "rCursor",
       },
-      -- on_clear = function()
-      --   defer(set_custom_highlight, 0)
-      -- end,
     })
   end,
 }

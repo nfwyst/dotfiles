@@ -17,6 +17,7 @@ _G.fs = vim.fs
 _G.uv = vim.uv
 _G.filter = vim.tbl_filter
 _G.contains = vim.tbl_contains
+_G.env = vim.env
 
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
