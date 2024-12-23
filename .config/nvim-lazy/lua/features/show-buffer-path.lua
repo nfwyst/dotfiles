@@ -9,7 +9,7 @@ local function get_buffer_count()
 end
 
 local function set_winbar(bufpath)
-  local title = "%#WinBar1#%m "
+  local title = "%#WinBar1#%m"
     .. "%#WinBar2#("
     .. get_buffer_count()
     .. ") "
