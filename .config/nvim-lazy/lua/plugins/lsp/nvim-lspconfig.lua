@@ -16,9 +16,9 @@ if not LINUX then
   PUSH(lsp_servers, "gopls")
 end
 
-local function get_servers()
+local function get_servers(extra_servers)
   local servers = {}
-  for _, name in ipairs(lsp_servers) do
+  for _, name in ipairs(push(lsp_servers, extra_servers)) do
     local path = "plugins.lsp.settings." .. name
     local ok, settings = pcall(require, path)
     local config = {}
@@ -83,7 +83,7 @@ return {
     hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, opt)
 
     local override_opts = {
-      servers = get_servers(),
+      servers = get_servers(opts.servers or {}),
       diagnostics = {
         underline = false,
         update_in_insert = false,
@@ -105,14 +105,17 @@ return {
         },
       },
       setup = {
-        tailwindcss = function(_, opts)
+        tailwindcss = function(_, tw_opts)
           local tw = LazyVim.lsp.get_raw_config("tailwindcss")
-          opts.filetypes = opts.filetypes or {}
-          push(opts.filetypes, tw.default_config.filetypes)
+          tw_opts.filetypes = tw_opts.filetypes or {}
+          push(tw_opts.filetypes, tw.default_config.filetypes)
 
-          opts.filetypes = EXCLUDE_LIST(opts.filetypes, opts.filetypes_exclude)
+          tw_opts.filetypes = EXCLUDE_LIST(tw_opts.filetypes, tw_opts.filetypes_exclude)
 
-          push(opts.filetypes, opts.filetypes_include or {})
+          push(tw_opts.filetypes, tw_opts.filetypes_include or {})
+        end,
+        vtsls = function()
+          return true
         end,
         -- example to setup with typescript.nvim
         -- tsserver = function(_, opts)
