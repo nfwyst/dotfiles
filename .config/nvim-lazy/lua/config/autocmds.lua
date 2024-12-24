@@ -12,5 +12,7 @@ AUCMD("User", {
   once = true,
   callback = function()
     pcall(vim.keymap.del, "n", "<leader>gL")
+    pcall(vim.keymap.del, { "n", "v" }, "<leader>cf")
+    pcall(vim.keymap.del, { "n", "v" }, "<leader>cF")
   end,
 })

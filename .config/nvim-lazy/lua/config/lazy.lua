@@ -13,7 +13,7 @@ local function install_pkg_manager()
   local is_dir = IS_DIRPATH(lazypath)
 
   if is_dir then
-    vim.opt.rtp:prepend(lazypath)
+    opt.rtp:prepend(lazypath)
     return true
   end
 
@@ -23,7 +23,7 @@ local function install_pkg_manager()
   local err = v.shell_error ~= 0
 
   if not err then
-    vim.opt.rtp:prepend(lazypath)
+    opt.rtp:prepend(lazypath)
     return true
   end
 

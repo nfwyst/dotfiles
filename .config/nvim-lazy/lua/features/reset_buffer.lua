@@ -28,12 +28,7 @@ local function sync_tab(bufnr)
   if not is_tab_indent(bufnr) then
     return
   end
-  SET_LOCAL_OPTS({
-    expandtab = false,
-    tabstop = 4,
-    softtabstop = 4,
-    shiftwidth = 4,
-  })
+  SET_TAB(4, false)
 end
 
 local function center(bufnr)

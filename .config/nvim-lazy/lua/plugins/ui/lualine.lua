@@ -112,7 +112,12 @@ return {
           },
           {
             require("lazy.status").updates,
-            cond = not LINUX and require("lazy.status").has_updates,
+            cond = function()
+              if LINUX then
+                return false
+              end
+              return require("lazy.status").has_updates()
+            end,
             color = function()
               return { fg = Snacks.util.color("Special") }
             end,

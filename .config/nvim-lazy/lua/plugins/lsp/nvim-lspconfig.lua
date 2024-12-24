@@ -68,11 +68,10 @@ local opt = {
   max_width = GET_MAX_WIDTH(),
 }
 
+lsp.set_log_level(levels.OFF)
+
 return {
   "neovim/nvim-lspconfig",
-  init = function()
-    lsp.set_log_level(levels.OFF)
-  end,
   opts = function(_, opts)
     override()
 

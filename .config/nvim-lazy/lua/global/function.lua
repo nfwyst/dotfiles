@@ -227,3 +227,12 @@ end
 function PUSH(dest, from)
   dest[#dest + 1] = from
 end
+
+function SET_TAB(level, expand)
+  SET_LOCAL_OPTS({
+    expandtab = expand,
+    tabstop = level,
+    softtabstop = level,
+    shiftwidth = level,
+  })
+end

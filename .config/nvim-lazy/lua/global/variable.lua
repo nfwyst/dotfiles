@@ -18,6 +18,8 @@ _G.uv = vim.uv
 _G.filter = vim.tbl_filter
 _G.contains = vim.tbl_contains
 _G.env = vim.env
+_G.opt = vim.opt
+_G.opt_local = vim.opt_local
 
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
@@ -28,6 +30,8 @@ LINUX = jit.os == "Linux"
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 STAY_CENTER = true
+ESLINT_BIN_NAME = "eslint_d"
+ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 CONSTANTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
@@ -63,3 +67,18 @@ PROMPT = [[
 请记住，你的目标不仅是帮助我编写正确的代码，而且要帮助我理解基本原理并提高我的编程技能。
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
+
+ESLINT_CONFIGS = {
+  ".eslintrc.js",
+  ".eslintrc.cjs",
+  ".eslintrc.yaml",
+  ".eslintrc.yml",
+  ".eslintrc.json",
+  "eslint.config.js",
+  "eslint.config.mjs",
+  "eslint.config.cjs",
+  "eslint.config.ts",
+  "eslint.config.mts",
+  "eslint.config.cts",
+  "package.json",
+}

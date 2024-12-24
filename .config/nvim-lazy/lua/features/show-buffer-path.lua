@@ -16,7 +16,7 @@ local function set_winbar(bufpath)
     .. "%#WinBar1#"
     .. SHORT_HOME_PATH(bufpath)
     .. "%*%=%#WinBar2#"
-  vim.opt_local.winbar = title
+  opt_local.winbar = title
 end
 
 AUCMD({ "BufWinEnter", "BufNewFile" }, {

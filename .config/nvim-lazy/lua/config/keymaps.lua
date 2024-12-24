@@ -19,6 +19,15 @@ MAPS({
     { from = "p", to = paste },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
+    {
+      from = "<leader>ct",
+      to = function()
+        SET_TAB(2, true)
+      end,
+      opt = {
+        desc = "Fix Tab Level",
+      },
+    },
   },
   [{ "v", "x" }] = {
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },

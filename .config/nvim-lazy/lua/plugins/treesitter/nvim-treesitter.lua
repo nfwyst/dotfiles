@@ -1,17 +1,16 @@
+vim.filetype.add({
+  filename = {
+    ["vifmrc"] = "vim",
+  },
+  pattern = {
+    [".*/waybar/config"] = "jsonc",
+    ["%.env%.[%w_.-]+"] = "sh",
+  },
+})
+language.register("bash", "zsh")
+
 return {
   "nvim-treesitter/nvim-treesitter",
-  init = function()
-    vim.filetype.add({
-      filename = {
-        ["vifmrc"] = "vim",
-      },
-      pattern = {
-        [".*/waybar/config"] = "jsonc",
-        ["%.env%.[%w_.-]+"] = "sh",
-      },
-    })
-    language.register("bash", "zsh")
-  end,
   opts = {
     ensure_installed = {
       "css",

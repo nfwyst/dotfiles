@@ -15,10 +15,9 @@ end
 
 return {
   "williamboman/mason.nvim",
-  opts = function()
-    return {
-      ensure_installed = ensure_installed,
-    }
+  opts = function(_, opts)
+    opts.ensure_installed = ensure_installed
+    return opts
   end,
   keys = {
     {

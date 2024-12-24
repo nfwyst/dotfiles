@@ -1,20 +1,8 @@
-local fe = { "eslint_d" }
-local eslint_configs = {
-  ".eslintrc.js",
-  ".eslintrc.cjs",
-  ".eslintrc.yaml",
-  ".eslintrc.yml",
-  ".eslintrc.json",
-  "eslint.config.js",
-  "eslint.config.mjs",
-  "eslint.config.cjs",
-  "eslint.config.ts",
-  "eslint.config.mts",
-  "eslint.config.cts",
-  "package.json",
-}
+local eslint = { "eslint_d" }
+local lint_events = "BufWritePost"
 
-local function enable_lint(bufnr)
+local function enable_lint(event)
+  local bufnr = event.buf
   local opt = { bufnr = bufnr }
   if diagnostic.is_enabled(opt) then
     return
@@ -23,54 +11,38 @@ local function enable_lint(bufnr)
   BUF_VAR(bufnr, CONSTANTS.LINT_INITED, true)
 end
 
-AUCMD("BufWritePost", {
+AUCMD(lint_events, {
   group = GROUP("PostLint", { clear = true }),
-  callback = function(event)
-    enable_lint(event.buf)
-    vim.cmd.Lint()
-  end,
+  callback = enable_lint,
 })
 
-local function init(lint)
-  CMD("Lint", function()
-    pcall(lint.try_lint)
-  end, { desc = "Run linter" })
-end
+env.ESLINT_D_PPID = fn.getpid()
 
 return {
   "mfussenegger/nvim-lint",
-  cmd = "Lint",
-  init = function()
-    env.ESLINT_D_PPID = fn.getpid()
-  end,
   opts = function(_, opts)
-    local lint = require("lint")
-
-    local eslint_linter = lint.linters.eslint_d
+    local eslint_linter = require("lint").linters.eslint_d
     ---@diagnostic disable-next-line: assign-type-mismatch
     eslint_linter.cmd = function()
-      local bin_name = "eslint_d"
-      local bin_path = DATA_PATH .. "/mason/bin/" .. bin_name
-      if IS_FILEPATH(bin_path) then
-        return bin_path
+      if IS_FILEPATH(ESLINT_BIN_PATH) then
+        return ESLINT_BIN_PATH
       end
-      return bin_name
+      return ESLINT_BIN_NAME
     end
     push(eslint_linter.args, {
       "--config",
       function()
-        return FIND_FILE(eslint_configs)
+        return FIND_FILE(ESLINT_CONFIGS)
       end,
     })
 
-    init(lint)
-
+    opts.events = lint_events
     opts.linters_by_ft = {
-      javascript = fe,
-      typescript = fe,
-      typescriptreact = fe,
-      javascriptreact = fe,
-      svelte = fe,
+      javascript = eslint,
+      typescript = eslint,
+      typescriptreact = eslint,
+      javascriptreact = eslint,
+      svelte = eslint,
       sh = { "shellcheck" },
       zsh = { "zsh" },
       markdown = { "vale" },
