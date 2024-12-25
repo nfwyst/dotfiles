@@ -1,7 +1,7 @@
 local function get_buffer_count(on_travel)
   local count = 0
   for _, info in ipairs(BUF_INFO()) do
-    if info.listed == 1 then
+    if IS_FILE_BUF_LISTED(info) then
       local should_count = on_travel(info)
       if should_count then
         count = count + 1
@@ -35,7 +35,7 @@ AUCMD({ "BufWinEnter", "BufNewFile" }, {
   group = GROUP("WinbarUpdate", { clear = true }),
   callback = function(event)
     local bufnr = event.buf
-    if bo[bufnr].buflisted then
+    if IS_FILE_BUF_LISTED(bufnr) then
       set_winbar(BUF_PATH(bufnr), bufnr)
     end
   end,

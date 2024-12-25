@@ -17,6 +17,17 @@ function IS_FILEPATH(path)
   return fn.filereadable(path) == 1
 end
 
+function IS_FILE_BUF_LISTED(bufnr_or_info)
+  local bufinfo = bufnr_or_info
+  if type(bufnr_or_info) == "number" then
+    bufinfo = BUF_INFO(bufnr_or_info)
+  end
+  if bufinfo.listed == 0 then
+    return false
+  end
+  return IS_FILEPATH(bufinfo.name)
+end
+
 function IS_DIRPATH(path)
   return fn.isdirectory(path) == 1
 end
@@ -197,7 +208,7 @@ function FIND_FILE(file_or_dirs, opts)
   opts = opts or {}
   local bufinfo = BUF_INFO(CUR_BUF())
   local from = opts.from
-  if not from and bufinfo.listed == 1 then
+  if not from and IS_FILE_BUF_LISTED(bufinfo) then
     from = bufinfo.name
   end
   local path_wraper = fs.find(file_or_dirs, {
