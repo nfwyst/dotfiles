@@ -7,6 +7,8 @@ local ensure_installed = {
   "beautysh",
   "js-debug-adapter",
   "gitui",
+  "markdown-toc",
+  "markdownlint-cli2",
 }
 
 if not LINUX then

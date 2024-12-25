@@ -7,7 +7,7 @@ local function paste()
   if is_copy_line then
     local win = CUR_WIN()
     local row, col = unpack(WIN_CURSOR(win))
-    vim.cmd.put()
+    cmd.put()
     return WIN_CURSOR(win, { row + 1, col })
   end
 
@@ -37,7 +37,7 @@ MAPS({
     {
       from = "jk",
       to = function()
-        vim.cmd.stopinsert()
+        cmd.stopinsert()
         snippet.stop()
       end,
     },

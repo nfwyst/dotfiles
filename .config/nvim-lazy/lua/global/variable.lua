@@ -10,6 +10,7 @@ _G.snippet = vim.snippet
 _G.v = vim.v
 _G.defer = vim.defer_fn
 _G.bo = vim.bo
+_G.wo = vim.wo
 _G.push = vim.list_extend
 _G.merge = vim.tbl_deep_extend
 _G.language = vim.treesitter.language
@@ -20,6 +21,7 @@ _G.contains = vim.tbl_contains
 _G.env = vim.env
 _G.opt = vim.opt
 _G.opt_local = vim.opt_local
+_G.cmd = vim.cmd
 
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd

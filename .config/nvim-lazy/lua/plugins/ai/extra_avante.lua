@@ -27,7 +27,7 @@ local keys = {
     "<leader>aa",
     function()
       GET_USER_INPUT("question", function(question)
-        vim.cmd("AvanteAsk " .. question)
+        cmd("AvanteAsk " .. question)
       end)
     end,
     desc = "AvanteAsk",

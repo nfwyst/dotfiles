@@ -195,11 +195,10 @@ end
 
 function FIND_FILE(file_or_dirs, opts)
   opts = opts or {}
-  local bufpath = BUF_PATH(CUR_BUF())
-  local is_file = IS_FILEPATH(bufpath)
+  local bufinfo = BUF_INFO(CUR_BUF())
   local from = opts.from
-  if not from and is_file then
-    from = bufpath
+  if not from and bufinfo.listed == 1 then
+    from = bufinfo.name
   end
   local path_wraper = fs.find(file_or_dirs, {
     upward = true,

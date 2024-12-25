@@ -26,7 +26,11 @@ local lsps = function()
   for _, client in pairs(clients) do
     PUSH(names, client.name)
   end
-  return "󱓞 " .. table.concat(names, "•")
+  local result = table.concat(names, "•")
+  if result == "" then
+    return ""
+  end
+  return "󱓞 " .. result
 end
 
 return {

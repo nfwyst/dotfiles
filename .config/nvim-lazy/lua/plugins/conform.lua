@@ -2,7 +2,6 @@ local fixing = false
 
 local fixer = { "eslint_d" }
 local formatter = { "prettierd" }
-local clang = { "clang_format" }
 
 local function fix_or_format()
   if fixing then
@@ -75,8 +74,6 @@ return {
         ["markdown"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
         ["markdown.mdx"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
         nu = { "nufmt" },
-        c = clang,
-        cpp = clang,
         sh = { "shfmt" },
         zsh = { "beautysh" },
         lua = { "stylua" },
