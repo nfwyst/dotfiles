@@ -7,12 +7,22 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
+local keys_to_delete = {
+  n = { "<leader>gL" },
+  [{ "n", "v" }] = {
+    "<leader>cf",
+    "<leader>cF",
+  },
+}
+
 AUCMD("User", {
   pattern = "LazyVimKeymaps",
   once = true,
   callback = function()
-    pcall(vim.keymap.del, "n", "<leader>gL")
-    pcall(vim.keymap.del, { "n", "v" }, "<leader>cf")
-    pcall(vim.keymap.del, { "n", "v" }, "<leader>cF")
+    for mode, keys in pairs(keys_to_delete) do
+      for _, key in ipairs(keys) do
+        pcall(keymap.del, mode, key)
+      end
+    end
   end,
 })

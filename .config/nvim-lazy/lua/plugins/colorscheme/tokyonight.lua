@@ -20,6 +20,6 @@ return {
         colors.fg_sidebar = fg_dark
       end,
     }
-    return merge("force", opts, opt)
+    return merge(opts, opt)
   end,
 }

@@ -24,11 +24,26 @@ AUCMD("User", {
   end,
 })
 
+local function set_tab(level, expand)
+  SET_LOCAL_OPTS({
+    expandtab = expand,
+    tabstop = level,
+    softtabstop = level,
+    shiftwidth = level,
+  })
+end
+
 local function sync_tab(bufnr)
   if not is_tab_indent(bufnr) then
     return
   end
-  SET_TAB(4, false)
+  set_tab(4, false)
+  MAP("n", "<leader>ct", function()
+    set_tab(2, true)
+  end, {
+    desc = "Fix Tab Level",
+    buffer = bufnr,
+  })
 end
 
 local function center(bufnr)

@@ -17,7 +17,7 @@ function IS_FILEPATH(path)
   return fn.filereadable(path) == 1
 end
 
-function IS_FILE_BUF_LISTED(bufnr_or_info)
+function IS_FILE_BUF_LISTED(bufnr_or_info, is_new)
   local bufinfo = bufnr_or_info
   if type(bufnr_or_info) == "number" then
     bufinfo = BUF_INFO(bufnr_or_info)
@@ -25,7 +25,7 @@ function IS_FILE_BUF_LISTED(bufnr_or_info)
   if bufinfo.listed == 0 then
     return false
   end
-  return IS_FILEPATH(bufinfo.name)
+  return is_new or IS_FILEPATH(bufinfo.name)
 end
 
 function IS_DIRPATH(path)
@@ -230,19 +230,10 @@ function SET_HLS(highlights)
       highlight.force = true
     end
     local old_value = GET_HL(group)
-    api.nvim_set_hl(0, group, merge("force", old_value, highlight))
+    api.nvim_set_hl(0, group, merge(old_value, highlight))
   end
 end
 
 function PUSH(dest, from)
   dest[#dest + 1] = from
-end
-
-function SET_TAB(level, expand)
-  SET_LOCAL_OPTS({
-    expandtab = expand,
-    tabstop = level,
-    softtabstop = level,
-    shiftwidth = level,
-  })
 end

@@ -12,7 +12,7 @@ end
 
 local function setup_eslint()
   local eslint_d = require("conform.formatters.eslint_d")
-  merge("force", eslint_d, {
+  assign(eslint_d, {
     command = ESLINT_BIN_PATH,
     cwd = require("conform.util").root_file(ESLINT_CONFIGS),
     require_cwd = true,
@@ -24,6 +24,11 @@ local function setup_prettier()
   prettierd.command = DATA_PATH .. "/mason/bin/prettierd"
 end
 
+local format_opt = {
+  timeout_ms = 1000,
+  async = true,
+}
+
 return {
   "stevearc/conform.nvim",
   keys = {
@@ -31,7 +36,9 @@ return {
       "<leader>cF",
       function()
         fixing = false
-        require("conform").format({ formatters = { "injected" } })
+        require("conform").format(merge(format_opt, {
+          formatters = { "injected" },
+        }))
       end,
       mode = { "n", "v" },
       desc = "Format Injected Langs",
@@ -49,7 +56,7 @@ return {
       "<leader>cL",
       function()
         fixing = true
-        require("conform").format()
+        require("conform").format(format_opt)
       end,
     },
   },
@@ -94,6 +101,6 @@ return {
         end,
       },
     }
-    return merge("force", opts, opt)
+    return merge(opts, opt)
   end,
 }

@@ -14,7 +14,7 @@ return {
       new_config.settings.json.schemas = schemas
     end
 
-    merge("force", schemas, require("schemastore").yaml.schemas())
+    assign(schemas, require("schemastore").yaml.schemas())
   end,
   settings = {
     redhat = { telemetry = { enabled = false } },

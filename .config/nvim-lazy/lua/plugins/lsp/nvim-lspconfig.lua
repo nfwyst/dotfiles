@@ -10,15 +10,16 @@ local lsp_servers = {
   "svelte",
   "bashls",
   "taplo",
+  "vtsls",
 }
 
 if not LINUX then
   PUSH(lsp_servers, "gopls")
 end
 
-local function get_servers(extra_servers)
+local function get_servers()
   local servers = {}
-  for _, name in ipairs(push(lsp_servers, extra_servers)) do
+  for _, name in ipairs(lsp_servers) do
     local path = "plugins.lsp.settings." .. name
     local ok, settings = pcall(require, path)
     local config = {}
@@ -61,7 +62,7 @@ if LINUX then
   virtual_text = nil
 end
 
-local opt = {
+local ui_opt = {
   border = "rounded",
   width = "auto",
   silent = true,
@@ -79,11 +80,11 @@ return {
     local md = lsp.protocol.Methods
     local hl = lsp.handlers
 
-    hl[md.textDocument_hover] = lsp.with(hl.hover, opt)
-    hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, opt)
+    hl[md.textDocument_hover] = lsp.with(hl.hover, ui_opt)
+    hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, ui_opt)
 
-    local override_opts = {
-      servers = get_servers(opts.servers or {}),
+    local opt = {
+      servers = get_servers(),
       diagnostics = {
         underline = false,
         update_in_insert = false,
@@ -104,6 +105,12 @@ return {
           },
         },
       },
+      inlay_hints = {
+        enabled = false,
+      },
+      codelens = {
+        enabled = false,
+      },
       setup = {
         tailwindcss = function(_, tw_opts)
           local tw = LazyVim.lsp.get_raw_config("tailwindcss")
@@ -117,14 +124,12 @@ return {
         vtsls = function()
           return true
         end,
-        -- example to setup with typescript.nvim
-        -- tsserver = function(_, opts)
-        --   require("typescript").setup({ server = opts })
-        --   return true
-        -- end,
+        ts_ls = function()
+          return true
+        end,
       },
     }
 
-    return merge("force", opts, override_opts)
+    return merge(opts, opt)
   end,
 }

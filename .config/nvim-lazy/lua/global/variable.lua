@@ -12,7 +12,6 @@ _G.defer = vim.defer_fn
 _G.bo = vim.bo
 _G.wo = vim.wo
 _G.push = vim.list_extend
-_G.merge = vim.tbl_deep_extend
 _G.language = vim.treesitter.language
 _G.fs = vim.fs
 _G.uv = vim.uv
@@ -22,6 +21,17 @@ _G.env = vim.env
 _G.opt = vim.opt
 _G.opt_local = vim.opt_local
 _G.cmd = vim.cmd
+_G.filter = vim.tbl_filter
+_G.islist = vim.islist
+_G.merge = function(...)
+  return vim.tbl_deep_extend("force", ...)
+end
+_G.assign = function(dest, from)
+  for key, value in pairs(from) do
+    dest[key] = value
+  end
+  return dest
+end
 
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd

@@ -159,6 +159,6 @@ return {
       extensions = { "lazy", "fzf" },
     }
 
-    return merge("force", opts, opt)
+    return merge(opts, opt)
   end,
 }
