@@ -1,12 +1,11 @@
 return {
   on_new_config = function(new_config)
-    local schemas = new_config.settings.json.schemas
-    if not schemas then
-      schemas = {}
-      new_config.settings.json.schemas = schemas
+    local json = new_config.settings.json
+    if not json.schemas then
+      json.schemas = {}
     end
 
-    push(schemas, require("schemastore").json.schemas())
+    push_list(json.schemas, require("schemastore").json.schemas())
   end,
   settings = {
     json = {

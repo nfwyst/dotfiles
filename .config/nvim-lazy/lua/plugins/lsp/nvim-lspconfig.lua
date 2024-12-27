@@ -36,7 +36,7 @@ local function override()
   windows.default_options.border = "rounded"
 
   local keys = require("lazyvim.plugins.lsp.keymaps").get()
-  push(keys, {
+  push_list(keys, {
     { "K", false },
     { "<c-k>", false, mode = "i" },
     {
@@ -115,11 +115,11 @@ return {
         tailwindcss = function(_, tw_opts)
           local tw = LazyVim.lsp.get_raw_config("tailwindcss")
           tw_opts.filetypes = tw_opts.filetypes or {}
-          push(tw_opts.filetypes, tw.default_config.filetypes)
+          push_list(tw_opts.filetypes, tw.default_config.filetypes)
 
           tw_opts.filetypes = EXCLUDE_LIST(tw_opts.filetypes, tw_opts.filetypes_exclude)
 
-          push(tw_opts.filetypes, tw_opts.filetypes_include or {})
+          push_list(tw_opts.filetypes, tw_opts.filetypes_include or {})
         end,
         vtsls = function()
           return true

@@ -1,7 +1,7 @@
-local function get_buffer_count(on_travel)
+local function get_buf_count(get_should_count)
   local count = 0
   for _, info in ipairs(BUF_INFO()) do
-    local should_count = on_travel(info)
+    local should_count = get_should_count(info)
     if should_count then
       count = count + 1
     end
@@ -9,43 +9,7 @@ local function get_buffer_count(on_travel)
   return count
 end
 
-local function buf_has_references(bufinfo)
-  local bufnr = bufinfo.bufnr
-  if #bufinfo.windows then
-    return true
-  end
-
-  if fn.bufnr("#") == bufnr then
-    return true
-  end
-
-  local qf_lists = fn.getqflist()
-  for _, item in ipairs(qf_lists) do
-    if item.bufnr == bufnr then
-      return true
-    end
-  end
-
-  local jumplist = fn.getjumplist()
-  for _, jump in ipairs(jumplist[1]) do
-    if jump.bufnr == bufnr then
-      return true
-    end
-  end
-
-  for _, win in ipairs(api.nvim_list_wins()) do
-    local loc_list = fn.getloclist(win)
-    for _, item in ipairs(loc_list) do
-      if item.bufnr == bufnr then
-        return true
-      end
-    end
-  end
-
-  return false
-end
-
-local function destroy_buffer(bufnr)
+local function destroy_buf(bufnr)
   local method = "textDocument/didClose"
   local text_document_identifier = lsp.util.make_text_document_params(bufnr)
   local params = { textDocument = text_document_identifier }
@@ -58,34 +22,35 @@ local function destroy_buffer(bufnr)
     lsp.buf_detach_client(bufnr, client.id)
   end
 
-  api.nvim_buf_delete(bufnr, { force = true })
+  Snacks.bufdelete(bufnr)
+end
+
+local function make_get_should_count(cur_buf, is_new)
+  return function(bufinfo)
+    local is_file_listed = IS_FILE_BUF_LISTED(bufinfo, is_new)
+    if not is_file_listed then
+      return false
+    end
+    local bufnr = bufinfo.bufnr
+    local should_count = bufnr == cur_buf or bufinfo.changed == 1
+    if not should_count then
+      destroy_buf(bufnr)
+    end
+    return should_count
+  end
 end
 
 local function set_winbar(bufnr, is_new)
-  local function on_travel(bufinfo)
-    local should_travel = is_new or IS_FILE_BUF_LISTED(bufinfo)
-    if not should_travel then
-      return false
-    end
-    local buf = bufinfo.bufnr
-    local is_cur_buf = buf == bufnr
-    local is_changed = bo[buf].modified
-    local has_refs = buf_has_references(bufinfo)
-    local should_count = is_cur_buf or is_changed or has_refs
-    if should_count then
-      return should_count
-    end
-    destroy_buffer(buf)
-  end
-
+  local get_should_count = make_get_should_count(bufnr, is_new)
   local bufpath = BUF_PATH(bufnr)
   local title = "%#WinBar1#%m"
     .. "%#WinBar2#("
-    .. get_buffer_count(on_travel)
+    .. get_buf_count(get_should_count)
     .. ") "
     .. "%#WinBar1#"
     .. SHORT_HOME_PATH(bufpath)
     .. "%*%=%#WinBar2#"
+
   opt_local.winbar = title
 end
 
@@ -95,7 +60,9 @@ AUCMD({ "BufWinEnter", "BufNewFile" }, {
     local bufnr = event.buf
     local is_new = event.event == "BufNewFile"
     if IS_FILE_BUF_LISTED(bufnr, is_new) then
-      set_winbar(bufnr, is_new)
+      defer(function()
+        set_winbar(bufnr, is_new)
+      end, 0)
     end
   end,
 })

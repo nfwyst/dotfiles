@@ -29,7 +29,7 @@ return {
       end
       return ESLINT_BIN_NAME
     end
-    push(eslint_linter.args, {
+    push_list(eslint_linter.args, {
       "--config",
       function()
         return FIND_FILE(ESLINT_CONFIGS)

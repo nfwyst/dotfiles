@@ -8,13 +8,12 @@ return {
     },
   },
   on_new_config = function(new_config)
-    local schemas = new_config.settings.json.schemas
-    if not schemas then
-      schemas = {}
-      new_config.settings.json.schemas = schemas
+    local json = new_config.settings.json
+    if not json.schemas then
+      json.schemas = {}
     end
 
-    assign(schemas, require("schemastore").yaml.schemas())
+    json.schemas = merge(json.schemas, require("schemastore").yaml.schemas())
   end,
   settings = {
     redhat = { telemetry = { enabled = false } },
