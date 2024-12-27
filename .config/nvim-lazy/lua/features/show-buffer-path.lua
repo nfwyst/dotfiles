@@ -62,7 +62,7 @@ AUCMD({ "BufWinEnter", "BufNewFile" }, {
     if IS_FILE_BUF_LISTED(bufnr, is_new) then
       defer(function()
         set_winbar(bufnr, is_new)
-      end, 0)
+      end, 100)
     end
   end,
 })

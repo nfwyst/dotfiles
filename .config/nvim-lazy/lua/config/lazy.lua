@@ -71,6 +71,7 @@ require("lazy").setup({
     { import = "plugins.lang" },
     { import = "plugins.treesitter" },
     { import = "plugins.util" },
+    { import = "plugins.coding" },
   },
   defaults = {
     version = nil,

@@ -1,7 +1,7 @@
 SET_OPTS({
   lazyvim_blink_main = true,
   snacks_animate = not LINUX,
-  snacks_scroll = not LINUX,
+  snacks_scroll = false,
   ai_cmp = false,
   editorconfig = true,
   lazyvim_picker = "fzf",

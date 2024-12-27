@@ -1,25 +1,39 @@
 return {
   "ibhagwan/fzf-lua",
   cmd = "FzfLua",
-  opts = {
-    winopts = {
-      backdrop = 100,
-      preview = {
-        scrollbar = "border",
+  opts = function(_, opts)
+    local acts = require("fzf-lua.actions")
+    local actions = {
+      ["ctrl-i"] = { acts.toggle_ignore },
+      ["ctrl-h"] = { acts.toggle_hidden },
+      ["alt-i"] = false,
+      ["alt-h"] = false,
+      ["ctrl-g"] = false,
+    }
+
+    local opt = {
+      winopts = {
+        backdrop = 100,
+        preview = {
+          scrollbar = false,
+        },
       },
-    },
-    oldfiles = {
-      include_current_session = true,
-    },
-    previewers = {
-      builtin = {
-        syntax_limit_b = 1024 * 100,
+      oldfiles = {
+        include_current_session = true,
       },
-    },
-    grep = {
-      rg_glob = true,
-      glob_flag = "--iglob",
-      glob_separator = "%s%-%-",
-    },
-  },
+      previewers = {
+        builtin = {
+          syntax_limit_b = 1024 * 100,
+        },
+      },
+      files = {
+        actions = actions,
+      },
+      grep = {
+        rg_glob = true,
+        actions = actions,
+      },
+    }
+    return merge(opts, opt)
+  end,
 }
