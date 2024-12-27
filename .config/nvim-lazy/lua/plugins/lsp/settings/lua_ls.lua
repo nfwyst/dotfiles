@@ -9,7 +9,7 @@ return {
         disable = {},
       },
       codeLens = {
-        enable = false,
+        enable = true,
       },
       completion = {
         callSnippet = "Replace",

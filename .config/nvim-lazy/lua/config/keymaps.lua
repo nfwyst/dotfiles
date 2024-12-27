@@ -19,6 +19,12 @@ MAPS({
     { from = "p", to = paste },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
+    { from = "<leader>Q", to = "<cmd>quit<cr>", opt = {
+      desc = "Quit",
+    } },
+    { from = "<leader>qf", to = "<cmd>ccl<cr>", opt = {
+      desc = "Quit Quickfix List",
+    } },
   },
   [{ "v", "x" }] = {
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },

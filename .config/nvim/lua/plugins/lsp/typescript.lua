@@ -119,7 +119,5 @@ return {
         },
       },
     })
-    -- FIXME: wait for tsserver fix hint issue
-    -- TOGGLE_INLAY_HINT()
   end,
 }

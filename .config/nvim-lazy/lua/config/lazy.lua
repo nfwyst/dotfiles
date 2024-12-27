@@ -70,6 +70,7 @@ require("lazy").setup({
     { import = "plugins.ai" },
     { import = "plugins.lang" },
     { import = "plugins.treesitter" },
+    { import = "plugins.util" },
   },
   defaults = {
     version = nil,
