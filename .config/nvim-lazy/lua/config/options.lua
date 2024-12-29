@@ -29,7 +29,7 @@ SET_OPTS({
     precedes = "«",
     nbsp = "░",
   },
-  undolevels = 1000,
+  undolevels = LINUX and 1000 or 100000,
   showcmd = false,
   breakindent = true,
   background = "dark",

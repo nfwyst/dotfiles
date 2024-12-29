@@ -42,19 +42,28 @@ end
 
 local function set_winbar(bufnr, is_new)
   local get_should_count = make_get_should_count(bufnr, is_new)
+  local buf_count = get_buf_count(get_should_count)
+
+  if bufnr ~= CUR_BUF() then
+    return
+  end
+
   local bufpath = BUF_PATH(bufnr)
   local title = "%#WinBar1#%m"
     .. "%#WinBar2#("
-    .. get_buf_count(get_should_count)
+    .. buf_count
     .. ") "
     .. "%#WinBar1#"
     .. SHORT_HOME_PATH(bufpath)
     .. "%*%=%#WinBar2#"
-
   opt_local.winbar = title
 end
 
-AUCMD({ "BufWinEnter", "BufNewFile" }, {
+AUCMD({
+  -- "BufWinEnter",
+  "BufAdd",
+  "BufNewFile",
+}, {
   group = GROUP("WinbarUpdate", { clear = true }),
   callback = function(event)
     local bufnr = event.buf

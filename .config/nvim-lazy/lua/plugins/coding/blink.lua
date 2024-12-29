@@ -1,3 +1,16 @@
+local function get_sources(names)
+  local sources = { default = names, providers = {} }
+  for _, name in ipairs(names) do
+    sources.providers[name] = {
+      name = name,
+      module = "blink.compat.source",
+      score_offset = 1000,
+      opts = {},
+    }
+  end
+  return sources
+end
+
 return {
   "saghen/blink.cmp",
   dependencies = {
@@ -8,22 +21,13 @@ return {
     },
   },
   opts = {
-    sources = {
-      default = { "obsidian", "obsidian_new", "obsidian_tags" },
-      providers = {
-        obsidian = {
-          name = "obsidian",
-          module = "blink.compat.source",
-        },
-        obsidian_new = {
-          name = "obsidian_new",
-          module = "blink.compat.source",
-        },
-        obsidian_tags = {
-          name = "obsidian_tags",
-          module = "blink.compat.source",
-        },
-      },
-    },
+    sources = get_sources({
+      "obsidian",
+      "obsidian_new",
+      "obsidian_tags",
+      "avante_commands",
+      "avante_mentions",
+      "avante_files",
+    }),
   },
 }

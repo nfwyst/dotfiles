@@ -195,13 +195,7 @@ return {
       },
       file_selector = {
         provider = "fzf",
-        -- provider_opts = {
-        --   finder = require("telescope.finders").new_oneshot_job(
-        --     { "fd", "--type", "f" },
-        --     { cwd = require("avante.utils").get_project_root() }
-        --   ),
-        --   sorter = require("telescope").extensions.fzf.native_fzf_sorter(),
-        -- },
+        provider_opts = {},
       },
     })
     init(config)
