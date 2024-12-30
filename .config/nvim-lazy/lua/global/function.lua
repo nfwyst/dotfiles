@@ -92,7 +92,11 @@ end
 function SET_OPTS(opts, scope)
   scope = scope or "opt"
   for k, v in pairs(opts) do
-    vim[scope][k] = v
+    if type(scope) == "string" then
+      vim[scope][k] = v
+    else
+      scope[k] = v
+    end
   end
 end
 
@@ -143,7 +147,12 @@ function IS_BIG_FILE(bufnr)
 end
 
 function GET_GIT_ROOT(bufnr)
-  return fs.root(bufnr or CUR_BUF(), ".git")
+  bufnr = bufnr or CUR_BUF()
+  local root = fs.root(bufnr, ".git")
+  if not root then
+    return fs.root(fn.getcwd(), ".git")
+  end
+  return root
 end
 
 function GET_MAX_WIDTH(offset, multiple)

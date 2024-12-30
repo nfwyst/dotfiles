@@ -10,8 +10,6 @@ return {
     enabled = true,
     skip_filetypes = {
       "Trouble",
-      "alpha",
-      "dashboard",
       "help",
       "lazy",
       "mason",

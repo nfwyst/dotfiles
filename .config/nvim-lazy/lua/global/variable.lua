@@ -18,6 +18,7 @@ _G.uv = vim.uv
 _G.filter = vim.tbl_filter
 _G.contains = vim.tbl_contains
 _G.env = vim.env
+_G.o = vim.o
 _G.opt = vim.opt
 _G.opt_local = vim.opt_local
 _G.cmd = vim.cmd

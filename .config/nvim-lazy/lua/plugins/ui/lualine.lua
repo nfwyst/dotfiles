@@ -76,6 +76,10 @@ return {
               info = icons.diagnostics.Info,
               hint = icons.diagnostics.Hint,
             },
+            update_in_insert = false,
+            cond = function()
+              return BUF_VAR(CUR_BUF(), CONSTANTS.LINT_INITED)
+            end,
           },
           { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
         },

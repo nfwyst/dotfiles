@@ -65,10 +65,6 @@ local keys = {
     desc = "Avante: Toggle Suggestion",
   },
   {
-    "<leader>ab",
-    desc = "Avante: Add Current Buffer To Context",
-  },
-  {
     "<leader>aT",
     "<cmd>TogglePrompt<cr>",
     desc = "TogglePrompt",

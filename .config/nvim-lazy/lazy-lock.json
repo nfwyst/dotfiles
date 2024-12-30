@@ -1,5 +1,6 @@
 {
   "LazyVim": { "branch": "main", "commit": "d0c366e4d861b848bdc710696d5311dca2c6d540" },
+  "NeoSolarized.nvim": { "branch": "master", "commit": "bdfcdd056c4c73b10fc6f42f0c2d0df839ff49ae" },
   "SchemaStore.nvim": { "branch": "main", "commit": "e43f3e47991bc9f6cbc1d8b4d0f6a0d8d6c29284" },
   "avante.nvim": { "branch": "main", "commit": "9abbec4c5b580b514184990490dea74d0cdc27cc" },
   "blink.cmp": { "branch": "main", "commit": "0350feedfa8adb07b6750f6d9150c26e13eae0d2" },
@@ -26,10 +27,11 @@
   "minuet-ai.nvim": { "branch": "main", "commit": "97eb69061a358db54d7a7a7cfa239fcc5aedf852" },
   "neo-tree.nvim": { "branch": "main", "commit": "a9f8943b4c31f8460d25c71e0f463d65e9775f1c" },
   "noice.nvim": { "branch": "main", "commit": "eaed6cc9c06aa2013b5255349e4f26a6b17ab70f" },
+  "nomodoro": { "branch": "main", "commit": "35076f96ea21fecc6202162304891338c8eebe3c" },
   "nui.nvim": { "branch": "main", "commit": "53e907ffe5eedebdca1cd503b00aa8692068ca46" },
   "nvim-lint": { "branch": "master", "commit": "1fea92f1d9908eaa5eb8bafe08b4293d7aadaa55" },
   "nvim-lspconfig": { "branch": "master", "commit": "8b15a1a597a59f4f5306fad9adfe99454feab743" },
-  "nvim-treesitter": { "branch": "master", "commit": "34d78baa86a37e86fe64b642860144c28ab9f0c8" },
+  "nvim-treesitter": { "branch": "master", "commit": "a295ba13d27684e8904e8e51876b84ee85135cf1" },
   "nvim-treesitter-context": { "branch": "master", "commit": "2bcf700b59bc92850ca83a1c02e86ba832e0fae0" },
   "nvim-treesitter-textobjects": { "branch": "master", "commit": "ad8f0a472148c3e0ae9851e26a722ee4e29b1595" },
   "nvim-ts-autotag": { "branch": "main", "commit": "1cca23c9da708047922d3895a71032bc0449c52d" },
@@ -47,5 +49,7 @@
   "ts-comments.nvim": { "branch": "main", "commit": "872dcfa0418f4a33b7437fb4d9f4e89f2f000d74" },
   "typescript-tools.nvim": { "branch": "master", "commit": "35e397ce467bedbbbb5bfcd0aa79727b59a08d4a" },
   "vimade": { "branch": "master", "commit": "f751502b61e2c1ed0183a897993b00d0d4d3e556" },
+  "wezterm-types": { "branch": "main", "commit": "1518752906ba3fac0060d9efab6e4d3ec15d4b5a" },
+  "wezterm.nvim": { "branch": "main", "commit": "032c33b621b96cc7228955b4352b48141c482098" },
   "which-key.nvim": { "branch": "main", "commit": "8ab96b38a2530eacba5be717f52e04601eb59326" }
 }

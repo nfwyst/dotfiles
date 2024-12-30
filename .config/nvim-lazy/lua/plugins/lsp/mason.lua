@@ -19,7 +19,19 @@ return {
   "williamboman/mason.nvim",
   opts = function(_, opts)
     opts.ensure_installed = ensure_installed
-    return opts
+    local opt = {
+      log_level = levels.OFF,
+      ui = {
+        border = "rounded",
+        height = 0.7,
+        icons = {
+          package_installed = "✓",
+          package_pending = "◍",
+          package_uninstalled = "✗",
+        },
+      },
+    }
+    return merge(opts, opt)
   end,
   keys = {
     {
