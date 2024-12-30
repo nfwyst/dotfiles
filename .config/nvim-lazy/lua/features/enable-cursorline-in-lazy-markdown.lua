@@ -1,5 +1,5 @@
 AUCMD("FileType", {
-  group = GROUP("EnableCursorLineForGit", { clear = true }),
+  group = GROUP("EnableCursorLineForFileType", { clear = true }),
   pattern = { "lazy", "markdown" },
   callback = function(event)
     defer(function()

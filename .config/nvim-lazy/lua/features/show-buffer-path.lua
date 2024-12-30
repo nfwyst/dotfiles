@@ -60,8 +60,8 @@ local function set_winbar(bufnr, is_new)
 end
 
 AUCMD({
-  -- "BufWinEnter",
   "BufAdd",
+  "BufWinEnter",
   "BufNewFile",
 }, {
   group = GROUP("WinbarUpdate", { clear = true }),
@@ -71,7 +71,7 @@ AUCMD({
     if IS_FILE_BUF_LISTED(bufnr, is_new) then
       defer(function()
         set_winbar(bufnr, is_new)
-      end, 100)
+      end, 200)
     end
   end,
 })

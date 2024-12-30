@@ -60,13 +60,13 @@ return {
           path = path_getter,
           overrides = {
             log_level = levels.OFF,
-            notes_subdir = nil,
+            notes_subdir = NIL,
             new_notes_location = "current_dir",
             daily_notes = {
-              folder = nil,
+              folder = NIL,
             },
             templates = {
-              subdir = nil,
+              subdir = NIL,
             },
             disable_frontmatter = true,
           },

@@ -23,7 +23,7 @@ return {
       },
       previewers = {
         builtin = {
-          syntax_limit_b = 1024 * 100,
+          syntax_limit_b = 102400,
         },
       },
       files = {

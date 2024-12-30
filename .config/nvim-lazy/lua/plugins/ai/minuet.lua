@@ -2,7 +2,12 @@ return {
   "milanglacier/minuet-ai.nvim",
   cmd = { "MinuetToggleVirtualText" },
   keys = {
-    { "<leader>am", "MinuetToggleVirtualText", desc = "Toggle Minuet", mode = { "n", "v" } },
+    {
+      "<leader>am",
+      "<cmd>MinuetToggleVirtualText<cr>",
+      desc = "Toggle Minuet",
+      mode = { "n", "v" },
+    },
   },
   dependencies = {
     { "nvim-lua/plenary.nvim" },
@@ -31,10 +36,10 @@ return {
       virtualtext = {
         keymap = {
           accept = "<c-a>",
-          accept_line = "<c-y>",
-          prev = "<c-v>",
-          next = "<c-x>",
-          dismiss = "<c-s>",
+          accept_line = "<c-l>",
+          prev = "<c-k>",
+          next = "<c-j>",
+          dismiss = "<c-e>",
         },
       },
     })

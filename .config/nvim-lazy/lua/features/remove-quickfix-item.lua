@@ -40,7 +40,7 @@ AUCMD("FileType", {
   callback = function(event)
     local buf = event.buf
     local win = fn.bufwinid(buf)
-    vim.wo[win].relativenumber = false
+    wo[win].relativenumber = false
     MAP("n", "dd", remove_qf_item(true), { buffer = buf })
     MAP("x", "d", remove_qf_item(), { buffer = buf })
   end,

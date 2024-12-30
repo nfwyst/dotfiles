@@ -22,7 +22,7 @@ function IS_FILE_BUF_LISTED(bufnr_or_info, is_new)
   if type(bufnr_or_info) == "number" then
     bufinfo = BUF_INFO(bufnr_or_info)
   end
-  if bufinfo.listed == 0 then
+  if bufinfo.loaded == 0 or bufinfo.listed == 0 then
     return false
   end
   return is_new or IS_FILEPATH(bufinfo.name)
@@ -35,7 +35,7 @@ end
 function KEYS_TO_CMD(keys, cmd)
   cmd = cmd or {}
   for _, key in ipairs(keys) do
-    if type(key[2]) == "string" then
+    if type(key[2]) == "string" and key[2] ~= "" then
       cmd[#cmd + 1] = key.desc
     end
   end
@@ -163,7 +163,7 @@ end
 
 function ENABLE_CURSORLINE(bufnr)
   local win = fn.bufwinid(bufnr)
-  vim.wo[win].cursorline = true
+  wo[win].cursorline = true
 end
 
 function RUN_IN_BUF(bufnr, callback, opt)

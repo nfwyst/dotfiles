@@ -22,7 +22,7 @@ end
 local mode = { "n", "v" }
 
 local keys = {
-  { "<leader>a", desc = "+ai", mode = mode },
+  { "<leader>a", "", desc = "+ai", mode = mode },
   {
     "<leader>aa",
     function()

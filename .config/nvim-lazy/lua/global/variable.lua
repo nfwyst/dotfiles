@@ -23,6 +23,7 @@ _G.opt_local = vim.opt_local
 _G.cmd = vim.cmd
 _G.filter = vim.tbl_filter
 _G.islist = vim.islist
+_G.NIL = vim.NIL
 _G.merge = function(...)
   return vim.tbl_deep_extend("force", ...)
 end

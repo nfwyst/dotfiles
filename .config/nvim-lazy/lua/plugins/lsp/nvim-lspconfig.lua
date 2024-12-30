@@ -42,7 +42,7 @@ local function override()
     {
       "gk",
       function()
-        return vim.lsp.buf.hover()
+        return lsp.buf.hover()
       end,
       desc = "Hover",
     },
