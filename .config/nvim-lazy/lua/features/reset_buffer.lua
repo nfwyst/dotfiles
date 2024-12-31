@@ -38,7 +38,7 @@ local function sync_tab(bufnr)
     return
   end
   set_tab(4, false)
-  MAP("n", "<leader>ct", function()
+  MAP("n", "<leader>cT", function()
     set_tab(2, true)
   end, {
     desc = "Fix Tab Level",

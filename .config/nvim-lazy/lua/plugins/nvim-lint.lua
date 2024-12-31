@@ -2,13 +2,16 @@ local eslint = { "eslint_d" }
 local lint_events = "BufWritePost"
 
 local function enable_lint(event)
-  local bufnr = event.buf
-  local opt = { bufnr = bufnr }
-  if diagnostic.is_enabled(opt) then
+  if IS_ZEN_MODE then
     return
   end
-  diagnostic.enable(true, opt)
+  local bufnr = event.buf
+  local inited = BUF_VAR(bufnr, CONSTANTS.LINT_INITED)
+  if inited then
+    return
+  end
   BUF_VAR(bufnr, CONSTANTS.LINT_INITED, true)
+  diagnostic.enable(true, { bufnr = bufnr })
 end
 
 AUCMD(lint_events, {

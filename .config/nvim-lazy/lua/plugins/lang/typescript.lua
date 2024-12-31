@@ -64,6 +64,78 @@ local hint = {
   includeInlayEnumMemberValueHints = true,
 }
 
+local function set_keymaps(bufnr)
+  local function get_opt(desc)
+    return { desc = desc, buffer = bufnr }
+  end
+
+  MAPS({
+    n = {
+      {
+        from = "<leader>ci",
+        to = function()
+          NEED_ESLINT_FIX = true
+          require("conform").format({
+            timeout_ms = 1000,
+            async = true,
+          })
+        end,
+        opt = get_opt("Fixes All Fixable Errors By Eslint"),
+      },
+      {
+        from = "<leader>ct",
+        to = "",
+        opt = get_opt("Typescript Tools"),
+      },
+      {
+        from = "<leader>cto",
+        to = "<cmd>TSToolsOrganizeImports<cr>",
+        opt = get_opt("Sorts And Removes Unused Imports"),
+      },
+      {
+        from = "<leader>cts",
+        to = "<cmd>TSToolsSortImports<cr>",
+        opt = get_opt("Sorts Imports"),
+      },
+      {
+        from = "<leader>ctr",
+        to = "<cmd>TSToolsRemoveUnusedImports<cr>",
+        opt = get_opt("Removes Unused Imports"),
+      },
+      {
+        from = "<leader>ctR",
+        to = "<cmd>TSToolsRemoveUnused<cr>",
+        opt = get_opt("Removes All Unused Statements"),
+      },
+      {
+        from = "<leader>cta",
+        to = "<cmd>TSToolsAddMissingImports<cr>",
+        opt = get_opt("Adds Imports For All Statements"),
+      },
+      {
+        from = "<leader>ctF",
+        to = "<cmd>TSToolsFixAll<cr>",
+        opt = get_opt("Fixes All Fixable Errors"),
+      },
+      {
+        from = "<leader>ctg",
+        to = "<cmd>TSToolsGoToSourceDefinition<cr>",
+        opt = get_opt("Goes To Source Definition"),
+      },
+      {
+        from = "<leader>ctm",
+        to = "<cmd>TSToolsRenameFile<cr>",
+        opt = get_opt("Rename Current File And Apply Changes"),
+      },
+      {
+        from = "<leader>ctf",
+        to = "<cmd>TSToolsFileReferences<cr>",
+        opt = get_opt("Find Files That Reference The Current File"),
+      },
+    },
+  })
+end
+
 return {
   "pmizio/typescript-tools.nvim",
   dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
@@ -76,7 +148,8 @@ return {
   config = function()
     local api = require("typescript-tools.api")
     require("typescript-tools").setup({
-      on_attach = function(client)
+      on_attach = function(client, bufnr)
+        set_keymaps(bufnr)
         local cap = client.server_capabilities
         if client.name ~= "typescript-tools" then
           return

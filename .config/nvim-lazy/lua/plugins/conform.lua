@@ -1,10 +1,8 @@
-local fixing = false
-
 local fixer = { "eslint_d" }
 local formatter = { "prettierd" }
 
 local function fix_or_format()
-  if fixing then
+  if NEED_ESLINT_FIX then
     return fixer
   end
   return formatter
@@ -35,7 +33,7 @@ return {
     {
       "<leader>cF",
       function()
-        fixing = false
+        NEED_ESLINT_FIX = false
         require("conform").format(merge(format_opt, {
           formatters = { "injected" },
         }))
@@ -46,18 +44,11 @@ return {
     {
       "<leader>cf",
       function()
-        fixing = false
+        NEED_ESLINT_FIX = false
         LazyVim.format({ force = true })
       end,
       mode = { "n", "v" },
       desc = "Format",
-    },
-    {
-      "<leader>cL",
-      function()
-        fixing = true
-        require("conform").format(format_opt)
-      end,
     },
   },
   opts = function(_, opts)

@@ -3,15 +3,11 @@ return {
   dependencies = {
     { "justinsgithub/wezterm-types", cond = not LINUX },
   },
-  opts = {
-    library = {
-      { path = "${3rd}/luv/library", words = { "vim%.uv" } },
-      { path = "LazyVim", words = { "LazyVim" } },
-      { path = "snacks.nvim", words = { "Snacks" } },
-      { path = "lazy.nvim", words = { "LazyVim" } },
-      { path = "wezterm-types", mods = { "wezterm" } },
-    },
-  },
+  opts = function(_, opts)
+    PUSH(opts.library, {
+      path = "wezterm-types",
+      mods = { "wezterm" },
+    })
+    return opts
+  end,
 }
-
--- TODO: check opts table override

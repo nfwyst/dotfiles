@@ -31,6 +31,14 @@ if has_git then
   })
 end
 
+local function on_zen(is_open, statuscolumn)
+  IS_ZEN_MODE = is_open
+  diagnostic.enable(not is_open)
+  SET_OPTS(COLUMN_OPTS(not is_open, statuscolumn))
+end
+
+local statuscolumn = ""
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
@@ -55,13 +63,14 @@ return {
         },
       },
       zen = {
-        on_open = function(win)
-          diagnostic.enable(false, { bufnr = win.buf })
-          SET_OPTS({
-            number = false,
-            relativenumber = false,
-            statuscolumn = "",
-          }, wo[win.win])
+        on_open = function()
+          statuscolumn = o.statuscolumn
+          on_zen(true)
+          opt_local.winbar = nil
+        end,
+        on_close = function(event)
+          on_zen(false, statuscolumn)
+          SHOW_WINBAR({ buf = event.buf })
         end,
       },
     }

@@ -17,15 +17,15 @@ function IS_FILEPATH(path)
   return fn.filereadable(path) == 1
 end
 
-function IS_FILE_BUF_LISTED(bufnr_or_info, is_new)
+function IS_BUF_LISTED(bufnr_or_info)
   local bufinfo = bufnr_or_info
   if type(bufnr_or_info) == "number" then
     bufinfo = BUF_INFO(bufnr_or_info)
   end
-  if bufinfo.loaded == 0 or bufinfo.listed == 0 then
+  if bufinfo.loaded == 0 then
     return false
   end
-  return is_new or IS_FILEPATH(bufinfo.name)
+  return bufinfo.listed == 1
 end
 
 function IS_DIRPATH(path)
@@ -217,7 +217,7 @@ function FIND_FILE(file_or_dirs, opts)
   opts = opts or {}
   local bufinfo = BUF_INFO(CUR_BUF())
   local from = opts.from
-  if not from and IS_FILE_BUF_LISTED(bufinfo) then
+  if not from and IS_BUF_LISTED(bufinfo) then
     from = bufinfo.name
   end
   local path_wraper = fs.find(file_or_dirs, {
@@ -245,4 +245,14 @@ end
 
 function PUSH(dest, from)
   dest[#dest + 1] = from
+end
+
+function COLUMN_OPTS(enable, statuscolumn)
+  local signcolumn = enable and "yes" or "no"
+  return {
+    number = enable,
+    relativenumber = enable,
+    statuscolumn = statuscolumn or "",
+    signcolumn = signcolumn,
+  }
 end
