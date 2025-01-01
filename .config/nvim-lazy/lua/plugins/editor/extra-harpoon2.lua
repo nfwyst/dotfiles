@@ -131,15 +131,21 @@ return {
   },
   keys = function(_, keys)
     local harpoon = require("harpoon")
+    local keys_filtered = {}
+    local exclude_keys = { "<leader>1", "<leader>2", "<leader>3", "<leader>4", "<leader>5" }
     for _, key in ipairs(keys) do
       local name = key[1]
-      if name == "<leader>h" then
-        key[2] = function()
-          harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
+      local is_valid = not contains(exclude_keys, name)
+      if is_valid then
+        if name == "<leader>h" then
+          key[2] = function()
+            harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
+          end
         end
+        PUSH(keys_filtered, key)
       end
     end
-    push_list(keys, {
+    push_list(keys_filtered, {
       {
         "<tab>",
         show_bookmark,
@@ -160,6 +166,6 @@ return {
         end,
       },
     })
-    return keys
+    return keys_filtered
   end,
 }

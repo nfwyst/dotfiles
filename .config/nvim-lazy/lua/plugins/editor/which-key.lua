@@ -1,4 +1,13 @@
 return {
   "folke/which-key.nvim",
-  opts = {},
+  opts = {
+    plugins = {
+      spelling = {
+        suggestions = 10,
+      },
+    },
+    win = {
+      height = { max = 80 },
+    },
+  },
 }
