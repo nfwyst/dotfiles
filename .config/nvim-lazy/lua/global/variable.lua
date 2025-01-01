@@ -26,6 +26,9 @@ _G.cmd = vim.cmd
 _G.filter = vim.tbl_filter
 _G.islist = vim.islist
 _G.NIL = vim.NIL
+_G.shadow_merge = function(...)
+  return vim.tbl_extend("force", ...)
+end
 _G.merge = function(...)
   return vim.tbl_deep_extend("force", ...)
 end
@@ -49,6 +52,7 @@ ESLINT_BIN_NAME = "eslint_d"
 ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
+HAS_WEZTERM = fn.executable("wezterm") == 1
 CONSTANTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",

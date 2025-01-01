@@ -14,6 +14,8 @@ return {
     local opt = {
       winopts = {
         backdrop = 100,
+        height = 0.9,
+        width = 0.9,
         preview = {
           scrollbar = false,
         },

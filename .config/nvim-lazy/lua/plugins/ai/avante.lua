@@ -21,66 +21,63 @@ end
 
 local mode = { "n", "v" }
 
-local keys = {
-  { "<leader>a", "", desc = "+ai", mode = mode },
-  {
-    "<leader>aa",
-    function()
-      GET_USER_INPUT("question", function(question)
-        cmd("AvanteAsk " .. question)
-      end)
-    end,
-    desc = "AvanteAsk",
-  },
-  { "<leader>aB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
-  { "<leader>ac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
-  { "<leader>aH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
-  { "<leader>aM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
-  { "<leader>aC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
-  { "<leader>ae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
-  { "<leader>ar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },
-  { "<leader>aR", "<cmd>AvanteShowRepoMap<cr>", desc = "AvanteShowRepoMap" },
-  { "<leader>aP", "<cmd>AvanteSwitchFileSelectorProvider<cr>", desc = "AvanteSwitchFileSelectorProvider" },
-  { "<leader>ap", "<cmd>AvanteSwitchProvider<cr>", desc = "AvanteSwitchProvider" },
-  { "<leader>at", "<cmd>AvanteToggle<cr>", desc = "AvanteToggle" },
-  {
-    "<leader>ah",
-    function()
-      require("avante").toggle.hint()
-    end,
-    desc = "Avante: Toggle Hint",
-  },
-  {
-    "<leader>ad",
-    function()
-      require("avante").toggle.debug()
-    end,
-    desc = "Avante: Toggle Debug",
-  },
-  {
-    "<leader>as",
-    function()
-      require("avante").toggle.suggestion()
-    end,
-    desc = "Avante: Toggle Suggestion",
-  },
-  {
-    "<leader>aT",
-    "<cmd>TogglePrompt<cr>",
-    desc = "TogglePrompt",
-  },
-}
-
 return {
   "yetone/avante.nvim",
   cond = HAS_AI_KEY,
-  cmd = KEYS_TO_CMD(keys),
   build = "make BUILD_FROM_SOURCE=true",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
   },
-  keys = keys,
+  keys = {
+    { "<leader>a", "", desc = "+ai", mode = mode },
+    {
+      "<leader>aa",
+      function()
+        GET_USER_INPUT("question", function(question)
+          cmd("AvanteAsk " .. question)
+        end)
+      end,
+      desc = "AvanteAsk",
+    },
+    { "<leader>aB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
+    { "<leader>ac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
+    { "<leader>aH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
+    { "<leader>aM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
+    { "<leader>aC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
+    { "<leader>ae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
+    { "<leader>ar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },
+    { "<leader>aR", "<cmd>AvanteShowRepoMap<cr>", desc = "AvanteShowRepoMap" },
+    { "<leader>aP", "<cmd>AvanteSwitchFileSelectorProvider<cr>", desc = "AvanteSwitchFileSelectorProvider" },
+    { "<leader>ap", "<cmd>AvanteSwitchProvider<cr>", desc = "AvanteSwitchProvider" },
+    { "<leader>at", "<cmd>AvanteToggle<cr>", desc = "AvanteToggle" },
+    {
+      "<leader>ah",
+      function()
+        require("avante").toggle.hint()
+      end,
+      desc = "Avante: Toggle Hint",
+    },
+    {
+      "<leader>ad",
+      function()
+        require("avante").toggle.debug()
+      end,
+      desc = "Avante: Toggle Debug",
+    },
+    {
+      "<leader>as",
+      function()
+        require("avante").toggle.suggestion()
+      end,
+      desc = "Avante: Toggle Suggestion",
+    },
+    {
+      "<leader>aT",
+      "<cmd>TogglePrompt<cr>",
+      desc = "TogglePrompt",
+    },
+  },
   config = function()
     local config = require("avante.config")
     local providers = require("avante.providers")
@@ -134,23 +131,6 @@ return {
         },
       },
       mappings = {
-        diff = {
-          ours = "co",
-          theirs = "ct",
-          all_theirs = "ca",
-          both = "cb",
-          cursor = "cc",
-          next = "]x",
-          prev = "[x",
-        },
-        jump = {
-          next = "]]",
-          prev = "[[",
-        },
-        submit = {
-          normal = "<cr>",
-          insert = "<C-s>",
-        },
         files = {
           add_current = "<leader>ab",
         },

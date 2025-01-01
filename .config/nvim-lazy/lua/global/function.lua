@@ -32,16 +32,6 @@ function IS_DIRPATH(path)
   return fn.isdirectory(path) == 1
 end
 
-function KEYS_TO_CMD(keys, cmd)
-  cmd = cmd or {}
-  for _, key in ipairs(keys) do
-    if type(key[2]) == "string" and key[2] ~= "" then
-      cmd[#cmd + 1] = key.desc
-    end
-  end
-  return cmd
-end
-
 function NOTIFY(...)
   local args = { ... }
   defer(function()
