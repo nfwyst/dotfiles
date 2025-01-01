@@ -18,6 +18,7 @@ return {
         width = 0.9,
         preview = {
           scrollbar = false,
+          layout = "vertical",
         },
       },
       oldfiles = {
