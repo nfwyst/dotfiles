@@ -22,11 +22,7 @@ local function get_servers()
   for _, name in ipairs(lsp_servers) do
     local path = "plugins.lsp.settings." .. name
     local ok, settings = pcall(require, path)
-    local config = {}
-    if ok then
-      config = settings
-    end
-    servers[name] = config
+    servers[name] = ok and settings or {}
   end
   return servers
 end
