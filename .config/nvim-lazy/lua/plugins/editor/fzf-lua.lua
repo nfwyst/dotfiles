@@ -12,6 +12,9 @@ return {
     }
 
     local opt = {
+      fzf_colors = {
+        ["gutter"] = "-1",
+      },
       winopts = {
         backdrop = 100,
         height = 0.9,
