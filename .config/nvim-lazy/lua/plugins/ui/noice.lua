@@ -61,7 +61,7 @@ return {
         },
         signature = {
           auto_open = {
-            enabled = not LINUX,
+            enabled = false,
           },
         },
       },

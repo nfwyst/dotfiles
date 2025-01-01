@@ -15,6 +15,14 @@ return {
     },
   },
   opts = function(_, opts)
+    local link = { link = "FloatBorder" }
+    SET_HLS({
+      BlinkCmpMenuBorder = link,
+      BlinkCmpDocBorder = link,
+      BlinkCmpSignatureHelpBorder = link,
+      Pmenu = { bg = "NONE" },
+    })
+
     push_list(opts.sources.compat, {
       "obsidian",
       "obsidian_new",
@@ -23,8 +31,20 @@ return {
       "avante_mentions",
       "avante_files",
     })
-    return opts
+
+    local opt = {
+      completion = {
+        menu = {
+          border = "rounded",
+        },
+        documentation = {
+          window = {
+            border = "rounded",
+          },
+        },
+      },
+    }
+
+    return merge(opts, opt)
   end,
 }
-
--- TODO: border, ghost_text, scrollbar
