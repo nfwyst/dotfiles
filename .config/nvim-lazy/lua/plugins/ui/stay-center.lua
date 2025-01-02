@@ -1,7 +1,7 @@
 return {
   "arnamak/stay-centered.nvim",
   cond = function()
-    return not g.snacks_scroll
+    return not g.snacks_scroll and not LINUX
   end,
   lazy = false,
   name = "stay-centered",

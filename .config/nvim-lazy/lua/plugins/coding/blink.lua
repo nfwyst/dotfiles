@@ -1,20 +1,12 @@
 return {
   "saghen/blink.cmp",
-  dependencies = {
-    {
-      "saghen/blink.compat",
-      optional = false,
-      opts = function(_, opts)
-        require("cmp").ConfirmBehavior = {
-          Insert = "insert",
-          Replace = "replace",
-        }
-        opts.impersonate_nvim_cmp = true
-        return opts
-      end,
-    },
-  },
+  dependencies = { "saghen/blink.compat" },
   opts = function(_, opts)
+    require("cmp").ConfirmBehavior = {
+      Insert = "insert",
+      Replace = "replace",
+    }
+
     local link = { link = "FloatBorder" }
     SET_HLS({
       BlinkCmpMenuBorder = link,

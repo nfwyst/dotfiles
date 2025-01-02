@@ -3,7 +3,7 @@
   "NeoSolarized.nvim": { "branch": "master", "commit": "bdfcdd056c4c73b10fc6f42f0c2d0df839ff49ae" },
   "SchemaStore.nvim": { "branch": "main", "commit": "fa47222e29d6f6e80eddcdd0f125c27edf274ad5" },
   "avante.nvim": { "branch": "main", "commit": "c088ad7affeff286e825f60542242654b79d1e38" },
-  "blink.cmp": { "branch": "main", "commit": "6891bcb06b6f21de68278991f29e53452b822d48" },
+  "blink.cmp": { "branch": "main", "commit": "00ad008cbea4d0d2b5880e7c7386caa9fc4e5e2b" },
   "blink.compat": { "branch": "main", "commit": "5ca8848c8cc32abdc980e5db4f0eb7bb8fbf84dc" },
   "bufferline.nvim": { "branch": "main", "commit": "261a72b90d6db4ed8014f7bda976bcdc9dd7ce76" },
   "catppuccin": { "branch": "main", "commit": "f67b886d65a029f12ffa298701fb8f1efd89295d" },

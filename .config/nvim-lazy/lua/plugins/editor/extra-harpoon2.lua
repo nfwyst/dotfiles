@@ -109,6 +109,45 @@ end
 return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
+  keys = function()
+    return {
+      {
+        "<leader>H",
+        function()
+          require("harpoon"):list():add()
+        end,
+        desc = "Harpoon File",
+      },
+      {
+        "<leader>h",
+        function()
+          local harpoon = require("harpoon")
+          harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
+        end,
+        desc = "Harpoon Quick Menu",
+      },
+      {
+        "<tab>",
+        show_bookmark,
+      },
+      {
+        "<s-tab>",
+        function()
+          local harpoon = require("harpoon")
+          local tag = fn.input("Note: ")
+          if tag == "" then
+            return
+          end
+          tag = " -- " .. tag
+          local bookmarks = harpoon:list("bookmarks")
+          local item = bookmarks.config.create_list_item(tag)
+          if item then
+            bookmarks:prepend(item)
+          end
+        end,
+      },
+    }
+  end,
   opts = {
     bookmarks = {
       create_list_item = function(tag)
@@ -129,43 +168,4 @@ return {
       end,
     },
   },
-  keys = function(_, keys)
-    local harpoon = require("harpoon")
-    local keys_filtered = {}
-    local exclude_keys = { "<leader>1", "<leader>2", "<leader>3", "<leader>4", "<leader>5" }
-    for _, key in ipairs(keys) do
-      local name = key[1]
-      local is_valid = not contains(exclude_keys, name)
-      if is_valid then
-        if name == "<leader>h" then
-          key[2] = function()
-            harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
-          end
-        end
-        PUSH(keys_filtered, key)
-      end
-    end
-    push_list(keys_filtered, {
-      {
-        "<tab>",
-        show_bookmark,
-      },
-      {
-        "<s-tab>",
-        function()
-          local tag = fn.input("Note: ")
-          if tag == "" then
-            return
-          end
-          tag = " -- " .. tag
-          local bookmarks = harpoon:list("bookmarks")
-          local item = bookmarks.config.create_list_item(tag)
-          if item then
-            bookmarks:prepend(item)
-          end
-        end,
-      },
-    })
-    return keys_filtered
-  end,
 }
