@@ -55,7 +55,19 @@ return {
             end,
           },
         },
-        lualine_b = { "branch", lsps },
+        lualine_b = {
+          "branch",
+          {
+            lsps,
+            padding = { left = 0, right = 1 },
+          },
+          {
+            function()
+              return icons.kinds.Folder .. fs.basename(LazyVim.root.get())
+            end,
+            padding = { left = 0, right = 1 },
+          },
+        },
         lualine_c = {
           {
             function()
@@ -67,7 +79,6 @@ return {
             color = { fg = "#dc322f" },
             padding = { left = 0, right = 1 },
           },
-          LazyVim.lualine.root_dir(),
           {
             "diagnostics",
             symbols = {
