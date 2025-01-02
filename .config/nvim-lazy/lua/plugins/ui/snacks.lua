@@ -44,6 +44,11 @@ return {
   opts = function(_, opts)
     push_list(opts.dashboard.preset.keys, keys)
     local opt = {
+      indent = {
+        scope = {
+          enabled = not LINUX,
+        },
+      },
       bigfile = {
         size = 524288, -- 0.5 * 1024 * 1024
       },

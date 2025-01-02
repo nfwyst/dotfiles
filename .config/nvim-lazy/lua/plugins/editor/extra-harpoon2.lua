@@ -6,8 +6,10 @@ end
 
 local function on_select_bookmark_value(value)
   local filepath, row, col = parse_bookmark_value(value)
-  cmd.edit(root .. filepath)
-  WIN_CURSOR(CUR_WIN(), { tonumber(row), tonumber(col) })
+  if filepath then
+    cmd.edit(root .. filepath)
+    WIN_CURSOR(CUR_WIN(), { tonumber(row), tonumber(col) })
+  end
 end
 
 local function get_ui_size(title)
@@ -91,7 +93,8 @@ local function show_bookmark()
     PUSH(options, item.value)
   end
 
-  require("fzf-lua").fzf_exec(options, {
+  local fzf = require("fzf-lua")
+  fzf.fzf_exec(options, {
     prompt = "Harpoon Bookmarks ❯ ",
     actions = {
       ["default"] = function(selected)
@@ -99,8 +102,9 @@ local function show_bookmark()
       end,
       ["ctrl-r"] = {
         delete_harpoon_bookmark(show_bookmark),
-        require("fzf-lua").actions.resume,
+        fzf.actions.resume,
       },
+      ["btab"] = fzf.utils.fzf_exit,
     },
     previewer = get_previewer(),
   })
@@ -127,11 +131,11 @@ return {
         desc = "Harpoon Quick Menu",
       },
       {
-        "<tab>",
+        "<s-tab>",
         show_bookmark,
       },
       {
-        "<s-tab>",
+        "<leader>k",
         function()
           local harpoon = require("harpoon")
           local tag = fn.input("Note: ")
@@ -145,6 +149,7 @@ return {
             bookmarks:prepend(item)
           end
         end,
+        desc = "Harpoon Add Bookmark",
       },
     }
   end,
