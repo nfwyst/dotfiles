@@ -33,22 +33,29 @@ local lsps = function()
   return "󱓞 " .. result
 end
 
+local refresh_time = 1000
+
 return {
   "nvim-lualine/lualine.nvim",
   opts = function(_, opts)
     local icons = LazyVim.config.icons
     local opt = {
       options = {
+        always_show_tabline = true,
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
         ignore_focus = { "neo-tree" },
+        refresh = {
+          statusline = refresh_time,
+          tabline = refresh_time,
+          winbar = refresh_time,
+        },
       },
       sections = {
         lualine_a = {
           "mode",
           {
             "tabs",
-            use_mode_colors = true,
             show_modified_status = false,
             cond = function()
               return fn.tabpagenr("$") > 1
@@ -59,12 +66,6 @@ return {
           "branch",
           {
             lsps,
-            padding = { left = 0, right = 1 },
-          },
-          {
-            function()
-              return icons.kinds.Folder .. fs.basename(LazyVim.root.get())
-            end,
             padding = { left = 0, right = 1 },
           },
         },
@@ -170,6 +171,54 @@ return {
           { "location", padding = { left = 0, right = 1 } },
         },
         lualine_z = { progress },
+      },
+      tabline = {
+        lualine_b = {
+          {
+            "buffers",
+            mode = 2,
+            show_modified_status = true,
+            max_length = o.columns,
+            filetype_names = {
+              snacks_dashboard = "dashboard",
+              ["neo-tree"] = "file tree",
+            },
+            padding = { right = 0, left = 1 },
+          },
+        },
+        lualine_x = {
+          {
+            function()
+              local root = fs.basename(LazyVim.root.get())
+              local git = fs.basename(LazyVim.root.git())
+              if git == root then
+                return root
+              end
+              return git .. "" .. root
+            end,
+            cond = function()
+              return bo[CUR_BUF()].filetype ~= "snacks_dashboard"
+            end,
+            padding = { left = 1, right = 1 },
+            color = { fg = "#37f499", bg = "NONE" },
+          },
+        },
+      },
+      winbar = {
+        lualine_c = {
+          {
+            "filename",
+            file_status = true,
+            shorting_target = 0,
+            newfile_status = false,
+            cond = function()
+              local listed = IS_BUF_LISTED(CUR_BUF())
+              return not IS_ZEN_MODE and listed
+            end,
+            path = 3,
+            color = { fg = "#04d1f9", bg = "NONE" },
+          },
+        },
       },
       extensions = { "lazy", "fzf" },
     }

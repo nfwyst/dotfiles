@@ -1,4 +1,3 @@
-require("features.show-buffer-path")
 require("features.remove-quickfix-item")
 require("features.reset_buffer")
 require("features.show-grug-far-fold")

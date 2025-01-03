@@ -146,7 +146,7 @@ function GET_GIT_ROOT(bufnr)
 end
 
 function GET_MAX_WIDTH(offset, multiple)
-  local editor_width = vim.o.columns
+  local editor_width = o.columns
   if multiple then
     return math.floor(editor_width * multiple)
   end

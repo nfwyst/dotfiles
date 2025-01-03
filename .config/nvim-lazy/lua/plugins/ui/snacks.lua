@@ -73,9 +73,8 @@ return {
           on_zen(true)
           opt_local.winbar = nil
         end,
-        on_close = function(event)
+        on_close = function()
           on_zen(false, statuscolumn)
-          SHOW_WINBAR({ buf = event.buf })
         end,
       },
     }

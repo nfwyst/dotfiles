@@ -3,8 +3,6 @@ local function set_custom_highlight()
   local fg0 = "#839496"
   local fg2 = "#586e75"
   SET_HLS({
-    WinBar1 = { fg = "#04d1f9", bg = "#1E2030" },
-    WinBar2 = { fg = "#37f499", bg = "#1E2030" },
     CursorLine = { bg = fg1 },
     ["@variable"] = { fg = fg0 },
     Normal = { fg = fg0 },
@@ -53,8 +51,6 @@ return {
       },
       extra_groups = {
         "NormalFloat",
-        "WinBar1",
-        "WinBar2",
         "FzfLuaFzfCursorLine",
       },
       exclude_groups = {
