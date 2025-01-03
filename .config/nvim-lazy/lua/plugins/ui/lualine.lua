@@ -47,7 +47,7 @@ return {
         ignore_focus = { "neo-tree" },
         refresh = {
           statusline = refresh_time,
-          tabline = refresh_time,
+          tabline = refresh_time / 2,
           winbar = refresh_time,
         },
       },
@@ -173,17 +173,18 @@ return {
         lualine_z = { progress },
       },
       tabline = {
-        lualine_b = {
+        lualine_a = {
           {
             "buffers",
-            mode = 2,
             show_modified_status = true,
             max_length = o.columns,
             filetype_names = {
               snacks_dashboard = "dashboard",
               ["neo-tree"] = "file tree",
             },
-            padding = { right = 0, left = 1 },
+            symbols = {
+              alternate_file = "",
+            },
           },
         },
         lualine_x = {
@@ -200,7 +201,7 @@ return {
               return bo[CUR_BUF()].filetype ~= "snacks_dashboard"
             end,
             padding = { left = 1, right = 1 },
-            color = { fg = "#37f499", bg = "NONE" },
+            color = { fg = "#37f499" },
           },
         },
       },
@@ -208,7 +209,7 @@ return {
         lualine_c = {
           {
             "filename",
-            file_status = true,
+            file_status = false,
             shorting_target = 0,
             newfile_status = false,
             cond = function()
@@ -220,7 +221,7 @@ return {
           },
         },
       },
-      extensions = { "lazy", "fzf" },
+      extensions = LINUX and {} or { "lazy", "fzf" },
     }
 
     return merge(opts, opt)
