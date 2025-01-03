@@ -11,27 +11,33 @@ AUCMD("FileType", {
 
 return {
   "nvim-neo-tree/neo-tree.nvim",
-  opts = {
-    hide_root_node = true,
-    log_level = "fatal",
-    enable_diagnostics = false,
-    default_component_configs = {
-      indent = {
-        with_expanders = false,
-      },
-    },
-    window = {
-      width = 10,
-      auto_expand_width = true,
-    },
-    filesystem = {
-      filtered_items = {
-        never_show = {
-          ".DS_Store",
+  opts = function(_, opts)
+    SET_HLS({ NeoTreeIndentMarker = { fg = TRANSPARENT_INDENT_HL } })
+
+    local opt = {
+      hide_root_node = true,
+      log_level = "fatal",
+      enable_diagnostics = false,
+      default_component_configs = {
+        indent = {
+          with_expanders = false,
         },
       },
-    },
-  },
+      window = {
+        width = 10,
+        auto_expand_width = true,
+      },
+      filesystem = {
+        filtered_items = {
+          never_show = {
+            ".DS_Store",
+          },
+        },
+      },
+    }
+
+    return merge(opts, opt)
+  end,
 }
 
 -- TODO: filter, max, min width

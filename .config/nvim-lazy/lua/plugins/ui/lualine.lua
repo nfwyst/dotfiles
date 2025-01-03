@@ -33,7 +33,7 @@ local lsps = function()
   return "󱓞 " .. result
 end
 
-local refresh_time = 1000
+local refresh_time = LINUX and 1000 or 100
 
 return {
   "nvim-lualine/lualine.nvim",

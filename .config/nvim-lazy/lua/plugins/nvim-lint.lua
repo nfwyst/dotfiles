@@ -15,7 +15,7 @@ local function enable_lint(event)
 end
 
 AUCMD(lint_events, {
-  group = GROUP("PostLint", { clear = true }),
+  group = GROUP("enable_linter", { clear = true }),
   callback = enable_lint,
 })
 

@@ -42,6 +42,8 @@ local statuscolumn = ""
 return {
   "snacks.nvim",
   opts = function(_, opts)
+    SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
+
     push_list(opts.dashboard.preset.keys, keys)
     local opt = {
       indent = {

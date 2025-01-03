@@ -35,7 +35,7 @@ local function remove_qf_item(is_normal)
 end
 
 AUCMD("FileType", {
-  group = GROUP("DeleteQfItem", { clear = true }),
+  group = GROUP("delete_qf_item", { clear = true }),
   pattern = "qf",
   callback = function(event)
     local buf = event.buf

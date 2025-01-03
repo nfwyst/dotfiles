@@ -12,7 +12,7 @@ end
 
 AUCMD("User", {
   pattern = "SnacksDashboard*",
-  group = GROUP("AutoCloseDashboard", { clear = true }),
+  group = GROUP("cursor_line_for_dashboard", { clear = true }),
   callback = function(event)
     if event.match == "SnacksDashboardClosed" then
       return
@@ -86,7 +86,7 @@ local function dim_win(bufnr)
 end
 
 AUCMD({ "BufReadPost", "BufNewFile" }, {
-  group = GROUP("IndentSettings", { clear = true }),
+  group = GROUP("reset_buffer_settings", { clear = true }),
   callback = function(event)
     local bufnr = event.buf
     sync_tab(bufnr)

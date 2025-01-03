@@ -1,5 +1,5 @@
 AUCMD("FileType", {
-  group = GROUP("ShowGrugFarFold", { clear = true }),
+  group = GROUP("show_grug_far_fold", { clear = true }),
   pattern = "grug-far",
   callback = function(event)
     defer(function()
