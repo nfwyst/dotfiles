@@ -46,6 +46,9 @@ return {
 
     push_list(opts.dashboard.preset.keys, keys)
     local opt = {
+      scroll = {
+        enabled = false,
+      },
       indent = {
         scope = {
           enabled = not LINUX,

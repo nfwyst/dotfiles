@@ -1,11 +1,11 @@
 return {
   "milanglacier/minuet-ai.nvim",
-  cmd = { "MinuetToggleVirtualText" },
+  cmd = { "Minuet" },
   keys = {
     {
       "<leader>am",
-      "<cmd>MinuetToggleVirtualText<cr>",
-      desc = "Toggle Minuet",
+      "<cmd>Minuet virtualtext toggle<cr>",
+      desc = "Minuet Togglee Virtual Text",
       mode = { "n", "v" },
     },
   },

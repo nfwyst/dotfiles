@@ -1,8 +1,6 @@
 return {
   "arnamak/stay-centered.nvim",
-  cond = function()
-    return not g.snacks_scroll and not LINUX
-  end,
+  cond = ENABLE_SCROLL_EFFECT,
   lazy = false,
   name = "stay-centered",
   priority = 1000,

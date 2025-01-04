@@ -85,6 +85,14 @@ local function dim_win(bufnr)
   end)
 end
 
+local function show_indent_guide(event)
+  if event.event == "BufNewFile" then
+    defer(function()
+      Snacks.indent.enable()
+    end, 0)
+  end
+end
+
 AUCMD({ "BufReadPost", "BufNewFile" }, {
   group = GROUP("reset_buffer_settings", { clear = true }),
   callback = function(event)
@@ -93,5 +101,6 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
     center(bufnr)
     disable_lint(bufnr)
     dim_win(bufnr)
+    show_indent_guide(event)
   end,
 })
