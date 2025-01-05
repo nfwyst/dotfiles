@@ -6,14 +6,14 @@ return {
       NeoTreeMessage = { link = "NeoTreeIndentMarker" },
     })
 
-    -- hide statuscolumn for file tree
+    -- hide left columns for file tree
     AUCMD("FileType", {
       group = GROUP("neotree_hide_statuscolumn", { clear = true }),
       pattern = "neo-tree",
       callback = function(event)
         defer(function()
           local win = fn.bufwinid(event.buf)
-          wo[win].statuscolumn = ""
+          SET_OPTS(COLUMN_OPTS(false), wo[win])
         end, 10)
       end,
     })

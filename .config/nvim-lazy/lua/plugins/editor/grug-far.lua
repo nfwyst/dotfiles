@@ -1,7 +1,7 @@
 return {
   "MagicDuck/grug-far.nvim",
   opts = function(_, opts)
-    -- show fold signs in searched view
+    -- only show fold signs in searched view
     AUCMD("FileType", {
       group = GROUP("show_grug_far_fold", { clear = true }),
       pattern = "grug-far",
