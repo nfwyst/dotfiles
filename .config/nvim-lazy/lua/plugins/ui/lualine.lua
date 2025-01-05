@@ -33,7 +33,13 @@ local lsps = function()
   return "󱓞 " .. result
 end
 
-local refresh_time = LINUX and 1000 or 100
+local refresh_time = 100
+local extensions
+
+if LINUX then
+  extensions = {}
+  refresh_time = 1000
+end
 
 return {
   "nvim-lualine/lualine.nvim",
@@ -41,10 +47,10 @@ return {
     local icons = LazyVim.config.icons
     local opt = {
       options = {
-        always_show_tabline = true,
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
-        ignore_focus = { "neo-tree" },
+        ignore_focus = { "neo-tree", "Avante", "AvanteInput" },
+        globalstatus = true,
         refresh = {
           statusline = refresh_time,
           tabline = refresh_time / 2,
@@ -181,6 +187,10 @@ return {
             filetype_names = {
               snacks_dashboard = "dashboard",
               ["neo-tree"] = "file tree",
+              AvanteInput = "avante input",
+              Avante = "avante chat",
+              lazy = "plugin manager",
+              mason = "package manager",
             },
             symbols = {
               alternate_file = "",
@@ -221,7 +231,7 @@ return {
           },
         },
       },
-      extensions = LINUX and {} or { "lazy", "fzf" },
+      extensions = extensions,
     }
 
     return merge(opts, opt)

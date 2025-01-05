@@ -9,6 +9,7 @@ _G.severity = diagnostic.severity
 _G.snippet = vim.snippet
 _G.v = vim.v
 _G.defer = vim.defer_fn
+_G.schedule = vim.schedule
 _G.b = vim.b
 _G.bo = vim.bo
 _G.wo = vim.wo

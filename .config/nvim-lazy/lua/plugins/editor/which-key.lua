@@ -7,7 +7,7 @@ return {
       },
     },
     win = {
-      height = { max = 80 },
+      height = { max = 85 },
     },
   },
 }

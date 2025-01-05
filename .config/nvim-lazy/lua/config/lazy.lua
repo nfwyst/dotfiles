@@ -84,7 +84,7 @@ require("lazy").setup({
     timeout = 1000,
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
-  ui = { border = "rounded", backdrop = 100, wrap = false },
+  ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
     enabled = not LINUX,
     notify = false,

@@ -79,6 +79,22 @@ return {
     },
   },
   config = function()
+    -- hide left columns for avante sidebar
+    AUCMD("FileType", {
+      group = GROUP("hide_left_columns_for_avante", { clear = true }),
+      pattern = { "Avante", "AvanteInput" },
+      callback = function(event)
+        defer(function()
+          local win = fn.bufwinid(event.buf)
+          local opts = COLUMN_OPTS(false)
+          if event.match == "AvanteInput" then
+            opts.signcolumn = "yes"
+          end
+          SET_OPTS(opts, wo[win])
+        end, 30)
+      end,
+    })
+
     local config = require("avante.config")
     local providers = require("avante.providers")
     local api_key_name = "DEEPSEEK_API_KEY"
@@ -89,9 +105,11 @@ return {
       openai = {
         endpoint = "https://api.deepseek.com/beta",
         model = "deepseek-chat",
+        timeout = 30000,
         api_key_name = api_key_name,
         temperature = 0.1,
         max_tokens = 8192,
+        allow_insecure = false,
       },
       vendors = {
         deepseek = {
