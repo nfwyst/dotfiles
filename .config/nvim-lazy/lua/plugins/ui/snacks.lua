@@ -34,7 +34,10 @@ end
 local function on_zen(is_open, statuscolumn)
   IS_ZEN_MODE = is_open
   diagnostic.enable(not is_open)
-  SET_OPTS(COLUMN_OPTS(not is_open, statuscolumn))
+  local opts = COLUMN_OPTS(not is_open, statuscolumn)
+  -- dont show fold signs for files buffer, use snacks fold
+  opts.foldcolumn = "0"
+  SET_OPTS(opts)
 end
 
 local statuscolumn = ""
@@ -43,6 +46,21 @@ return {
   "snacks.nvim",
   opts = function(_, opts)
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
+
+    -- show cursor line when dashboard opened
+    AUCMD("User", {
+      pattern = "SnacksDashboard*",
+      group = GROUP("cursor_line_for_dashboard", { clear = true }),
+      callback = function(event)
+        if event.match == "SnacksDashboardClosed" then
+          return
+        end
+
+        defer(function()
+          ENABLE_CURSORLINE(event.buf)
+        end, 10)
+      end,
+    })
 
     push_list(opts.dashboard.preset.keys, keys)
     local opt = {

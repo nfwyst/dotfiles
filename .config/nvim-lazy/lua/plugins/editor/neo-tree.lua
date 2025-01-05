@@ -1,20 +1,21 @@
-AUCMD("FileType", {
-  group = GROUP("neotree_hide_statuscolumn", { clear = true }),
-  pattern = "neo-tree",
-  callback = function(event)
-    defer(function()
-      local win = fn.bufwinid(event.buf)
-      wo[win].statuscolumn = ""
-    end, 10)
-  end,
-})
-
 return {
   "nvim-neo-tree/neo-tree.nvim",
   opts = function(_, opts)
     SET_HLS({
       NeoTreeIndentMarker = { fg = TRANSPARENT_INDENT_HL },
       NeoTreeMessage = { link = "NeoTreeIndentMarker" },
+    })
+
+    -- hide statuscolumn for file tree
+    AUCMD("FileType", {
+      group = GROUP("neotree_hide_statuscolumn", { clear = true }),
+      pattern = "neo-tree",
+      callback = function(event)
+        defer(function()
+          local win = fn.bufwinid(event.buf)
+          wo[win].statuscolumn = ""
+        end, 10)
+      end,
     })
 
     local opt = {

@@ -14,16 +14,17 @@ local function enable_lint(event)
   diagnostic.enable(true, { bufnr = bufnr })
 end
 
-AUCMD(lint_events, {
-  group = GROUP("enable_linter", { clear = true }),
-  callback = enable_lint,
-})
-
 env.ESLINT_D_PPID = fn.getpid()
 
 return {
   "mfussenegger/nvim-lint",
   opts = function(_, opts)
+    -- enable lint when event occured
+    AUCMD(lint_events, {
+      group = GROUP("enable_linter", { clear = true }),
+      callback = enable_lint,
+    })
+
     local eslint_linter = require("lint").linters.eslint_d
     ---@diagnostic disable-next-line: assign-type-mismatch
     eslint_linter.cmd = function()

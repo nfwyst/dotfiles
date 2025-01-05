@@ -10,20 +10,6 @@ local function is_tab_indent(bufnr)
   return false
 end
 
-AUCMD("User", {
-  pattern = "SnacksDashboard*",
-  group = GROUP("cursor_line_for_dashboard", { clear = true }),
-  callback = function(event)
-    if event.match == "SnacksDashboardClosed" then
-      return
-    end
-
-    defer(function()
-      ENABLE_CURSORLINE(event.buf)
-    end, 10)
-  end,
-})
-
 local function set_tab(level, expand)
   SET_LOCAL_OPTS({
     expandtab = expand,

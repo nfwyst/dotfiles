@@ -83,8 +83,16 @@ return {
     local providers = require("avante.providers")
     local api_key_name = "DEEPSEEK_API_KEY"
     local token = os.getenv(api_key_name) or ""
+
     require("avante").setup({
-      provider = "deepseek",
+      provider = "openai",
+      openai = {
+        endpoint = "https://api.deepseek.com/beta",
+        model = "deepseek-chat",
+        api_key_name = api_key_name,
+        temperature = 0.1,
+        max_tokens = 8192,
+      },
       vendors = {
         deepseek = {
           endpoint = "https://api.deepseek.com/beta/chat/completions",
@@ -101,14 +109,14 @@ return {
               body = {
                 model = opts.model,
                 messages = providers.openai.parse_messages(code_opts),
-                temperature = 0,
+                temperature = 0.1,
                 max_tokens = 8192,
                 stream = true,
               },
             }
           end,
-          parse_response_data = function(data_stream, event_state, opts)
-            providers.openai.parse_response(data_stream, event_state, opts)
+          parse_response_data = function(...)
+            return providers.openai.parse_response(...)
           end,
         },
       },

@@ -242,6 +242,7 @@ function COLUMN_OPTS(enable, statuscolumn)
   return {
     number = enable,
     relativenumber = enable,
+    foldcolumn = enable and "1" or "0",
     statuscolumn = statuscolumn or "",
     signcolumn = signcolumn,
   }
