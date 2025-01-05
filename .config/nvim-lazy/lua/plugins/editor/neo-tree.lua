@@ -12,7 +12,10 @@ AUCMD("FileType", {
 return {
   "nvim-neo-tree/neo-tree.nvim",
   opts = function(_, opts)
-    SET_HLS({ NeoTreeIndentMarker = { fg = TRANSPARENT_INDENT_HL } })
+    SET_HLS({
+      NeoTreeIndentMarker = { fg = TRANSPARENT_INDENT_HL },
+      NeoTreeMessage = { link = "NeoTreeIndentMarker" },
+    })
 
     local opt = {
       hide_root_node = true,
