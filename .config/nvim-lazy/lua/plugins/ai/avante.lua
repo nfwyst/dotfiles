@@ -84,11 +84,14 @@ return {
       group = GROUP("hide_left_columns_for_avante", { clear = true }),
       pattern = { "Avante", "AvanteInput" },
       callback = function(event)
+        local bufnr = event.buf
         defer(function()
-          local win = fn.bufwinid(event.buf)
+          local win = fn.bufwinid(bufnr)
           local opts = COLUMN_OPTS(false)
-          if event.match == "AvanteInput" then
+          local is_input = event.match == "AvanteInput"
+          if is_input then
             opts.signcolumn = "yes"
+            pcall(keymap.del, "i", "<tab>", { buffer = bufnr })
           end
           SET_OPTS(opts, wo[win])
         end, 30)

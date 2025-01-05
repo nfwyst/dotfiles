@@ -42,6 +42,28 @@ end
 
 local statuscolumn = ""
 
+-- hack fix
+local function remove_noname_buf(match)
+  if match ~= "SnacksDashboardUpdatePost" then
+    return
+  end
+  local infos = BUF_INFO()
+  for _, info in ipairs(infos) do
+    local loaded = info.loaded
+    local listed = info.listed
+
+    local bufnr = info.bufnr
+    local filetype = bo[bufnr].filetype
+    local buftype = bo[bufnr].buftype
+    local empty = EMPTY(filetype) and EMPTY(buftype) and EMPTY(info.name)
+
+    local invalid = loaded and listed and empty
+    if invalid then
+      api.nvim_buf_delete(info.bufnr, { force = false })
+    end
+  end
+end
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
@@ -52,12 +74,14 @@ return {
       pattern = "SnacksDashboard*",
       group = GROUP("cursor_line_for_dashboard", { clear = true }),
       callback = function(event)
-        if event.match == "SnacksDashboardClosed" then
+        local match = event.match
+        if match == "SnacksDashboardClosed" then
           return
         end
 
         defer(function()
           ENABLE_CURSORLINE(event.buf)
+          remove_noname_buf(match)
         end, 10)
       end,
     })

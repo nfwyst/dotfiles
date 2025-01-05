@@ -107,15 +107,6 @@ return {
       codelens = {
         enabled = false,
       },
-      capabilities = {
-        textDocument = {
-          completion = {
-            completionItem = {
-              snippetSupport = false,
-            },
-          },
-        },
-      },
       setup = {
         tailwindcss = function(_, tw_opts)
           local tw = LazyVim.lsp.get_raw_config("tailwindcss")

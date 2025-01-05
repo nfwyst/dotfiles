@@ -88,15 +88,9 @@ return {
           },
           lsp = {
             should_show_items = shouldnt_show_snippets,
-            transform_items = function(_, items)
-              -- remove the Snippet source from lsp
-              return filter(function(item)
-                return item.kind ~= lsp.protocol.CompletionItemKind.Snippet
-              end, items)
-            end,
           },
           snippets = {
-            min_keyword_length = 2,
+            min_keyword_length = 1,
             max_items = 3,
             -- only show snippets items if trigger_text is prefix
             should_show_items = should_show_snippets,
