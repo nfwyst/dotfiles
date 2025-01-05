@@ -42,5 +42,3 @@ return {
     return merge(opts, opt)
   end,
 }
-
--- TODO: filter, max, min width
