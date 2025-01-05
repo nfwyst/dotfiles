@@ -24,6 +24,8 @@ return {
       "avante_files",
     })
 
+    PUSH(opts.sources.default, "markdown")
+
     local opt = {
       completion = {
         menu = {
@@ -32,6 +34,15 @@ return {
         documentation = {
           window = {
             border = "rounded",
+          },
+        },
+      },
+      sources = {
+        providers = {
+          markdown = {
+            name = "RenderMarkdown",
+            module = "render-markdown.integ.blink",
+            fallbacks = { "lsp" },
           },
         },
       },
