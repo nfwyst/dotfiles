@@ -98,6 +98,27 @@ return {
       end,
     })
 
+    AUCMD("VimResized", {
+      group = GROUP("fix_avante_resized", { clear = true }),
+      callback = function(event)
+        local bufnr = event.buf
+        local filetype = bo[bufnr].filetype
+        if filetype ~= "AvanteInput" then
+          return
+        end
+        local wins = BUF_INFO(bufnr).windows
+        for index, win in ipairs(wins) do
+          if index > 1 then
+            api.nvim_win_close(win, false)
+          else
+            defer(function()
+              api.nvim_win_set_height(win, 10)
+            end, 0)
+          end
+        end
+      end,
+    })
+
     local config = require("avante.config")
     local providers = require("avante.providers")
     local api_key_name = "DEEPSEEK_API_KEY"

@@ -59,7 +59,7 @@ local function remove_noname_buf(match)
 
     local invalid = loaded and listed and empty
     if invalid then
-      api.nvim_buf_delete(info.bufnr, { force = false })
+      Snacks.bufdelete({ buf = info.bufnr, force = false })
     end
   end
 end
