@@ -90,7 +90,7 @@ export ZSH_TAB_TITLE_PREFIX=" "
 export GOPATH="$HOME/go"
 export CARGO_HOME="$HOME/.cargo"
 export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share",
+export XDG_DATA_HOME="$HOME/.local/share"
 
 export PATH="$PATH:$GOPATH/bin"
 export PATH="$PATH:$CARGO_HOME/bin"
