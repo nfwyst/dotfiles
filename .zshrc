@@ -105,6 +105,7 @@ export EDITOR="$(which nvim)"
 export SHELL="$(which zsh)"
 export OLLAMA_API_BASE="http://127.0.0.1:11434"
 export NODE_OPTIONS="--no-warnings=ExperimentalWarning"
+PROMPT="${PROMPT}"$'\n'
 
 # Shell integrations
 source <(starship init zsh)

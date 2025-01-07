@@ -6,12 +6,10 @@ $directory\
 $git_branch\
 $git_status\
 [](fg:#394260)\
-$all\n\n"""
+$all\
+$character"""
 
 command_timeout = 5000
-
-[character]
-disabled = true
 
 [directory]
 style = "fg:#e3e5e5 bg:#769ff0"
