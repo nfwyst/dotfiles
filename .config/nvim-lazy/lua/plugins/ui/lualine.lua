@@ -44,7 +44,65 @@ end
 return {
   "nvim-lualine/lualine.nvim",
   opts = function(_, opts)
-    local icons = LazyVim.config.icons
+    local sections = opts.sections
+
+    PUSH(sections.lualine_a, {
+      "tabs",
+      show_modified_status = false,
+      cond = function()
+        return fn.tabpagenr("$") > 1
+      end,
+    })
+
+    PUSH(sections.lualine_b, {
+      lsps,
+      padding = { left = 0, right = 1 },
+    })
+
+    local lualine_c = filter(function(item)
+      local name = item[1]
+      local is_diag = name == "diagnostics"
+      if is_diag then
+        assign(item, {
+          update_in_insert = false,
+          cond = function()
+            return BUF_VAR(CUR_BUF(), CONSTANTS.LINT_INITED)
+          end,
+        })
+      end
+      return is_diag or name == "filetype"
+    end, sections.lualine_c)
+    PUSH(lualine_c, {
+      function()
+        return require("nomodoro").status()
+      end,
+      cond = function()
+        return package.loaded["nomodoro"]
+      end,
+      color = { fg = "#dc322f" },
+      padding = { left = 0, right = 1 },
+    })
+
+    local lualine_x = sections.lualine_x
+    if LINUX then
+      lualine_x = filter(function(item)
+        return item[1] ~= require("lazy.status").updates
+      end, lualine_x)
+    end
+
+    local lualine_y = filter(function(item)
+      return item[1] ~= "progress"
+    end, sections.lualine_y)
+    push_list(lualine_y, {
+      {
+        function()
+          return "󱁐:" .. bo[CUR_BUF()].shiftwidth
+        end,
+        padding = { left = 0, right = 1 },
+      },
+      { "encoding", padding = { left = 0, right = 1 } },
+    })
+
     local opt = {
       options = {
         component_separators = { left = "", right = "" },
@@ -58,124 +116,9 @@ return {
         },
       },
       sections = {
-        lualine_a = {
-          "mode",
-          {
-            "tabs",
-            show_modified_status = false,
-            cond = function()
-              return fn.tabpagenr("$") > 1
-            end,
-          },
-        },
-        lualine_b = {
-          "branch",
-          {
-            lsps,
-            padding = { left = 0, right = 1 },
-          },
-        },
-        lualine_c = {
-          {
-            function()
-              return require("nomodoro").status()
-            end,
-            cond = function()
-              return package.loaded["nomodoro"]
-            end,
-            color = { fg = "#dc322f" },
-            padding = { left = 0, right = 1 },
-          },
-          {
-            "diagnostics",
-            symbols = {
-              error = icons.diagnostics.Error,
-              warn = icons.diagnostics.Warn,
-              info = icons.diagnostics.Info,
-              hint = icons.diagnostics.Hint,
-            },
-            update_in_insert = false,
-            cond = function()
-              return BUF_VAR(CUR_BUF(), CONSTANTS.LINT_INITED)
-            end,
-          },
-          { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
-        },
-        lualine_x = {
-          Snacks.profiler.status(),
-          {
-            function()
-              return require("noice").api.status.command.get()
-            end,
-            cond = function()
-              return package.loaded["noice"] and require("noice").api.status.command.has()
-            end,
-            color = function()
-              return { fg = Snacks.util.color("Statement") }
-            end,
-          },
-          {
-            function()
-              return require("noice").api.status.mode.get()
-            end,
-            cond = function()
-              return package.loaded["noice"] and require("noice").api.status.mode.has()
-            end,
-            color = function()
-              return { fg = Snacks.util.color("Constant") }
-            end,
-          },
-          {
-            function()
-              return "  " .. require("dap").status()
-            end,
-            cond = function()
-              return package.loaded["dap"] and require("dap").status() ~= ""
-            end,
-            color = function()
-              return { fg = Snacks.util.color("Debug") }
-            end,
-          },
-          {
-            require("lazy.status").updates,
-            cond = function()
-              if LINUX then
-                return false
-              end
-              return require("lazy.status").has_updates()
-            end,
-            color = function()
-              return { fg = Snacks.util.color("Special") }
-            end,
-          },
-          {
-            "diff",
-            symbols = {
-              added = icons.git.added,
-              modified = icons.git.modified,
-              removed = icons.git.removed,
-            },
-            source = function()
-              local gitsigns = b.gitsigns_status_dict
-              if gitsigns then
-                return {
-                  added = gitsigns.added,
-                  modified = gitsigns.changed,
-                  removed = gitsigns.removed,
-                }
-              end
-            end,
-          },
-        },
-        lualine_y = {
-          {
-            function()
-              return "󱁐:" .. bo[CUR_BUF()].shiftwidth
-            end,
-          },
-          { "encoding", padding = { left = 0, right = 1 } },
-          { "location", padding = { left = 0, right = 1 } },
-        },
+        lualine_c = lualine_c,
+        lualine_x = lualine_x,
+        lualine_y = lualine_y,
         lualine_z = { progress },
       },
       tabline = {
