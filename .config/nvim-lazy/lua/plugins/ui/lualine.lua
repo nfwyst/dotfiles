@@ -195,6 +195,18 @@ return {
             symbols = {
               alternate_file = "",
             },
+            fmt = function(name, context)
+              if name == "[No Name]" then
+                bo[context.bufnr].buflisted = false
+                return context.filetype
+              end
+              return name
+            end,
+            icons_enabled = false,
+            buffers_color = {
+              active = { fg = "#ffffff" },
+            },
+            use_mode_colors = false,
           },
         },
         lualine_x = {
