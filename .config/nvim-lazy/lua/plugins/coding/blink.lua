@@ -18,18 +18,15 @@ local function shouldnt_show_snippets()
   return not should_show_snippets()
 end
 
-local cmdline
-if not LINUX then
-  cmdline = function()
-    local type = fn.getcmdtype()
-    if type == "/" or type == "?" then
-      return { "buffer" }
-    end
-    if type == ":" then
-      return { "cmdline" }
-    end
-    return {}
+local function get_by_cmdtype(search_val, cmd_val, default)
+  local type = fn.getcmdtype()
+  if type == "/" or type == "?" then
+    return search_val
   end
+  if type == ":" then
+    return cmd_val
+  end
+  return default
 end
 
 return {
@@ -64,10 +61,16 @@ return {
       completion = {
         menu = {
           border = "rounded",
+          auto_show = function(ctx)
+            if not LINUX or ctx.mode ~= "cmdline" then
+              return true
+            end
+            return get_by_cmdtype(false, false, true)
+          end,
           cmdline_position = function()
             local pos = g.ui_cmdline_pos
-            if pos ~= nil then
-              return { pos[1], pos[2] }
+            if pos then
+              return { pos[1] + get_by_cmdtype(-1, 0, 0), pos[2] }
             end
             local ch = o.cmdheight
             local height = (ch == 0) and 1 or ch
@@ -79,6 +82,16 @@ return {
             border = "rounded",
           },
         },
+        list = {
+          selection = {
+            preselect = function(ctx)
+              return ctx.mode ~= "cmdline"
+            end,
+            auto_insert = function(ctx)
+              return ctx.mode ~= "cmdline"
+            end,
+          },
+        },
       },
       sources = {
         providers = {
@@ -88,6 +101,14 @@ return {
           },
           lsp = {
             should_show_items = shouldnt_show_snippets,
+            transform_items = function(_, items)
+              for _, item in ipairs(items) do
+                local st = item.sortText or ""
+                local sn = lsp.protocol.CompletionItemKind.Snippet
+                item.sortText = item.kind == sn and "0000" .. st or "9999" .. st
+              end
+              return items
+            end,
           },
           snippets = {
             min_keyword_length = 1,
@@ -135,15 +156,23 @@ return {
             },
           },
           buffer = {
-            min_keyword_length = 4,
+            min_keyword_length = 3,
             max_items = 3,
             should_show_items = shouldnt_show_snippets,
           },
           cmdline = {
-            enabled = not LINUX,
+            enabled = true,
           },
         },
-        cmdline = cmdline,
+        cmdline = function()
+          return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
+        end,
+      },
+      keymap = {
+        cmdline = {
+          ["<c-l>"] = { "show" },
+          ["<c-e>"] = { "hide" },
+        },
       },
     }
 
