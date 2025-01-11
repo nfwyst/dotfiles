@@ -213,8 +213,10 @@ return {
       },
       keymap = {
         cmdline = {
-          ["<c-l>"] = { "show" },
-          ["<c-e>"] = { "hide" },
+          ["<c-l>"] = { "show", "fallback" },
+          ["<c-e>"] = { "hide", "fallback" },
+          ["<c-j>"] = { "select_next", "fallback" },
+          ["<c-k>"] = { "select_prev", "fallback" },
         },
       },
     }
