@@ -23,7 +23,7 @@ return {
       provider_options = {
         openai_fim_compatible = {
           model = "deepseek-chat",
-          end_point = "https://api.deepseek.com/beta/completions",
+          end_point = "https://api.deepseek.com/completions",
           api_key = "DEEPSEEK_API_KEY",
           name = "󱗻",
           stream = true,

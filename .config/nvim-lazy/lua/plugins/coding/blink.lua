@@ -31,7 +31,7 @@ end
 
 return {
   "saghen/blink.cmp",
-  dependencies = { "saghen/blink.compat" },
+  dependencies = { "saghen/blink.compat", "moyiz/blink-emoji.nvim", "Kaiser-Yang/blink-cmp-dictionary" },
   opts = function(_, opts)
     require("cmp").ConfirmBehavior = {
       Insert = "insert",
@@ -56,6 +56,13 @@ return {
     })
 
     PUSH(opts.sources.default, "markdown")
+
+    if not LINUX then
+      push_list(opts.sources.default, {
+        "emoji",
+        "dictionary",
+      })
+    end
 
     local opt = {
       completion = {
@@ -109,6 +116,7 @@ return {
               end
               return items
             end,
+            score_offset = 90,
           },
           snippets = {
             min_keyword_length = 1,
@@ -143,9 +151,11 @@ return {
 
               return items
             end,
+            score_offset = 85,
           },
           path = {
             should_show_items = shouldnt_show_snippets,
+            fallbacks = { "snippets", "buffer" },
             opts = {
               trailing_slash = false,
               label_trailing_slash = true,
@@ -154,11 +164,44 @@ return {
               end,
               show_hidden_files_by_default = true,
             },
+            score_offset = 25,
+          },
+          dictionary = {
+            should_show_items = shouldnt_show_snippets,
+            module = "blink-cmp-dictionary",
+            name = "Dict",
+            enabled = not LINUX,
+            max_items = 3,
+            min_keyword_length = 3,
+            opts = {
+              dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
+              separate_output = function(output)
+                local items = {}
+                for line in output:gmatch("[^\r\n]+") do
+                  table.insert(items, {
+                    label = line,
+                    insert_text = line,
+                    documentation = nil,
+                  })
+                end
+                return items
+              end,
+            },
+            score_offset = 20,
           },
           buffer = {
             min_keyword_length = 3,
             max_items = 3,
             should_show_items = shouldnt_show_snippets,
+            score_offset = 15,
+          },
+          emoji = {
+            should_show_items = shouldnt_show_snippets,
+            module = "blink-emoji",
+            name = "Emoji",
+            enabled = not LINUX,
+            score_offset = 15,
+            opts = { insert = true },
           },
           cmdline = {
             enabled = true,

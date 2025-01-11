@@ -147,7 +147,7 @@ return {
             end,
             icons_enabled = false,
             buffers_color = {
-              active = { fg = "#ffffff" },
+              active = { fg = "#ffffff", bg = "#6f95ff" },
             },
             use_mode_colors = false,
           },

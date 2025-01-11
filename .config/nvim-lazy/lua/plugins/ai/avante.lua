@@ -106,17 +106,18 @@ return {
     require("avante").setup({
       provider = "openai",
       openai = {
-        endpoint = "https://api.deepseek.com/beta",
+        endpoint = "https://api.deepseek.com/v1",
         model = "deepseek-chat",
         timeout = 30000,
         api_key_name = api_key_name,
         temperature = 0.1,
         max_tokens = 8192,
         allow_insecure = false,
+        ["local"] = false,
       },
       vendors = {
         deepseek = {
-          endpoint = "https://api.deepseek.com/beta/chat/completions",
+          endpoint = "https://api.deepseek.com/chat/completions",
           model = "deepseek-chat",
           api_key_name = api_key_name,
           parse_curl_args = function(opts, code_opts)
