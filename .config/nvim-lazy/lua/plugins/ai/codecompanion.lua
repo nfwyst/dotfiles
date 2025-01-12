@@ -42,7 +42,9 @@ return {
     {
       "<leader>acM",
       function()
-        return require("codecompanion").actions({})
+        return require("codecompanion").actions({
+          provider = { name = "default", opts = { prompt = "Select Action: " } },
+        })
       end,
       desc = "CodeCompanion Actions",
       mode = mode,
@@ -81,56 +83,63 @@ return {
       desc = "TogglePrompt",
     },
   },
-  opts = {
-    strategies = {
-      chat = {
-        adapter = "deepseek",
+  config = function()
+    local system_prompt = require("codecompanion.config").config.opts.system_prompt
+    require("codecompanion").setup({
+      strategies = {
+        chat = {
+          adapter = "deepseek",
+        },
+        inline = {
+          adapter = "deepseek",
+        },
+        agent = {
+          adapter = "deepseek",
+        },
       },
-      inline = {
-        adapter = "deepseek",
-      },
-      agent = {
-        adapter = "deepseek",
-      },
-    },
-    opts = {
-      language = "Chinese",
-      log_level = "ERROR",
-      send_code = true,
-      system_prompt = function(...)
-        local opts = require("codecompanion.config").config.opts
-        return is_default_prompt and opts.system_prompt(...) or PROMPT
-      end,
-    },
-    adapters = {
       opts = {
-        allow_insecure = false,
-        proxy = AI.proxy,
+        language = "Chinese",
+        log_level = "ERROR",
+        send_code = true,
+        system_prompt = function(...)
+          return is_default_prompt and system_prompt(...) or PROMPT
+        end,
       },
-      deepseek = function()
-        return require("codecompanion.adapters").extend("openai_compatible", {
-          env = {
-            url = AI.endpoint,
-            chat_url = AI.chat.pathname,
-            api_key = AI.api_key.name,
-          },
-          schema = {
-            model = {
-              default = AI.model.default,
-              choices = AI.model.list,
+      adapters = {
+        opts = {
+          allow_insecure = false,
+          proxy = AI.proxy,
+        },
+        deepseek = function()
+          return require("codecompanion.adapters").extend("openai_compatible", {
+            env = {
+              url = AI.endpoint,
+              chat_url = AI.chat.pathname,
+              api_key = AI.api_key.name,
             },
-            num_ctx = {
-              default = AI.max.context,
+            schema = {
+              model = {
+                default = AI.model.default,
+                choices = AI.model.list,
+              },
+              num_ctx = {
+                default = AI.max.context,
+              },
+              max_tokens = {
+                default = AI.max.tokens,
+              },
+              temperature = {
+                default = AI.temperature,
+              },
             },
-            max_tokens = {
-              default = AI.max.tokens,
-            },
-            temperature = {
-              default = AI.temperature,
-            },
-          },
-        })
-      end,
-    },
-  },
+          })
+        end,
+      },
+      display = {
+        diff = {
+          enabled = true,
+        },
+      },
+    })
+  end,
 }
