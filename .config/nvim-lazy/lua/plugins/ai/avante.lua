@@ -144,6 +144,7 @@ return {
       },
       behaviour = {
         auto_suggestions = false,
+        auto_suggestions_respect_ignore = true,
         auto_set_highlight_group = true,
         auto_apply_diff_after_generation = false,
         auto_set_keymaps = false,

@@ -94,9 +94,7 @@ return {
             preselect = function(ctx)
               return ctx.mode ~= "cmdline"
             end,
-            auto_insert = function(ctx)
-              return ctx.mode ~= "cmdline"
-            end,
+            auto_insert = true,
           },
         },
       },
@@ -108,13 +106,14 @@ return {
           },
           lsp = {
             should_show_items = shouldnt_show_snippets,
-            transform_items = function(_, items)
-              for _, item in ipairs(items) do
+            transform_items = function(ctx, items)
+              local is_cl = ctx.mode == "cmdline"
+              return filter(function(item)
                 local st = item.sortText or ""
-                local sn = lsp.protocol.CompletionItemKind.Snippet
-                item.sortText = item.kind == sn and "0000" .. st or "9999" .. st
-              end
-              return items
+                local is_sn = item.kind == lsp.protocol.CompletionItemKind.Snippet
+                item.sortText = is_sn and "0000" .. st or "9999" .. st
+                return not is_cl or not is_sn
+              end, items)
             end,
             score_offset = 90,
           },
@@ -218,6 +217,9 @@ return {
           ["<c-j>"] = { "select_next", "fallback" },
           ["<c-k>"] = { "select_prev", "fallback" },
         },
+      },
+      snippets = {
+        preset = "default",
       },
     }
 

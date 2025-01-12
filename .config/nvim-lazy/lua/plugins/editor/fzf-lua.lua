@@ -2,7 +2,7 @@ return {
   "ibhagwan/fzf-lua",
   cmd = "FzfLua",
   opts = function(_, opts)
-    local acts = require("fzf-lua.actions")
+    local acts = require("fzf-lua").actions
     local actions = {
       ["ctrl-i"] = { acts.toggle_ignore },
       ["ctrl-h"] = { acts.toggle_hidden },
