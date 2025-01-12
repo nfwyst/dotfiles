@@ -61,7 +61,13 @@ end
 
 require("lazy").setup({
   spec = {
-    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+    {
+      "LazyVim/LazyVim",
+      import = "lazyvim.plugins",
+      opts = {
+        colorscheme = "tokyonight",
+      },
+    },
     { import = "plugins" },
     { import = "plugins.colorscheme" },
     { import = "plugins.lsp" },

@@ -170,7 +170,7 @@ return {
             module = "blink-cmp-dictionary",
             name = "Dict",
             enabled = not LINUX,
-            max_items = 3,
+            max_items = 2,
             min_keyword_length = 3,
             opts = {
               dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
