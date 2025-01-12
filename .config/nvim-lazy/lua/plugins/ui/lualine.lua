@@ -3,15 +3,15 @@ local progress = {
     local current_line = fn.line(".")
     local total_lines = fn.line("$")
     local chars = {
-      "  ",
-      "▁▁",
-      "▂▂",
-      "▃▃",
-      "▄▄",
-      "▅▅",
-      "▆▆",
-      "▇▇",
       "██",
+      "▇▇",
+      "▆▆",
+      "▅▅",
+      "▄▄",
+      "▃▃",
+      "▂▂",
+      "▁▁",
+      "  ",
     }
     local line_ratio = current_line / total_lines
     local index = math.ceil(line_ratio * #chars)
@@ -20,23 +20,10 @@ local progress = {
   padding = 0,
 }
 
-local lsps = function()
-  local clients = lsp.get_clients({ bufnr = CUR_BUF() })
-  local names = {}
-  for _, client in pairs(clients) do
-    PUSH(names, client.name)
-  end
-  local result = table.concat(names, "•")
-  if result == "" then
-    return ""
-  end
-  return "󱓞 " .. result
-end
-
 local refresh_time = 100
 local extensions
 
-if LINUX then
+if IS_LINUX then
   extensions = {}
   refresh_time = 1000
 end
@@ -54,11 +41,6 @@ return {
       end,
     })
 
-    PUSH(sections.lualine_b, {
-      lsps,
-      padding = { left = 0, right = 1 },
-    })
-
     local lualine_c = filter(function(item)
       local name = item[1]
       local is_diag = name == "diagnostics"
@@ -72,19 +54,9 @@ return {
       end
       return is_diag or name == "filetype"
     end, sections.lualine_c)
-    PUSH(lualine_c, {
-      function()
-        return require("nomodoro").status()
-      end,
-      cond = function()
-        return package.loaded["nomodoro"]
-      end,
-      color = { fg = "#dc322f" },
-      padding = { left = 0, right = 1 },
-    })
 
     local lualine_x = sections.lualine_x
-    if LINUX then
+    if IS_LINUX then
       lualine_x = filter(function(item)
         return item[1] ~= require("lazy.status").updates
       end, lualine_x)
@@ -107,7 +79,7 @@ return {
       options = {
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
-        ignore_focus = { "neo-tree", "Avante", "AvanteInput" },
+        ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion" },
         globalstatus = true,
         refresh = {
           statusline = refresh_time,

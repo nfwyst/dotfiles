@@ -1,6 +1,6 @@
 SET_OPTS({
   lazyvim_blink_main = true,
-  snacks_animate = not LINUX,
+  snacks_animate = not IS_LINUX,
   ai_cmp = false,
   editorconfig = true,
   lazyvim_picker = "fzf",
@@ -8,7 +8,7 @@ SET_OPTS({
 }, "g")
 
 SET_OPTS({
-  relativenumber = not LINUX,
+  relativenumber = not IS_LINUX,
   showtabline = 0,
   swapfile = false,
   timeoutlen = 350,
@@ -28,7 +28,7 @@ SET_OPTS({
     precedes = "«",
     nbsp = "░",
   },
-  undolevels = LINUX and 1000 or 100000,
+  undolevels = IS_LINUX and 1000 or 100000,
   showcmd = false,
   breakindent = true,
   background = "dark",

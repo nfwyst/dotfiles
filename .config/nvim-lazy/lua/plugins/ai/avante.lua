@@ -28,11 +28,23 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    {
+      "saghen/blink.cmp",
+      module = false,
+      opts = function(_, opts)
+        push_list(opts.sources.compat, {
+          "avante_commands",
+          "avante_mentions",
+          "avante_files",
+        })
+      end,
+    },
   },
   keys = {
     { "<leader>a", "", desc = "+ai", mode = mode },
+    { "<leader>aa", "", desc = "Avante", mode = mode },
     {
-      "<leader>aa",
+      "<leader>aaa",
       function()
         GET_USER_INPUT("question", function(question)
           cmd("AvanteAsk " .. question)
@@ -40,40 +52,40 @@ return {
       end,
       desc = "AvanteAsk",
     },
-    { "<leader>aB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
-    { "<leader>ac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
-    { "<leader>aH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
-    { "<leader>aM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
-    { "<leader>aC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
-    { "<leader>ae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
-    { "<leader>ar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },
-    { "<leader>aR", "<cmd>AvanteShowRepoMap<cr>", desc = "AvanteShowRepoMap" },
-    { "<leader>aP", "<cmd>AvanteSwitchFileSelectorProvider<cr>", desc = "AvanteSwitchFileSelectorProvider" },
-    { "<leader>ap", "<cmd>AvanteSwitchProvider<cr>", desc = "AvanteSwitchProvider" },
-    { "<leader>at", "<cmd>AvanteToggle<cr>", desc = "AvanteToggle" },
+    { "<leader>aaB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
+    { "<leader>aac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
+    { "<leader>aaH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
+    { "<leader>aaM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
+    { "<leader>aaC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
+    { "<leader>aae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
+    { "<leader>aar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },
+    { "<leader>aaR", "<cmd>AvanteShowRepoMap<cr>", desc = "AvanteShowRepoMap" },
+    { "<leader>aaP", "<cmd>AvanteSwitchFileSelectorProvider<cr>", desc = "AvanteSwitchFileSelectorProvider" },
+    { "<leader>aap", "<cmd>AvanteSwitchProvider<cr>", desc = "AvanteSwitchProvider" },
+    { "<leader>aat", "<cmd>AvanteToggle<cr>", desc = "AvanteToggle" },
     {
-      "<leader>ah",
+      "<leader>aah",
       function()
         require("avante").toggle.hint()
       end,
       desc = "Avante: Toggle Hint",
     },
     {
-      "<leader>ad",
+      "<leader>aad",
       function()
         require("avante").toggle.debug()
       end,
       desc = "Avante: Toggle Debug",
     },
     {
-      "<leader>as",
+      "<leader>aas",
       function()
         require("avante").toggle.suggestion()
       end,
       desc = "Avante: Toggle Suggestion",
     },
     {
-      "<leader>aT",
+      "<leader>aaT",
       "<cmd>TogglePrompt<cr>",
       desc = "TogglePrompt",
     },
@@ -100,40 +112,38 @@ return {
 
     local config = require("avante.config")
     local providers = require("avante.providers")
-    local api_key_name = "DEEPSEEK_API_KEY"
-    local token = os.getenv(api_key_name) or ""
+    local key_name = AI.api_key.name
 
     require("avante").setup({
-      provider = "openai",
-      openai = {
-        endpoint = "https://api.deepseek.com/v1",
-        model = "deepseek-chat",
-        timeout = 30000,
-        api_key_name = api_key_name,
-        temperature = 0.1,
-        max_tokens = 8192,
-        allow_insecure = false,
-        ["local"] = false,
-      },
+      provider = "deepseek",
       vendors = {
         deepseek = {
-          endpoint = "https://api.deepseek.com/chat/completions",
-          model = "deepseek-chat",
-          api_key_name = api_key_name,
+          endpoint = AI.endpoint,
+          model = AI.model.default,
+          api_key_name = key_name,
           parse_curl_args = function(opts, code_opts)
+            local headers = {
+              ["Accept"] = "application/json",
+              ["Content-Type"] = "application/json",
+            }
+            local key_value = AI.api_key.value
+            if key_value then
+              headers["Authorization"] = "Bearer " .. key_value
+            end
             return {
-              url = opts.endpoint,
-              headers = {
-                ["Accept"] = "application/json",
-                ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. token,
-              },
+              url = opts.endpoint .. AI.chat.pathname,
+              insecure = false,
+              headers = headers,
+              timeout = AI.timeout,
               body = {
                 model = opts.model,
                 messages = providers.openai.parse_messages(code_opts),
-                temperature = 0.1,
-                max_tokens = 8192,
                 stream = true,
+                temperature = AI.temperature,
+                max_tokens = AI.max.tokens,
+                options = {
+                  num_ctx = AI.max.context,
+                },
               },
             }
           end,

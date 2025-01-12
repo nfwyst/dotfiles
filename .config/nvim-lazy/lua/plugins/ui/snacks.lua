@@ -1,6 +1,6 @@
 local left = { "mark" }
 
-if LINUX then
+if IS_LINUX then
   left[2] = "sign"
 end
 
@@ -69,7 +69,7 @@ return {
       },
       indent = {
         scope = {
-          enabled = not LINUX,
+          enabled = not IS_LINUX,
         },
       },
       bigfile = {

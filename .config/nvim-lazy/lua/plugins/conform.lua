@@ -27,6 +27,8 @@ local format_opt = {
   async = true,
 }
 
+local mode = { "n", "v" }
+
 return {
   "stevearc/conform.nvim",
   keys = {
@@ -38,7 +40,7 @@ return {
           formatters = { "injected" },
         }))
       end,
-      mode = { "n", "v" },
+      mode = mode,
       desc = "Format Injected Langs",
     },
     {
@@ -47,7 +49,7 @@ return {
         NEED_ESLINT_FIX = false
         LazyVim.format({ force = true })
       end,
-      mode = { "n", "v" },
+      mode = mode,
       desc = "Format",
     },
   },

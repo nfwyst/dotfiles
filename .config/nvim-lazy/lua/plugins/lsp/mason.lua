@@ -11,7 +11,7 @@ local ensure_installed = {
   "markdownlint-cli2",
 }
 
-if not LINUX then
+if not IS_LINUX then
   PUSH(ensure_installed, "stylua")
 end
 

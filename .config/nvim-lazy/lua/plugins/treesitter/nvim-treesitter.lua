@@ -35,7 +35,7 @@ return {
         "yaml",
         "git_config",
       },
-      ignore_install = LINUX and { "nu" },
+      ignore_install = IS_LINUX and { "nu" } or nil,
     }
 
     return merge(opts, opt)

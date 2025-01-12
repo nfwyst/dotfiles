@@ -46,30 +46,17 @@ return {
       Pmenu = { bg = "NONE" },
     })
 
-    push_list(opts.sources.compat, {
-      "obsidian",
-      "obsidian_new",
-      "obsidian_tags",
-      "avante_commands",
-      "avante_mentions",
-      "avante_files",
+    push_list(opts.sources.default, {
+      "emoji",
+      "dictionary",
     })
-
-    PUSH(opts.sources.default, "markdown")
-
-    if not LINUX then
-      push_list(opts.sources.default, {
-        "emoji",
-        "dictionary",
-      })
-    end
 
     local opt = {
       completion = {
         menu = {
           border = "rounded",
           auto_show = function(ctx)
-            if not LINUX or ctx.mode ~= "cmdline" then
+            if not IS_LINUX or ctx.mode ~= "cmdline" then
               return true
             end
             return get_by_cmdtype(false, false, true)
@@ -100,10 +87,6 @@ return {
       },
       sources = {
         providers = {
-          markdown = {
-            name = "RenderMarkdown",
-            module = "render-markdown.integ.blink",
-          },
           lsp = {
             should_show_items = shouldnt_show_snippets,
             transform_items = function(ctx, items)
@@ -169,7 +152,6 @@ return {
             should_show_items = shouldnt_show_snippets,
             module = "blink-cmp-dictionary",
             name = "Dict",
-            enabled = not LINUX,
             max_items = 2,
             min_keyword_length = 3,
             opts = {
@@ -198,7 +180,7 @@ return {
             should_show_items = shouldnt_show_snippets,
             module = "blink-emoji",
             name = "Emoji",
-            enabled = not LINUX,
+            enabled = not IS_LINUX,
             score_offset = 15,
             opts = { insert = true },
           },

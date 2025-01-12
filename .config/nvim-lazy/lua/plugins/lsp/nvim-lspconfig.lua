@@ -13,7 +13,7 @@ local lsp_servers = {
   "vtsls",
 }
 
-if not LINUX then
+if not IS_LINUX then
   PUSH(lsp_servers, "gopls")
 end
 
@@ -54,7 +54,7 @@ local virtual_text = {
     return "● " .. diagnostic.message
   end,
 }
-if LINUX then
+if IS_LINUX then
   virtual_text = nil
 end
 
@@ -69,6 +69,29 @@ lsp.set_log_level(levels.OFF)
 
 return {
   "neovim/nvim-lspconfig",
+  dependencies = {
+    {
+      "nvim-lualine/lualine.nvim",
+      module = false,
+      opts = function(_, opts)
+        PUSH(opts.sections.lualine_b, {
+          function()
+            local clients = lsp.get_clients({ bufnr = CUR_BUF() })
+            local names = {}
+            for _, client in pairs(clients) do
+              PUSH(names, client.name)
+            end
+            local result = table.concat(names, "•")
+            if result == "" then
+              return ""
+            end
+            return "󱓞 " .. result
+          end,
+          padding = { left = 0, right = 1 },
+        })
+      end,
+    },
+  },
   opts = function(_, opts)
     override()
 

@@ -54,10 +54,10 @@ return {
       },
       lsp = {
         hover = {
-          silent = LINUX,
+          silent = IS_LINUX,
         },
         progress = {
-          enabled = not LINUX,
+          enabled = not IS_LINUX,
         },
         signature = {
           auto_open = {

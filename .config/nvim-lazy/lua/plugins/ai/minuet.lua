@@ -22,13 +22,13 @@ return {
       },
       provider_options = {
         openai_fim_compatible = {
-          model = "deepseek-chat",
-          end_point = "https://api.deepseek.com/completions",
-          api_key = "DEEPSEEK_API_KEY",
+          model = AI.model.default,
+          end_point = AI.fim.url,
+          api_key = AI.api_key.name,
           name = "󱗻",
           stream = true,
           optional = {
-            max_tokens = 256,
+            max_tokens = AI.max.fim_tokens,
             stop = { "\n\n" },
           },
         },

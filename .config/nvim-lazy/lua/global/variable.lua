@@ -44,8 +44,7 @@ HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
 CMD = api.nvim_create_user_command
 GROUP = api.nvim_create_augroup
-HAS_AI_KEY = os.getenv("DEEPSEEK_API_KEY")
-LINUX = jit.os == "Linux"
+IS_LINUX = jit.os == "Linux"
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 STAY_CENTER = true
@@ -55,11 +54,45 @@ NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
 HAS_WEZTERM = fn.executable("wezterm") == 1
 TRANSPARENT_INDENT_HL = "#666666"
-ENABLE_SCROLL_EFFECT = not LINUX
+ENABLE_SCROLL_EFFECT = not IS_LINUX
+
 CONSTANTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
+  ai = {
+    deepseek = {
+      endpoint = "https://api.deepseek.com",
+      temperature = 0.1,
+      timeout = 30000,
+      max = {
+        tokens = 8192,
+        fim_tokens = 256,
+        context = 65536,
+      },
+      model = {
+        list = {
+          "deepseek-chat",
+          "deepseek-coder",
+        },
+        default = "deepseek-chat",
+      },
+      api_key = {
+        name = "DEEPSEEK_API_KEY",
+        value = os.getenv("DEEPSEEK_API_KEY"),
+      },
+      fim = {
+        url = "https://api.deepseek.com/beta/completions",
+      },
+      chat = {
+        url = "https://api.deepseek.com/chat/completions",
+        pathname = "/chat/completions",
+      },
+    },
+  },
 }
+
+AI = CONSTANTS.ai.deepseek
+HAS_AI_KEY = AI.api_key.value ~= nil
 
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。
@@ -88,6 +121,7 @@ PROMPT = [[
 2. 回答我的问题
 3. 提供代码审查和反馈
 4. 提供进一步学习或练习的建议
+5. 所有非代码回复必须为中文
 请记住，你的目标不仅是帮助我编写正确的代码，而且要帮助我理解基本原理并提高我的编程技能。
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]

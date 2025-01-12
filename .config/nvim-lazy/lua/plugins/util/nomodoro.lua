@@ -1,6 +1,24 @@
 return {
   "dbinagi/nomodoro",
   cmd = { "NomoTimer", "NomoMenu" },
+  dependencies = {
+    {
+      "nvim-lualine/lualine.nvim",
+      module = false,
+      opts = function(_, opts)
+        PUSH(opts.sections.lualine_c, {
+          function()
+            return require("nomodoro").status()
+          end,
+          cond = function()
+            return package.loaded["nomodoro"]
+          end,
+          color = { fg = "#dc322f" },
+          padding = { left = 0, right = 1 },
+        })
+      end,
+    },
+  },
   opts = {
     work_time = 25,
     short_break_time = 5,

@@ -92,7 +92,7 @@ require("lazy").setup({
   install = { colorscheme = { "tokyonight", "habamax" } },
   ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
-    enabled = not LINUX,
+    enabled = not IS_LINUX,
     notify = false,
   },
   change_detection = { notify = false },

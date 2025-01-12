@@ -22,7 +22,7 @@ defer(set_custom_highlight, 0)
 
 return {
   "xiyaowong/transparent.nvim",
-  cond = not LINUX,
+  cond = not IS_LINUX,
   config = function()
     require("transparent").setup({
       groups = {

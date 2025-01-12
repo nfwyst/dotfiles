@@ -39,7 +39,20 @@ end
 
 return {
   "epwalsh/obsidian.nvim",
-  dependencies = { "nvim-lua/plenary.nvim" },
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+    {
+      "saghen/blink.cmp",
+      module = false,
+      opts = function(_, opts)
+        push_list(opts.sources.compat, {
+          "obsidian",
+          "obsidian_new",
+          "obsidian_tags",
+        })
+      end,
+    },
+  },
   ft = "markdown",
   config = function()
     local obsidian = require("obsidian")

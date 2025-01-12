@@ -1,7 +1,20 @@
-local ft = { "markdown", "Avante", "norg", "rmd", "org" }
+local ft = { "markdown", "Avante", "norg", "rmd", "org", "codecompanion" }
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
+  dependencies = {
+    {
+      "saghen/blink.cmp",
+      module = false,
+      opts = function(_, opts)
+        PUSH(opts.sources.default, "markdown")
+        opts.sources.providers.markdown = {
+          name = "RenderMarkdown",
+          module = "render-markdown.integ.blink",
+        }
+      end,
+    },
+  },
   opts = {
     modes = { "n", "i", "no", "c", "t" },
     file_types = ft,

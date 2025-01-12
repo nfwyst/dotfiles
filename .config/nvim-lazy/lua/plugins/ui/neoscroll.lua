@@ -3,7 +3,7 @@ return {
   cond = ENABLE_SCROLL_EFFECT,
   event = { "BufReadPost", "BufNewFile" },
   opts = {
-    performance_mode = LINUX,
+    performance_mode = IS_LINUX,
     mappings = {
       "<C-u>",
       "<C-d>",
