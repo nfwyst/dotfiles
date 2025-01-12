@@ -89,7 +89,7 @@ require("lazy").setup({
   git = {
     timeout = 1000,
   },
-  install = { colorscheme = { "tokyonight", "habamax" } },
+  install = { colorscheme = { "tokyonight", "NeoSolarized" } },
   ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
     enabled = not IS_LINUX,
