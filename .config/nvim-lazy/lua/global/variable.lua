@@ -59,6 +59,7 @@ ENABLE_SCROLL_EFFECT = not IS_LINUX
 CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
+  IS_BUF_PINNED = "IS_BUF_PINNED",
   ai = {
     deepseek = {
       endpoint = "https://api.deepseek.com",

@@ -108,14 +108,18 @@ return {
               mason = "package manager",
             },
             symbols = {
-              alternate_file = "",
+              alternate_file = "󰁯 ",
             },
             fmt = function(name, context)
+              local bufnr = context.bufnr
               if name == "[No Name]" then
-                bo[context.bufnr].buflisted = false
+                bo[bufnr].buflisted = false
                 return context.filetype
               end
-              return name
+              if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+                return name
+              end
+              return name .. "  "
             end,
             icons_enabled = false,
             buffers_color = {

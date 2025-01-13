@@ -9,5 +9,10 @@ return {
     win = {
       height = { max = 85 },
     },
+    icons = {
+      rules = {
+        { pattern = "harpoon", icon = "󱓞 ", color = "orange" },
+      },
+    },
   },
 }

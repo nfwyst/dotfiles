@@ -41,7 +41,7 @@ return {
     },
   },
   keys = {
-    { "<leader>a", "", desc = "+ai", mode = mode },
+    { "<leader>a", "", desc = "ai", mode = mode },
     { "<leader>aa", "", desc = "Avante", mode = mode },
     {
       "<leader>aaa",

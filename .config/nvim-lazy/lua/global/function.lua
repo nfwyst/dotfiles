@@ -194,12 +194,12 @@ function RUN_IN_WIN(win, callback, opt)
 end
 
 function BUF_VAR(bufnr, name, value)
-  if value then
+  if value ~= nil then
     return api.nvim_buf_set_var(bufnr, name, value)
   end
-  local ok, value = pcall(api.nvim_buf_get_var, bufnr, name)
+  local ok, val = pcall(api.nvim_buf_get_var, bufnr, name)
   if ok then
-    return value
+    return val
   end
 end
 

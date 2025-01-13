@@ -57,7 +57,7 @@ local function get_previewer()
     end, 50)
 
     self:set_preview_buf(bufnr)
-    self.win:update_scrollbar()
+    self.win:update_preview_scrollbar()
   end
 
   previewer.gen_winopts = function(self)
@@ -114,30 +114,30 @@ return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
   keys = function()
-    return {
+    local harpoon = require("harpoon")
+    local keys = {
+      { "<leader>h", "", desc = "Harpoon Bookmark" },
       {
-        "<leader>H",
+        "<leader>hf",
         function()
-          require("harpoon"):list():add()
+          harpoon:list():add()
         end,
-        desc = "Harpoon File",
+        desc = "Harpoon Bookmark Add File",
       },
       {
-        "<leader>h",
+        "<leader>hl",
         function()
-          local harpoon = require("harpoon")
           harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
         end,
-        desc = "Harpoon Quick Menu",
+        desc = "Harpoon Bookmark Open File List",
       },
       {
         "<s-tab>",
         show_bookmark,
       },
       {
-        "<leader>k",
+        "<leader>hb",
         function()
-          local harpoon = require("harpoon")
           local tag = fn.input("Note: ")
           if tag == "" then
             return
@@ -149,9 +149,19 @@ return {
             bookmarks:prepend(item)
           end
         end,
-        desc = "Harpoon Add Bookmark",
+        desc = "Harpoon Add Location Bookmark",
       },
     }
+    for i = 1, 5 do
+      PUSH(keys, {
+        "<leader>h" .. i,
+        function()
+          harpoon:list():select(i)
+        end,
+        desc = "Harpoon To File " .. i,
+      })
+    end
+    return keys
   end,
   opts = {
     bookmarks = {
