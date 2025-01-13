@@ -39,6 +39,9 @@ return {
         rg_glob = true,
         actions = actions,
       },
+      lsp = {
+        async_or_timeout = 60000,
+      },
     }
     return merge(opts, opt)
   end,
