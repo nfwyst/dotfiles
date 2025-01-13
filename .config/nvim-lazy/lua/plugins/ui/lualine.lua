@@ -116,10 +116,14 @@ return {
                 bo[bufnr].buflisted = false
                 return context.filetype
               end
-              if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
-                return name
+              local separator = "  ▎"
+              if bufnr == CUR_BUF() or context.last then
+                separator = ""
               end
-              return name .. "  "
+              if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+                return name .. separator
+              end
+              return name .. "  " .. separator
             end,
             icons_enabled = false,
             buffers_color = {
