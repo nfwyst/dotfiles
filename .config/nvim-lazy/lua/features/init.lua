@@ -1,2 +1,2 @@
 require("features.remove-quickfix-item")
-require("features.reset_buffer")
+require("features.reset-buffer")
