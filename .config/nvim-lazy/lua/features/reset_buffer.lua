@@ -44,7 +44,7 @@ local function center(bufnr)
 end
 
 local function disable_lint(bufnr)
-  local inited = BUF_VAR(bufnr, CONSTANTS.LINT_INITED)
+  local inited = BUF_VAR(bufnr, CONSTS.LINT_INITED)
   if inited then
     return
   end
@@ -57,7 +57,7 @@ local function disable_lint(bufnr)
 end
 
 local function dim_win(bufnr)
-  local var_key = CONSTANTS.WIN_DIMED
+  local var_key = CONSTS.WIN_DIMED
   local is_actived = BUF_VAR(bufnr, var_key)
   if is_actived then
     return

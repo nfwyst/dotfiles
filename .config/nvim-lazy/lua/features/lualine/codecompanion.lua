@@ -21,11 +21,9 @@ local spinner_symbols_len = 10
 function M:init(options)
   M.super.init(self, options)
 
-  local group = vim.api.nvim_create_augroup("CodeCompanionHooks", {})
-
-  vim.api.nvim_create_autocmd({ "User" }, {
+  AUCMD({ "User" }, {
     pattern = "CodeCompanionRequest*",
-    group = group,
+    group = GROUP("CodeCompanionHooks", {}),
     callback = function(request)
       if request.match == "CodeCompanionRequestStarted" then
         self.processing = true
@@ -42,7 +40,7 @@ function M:update_status()
     self.spinner_index = (self.spinner_index % spinner_symbols_len) + 1
     return spinner_symbols[self.spinner_index]
   else
-    return "😄"
+    return " "
   end
 end
 

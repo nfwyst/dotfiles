@@ -6,11 +6,11 @@ local function enable_lint(event)
     return
   end
   local bufnr = event.buf
-  local inited = BUF_VAR(bufnr, CONSTANTS.LINT_INITED)
+  local inited = BUF_VAR(bufnr, CONSTS.LINT_INITED)
   if inited then
     return
   end
-  BUF_VAR(bufnr, CONSTANTS.LINT_INITED, true)
+  BUF_VAR(bufnr, CONSTS.LINT_INITED, true)
   diagnostic.enable(true, { bufnr = bufnr })
 end
 

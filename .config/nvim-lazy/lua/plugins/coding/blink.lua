@@ -1,4 +1,5 @@
 local trigger_text = ";"
+local emoji_enabled = not IS_LINUX
 
 local function line_before_cursor()
   local cursor = WIN_CURSOR(CUR_WIN())
@@ -14,8 +15,16 @@ local function should_show_snippets()
   return contents_before_cursor:match(trigger_pattern) ~= nil
 end
 
-local function shouldnt_show_snippets()
-  return not should_show_snippets()
+local function should_show_emoji()
+  return line_before_cursor():match(":%w*$") ~= nil
+end
+
+local function shouldnt_show_snippets_emoji()
+  local no_snip = not should_show_snippets()
+  if emoji_enabled then
+    return no_snip and not should_show_emoji()
+  end
+  return no_snip
 end
 
 local function get_by_cmdtype(search_val, cmd_val, default)
@@ -31,7 +40,11 @@ end
 
 return {
   "saghen/blink.cmp",
-  dependencies = { "saghen/blink.compat", "moyiz/blink-emoji.nvim", "Kaiser-Yang/blink-cmp-dictionary" },
+  dependencies = {
+    "saghen/blink.compat",
+    { "moyiz/blink-emoji.nvim", cond = emoji_enabled },
+    "Kaiser-Yang/blink-cmp-dictionary",
+  },
   opts = function(_, opts)
     require("cmp").ConfirmBehavior = {
       Insert = "insert",
@@ -46,10 +59,16 @@ return {
       Pmenu = { bg = "NONE" },
     })
 
-    push_list(opts.sources.default, {
-      "emoji",
-      "dictionary",
-    })
+    PUSH(opts.sources.default, "dictionary")
+    if emoji_enabled then
+      PUSH(opts.sources.default, "emoji")
+      opts.sources.providers.emoji = {
+        module = "blink-emoji",
+        name = "Emoji",
+        score_offset = 15,
+        opts = { insert = true },
+      }
+    end
 
     local opt = {
       completion = {
@@ -88,7 +107,7 @@ return {
       sources = {
         providers = {
           lsp = {
-            should_show_items = shouldnt_show_snippets,
+            should_show_items = shouldnt_show_snippets_emoji,
             transform_items = function(ctx, items)
               local is_cl = ctx.mode == "cmdline"
               return filter(function(item)
@@ -136,7 +155,7 @@ return {
             score_offset = 85,
           },
           path = {
-            should_show_items = shouldnt_show_snippets,
+            should_show_items = shouldnt_show_snippets_emoji,
             fallbacks = { "snippets", "buffer" },
             opts = {
               trailing_slash = false,
@@ -149,7 +168,7 @@ return {
             score_offset = 25,
           },
           dictionary = {
-            should_show_items = shouldnt_show_snippets,
+            should_show_items = shouldnt_show_snippets_emoji,
             module = "blink-cmp-dictionary",
             name = "Dict",
             max_items = 2,
@@ -173,16 +192,8 @@ return {
           buffer = {
             min_keyword_length = 3,
             max_items = 3,
-            should_show_items = shouldnt_show_snippets,
+            should_show_items = shouldnt_show_snippets_emoji,
             score_offset = 15,
-          },
-          emoji = {
-            should_show_items = shouldnt_show_snippets,
-            module = "blink-emoji",
-            name = "Emoji",
-            enabled = not IS_LINUX,
-            score_offset = 15,
-            opts = { insert = true },
           },
           cmdline = {
             enabled = true,

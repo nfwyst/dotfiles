@@ -56,7 +56,7 @@ HAS_WEZTERM = fn.executable("wezterm") == 1
 TRANSPARENT_INDENT_HL = "#666666"
 ENABLE_SCROLL_EFFECT = not IS_LINUX
 
-CONSTANTS = {
+CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
   ai = {
@@ -91,7 +91,7 @@ CONSTANTS = {
   },
 }
 
-AI = CONSTANTS.ai.deepseek
+AI = CONSTS.ai.deepseek
 HAS_AI_KEY = AI.api_key.value ~= nil
 
 PROMPT = [[

@@ -48,7 +48,7 @@ return {
         assign(item, {
           update_in_insert = false,
           cond = function()
-            return BUF_VAR(CUR_BUF(), CONSTANTS.LINT_INITED)
+            return BUF_VAR(CUR_BUF(), CONSTS.LINT_INITED)
           end,
         })
       end
