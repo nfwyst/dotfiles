@@ -28,10 +28,35 @@ if IS_LINUX then
   refresh_time = 1000
 end
 
+local function format_duplicated_title(title, filepath, bufnr)
+  if not IS_FILEPATH(filepath) then
+    return title
+  end
+  local showed_map = TABLINE_TITLE_MAP[title]
+  if not showed_map then
+    TABLINE_TITLE_MAP[title] = { bufnr }
+    return title
+  end
+  if not contains(showed_map, bufnr) then
+    PUSH(showed_map, bufnr)
+  end
+  if #showed_map <= 1 then
+    return title
+  end
+  return fs.basename(fs.dirname(filepath)) .. "/" .. title
+end
+
 return {
   "nvim-lualine/lualine.nvim",
   opts = function(_, opts)
     local sections = opts.sections
+
+    AUCMD("BufDelete", {
+      group = GROUP("clean_tabline_title_map_for_buf", { clear = true }),
+      callback = function(event)
+        CLEAN_TABLINE_TITLE_MAP(event.buf)
+      end,
+    })
 
     PUSH(sections.lualine_a, {
       "tabs",
@@ -113,19 +138,21 @@ return {
             },
             fmt = function(name, context)
               local bufnr = context.bufnr
+              local ft = context.filetype
               local title = not EMPTY(name) and name
-              local filetype = not EMPTY(context.filetype) and context.filetype
+              local filetype = not EMPTY(ft) and ft
               local title_invalid = not title or title == "[No Name]"
 
               if title_invalid then
+                title = filetype or ""
                 if not filetype then
                   bo[bufnr].buflisted = false
                 end
-                title = filetype or ""
-              end
-
-              if EMPTY(title) then
-                return title
+                if EMPTY(title) then
+                  return title
+                end
+              else
+                title = format_duplicated_title(title, context.file, bufnr)
               end
 
               local pinned_icon = ""

@@ -56,7 +56,7 @@ return {
       mode = mode,
     },
     { "<leader>acme", "<cmd>CodeCompanion /explain<cr>", desc = "Explain Code", mode = "v" },
-    { "<leader>acmE", "<cmd>CodeCompanion /lsp<cr>", desc = "Explain Code Using LSP", mode = "v" },
+    { "<leader>acmE", "<cmd>CodeCompanion /lsp<cr>", desc = "Explain The LSP Diagnostics", mode = "v" },
     { "<leader>acmf", "<cmd>CodeCompanion /fix<cr>", desc = "Fix Code", mode = "v" },
     { "<leader>acmc", "<cmd>CodeCompanion /commit<cr>", desc = "Generate Commit" },
     {

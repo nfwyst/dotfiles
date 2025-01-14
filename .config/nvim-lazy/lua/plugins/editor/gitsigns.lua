@@ -9,7 +9,7 @@ local signs = {
 
 return {
   "lewis6991/gitsigns.nvim",
-  cond = GET_GIT_ROOT(),
+  cond = IS_LAUNCH_FROM_GIT_REPO,
   opts = {
     signs = signs,
     signs_staged = signs,

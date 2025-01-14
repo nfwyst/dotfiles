@@ -85,7 +85,8 @@ return {
             if result == "" then
               return ""
             end
-            return "󱓞 " .. result
+            local prefix = IS_LAUNCH_FROM_GIT_REPO and "" or " "
+            return prefix .. "󱓞 " .. result
           end,
           padding = { left = 0, right = 1 },
         })

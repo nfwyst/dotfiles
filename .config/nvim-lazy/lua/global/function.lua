@@ -136,13 +136,10 @@ function IS_BIG_FILE(bufnr)
   end
 end
 
-function GET_GIT_ROOT(bufnr)
-  bufnr = bufnr or CUR_BUF()
-  local root = fs.root(bufnr, ".git")
-  if not root then
-    return fs.root(fn.getcwd(), ".git")
-  end
-  return root
+function GET_GIT_ROOT(bufnr_or_path)
+  bufnr_or_path = bufnr_or_path or CUR_BUF()
+  local root = fs.root(bufnr_or_path, ".git")
+  return root or fs.root(fn.getcwd(), ".git")
 end
 
 function GET_MAX_WIDTH(offset, multiple)
@@ -246,4 +243,24 @@ function COLUMN_OPTS(enable, statuscolumn)
     statuscolumn = statuscolumn or "",
     signcolumn = signcolumn,
   }
+end
+
+function CLEAN_TABLINE_TITLE_MAP(bufnr)
+  local bufpath = BUF_PATH(bufnr)
+  if not IS_FILEPATH(bufpath) then
+    return
+  end
+
+  local bufname = fs.basename(bufpath)
+  local showed_map = TABLINE_TITLE_MAP[bufname]
+
+  if showed_map then
+    TABLINE_TITLE_MAP[bufname] = filter(function(buf)
+      return buf ~= bufnr
+    end, showed_map)
+  end
+
+  if #showed_map < 1 then
+    TABLINE_TITLE_MAP[bufname] = nil
+  end
 end
