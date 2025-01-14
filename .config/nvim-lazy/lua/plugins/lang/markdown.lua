@@ -16,7 +16,7 @@ return {
     },
   },
   opts = {
-    modes = { "n", "i", "no", "c", "t" },
+    render_modes = { "n", "i", "no", "c", "t" },
     file_types = ft,
     latex = {
       render_modes = true,

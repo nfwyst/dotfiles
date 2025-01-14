@@ -83,8 +83,8 @@ require("lazy").setup({
     version = nil,
   },
   rocks = {
-    enabled = true,
-    hererocks = true,
+    enabled = false,
+    hererocks = false,
   },
   git = {
     timeout = 1000,

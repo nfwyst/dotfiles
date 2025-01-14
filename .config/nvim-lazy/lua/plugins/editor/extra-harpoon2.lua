@@ -114,19 +114,20 @@ return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
   keys = function()
-    local harpoon = require("harpoon")
+    -- lazy require harpoon
     local keys = {
       { "<leader>h", "", desc = "Harpoon Bookmark" },
       {
         "<leader>hf",
         function()
-          harpoon:list():add()
+          require("harpoon"):list():add()
         end,
         desc = "Harpoon Bookmark Add File",
       },
       {
         "<leader>hl",
         function()
+          local harpoon = require("harpoon")
           harpoon.ui:toggle_quick_menu(harpoon:list(), get_ui_size("Harpoon"))
         end,
         desc = "Harpoon Bookmark Open File List",
@@ -143,7 +144,7 @@ return {
             return
           end
           tag = " -- " .. tag
-          local bookmarks = harpoon:list("bookmarks")
+          local bookmarks = require("harpoon"):list("bookmarks")
           local item = bookmarks.config.create_list_item(tag)
           if item then
             bookmarks:prepend(item)
@@ -156,7 +157,7 @@ return {
       PUSH(keys, {
         "<leader>h" .. i,
         function()
-          harpoon:list():select(i)
+          require("harpoon"):list():select(i)
         end,
         desc = "Harpoon To File " .. i,
       })

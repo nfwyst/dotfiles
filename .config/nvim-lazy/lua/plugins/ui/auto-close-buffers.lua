@@ -61,7 +61,7 @@ return {
   },
   opts = {
     autoclose = true,
-    threshold = IS_LINUX and 1 or 6,
+    threshold = IS_LINUX and 3 or 7,
     close_command = function(bufnr)
       Snacks.bufdelete(bufnr)
     end,

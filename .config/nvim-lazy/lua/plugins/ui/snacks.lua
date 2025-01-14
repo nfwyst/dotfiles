@@ -83,6 +83,9 @@ return {
           header = header,
         },
       },
+      lazygit = {
+        enabled = false,
+      },
       styles = {
         notification = {
           wo = {

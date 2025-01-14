@@ -107,23 +107,32 @@ return {
               lazy = "plugin manager",
               mason = "package manager",
             },
+            component_separators = { left = " ▎", right = " ▎" },
             symbols = {
               alternate_file = "󰁯 ",
             },
             fmt = function(name, context)
               local bufnr = context.bufnr
-              if name == "[No Name]" then
-                bo[bufnr].buflisted = false
-                return context.filetype
+              local title = not EMPTY(name) and name
+              local filetype = not EMPTY(context.filetype) and context.filetype
+              local title_invalid = not title or title == "[No Name]"
+
+              if title_invalid then
+                if not filetype then
+                  bo[bufnr].buflisted = false
+                end
+                title = filetype or ""
               end
-              local separator = "  ▎"
-              if bufnr == CUR_BUF() or context.last then
-                separator = ""
+
+              if EMPTY(title) then
+                return title
               end
-              if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
-                return name .. separator
+
+              local pinned_icon = ""
+              if BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+                pinned_icon = " "
               end
-              return name .. "  " .. separator
+              return title .. pinned_icon
             end,
             icons_enabled = false,
             buffers_color = {
