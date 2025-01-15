@@ -121,6 +121,8 @@ local white_list = {
   text = true,
   markdown = true,
   Avante = true,
+  octo = true,
+  codecompanion = true,
 }
 function IS_BIG_FILE(bufnr)
   local filetype = bo[bufnr].filetype

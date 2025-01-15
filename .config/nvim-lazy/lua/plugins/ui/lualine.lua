@@ -155,6 +155,10 @@ return {
                 title = format_duplicated_title(title, context.file, bufnr)
               end
 
+              if filetype == "octo" and tonumber(title) then
+                title = " PR:" .. title
+              end
+
               local pinned_icon = ""
               if BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
                 pinned_icon = " "
