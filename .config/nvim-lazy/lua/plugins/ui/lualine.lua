@@ -20,12 +20,12 @@ local progress = {
   padding = 0,
 }
 
-local refresh_time = 100
+local refresh_time = 200
 local extensions
 
 if IS_LINUX then
   extensions = {}
-  refresh_time = 1000
+  refresh_time = 1400
 end
 
 local function with_parent_when_duplicated(name, bufpath, bufnr)
