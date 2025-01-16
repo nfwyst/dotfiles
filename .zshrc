@@ -126,7 +126,6 @@ alias gc-="git checkout -"
 alias ys="yarn start"
 alias python="python3"
 alias pip="python3 -m pip"
-alias xcopy="xclip -selection clipboard"
 alias cat="bat"
 alias find="fd"
 

@@ -34,14 +34,12 @@ local function remove_qf_item(is_normal)
   end
 end
 
-AUCMD("FileType", {
-  group = GROUP("delete_qf_item", { clear = true }),
-  pattern = "qf",
-  callback = function(event)
-    local buf = event.buf
-    local win = fn.bufwinid(buf)
-    wo[win].relativenumber = false
-    MAP("n", "dd", remove_qf_item(true), { buffer = buf })
-    MAP("x", "d", remove_qf_item(), { buffer = buf })
-  end,
-})
+FILETYPE_TASK_MAP.qf = function(bufnr, win)
+  if BUF_VAR(bufnr, TASK_KEY) then
+    return
+  end
+  wo[win].relativenumber = false
+  MAP("n", "dd", remove_qf_item(true), { buffer = bufnr })
+  MAP("x", "d", remove_qf_item(), { buffer = bufnr })
+  BUF_VAR(bufnr, TASK_KEY, true)
+end

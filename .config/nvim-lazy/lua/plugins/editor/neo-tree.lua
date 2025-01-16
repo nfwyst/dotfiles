@@ -7,16 +7,17 @@ return {
     })
 
     -- hide left columns for file tree
-    AUCMD("FileType", {
-      group = GROUP("neotree_hide_statuscolumn", { clear = true }),
-      pattern = "neo-tree",
-      callback = function(event)
+    if not FILETYPE_TASK_MAP["neo-tree"] then
+      FILETYPE_TASK_MAP["neo-tree"] = function(_, win)
+        if WIN_VAR(win, TASK_KEY) then
+          return
+        end
         defer(function()
-          local win = fn.bufwinid(event.buf)
           SET_OPTS(COLUMN_OPTS(false), wo[win])
+          WIN_VAR(win, TASK_KEY, true)
         end, 10)
-      end,
-    })
+      end
+    end
 
     local opt = {
       hide_root_node = true,

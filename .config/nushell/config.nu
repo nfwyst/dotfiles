@@ -920,7 +920,6 @@ alias gc- = git checkout -
 alias c = clear
 alias python = python3
 alias pip = python3 -m pip
-alias xcopy = xclip -selection clipboard
 alias cat = bat
 alias find = fd
 

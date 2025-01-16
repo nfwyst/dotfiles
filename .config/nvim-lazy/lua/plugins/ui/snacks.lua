@@ -42,26 +42,17 @@ end
 
 local statuscolumn = ""
 
+-- show cursor line for specific filetypes
+assign(FILETYPE_TASK_MAP, {
+  lazy = ENABLE_CURSORLINE,
+  markdown = ENABLE_CURSORLINE,
+  snacks_dashboard = ENABLE_CURSORLINE,
+})
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
-
-    -- show cursor line when dashboard opened
-    AUCMD("User", {
-      pattern = "SnacksDashboard*",
-      group = GROUP("cursor_line_for_dashboard", { clear = true }),
-      callback = function(event)
-        if event.match == "SnacksDashboardClosed" then
-          return
-        end
-
-        defer(function()
-          ENABLE_CURSORLINE(event.buf)
-        end, 10)
-      end,
-    })
-
     push_list(opts.dashboard.preset.keys, keys)
     local opt = {
       scroll = {

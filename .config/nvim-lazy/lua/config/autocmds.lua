@@ -2,10 +2,6 @@
 
 local keys_to_delete = {
   n = { "<leader>gL" },
-  [{ "n", "v" }] = {
-    "<leader>cf",
-    "<leader>cF",
-  },
 }
 
 -- remove default keymap
@@ -18,16 +14,5 @@ AUCMD("User", {
         pcall(keymap.del, mode, key)
       end
     end
-  end,
-})
-
--- show cursor line for specific filetypes
-AUCMD("FileType", {
-  group = GROUP("cursor_line_for_filetype", { clear = true }),
-  pattern = { "lazy", "markdown" },
-  callback = function(event)
-    defer(function()
-      ENABLE_CURSORLINE(event.buf)
-    end, 30)
   end,
 })

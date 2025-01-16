@@ -72,7 +72,7 @@ function BUF_PATH(bufnr)
 end
 
 function EMPTY(input)
-  return not input or input == ""
+  return input == "" or not input
 end
 
 function SHORT_HOME_PATH(path)
@@ -159,9 +159,14 @@ function EXCLUDE_LIST(list, excludes)
   end, list)
 end
 
-function ENABLE_CURSORLINE(bufnr)
-  local win = fn.bufwinid(bufnr)
-  wo[win].cursorline = true
+function ENABLE_CURSORLINE(bufnr, win)
+  win = win or fn.bufwinid(bufnr)
+  if wo[win].cursorline then
+    return
+  end
+  defer(function()
+    wo[win].cursorline = true
+  end, 30)
 end
 
 function RUN_IN_BUF(bufnr, callback, opt)
@@ -197,6 +202,16 @@ function BUF_VAR(bufnr, name, value)
     return api.nvim_buf_set_var(bufnr, name, value)
   end
   local ok, val = pcall(api.nvim_buf_get_var, bufnr, name)
+  if ok then
+    return val
+  end
+end
+
+function WIN_VAR(win, name, value)
+  if value ~= nil then
+    return api.nvim_win_set_var(win, name, value)
+  end
+  local ok, val = pcall(api.nvim_win_get_var, win, name)
   if ok then
     return val
   end
@@ -256,13 +271,15 @@ function CLEAN_TABLINE_TITLE_MAP(bufnr)
   local bufname = fs.basename(bufpath)
   local showed_map = TABLINE_TITLE_MAP[bufname]
 
-  if showed_map then
-    TABLINE_TITLE_MAP[bufname] = filter(function(buf)
-      return buf ~= bufnr
-    end, showed_map)
+  if not showed_map then
+    return
   end
 
-  if #showed_map < 1 then
+  TABLINE_TITLE_MAP[bufname] = filter(function(buf)
+    return buf ~= bufnr
+  end, showed_map)
+
+  if #TABLINE_TITLE_MAP[bufname] < 1 then
     TABLINE_TITLE_MAP[bufname] = nil
   end
 end

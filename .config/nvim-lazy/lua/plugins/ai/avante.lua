@@ -21,6 +21,29 @@ end
 
 local mode = { "n", "v" }
 
+local function hide_response_columns(_, win)
+  if WIN_VAR(win, TASK_KEY) then
+    return
+  end
+  defer(function()
+    SET_OPTS(COLUMN_OPTS(false), wo[win])
+    WIN_VAR(win, TASK_KEY, true)
+  end, 30)
+end
+
+local function hide_input_columns(bufnr, win)
+  if WIN_VAR(win, TASK_KEY) then
+    return
+  end
+  defer(function()
+    local opts = COLUMN_OPTS(false)
+    opts.signcolumn = "yes"
+    pcall(keymap.del, "i", "<tab>", { buffer = bufnr })
+    SET_OPTS(opts, wo[win])
+    WIN_VAR(win, TASK_KEY, true)
+  end, 30)
+end
+
 return {
   "yetone/avante.nvim",
   cond = HAS_AI_KEY,
@@ -92,23 +115,12 @@ return {
   },
   config = function()
     -- hide left columns for avante sidebar
-    AUCMD("FileType", {
-      group = GROUP("hide_left_columns_for_avante", { clear = true }),
-      pattern = { "Avante", "AvanteInput" },
-      callback = function(event)
-        local bufnr = event.buf
-        defer(function()
-          local win = fn.bufwinid(bufnr)
-          local opts = COLUMN_OPTS(false)
-          local is_input = event.match == "AvanteInput"
-          if is_input then
-            opts.signcolumn = "yes"
-            pcall(keymap.del, "i", "<tab>", { buffer = bufnr })
-          end
-          SET_OPTS(opts, wo[win])
-        end, 30)
-      end,
-    })
+    if not FILETYPE_TASK_MAP.Avante then
+      assign(FILETYPE_TASK_MAP, {
+        Avante = hide_response_columns,
+        AvanteInput = hide_input_columns,
+      })
+    end
 
     local config = require("avante.config")
     local providers = require("avante.providers")

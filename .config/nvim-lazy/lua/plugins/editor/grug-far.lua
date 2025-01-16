@@ -2,18 +2,19 @@ return {
   "MagicDuck/grug-far.nvim",
   opts = function(_, opts)
     -- only show fold signs in searched view
-    AUCMD("FileType", {
-      group = GROUP("show_grug_far_fold", { clear = true }),
-      pattern = "grug-far",
-      callback = function(event)
+    if not FILETYPE_TASK_MAP["grug-far"] then
+      FILETYPE_TASK_MAP["grug-far"] = function(_, win)
+        if WIN_VAR(win, TASK_KEY) then
+          return
+        end
         defer(function()
-          local win = fn.bufwinid(event.buf)
           local win_opts = COLUMN_OPTS(false)
           win_opts.foldcolumn = "2"
           SET_OPTS(win_opts, wo[win])
+          WIN_VAR(win, TASK_KEY, true)
         end, 30)
-      end,
-    })
+      end
+    end
 
     local opt = {
       minSearchChars = 3,
