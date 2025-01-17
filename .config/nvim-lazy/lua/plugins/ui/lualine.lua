@@ -1,102 +1,15 @@
-local progress = {
-  function()
-    local current_line = fn.line(".")
-    local total_lines = fn.line("$")
-    local chars = {
-      "██",
-      "▇▇",
-      "▆▆",
-      "▅▅",
-      "▄▄",
-      "▃▃",
-      "▂▂",
-      "▁▁",
-      "  ",
-    }
-    local line_ratio = current_line / total_lines
-    local index = math.ceil(line_ratio * #chars)
-    return chars[index]
-  end,
-  padding = 0,
-}
-
 local refresh_time = 200
 local extensions
 
 if IS_LINUX then
   extensions = {}
-  refresh_time = 1400
-end
-
-local function with_parent_when_duplicated(name, bufpath, bufnr)
-  local showed_map = TABLINE_TITLE_MAP[name]
-  if not showed_map then
-    TABLINE_TITLE_MAP[name] = { bufnr }
-    return name
-  end
-  if not contains(showed_map, bufnr) then
-    PUSH(showed_map, bufnr)
-  end
-  if #showed_map <= 1 then
-    return name
-  end
-  return fs.basename(fs.dirname(bufpath)) .. "/" .. name
-end
-
-local function buffers_formatter(name, context)
-  local bufnr = context.bufnr
-  local win = fn.bufwinid(bufnr)
-
-  local win_valid = api.nvim_win_is_valid(win)
-  local filetype = context.filetype
-  local task = FILETYPE_TASK_MAP[filetype]
-  if win_valid and task then
-    defer(function()
-      if win == CUR_WIN() then
-        task(bufnr, win)
-      end
-    end, 0)
-  end
-
-  if name == "[No Name]" then
-    name = filetype
-  end
-
-  local has_name = not EMPTY(name)
-  if not has_name and win_valid and IS_BUF_LISTED(bufnr) then
-    ---@diagnostic disable-next-line: missing-fields
-    Snacks.dashboard.open({ win = win, buf = bufnr })
-    return "dashboard"
-  end
-
-  local bufpath = context.file
-  if has_name and IS_FILEPATH(bufpath) then
-    name = with_parent_when_duplicated(name, bufpath, bufnr)
-  end
-
-  if EMPTY(name) then
-    local title = api.nvim_win_get_config(win).title
-    if title and title[1] and #title[1] > 0 then
-      name = title[1][1]
-    end
-  end
-
-  if filetype == "octo" and tonumber(name) then
-    name = " PR:" .. name
-  end
-
-  if BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
-    name = name .. " "
-  end
-
-  return name
+  refresh_time = 1600
 end
 
 return {
   "nvim-lualine/lualine.nvim",
   opts = function(_, opts)
     local sections = opts.sections
-
     AUCMD("BufDelete", {
       group = GROUP("clean_tabline_title_map_for_buf", { clear = true }),
       callback = function(event)
@@ -163,7 +76,7 @@ return {
         lualine_c = lualine_c,
         lualine_x = lualine_x,
         lualine_y = lualine_y,
-        lualine_z = { progress },
+        lualine_z = { require("features.lualine.progress") },
       },
       tabline = {
         lualine_a = {
@@ -183,7 +96,7 @@ return {
             symbols = {
               alternate_file = "󰁯 ",
             },
-            fmt = buffers_formatter,
+            fmt = require("features.lualine.buffers-fmt"),
             icons_enabled = false,
             buffers_color = {
               active = { fg = "#ffffff", bg = "#6f95ff" },
