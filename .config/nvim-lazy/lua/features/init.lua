@@ -6,5 +6,5 @@ SET_OPTS({
   loaded_ruby_provider = 0,
 }, "g")
 
-require("features.remove-quickfix-item")
+require("features.qf-del-bind-and-stop-auto-scroll")
 require("features.reset-buffer")

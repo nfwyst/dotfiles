@@ -71,6 +71,9 @@ return {
     end
 
     local opt = {
+      enabled = function()
+        return not contains({ "neo-tree", "neo-tree-popup" }, bo[CUR_BUF()].filetype)
+      end,
       completion = {
         menu = {
           border = "rounded",
