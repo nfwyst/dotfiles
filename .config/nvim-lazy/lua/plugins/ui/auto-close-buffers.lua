@@ -63,8 +63,7 @@ return {
     autoclose = true,
     threshold = IS_LINUX and 3 or 7,
     close_command = function(bufnr)
-      Snacks.bufdelete(bufnr)
-      CLEAN_TABLINE_TITLE_MAP(bufnr)
+      DEL_BUF(bufnr)
     end,
     close_buffers_with_windows = false,
   },

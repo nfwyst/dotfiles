@@ -13,24 +13,6 @@ local header = [[
 ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
 ]]
 
-local root = SHORT_HOME_PATH(LazyVim.root.get())
-local root_git = SHORT_HOME_PATH(LazyVim.root.git())
-
-local keys = {
-  {
-    icon = " ",
-    desc = "root: " .. root,
-  },
-}
-
-local has_git = root ~= root_git
-if has_git then
-  PUSH(keys, {
-    icon = " ",
-    desc = "git root: " .. root_git,
-  })
-end
-
 local function on_zen(is_open, statuscolumn)
   IS_ZEN_MODE = is_open
   diagnostic.enable(not is_open)
@@ -49,11 +31,21 @@ assign(FILETYPE_TASK_MAP, {
   snacks_dashboard = ENABLE_CURSORLINE,
 })
 
+local function on_enter(event)
+  local win = fn.bufwinid(event.buf)
+  RUN_IN_WIN(win, function()
+    SCROLL(win, "up")
+  end)
+end
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
+    local dashboard = require("snacks.dashboard").Dashboard
+    dashboard.on("UpdatePost", on_enter)
+    dashboard.on("Opened", on_enter)
+
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
-    push_list(opts.dashboard.preset.keys, keys)
     local opt = {
       scroll = {
         enabled = false,

@@ -69,7 +69,7 @@ return {
     {
       "<leader>aaa",
       function()
-        GET_USER_INPUT("question", function(question)
+        REQUEST_USER_INPUT("question", function(question)
           cmd("AvanteAsk " .. question)
         end)
       end,

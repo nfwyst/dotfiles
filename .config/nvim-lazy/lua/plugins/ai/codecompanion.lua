@@ -11,20 +11,18 @@ return {
       "nvim-lualine/lualine.nvim",
       module = false,
       opts = function(_, opts)
-        PUSH(opts.sections.lualine_x, require("features.lualine.codecompanion"))
+        PUSH(opts.sections.lualine_x, require("features.lualine.components").codecompanion)
       end,
     },
     {
       "saghen/blink.cmp",
       module = false,
       opts = function(_, opts)
-        PUSH(opts.sources.default, "codecompanion")
-        opts.sources.providers.codecompanion = {
-          name = "CodeCompanion",
-          module = "codecompanion.providers.completion.blink",
-          enabled = HAS_AI_KEY,
-          score_offset = 90,
-        }
+        local sources = opts.sources
+        if not sources.per_filetype then
+          sources.per_filetype = {}
+        end
+        sources.per_filetype.codecompanion = { "codecompanion" }
       end,
     },
   },

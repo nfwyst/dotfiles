@@ -16,3 +16,10 @@ AUCMD("User", {
     end
   end,
 })
+
+AUCMD("BufDelete", {
+  group = GROUP("buffer_delete", { clear = true }),
+  callback = function(event)
+    ON_BUF_DEL(event.buf)
+  end,
+})

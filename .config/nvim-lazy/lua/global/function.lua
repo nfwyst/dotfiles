@@ -39,7 +39,7 @@ function NOTIFY(...)
   end, 0)
 end
 
-function GET_USER_INPUT(title, on_submit)
+function REQUEST_USER_INPUT(title, on_submit)
   vim.ui.input({ prompt = title }, function(result)
     if not result then
       return
@@ -108,12 +108,12 @@ function PRESS_KEYS(keys, mode)
   api.nvim_feedkeys(codes, mode, false)
 end
 
-function BUF_COUNT(bufnr)
+function LINE_COUNT(bufnr)
   return api.nvim_buf_line_count(bufnr)
 end
 
-function BUF_LINES(bufnr, total_line)
-  return api.nvim_buf_get_lines(bufnr, 0, total_line, false)
+function BUF_LINES(bufnr, count)
+  return api.nvim_buf_get_lines(bufnr, 0, count, false)
 end
 
 local white_list = {
@@ -132,19 +132,18 @@ function IS_BIG_FILE(bufnr)
   if filetype == "bigfile" then
     return true
   end
-  local line_numbers = BUF_COUNT(bufnr)
-  if line_numbers > MAX_FILE_LENGTH then
+  if LINE_COUNT(bufnr) > MAX_FILE_LENGTH then
     return true
   end
 end
 
-function GET_GIT_ROOT(bufnr_or_path)
+function GIT_ROOT(bufnr_or_path)
   bufnr_or_path = bufnr_or_path or CUR_BUF()
   local root = fs.root(bufnr_or_path, ".git")
   return root or fs.root(fn.getcwd(), ".git")
 end
 
-function GET_MAX_WIDTH(offset, multiple)
+function MAX_WIDTH(offset, multiple)
   local editor_width = o.columns
   if multiple then
     return math.floor(editor_width * multiple)
@@ -233,7 +232,7 @@ function FIND_FILE(file_or_dirs, opts)
   return path_wraper[1]
 end
 
-function GET_HL(group_name)
+function HL(group_name)
   return api.nvim_get_hl(0, { name = group_name })
 end
 
@@ -242,8 +241,7 @@ function SET_HLS(highlights)
     if highlight.force == nil then
       highlight.force = true
     end
-    local old_value = GET_HL(group)
-    api.nvim_set_hl(0, group, merge(old_value, highlight))
+    api.nvim_set_hl(0, group, merge(HL(group), highlight))
   end
 end
 
@@ -262,24 +260,46 @@ function COLUMN_OPTS(enable, statuscolumn)
   }
 end
 
-function CLEAN_TABLINE_TITLE_MAP(bufnr)
-  local bufpath = BUF_PATH(bufnr)
-  if not IS_FILEPATH(bufpath) then
-    return
+function WIN_HEIGHT(win, exclude_scrolloff)
+  local height = api.nvim_win_get_height(win)
+
+  if exclude_scrolloff then
+    return height
   end
 
-  local bufname = fs.basename(bufpath)
-  local showed_map = TABLINE_TITLE_MAP[bufname]
+  return height - 2 * wo[win].scrolloff
+end
 
-  if not showed_map then
-    return
+local direction_map = {
+  up = "",
+  down = "",
+  right = "zl",
+  left = "zh",
+}
+function SCROLL(win, direction, scroll_len)
+  if not scroll_len then
+    scroll_len = WIN_HEIGHT(win, true)
   end
+  if scroll_len > 0 then
+    cmd.normal({ scroll_len .. direction_map[direction], bang = true })
+  end
+end
 
-  TABLINE_TITLE_MAP[bufname] = filter(function(buf)
-    return buf ~= bufnr
-  end, showed_map)
+function DEL_BUF(bufnr, wipe)
+  if wipe == nil then
+    wipe = false
+  end
+  ON_BUF_DEL(bufnr)
+  Snacks.bufdelete({ buf = bufnr, wipe = wipe })
+end
 
-  if #TABLINE_TITLE_MAP[bufname] < 1 then
-    TABLINE_TITLE_MAP[bufname] = nil
+local buf_del_map = {}
+function SET_BUF_DEL_MAP(key, func)
+  buf_del_map[key] = func
+end
+
+function ON_BUF_DEL(bufnr)
+  for _, func in pairs(buf_del_map) do
+    func(bufnr)
   end
 end

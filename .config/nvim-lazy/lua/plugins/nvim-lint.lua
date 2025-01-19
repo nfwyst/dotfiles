@@ -1,5 +1,6 @@
 local eslint = { "eslint_d" }
 local lint_events = "BufWritePost"
+local group = GROUP("enable_linter", { clear = true })
 
 local function enable_lint(event)
   if IS_ZEN_MODE then
@@ -21,7 +22,7 @@ return {
   opts = function(_, opts)
     -- enable lint when event occured
     AUCMD(lint_events, {
-      group = GROUP("enable_linter", { clear = true }),
+      group = group,
       callback = enable_lint,
     })
 

@@ -62,7 +62,7 @@ local ui_opt = {
   border = "rounded",
   width = "auto",
   silent = true,
-  max_width = GET_MAX_WIDTH(),
+  max_width = MAX_WIDTH(),
 }
 
 lsp.set_log_level(levels.OFF)

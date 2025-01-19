@@ -1,5 +1,5 @@
 local function get_size(offset)
-  local max_width = GET_MAX_WIDTH(offset)
+  local max_width = MAX_WIDTH(offset)
 
   local min_width = 15
   if min_width >= max_width then

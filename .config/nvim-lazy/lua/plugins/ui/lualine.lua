@@ -1,3 +1,4 @@
+local formatters = require("features.lualine.formatters")
 local refresh_time = 200
 local extensions
 
@@ -6,16 +7,39 @@ if IS_LINUX then
   refresh_time = 1600
 end
 
+local buffers_title_map = formatters.buffers_title_map
+
+local function clean_buffers_title_map(bufnr)
+  local bufpath = BUF_PATH(bufnr)
+  if not IS_FILEPATH(bufpath) then
+    return
+  end
+
+  local bufname = fs.basename(bufpath)
+  local showed_map = buffers_title_map[bufname]
+
+  if not showed_map then
+    return
+  end
+
+  buffers_title_map[bufname] = filter(function(buf)
+    return buf ~= bufnr
+  end, showed_map)
+
+  if #buffers_title_map[bufname] < 1 then
+    buffers_title_map[bufname] = nil
+  end
+end
+
 return {
   "nvim-lualine/lualine.nvim",
   opts = function(_, opts)
+    local components = require("features.lualine.components")
     local sections = opts.sections
-    AUCMD("BufDelete", {
-      group = GROUP("clean_tabline_title_map_for_buf", { clear = true }),
-      callback = function(event)
-        CLEAN_TABLINE_TITLE_MAP(event.buf)
-      end,
-    })
+
+    SET_BUF_DEL_MAP("lualine", function(bufnr)
+      clean_buffers_title_map(bufnr)
+    end)
 
     PUSH(sections.lualine_a, {
       "tabs",
@@ -64,7 +88,7 @@ return {
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
         ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion", "snacks_terminal" },
-        disabled_filetypes = { winbar = { "snacks_terminal" } },
+        disabled_filetypes = { winbar = { "snacks_terminal" }, statusline = {} },
         globalstatus = true,
         refresh = {
           statusline = refresh_time,
@@ -76,7 +100,7 @@ return {
         lualine_c = lualine_c,
         lualine_x = lualine_x,
         lualine_y = lualine_y,
-        lualine_z = { require("features.lualine.progress") },
+        lualine_z = { components.progress },
       },
       tabline = {
         lualine_a = {
@@ -96,7 +120,7 @@ return {
             symbols = {
               alternate_file = "󰁯 ",
             },
-            fmt = require("features.lualine.buffers-fmt"),
+            fmt = formatters.buffers,
             icons_enabled = false,
             buffers_color = {
               active = { fg = "#ffffff", bg = "#6f95ff" },
@@ -104,23 +128,7 @@ return {
             use_mode_colors = false,
           },
         },
-        lualine_x = {
-          {
-            function()
-              local root = fs.basename(LazyVim.root.get())
-              local git = fs.basename(LazyVim.root.git())
-              if git == root then
-                return root
-              end
-              return git .. "" .. root
-            end,
-            cond = function()
-              return bo[CUR_BUF()].filetype ~= "snacks_dashboard"
-            end,
-            padding = { left = 1, right = 1 },
-            color = { fg = "#37f499" },
-          },
-        },
+        lualine_x = { components.root_path_guide },
       },
       winbar = {
         lualine_c = {
@@ -130,8 +138,8 @@ return {
             shorting_target = 0,
             newfile_status = false,
             cond = function()
-              local listed = IS_BUF_LISTED(CUR_BUF())
-              return not IS_ZEN_MODE and listed
+              local bufnr = CUR_BUF()
+              return not IS_ZEN_MODE and IS_BUF_LISTED(bufnr) and IS_FILEPATH(BUF_PATH(bufnr))
             end,
             path = 3,
             color = { fg = "#04d1f9", bg = "NONE" },

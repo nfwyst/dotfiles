@@ -20,11 +20,6 @@ local function get_ui_size(title)
   }
 end
 
-local function win_height(win)
-  local height = api.nvim_win_get_height(win)
-  return height - 2 * wo[win].scrolloff
-end
-
 local function get_previewer()
   local builtin = require("fzf-lua.previewer.builtin")
   local previewer = builtin.base:extend()
@@ -37,7 +32,7 @@ local function get_previewer()
 
   previewer.populate_preview_buf = function(self, bookmark_value)
     local bufnr = self:get_tmp_buffer()
-    local filepath, row, col = parse_bookmark_value(bookmark_value)
+    local filepath, row = parse_bookmark_value(bookmark_value)
     filepath = root .. filepath
 
     local lines = fn.readfile(filepath)
@@ -46,13 +41,10 @@ local function get_previewer()
     api.nvim_buf_add_highlight(bufnr, -1, "Cursor", row - 1, 0, -1)
 
     defer(function()
-      local winid = self.win.preview_winid
-      RUN_IN_WIN(winid, function()
-        local scroll_row = row - 2 - math.floor(win_height(winid) / 2)
-        if scroll_row > 0 then
-          cmd.normal({ scroll_row .. "", bang = true })
-          cmd.normal({ col .. "", bang = true })
-        end
+      local win = self.win.preview_winid
+      wo[win].wrap = true
+      RUN_IN_WIN(win, function()
+        SCROLL(win, "down", row - 2 - math.floor(WIN_HEIGHT(win) / 2))
       end)
     end, 50)
 

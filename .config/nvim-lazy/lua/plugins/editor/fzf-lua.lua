@@ -37,6 +37,7 @@ return {
       },
       grep = {
         rg_glob = true,
+        silent = true,
         actions = actions,
       },
       lsp = {

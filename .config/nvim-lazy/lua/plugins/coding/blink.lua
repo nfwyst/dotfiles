@@ -105,6 +105,7 @@ return {
         },
       },
       sources = {
+        per_filetype = {},
         providers = {
           lsp = {
             should_show_items = shouldnt_show_snippets_emoji,
