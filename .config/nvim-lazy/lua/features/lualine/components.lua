@@ -74,7 +74,7 @@ local root_path_guide = {
     if git == root then
       return root
     end
-    return git .. "" .. root
+    return root .. "" .. git
   end,
   padding = { left = 1, right = 1 },
   color = { fg = "#37f499" },
