@@ -5,7 +5,7 @@ return {
         checkThirdParty = false,
       },
       diagnostics = {
-        globals = {},
+        globals = { "vim", "require" },
         disable = {},
       },
       codeLens = {

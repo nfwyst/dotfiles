@@ -43,7 +43,11 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
     return
   end
 
-  wo[win].relativenumber = false
+  defer(function()
+    local opts = COLUMN_OPTS(false)
+    opts.number = true
+    SET_OPTS(opts, wo[win])
+  end, 10)
 
   local opt = { buffer = bufnr }
   MAPS({

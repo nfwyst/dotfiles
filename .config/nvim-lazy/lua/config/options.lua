@@ -32,4 +32,7 @@ SET_OPTS({
   showcmd = false,
   breakindent = true,
   background = "dark",
+  guicursor = function(guicursor)
+    return guicursor + "a:Cursor/lCursor"
+  end,
 })

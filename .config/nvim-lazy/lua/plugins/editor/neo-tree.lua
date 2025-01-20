@@ -6,6 +6,8 @@ return {
       NeoTreeMessage = { link = "NeoTreeIndentMarker" },
     })
 
+    PUSH(FT_HIDE_CURSOR, "neo-tree")
+
     -- hide left columns for file tree
     if not FILETYPE_TASK_MAP["neo-tree"] then
       FILETYPE_TASK_MAP["neo-tree"] = function(_, win)

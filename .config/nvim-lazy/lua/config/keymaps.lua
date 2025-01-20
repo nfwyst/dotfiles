@@ -26,6 +26,9 @@ MAPS({
       desc = "Quit Quickfix List",
     } },
   },
+  [{ "n", "x", "s" }] = {
+    { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
+  },
   [{ "v", "x" }] = {
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
     { from = "<s-k>", to = ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv" },

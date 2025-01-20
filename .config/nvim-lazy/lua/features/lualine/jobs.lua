@@ -37,14 +37,28 @@ local function open_dashboard(win, bufnr)
   return "dashboard"
 end
 
-local function run_filetype_task(win, bufnr, filetype)
-  local task = FILETYPE_TASK_MAP[filetype]
-  if not task then
-    return
+local function toggle_cursor_visible(filetype)
+  local is_hided = HL("Cursor").blend == 100
+  local should_hide = contains(FT_HIDE_CURSOR, filetype)
+
+  if not is_hided and should_hide then
+    return SET_HLS({ Cursor = { blend = 100 } })
   end
+
+  if is_hided and not should_hide then
+    return SET_HLS({ Cursor = { blend = 0 } })
+  end
+end
+
+local function run_filetype_task(win, bufnr, filetype)
   defer(function()
-    if win == CUR_WIN() then
-      task(bufnr, win)
+    local is_same_win = win == CUR_WIN()
+    if is_same_win then
+      toggle_cursor_visible(filetype)
+      local task = FILETYPE_TASK_MAP[filetype]
+      if task then
+        task(bufnr, win)
+      end
     end
   end, 0)
 end

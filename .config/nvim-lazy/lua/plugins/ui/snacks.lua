@@ -31,21 +31,29 @@ assign(FILETYPE_TASK_MAP, {
   snacks_dashboard = ENABLE_CURSORLINE,
 })
 
-local function on_enter(event)
+local function scroll_to_top(event)
   local win = fn.bufwinid(event.buf)
   RUN_IN_WIN(win, function()
     SCROLL(win, "up")
   end)
 end
 
+local function set_events()
+  local dashboard = Snacks.dashboard.Dashboard
+  dashboard.on("UpdatePost", scroll_to_top)
+  dashboard.on("Opened", scroll_to_top)
+end
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
-    local dashboard = require("snacks.dashboard").Dashboard
-    dashboard.on("UpdatePost", on_enter)
-    dashboard.on("Opened", on_enter)
+    -- wait for setup finish
+    defer(set_events, 0)
+
+    PUSH(FT_HIDE_CURSOR, "snacks_dashboard")
 
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
+
     local opt = {
       scroll = {
         enabled = false,

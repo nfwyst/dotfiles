@@ -83,10 +83,12 @@ function SET_OPTS(opts, scope)
   scope = scope or "opt"
   for k, v in pairs(opts) do
     if type(scope) == "string" then
-      vim[scope][k] = v
-    else
-      scope[k] = v
+      scope = vim[scope]
     end
+    if type(v) == "function" then
+      v = v(scope[k])
+    end
+    scope[k] = v
   end
 end
 
