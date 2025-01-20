@@ -28,11 +28,11 @@ local function shouldnt_show_snippets_emoji()
 end
 
 local function get_by_cmdtype(search_val, cmd_val, default)
-  local type = fn.getcmdtype()
-  if type == "/" or type == "?" then
+  local cmdtype = fn.getcmdtype()
+  if cmdtype == "/" or cmdtype == "?" then
     return search_val
   end
-  if type == ":" then
+  if cmdtype == ":" then
     return cmd_val
   end
   return default
@@ -40,6 +40,7 @@ end
 
 return {
   "saghen/blink.cmp",
+  event = "CmdlineEnter",
   dependencies = {
     "saghen/blink.compat",
     { "moyiz/blink-emoji.nvim", cond = emoji_enabled },

@@ -41,12 +41,17 @@ local function toggle_cursor_visible(filetype)
   local is_hided = HL("Cursor").blend == 100
   local should_hide = contains(FT_HIDE_CURSOR, filetype)
 
-  if not is_hided and should_hide then
-    return SET_HLS({ Cursor = { blend = 100 } })
+  if should_hide and fn.mode() == "c" or not should_hide then
+    -- show Cursor
+    if is_hided then
+      SET_HLS({ Cursor = { blend = 0 } })
+    end
+    return
   end
 
-  if is_hided and not should_hide then
-    return SET_HLS({ Cursor = { blend = 0 } })
+  -- hide cursor
+  if not is_hided then
+    SET_HLS({ Cursor = { blend = 100 } })
   end
 end
 
