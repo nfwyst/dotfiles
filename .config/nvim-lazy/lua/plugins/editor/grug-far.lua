@@ -10,7 +10,7 @@ return {
         defer(function()
           local win_opts = COLUMN_OPTS(false)
           win_opts.foldcolumn = "2"
-          SET_OPTS(win_opts, wo[win])
+          SET_OPTS(win_opts, { win = win })
           WIN_VAR(win, TASK_KEY, true)
         end, 30)
       end

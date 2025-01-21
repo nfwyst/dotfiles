@@ -64,7 +64,7 @@ local function buffers(name, context)
       name = jobs.open_dashboard(win, bufnr)
     end
   elseif not name then
-    bo[bufnr].buflisted = false
+    OPT("buflisted", { buf = bufnr }, false)
     return ""
   end
 

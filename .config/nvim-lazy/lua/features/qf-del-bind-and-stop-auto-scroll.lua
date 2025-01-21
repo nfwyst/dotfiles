@@ -46,7 +46,7 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   defer(function()
     local opts = COLUMN_OPTS(false)
     opts.number = true
-    SET_OPTS(opts, wo[win])
+    SET_OPTS(opts, { win = win })
   end, 10)
 
   local opt = { buffer = bufnr }

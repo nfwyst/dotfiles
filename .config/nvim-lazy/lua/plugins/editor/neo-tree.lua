@@ -15,7 +15,7 @@ return {
           return
         end
         defer(function()
-          SET_OPTS(COLUMN_OPTS(false), wo[win])
+          SET_OPTS(COLUMN_OPTS(false), { win = win })
           WIN_VAR(win, TASK_KEY, true)
         end, 10)
       end

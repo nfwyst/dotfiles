@@ -33,9 +33,11 @@ assign(FILETYPE_TASK_MAP, {
 
 local function scroll_to_top(event)
   local win = fn.bufwinid(event.buf)
-  RUN_IN_WIN(win, function()
-    SCROLL(win, "up")
-  end)
+  if win == CUR_WIN() then
+    RUN_IN_WIN(win, function()
+      SCROLL(win, "up")
+    end)
+  end
 end
 
 local function set_events()

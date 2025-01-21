@@ -11,8 +11,6 @@ _G.v = vim.v
 _G.defer = vim.defer_fn
 _G.schedule = vim.schedule
 _G.b = vim.b
-_G.bo = vim.bo
-_G.wo = vim.wo
 _G.push_list = vim.list_extend
 _G.language = vim.treesitter.language
 _G.fs = vim.fs
@@ -78,8 +76,10 @@ CONSTS = {
         list = {
           "deepseek-chat",
           "deepseek-coder",
+          "deepseek-reasoner",
         },
         default = "deepseek-chat",
+        thinking = "deepseek-reasoner",
       },
       api_key = {
         name = "DEEPSEEK_API_KEY",

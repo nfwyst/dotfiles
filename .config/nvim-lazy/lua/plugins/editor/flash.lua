@@ -14,7 +14,7 @@ local exclude = {
 
 local function get_runner(name)
   return function()
-    local filetype = bo[CUR_BUF()].filetype
+    local filetype = OPT("filetype", { buf = CUR_BUF() })
     local invalid = contains(exclude, filetype)
     if not invalid then
       require("flash")[name]()

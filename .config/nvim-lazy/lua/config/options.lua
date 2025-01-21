@@ -19,20 +19,14 @@ SET_OPTS({
   wrap = true,
   linebreak = false,
   redrawtime = 1500,
-  spelllang = { "en", "cjk" },
+  spelllang = "en,cjk",
   foldnestmax = 10,
-  listchars = {
-    tab = "▓░",
-    trail = "•",
-    extends = "»",
-    precedes = "«",
-    nbsp = "░",
-  },
+  listchars = "tab:▓░,trail:•,extends:»,precedes:«,nbsp:░",
   undolevels = IS_LINUX and 1000 or 100000,
   showcmd = false,
   breakindent = true,
   background = "dark",
   guicursor = function(guicursor)
-    return guicursor + "a:Cursor/lCursor"
+    return guicursor .. ",a:Cursor/lCursor"
   end,
 })

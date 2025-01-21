@@ -79,16 +79,31 @@ function SHORT_HOME_PATH(path)
   return path:gsub("^" .. HOME_PATH, "~")
 end
 
-function SET_OPTS(opts, scope)
-  scope = scope or "opt"
-  for k, v in pairs(opts) do
-    if type(scope) == "string" then
-      scope = vim[scope]
+function OPT(name, opt, value)
+  if not opt then
+    opt = { scope = "global" }
+  elseif opt.win and not opt.scope then
+    opt.scope = "local"
+  end
+
+  if value == nil then
+    return api.nvim_get_option_value(name, opt)
+  end
+
+  if type(value) == "function" then
+    value = value(api.nvim_get_option_value(name, opt))
+  end
+
+  api.nvim_set_option_value(name, value, opt)
+end
+
+function SET_OPTS(opts, opt)
+  for name, value in pairs(opts) do
+    if type(opt) == "string" then
+      vim[opt][name] = value
+    else
+      OPT(name, opt, value)
     end
-    if type(v) == "function" then
-      v = v(scope[k])
-    end
-    scope[k] = v
   end
 end
 
@@ -127,7 +142,7 @@ local white_list = {
   codecompanion = true,
 }
 function IS_BIG_FILE(bufnr)
-  local filetype = bo[bufnr].filetype
+  local filetype = OPT("filetype", { buf = bufnr })
   if white_list[filetype] then
     return false
   end
@@ -162,11 +177,11 @@ end
 
 function ENABLE_CURSORLINE(bufnr, win)
   win = win or fn.bufwinid(bufnr)
-  if wo[win].cursorline then
+  if OPT("cursorline", { win = win }) then
     return
   end
   defer(function()
-    wo[win].cursorline = true
+    OPT("cursorline", { win = win }, true)
   end, 30)
 end
 
@@ -269,7 +284,7 @@ function WIN_HEIGHT(win, exclude_scrolloff)
     return height
   end
 
-  return height - 2 * wo[win].scrolloff
+  return height - 2 * OPT("scrolloff", { win = win })
 end
 
 local direction_map = {
@@ -283,7 +298,10 @@ function SCROLL(win, direction, scroll_len)
     scroll_len = WIN_HEIGHT(win, true)
   end
   if scroll_len > 0 then
-    cmd.normal({ scroll_len .. direction_map[direction], bang = true })
+    if api.nvim_get_mode().mode == "n" then
+      -- only run in normal mode
+      cmd.normal({ scroll_len .. direction_map[direction], bang = true })
+    end
   end
 end
 

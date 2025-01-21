@@ -76,7 +76,7 @@ return {
     push_list(lualine_y, {
       {
         function()
-          return "󱁐:" .. bo[CUR_BUF()].shiftwidth
+          return "󱁐:" .. OPT("shiftwidth", { buf = CUR_BUF() })
         end,
         padding = { left = 0, right = 1 },
       },

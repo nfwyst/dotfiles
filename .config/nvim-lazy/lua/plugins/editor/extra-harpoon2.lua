@@ -37,12 +37,13 @@ local function get_previewer()
 
     local lines = fn.readfile(filepath)
     api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    bo[bufnr].filetype = vim.filetype.match({ filename = filepath })
+    local filetype = vim.filetype.match({ filename = filepath })
+    OPT("filetype", { buf = bufnr }, filetype)
     api.nvim_buf_add_highlight(bufnr, -1, "Cursor", row - 1, 0, -1)
 
     defer(function()
       local win = self.win.preview_winid
-      wo[win].wrap = true
+      OPT("wrap", { win = win }, true)
       RUN_IN_WIN(win, function()
         SCROLL(win, "down", row - 2 - math.floor(WIN_HEIGHT(win) / 2))
       end)

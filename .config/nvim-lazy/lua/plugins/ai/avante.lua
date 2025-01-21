@@ -26,7 +26,7 @@ local function hide_response_columns(_, win)
     return
   end
   defer(function()
-    SET_OPTS(COLUMN_OPTS(false), wo[win])
+    SET_OPTS(COLUMN_OPTS(false), { win = win })
     WIN_VAR(win, TASK_KEY, true)
   end, 30)
 end
@@ -39,7 +39,7 @@ local function hide_input_columns(bufnr, win)
     local opts = COLUMN_OPTS(false)
     opts.signcolumn = "yes"
     pcall(keymap.del, "i", "<tab>", { buffer = bufnr })
-    SET_OPTS(opts, wo[win])
+    SET_OPTS(opts, { win = win })
     WIN_VAR(win, TASK_KEY, true)
   end, 30)
 end
@@ -131,7 +131,7 @@ return {
       vendors = {
         deepseek = {
           endpoint = AI.endpoint,
-          model = AI.model.default,
+          model = AI.model.thinking,
           api_key_name = key_name,
           parse_curl_args = function(opts, code_opts)
             local headers = {
