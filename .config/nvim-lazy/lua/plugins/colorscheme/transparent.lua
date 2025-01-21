@@ -3,7 +3,7 @@ local function set_custom_highlight()
   local fg0 = "#839496"
   local fg2 = "#586e75"
   SET_HLS({
-    CursorLine = { bg = fg1 },
+    CursorLine = { bg = "#3d4a4f" },
     ["@variable"] = { fg = fg0 },
     Normal = { fg = fg0 },
     Comment = { fg = fg2 },
