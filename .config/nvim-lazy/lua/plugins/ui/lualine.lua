@@ -1,10 +1,10 @@
 local formatters = require("features.lualine.formatters")
-local refresh_time = 200
+local refresh_time = 500
 local extensions
 
 if IS_LINUX then
   extensions = {}
-  refresh_time = 1600
+  refresh_time = 2000
 end
 
 local buffers_title_map = formatters.buffers_title_map

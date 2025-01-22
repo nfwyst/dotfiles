@@ -4,6 +4,12 @@ return {
   keys = {
     {
       "<leader>am",
+      "",
+      desc = "Minuet",
+      mode = { "n", "v" },
+    },
+    {
+      "<leader>amt",
       "<cmd>Minuet virtualtext toggle<cr>",
       desc = "Minuet Togglee Virtual Text",
       mode = { "n", "v" },
@@ -30,6 +36,7 @@ return {
           optional = {
             max_tokens = AI.max.fim_tokens,
             stop = { "\n\n" },
+            top_p = 0.9,
           },
         },
       },

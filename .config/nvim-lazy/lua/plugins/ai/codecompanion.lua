@@ -3,6 +3,7 @@ local is_default_prompt = true
 
 return {
   "olimorris/codecompanion.nvim",
+  cmd = { "CodeCompanion" },
   cond = HAS_AI_KEY,
   dependencies = {
     "nvim-lua/plenary.nvim",

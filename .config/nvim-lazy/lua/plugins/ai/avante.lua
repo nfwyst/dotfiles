@@ -185,7 +185,7 @@ return {
       },
       mappings = {
         files = {
-          add_current = "<leader>ab",
+          add_current = "<leader>aab",
         },
       },
       hints = {
