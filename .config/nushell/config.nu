@@ -916,6 +916,7 @@ alias el = env NVIM_APPNAME=nvim-lazy nvim
 alias vim = nvim
 alias vi = nvim
 alias ys = yarn start
+alias bs = bun start
 alias gc- = git checkout -
 alias c = clear
 alias python = python3
