@@ -1,7 +1,8 @@
-local ft = { "markdown", "Avante", "norg", "rmd", "org", "codecompanion", "octo" }
+local ft = { "markdown", "Avante", "codecompanion", "octo" }
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
+  ft = ft,
   dependencies = {
     {
       "saghen/blink.cmp",
@@ -42,6 +43,7 @@ return {
       render_modes = true,
     },
     checkbox = {
+      enabled = true,
       render_modes = true,
     },
     quote = {
@@ -60,5 +62,4 @@ return {
       render_modes = true,
     },
   },
-  ft = ft,
 }

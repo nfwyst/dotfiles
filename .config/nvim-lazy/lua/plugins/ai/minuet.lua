@@ -21,9 +21,12 @@ return {
   cond = HAS_AI_KEY,
   config = function()
     require("minuet").setup({
-      notify = false,
+      notify = "error",
       provider = "openai_fim_compatible",
       cmp = {
+        enable_auto_complete = false,
+      },
+      blink = {
         enable_auto_complete = false,
       },
       provider_options = {
