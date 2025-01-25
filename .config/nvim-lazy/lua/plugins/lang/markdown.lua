@@ -1,4 +1,5 @@
 local ft = { "markdown", "Avante", "codecompanion", "octo" }
+local anti_conceal = { enabled = false }
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
@@ -17,7 +18,7 @@ return {
     },
   },
   opts = {
-    render_modes = { "n", "i", "no", "c", "t" },
+    render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
     file_types = ft,
     latex = {
       render_modes = true,
@@ -60,6 +61,19 @@ return {
     },
     html = {
       render_modes = true,
+    },
+    overrides = {
+      buflisted = {
+        [false] = { anti_conceal = anti_conceal },
+      },
+      buftype = {
+        nofile = { anti_conceal = anti_conceal },
+      },
+    },
+    win_options = {
+      concealcursor = {
+        rendered = "nvic",
+      },
     },
   },
 }
