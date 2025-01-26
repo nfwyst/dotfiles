@@ -48,6 +48,7 @@ return {
               { find = "method textDocument" },
               { find = "Invalid commentstring" },
               { find = "Client %d quit with" },
+              { find = "Failed to parse snippet" },
             },
           },
         },

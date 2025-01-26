@@ -26,8 +26,8 @@ local function shouldnt_show_emoji()
   return not should_show_emoji()
 end
 
-local function shouldnt_show_snippets_emoji()
-  local isnt_snip_mode = not should_show_snip()
+local function shouldnt_show_snippets_emoji(ctx)
+  local isnt_snip_mode = not should_show_snip(ctx)
 
   if emoji_enabled then
     return isnt_snip_mode and shouldnt_show_emoji()
