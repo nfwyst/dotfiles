@@ -9,7 +9,10 @@ local function line_before_cursor()
   return contents_before_cursor, cursor
 end
 
-local function should_show_snippets()
+local function should_show_snip(ctx)
+  if ctx.mode == "cmdline" then
+    return false
+  end
   local contents_before_cursor = line_before_cursor()
   local trigger_pattern = trigger_text .. "%w*$"
   return contents_before_cursor:match(trigger_pattern) ~= nil
@@ -19,12 +22,82 @@ local function should_show_emoji()
   return line_before_cursor():match(":%w*$") ~= nil
 end
 
+local function shouldnt_show_emoji()
+  return not should_show_emoji()
+end
+
 local function shouldnt_show_snippets_emoji()
-  local no_snip = not should_show_snippets()
+  local isnt_snip_mode = not should_show_snip()
+
   if emoji_enabled then
-    return no_snip and not should_show_emoji()
+    return isnt_snip_mode and shouldnt_show_emoji()
   end
-  return no_snip
+
+  return isnt_snip_mode
+end
+
+local function get_snip_range(ctx)
+  if not should_show_snip(ctx) then
+    return
+  end
+
+  local contents_before_cursor, cursor = line_before_cursor()
+  local row = cursor[1]
+  local col = cursor[2]
+  local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
+  local trigger_pos = contents_before_cursor:find(trigger_pattern)
+
+  if not trigger_pos then
+    return
+  end
+
+  -- reload snippets source
+  schedule(function()
+    require("blink.cmp").reload("snippets")
+  end)
+
+  local line = row - 1
+  return {
+    start = { line = line, character = trigger_pos - 1 },
+    ["end"] = { line = line, character = col },
+  }
+end
+
+local function transform_snip_items(ctx, items)
+  local range = get_snip_range(ctx)
+
+  if not range then
+    return items
+  end
+
+  return map(function(item)
+    item.textEdit = {
+      newText = item.insertText or item.label,
+      range = range,
+    }
+    return item
+  end, items)
+end
+
+local function transform_lsp_items(ctx, items)
+  local range = get_snip_range(ctx)
+
+  return filter(function(item)
+    local is_snip = item.kind == lsp.protocol.CompletionItemKind.Snippet
+
+    if range then
+      assign(item, {
+        sortText = "0000" .. (item.sortText or ""),
+        textEdit = {
+          newText = item.insertText or item.label,
+          range = range,
+        },
+      })
+      return is_snip
+    end
+
+    return not is_snip
+  end, items)
 end
 
 local function get_by_cmdtype(search_val, cmd_val, default)
@@ -112,51 +185,16 @@ return {
         per_filetype = {},
         providers = {
           lsp = {
-            should_show_items = shouldnt_show_snippets_emoji,
-            transform_items = function(ctx, items)
-              local is_cl = ctx.mode == "cmdline"
-              return filter(function(item)
-                local st = item.sortText or ""
-                local is_sn = item.kind == lsp.protocol.CompletionItemKind.Snippet
-                item.sortText = is_sn and "0000" .. st or "9999" .. st
-                return not is_cl or not is_sn
-              end, items)
-            end,
+            should_show_items = shouldnt_show_emoji,
+            transform_items = transform_lsp_items,
             score_offset = 90,
           },
           snippets = {
             min_keyword_length = 1,
             max_items = 3,
             -- only show snippets items if trigger_text is prefix
-            should_show_items = should_show_snippets,
-            transform_items = function(_, items)
-              local contents_before_cursor, cursor = line_before_cursor()
-              local row = cursor[1]
-              local col = cursor[2]
-              local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
-              local trigger_pos = contents_before_cursor:find(trigger_pattern)
-              if not trigger_pos then
-                return items
-              end
-
-              local line = row - 1
-              local range = {
-                start = { line = line, character = trigger_pos - 1 },
-                ["end"] = { line = line, character = col },
-              }
-              for _, item in ipairs(items) do
-                item.textEdit = {
-                  newText = item.insertText or item.label,
-                  range = range,
-                }
-              end
-              -- reload snippets source
-              schedule(function()
-                require("blink.cmp").reload("snippets")
-              end)
-
-              return items
-            end,
+            should_show_items = should_show_snip,
+            transform_items = transform_snip_items,
             score_offset = 85,
           },
           path = {

@@ -110,7 +110,7 @@ return {
           proxy = AI.proxy,
         },
         deepseek = function()
-          return require("codecompanion.adapters").extend("openai_compatible", {
+          return require("codecompanion.adapters").extend("deepseek", {
             env = {
               url = AI.endpoint,
               chat_url = AI.chat.pathname,
@@ -118,7 +118,7 @@ return {
             },
             schema = {
               model = {
-                default = AI.model.default,
+                default = AI.model.thinking,
                 choices = AI.model.list,
               },
               num_ctx = {
