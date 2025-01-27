@@ -1,10 +1,20 @@
 local mode = { "n", "v" }
 local is_default_prompt = true
 
+local function actions()
+  return require("codecompanion").actions({
+    provider = { name = "default", opts = { prompt = "Select Action: " } },
+  })
+end
+
+local function toggle_prompt()
+  is_default_prompt = not is_default_prompt
+end
+
 return {
   "olimorris/codecompanion.nvim",
   cond = HAS_AI_KEY,
-  cmd = { "CodeCompanion", "CodeCompanionActions" },
+  cmd = { "CodeCompanion", "CodeCompanionChat" },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
@@ -27,62 +37,36 @@ return {
       end,
     },
   },
+  init = function()
+    cmd([[cab cc CodeCompanion]])
+    cmd([[cab ccc CodeCompanionChat]])
+  end,
   keys = {
     { "<leader>ac", "", desc = "CodeCompanion", mode = mode },
-    {
-      "<leader>acc",
-      function()
-        return require("codecompanion").chat({ fargs = { "deepseek" } })
-      end,
-      "<cmd>CodeCompanionChat deepseek<CR>",
-      desc = "CodeCompanion Chat",
-      mode = mode,
-    },
-    {
-      "<leader>acM",
-      function()
-        return require("codecompanion").actions({
-          provider = { name = "default", opts = { prompt = "Select Action: " } },
-        })
-      end,
-      desc = "CodeCompanion Actions",
-      mode = mode,
-    },
-    {
-      "<leader>acm",
-      "",
-      desc = "CodeCompanion Quick Actions",
-      mode = mode,
-    },
-    { "<leader>acme", "<cmd>CodeCompanion /explain<cr>", desc = "Explain Code", mode = "v" },
-    { "<leader>acmE", "<cmd>CodeCompanion /lsp<cr>", desc = "Explain The LSP Diagnostics", mode = "v" },
-    { "<leader>acmf", "<cmd>CodeCompanion /fix<cr>", desc = "Fix Code", mode = "v" },
-    {
-      "<leader>act",
-      function()
-        return require("codecompanion").toggle()
-      end,
-      desc = "CodeCompanion Toggle",
-      mode = mode,
-    },
-    {
-      "<leader>aca",
-      function(...)
-        return require("codecompanion").add(...)
-      end,
-      desc = "CodeCompanion Add",
-      mode = { "v" },
-    },
-    {
-      "<leader>acT",
-      function()
-        is_default_prompt = not is_default_prompt
-      end,
-      desc = "TogglePrompt",
-    },
+    { "<leader>acc", "<cmd>CodeCompanionChat Toggle<CR>", desc = "CodeCompanion: Toggle Chat", mode = mode },
+    { "<leader>aca", "<cmd>CodeCompanionChat Add<cr>", desc = "CodeCompanion: Add Code Snip To Chat", mode = "v" },
+    { "<leader>aco", actions, desc = "CodeCompanion: Open Actions Menu", mode = mode },
+    { "<leader>aci", "<cmd>CodeCompanion<cr>", desc = "CodeCompanion: Inline Prompt", mode = mode },
+    { "<leader>acb", "<cmd>CodeCompanion /buffer<cr>", desc = "CodeCompanion: Chat With Buffer" },
+    { "<leader>acd", "<cmd>CodeCompanion /doc<cr>", desc = "CodeCompanion: Gen Documentation", mode = "v" },
+    { "<leader>acm", "<cmd>CodeCompanion /scommit<cr>", desc = "CodeCompanion: Commit Staged Message" },
+    { "<leader>acg", "<cmd>CodeCompanion /commit<cr>", desc = "CodeCompanion: Commit Message" },
+    { "<leader>ace", "<cmd>CodeCompanion /explain<cr>", desc = "CodeCompanion: Explain Code", mode = "v" },
+    { "<leader>acl", "<cmd>CodeCompanion /lsp<cr>", desc = "CodeCompanion: Explain LSP Diagnostics", mode = mode },
+    { "<leader>acf", "<cmd>CodeCompanion /fix<cr>", desc = "CodeCompanion: Fix Code", mode = "v" },
+    { "<leader>acp", "<cmd>CodeCompanion /pr<cr>", desc = "CodeCompanion: PR Message" },
+    { "<leader>acr", "<cmd>CodeCompanion /refactor<cr>", desc = "CodeCompanion: Refactor Code Snip", mode = "v" },
+    { "<leader>acs", "<cmd>CodeCompanion /spell<cr>", desc = "CodeCompanion: Check Spell", mode = "v" },
+    { "<leader>acu", "<cmd>CodeCompanion /tests<cr>", desc = "CodeCompanion: Write Tests For Code Snip", mode = "v" },
+    { "<leader>acv", "<cmd>CodeCompanion /review<cr>", desc = "CodeCompanion: Review Code Snip", mode = "v" },
+    { "<leader>acn", "<cmd>CodeCompanion /naming<cr>", desc = "CodeCompanion: Better Naming", mode = "v" },
+    { "<leader>act", toggle_prompt, desc = "TogglePrompt" },
   },
   config = function()
     local system_prompt = require("codecompanion.config").config.opts.system_prompt
+    local list = AI.model.list
+    local choices = { list[1], list[2], ["deepseek-reasoner"] = { opts = { can_reason = true } } }
+
     require("codecompanion").setup({
       strategies = {
         chat = {
@@ -116,6 +100,10 @@ return {
               api_key = AI.api_key.name,
             },
             schema = {
+              model = {
+                default = AI.model.default,
+                choices = choices,
+              },
               num_ctx = {
                 default = AI.max.context,
               },
@@ -134,6 +122,7 @@ return {
           enabled = true,
         },
       },
+      prompt_library = require("features.codecompanion-prompt-lib"),
     })
   end,
 }

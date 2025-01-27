@@ -33,9 +33,12 @@ MAPS({
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
     { from = "<s-k>", to = ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv" },
   },
+  v = {
+    { from = ";;", to = "<esc>" },
+  },
   i = {
     {
-      from = "jk",
+      from = ";;",
       to = function()
         cmd.stopinsert()
         snippet.stop()
