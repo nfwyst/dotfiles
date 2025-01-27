@@ -3,8 +3,8 @@ local is_default_prompt = true
 
 return {
   "olimorris/codecompanion.nvim",
-  cmd = { "CodeCompanion" },
   cond = HAS_AI_KEY,
+  cmd = { "CodeCompanion", "CodeCompanionActions" },
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
@@ -57,7 +57,6 @@ return {
     { "<leader>acme", "<cmd>CodeCompanion /explain<cr>", desc = "Explain Code", mode = "v" },
     { "<leader>acmE", "<cmd>CodeCompanion /lsp<cr>", desc = "Explain The LSP Diagnostics", mode = "v" },
     { "<leader>acmf", "<cmd>CodeCompanion /fix<cr>", desc = "Fix Code", mode = "v" },
-    { "<leader>acmc", "<cmd>CodeCompanion /commit<cr>", desc = "Generate Commit" },
     {
       "<leader>act",
       function()
@@ -68,8 +67,8 @@ return {
     },
     {
       "<leader>aca",
-      function()
-        return require("codecompanion").add({})
+      function(...)
+        return require("codecompanion").add(...)
       end,
       desc = "CodeCompanion Add",
       mode = { "v" },
@@ -117,10 +116,6 @@ return {
               api_key = AI.api_key.name,
             },
             schema = {
-              model = {
-                default = AI.model.thinking,
-                choices = AI.model.list,
-              },
               num_ctx = {
                 default = AI.max.context,
               },
