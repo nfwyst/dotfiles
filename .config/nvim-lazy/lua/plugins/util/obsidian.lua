@@ -1,4 +1,4 @@
-local function init(obsidian)
+local function set_keymaps(obsidian)
   MAP("n", "gf", function()
     if obsidian.util.cursor_on_markdown_link() then
       return "<cmd>ObsidianFollowLink<cr>"
@@ -105,6 +105,7 @@ return {
         enable = false,
       },
     })
-    init(obsidian)
+
+    set_keymaps(obsidian)
   end,
 }

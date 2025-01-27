@@ -34,7 +34,6 @@ local function remove_qf_item(is_normal)
   end
 end
 
-local pos
 local leave_cmd
 local close_cmd
 
@@ -53,14 +52,6 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   MAPS({
     n = {
       { from = "dd", to = remove_qf_item(true), opt = opt },
-      {
-        from = "<cr>",
-        to = function()
-          pos = WIN_CURSOR(win)
-          PRESS_KEYS("<cr>", "n")
-        end,
-        opt = opt,
-      },
     },
     x = {
       { from = "d", to = remove_qf_item(), opt = opt },
@@ -69,17 +60,16 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
 
   if leave_cmd then
     api.nvim_del_autocmd(leave_cmd)
-    leave_cmd = nil
   end
 
   if close_cmd then
     api.nvim_del_autocmd(close_cmd)
-    close_cmd = nil
   end
 
   leave_cmd = AUCMD("WinLeave", {
     buffer = bufnr,
     callback = function()
+      local pos = WIN_CURSOR(win)
       defer(function()
         if api.nvim_win_is_valid(win) then
           WIN_CURSOR(win, pos)

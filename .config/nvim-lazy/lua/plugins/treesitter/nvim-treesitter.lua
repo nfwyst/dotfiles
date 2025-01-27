@@ -24,13 +24,31 @@ local function get_move_goto_config(direction, position)
   }
 end
 
+local function set_keymaps()
+  local rm = require("nvim-treesitter.textobjects.repeatable_move")
+  MAPS({
+    [{ "n", "x", "o" }] = {
+      { from = ";", to = rm.repeat_last_move },
+      { from = ",", to = rm.repeat_last_move_opposite },
+      { from = "f", to = rm.builtin_f_expr, opt = { expr = true } },
+      { from = "F", to = rm.builtin_F_expr, opt = { expr = true } },
+      { from = "t", to = rm.builtin_t_expr, opt = { expr = true } },
+      { from = "T", to = rm.builtin_T_expr, opt = { expr = true } },
+    },
+  })
+end
+
 return {
   "nvim-treesitter/nvim-treesitter",
   keys = {
     { "<leader>cw", "", desc = "swap" },
   },
   opts = function(_, opts)
+    -- wait for setup finish
+    defer(set_keymaps, 0)
+
     language.register("bash", "zsh")
+
     local opt = {
       ensure_installed = {
         "css",
