@@ -67,6 +67,18 @@ return {
     local list = AI.model.list
     local choices = { list[1], list[2], ["deepseek-reasoner"] = { opts = { can_reason = true } } }
 
+    FILETYPE_TASK_MAP.codecompanion = function(bufnr, win)
+      if BUF_VAR(bufnr, TASK_KEY) then
+        return
+      end
+
+      defer(function()
+        SET_OPTS(COLUMN_OPTS(false), { win = win })
+      end, 10)
+
+      BUF_VAR(bufnr, TASK_KEY, true)
+    end
+
     require("codecompanion").setup({
       strategies = {
         chat = {
