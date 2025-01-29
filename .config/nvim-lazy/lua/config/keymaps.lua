@@ -28,6 +28,8 @@ MAPS({
   },
   [{ "n", "x", "s" }] = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
+    { from = "<leader>I", to = "<cmd>wall<cr>", opt = { desc = "Save All" } },
+    { from = "<leader>X", to = "<cmd>xall<cr>", opt = { desc = "Save And Quit" } },
   },
   [{ "v", "x" }] = {
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
