@@ -78,6 +78,7 @@ CONSTS = {
           "deepseek-chat",
           "deepseek-coder",
           "deepseek-reasoner",
+          ["deepseek-reasoner"] = { opts = { can_reason = true } },
         },
         default = "deepseek-chat",
         thinking = "deepseek-reasoner",

@@ -1,5 +1,4 @@
 local ft = { "markdown", "Avante", "codecompanion", "octo" }
-local anti_conceal = { enabled = false }
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
@@ -17,63 +16,79 @@ return {
       end,
     },
   },
-  opts = {
-    render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
-    file_types = ft,
-    latex = {
-      render_modes = true,
-    },
-    heading = {
-      sign = true,
-      render_modes = true,
-      icons = { "󰎥 ", "󰎨 ", "󰎫 ", "󰎲 ", "󰎯 ", "󰎴 " },
-    },
-    paragraph = {
-      render_modes = true,
-      left_margin = 2,
-    },
-    code = {
-      sign = true,
-      width = "full",
-      render_modes = true,
-    },
-    dash = {
-      render_modes = true,
-    },
-    bullet = {
-      render_modes = true,
-    },
-    checkbox = {
-      enabled = true,
-      render_modes = true,
-    },
-    quote = {
-      render_modes = true,
-    },
-    pipe_table = {
-      render_modes = true,
-    },
-    link = {
-      render_modes = true,
-    },
-    inline_highlight = {
-      render_modes = true,
-    },
-    html = {
-      render_modes = true,
-    },
-    overrides = {
-      buflisted = {
-        [false] = { anti_conceal = anti_conceal },
+  opts = function(_, opts)
+    local state = require("render-markdown.state")
+    local anti_conceal = { enabled = false }
+
+    local opt = {
+      render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
+      file_types = ft,
+      latex = {
+        render_modes = true,
       },
-      buftype = {
-        nofile = { anti_conceal = anti_conceal },
+      heading = {
+        sign = true,
+        render_modes = true,
+        icons = { "󰎥 ", "󰎨 ", "󰎫 ", "󰎲 ", "󰎯 ", "󰎴 " },
       },
-    },
-    win_options = {
-      concealcursor = {
-        rendered = "nvic",
+      paragraph = {
+        render_modes = true,
+        left_margin = 2,
       },
-    },
-  },
+      code = {
+        sign = true,
+        render_modes = true,
+      },
+      dash = {
+        render_modes = true,
+      },
+      bullet = {
+        render_modes = true,
+      },
+      checkbox = {
+        enabled = true,
+        render_modes = true,
+      },
+      quote = {
+        render_modes = true,
+      },
+      pipe_table = {
+        render_modes = true,
+      },
+      link = {
+        render_modes = true,
+      },
+      inline_highlight = {
+        render_modes = true,
+      },
+      html = {
+        render_modes = true,
+      },
+      overrides = {
+        buflisted = {
+          [false] = { anti_conceal = anti_conceal },
+        },
+        buftype = {
+          nofile = { anti_conceal = anti_conceal },
+        },
+      },
+      win_options = {
+        concealcursor = {
+          rendered = "nvic",
+        },
+      },
+      on = {
+        render = function(buf)
+          if not OPT("modifiable", { buf = buf }) then
+            return
+          end
+
+          state.get(buf).anti_conceal.enabled = true
+          OPT("concealcursor", { win = fn.bufwinid(buf) }, "")
+        end,
+      },
+    }
+
+    return merge(opts, opt)
+  end,
 }

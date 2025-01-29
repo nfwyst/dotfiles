@@ -38,8 +38,8 @@ return {
     },
   },
   init = function()
-    cmd([[cab cc CodeCompanion]])
-    cmd([[cab ccc CodeCompanionChat]])
+    cmd.cab("cc CodeCompanion")
+    cmd.cab("ccc CodeCompanionChat")
   end,
   keys = {
     { "<leader>ac", "", desc = "CodeCompanion", mode = mode },
@@ -64,8 +64,6 @@ return {
   },
   config = function()
     local system_prompt = require("codecompanion.config").config.opts.system_prompt
-    local list = AI.model.list
-    local choices = { list[1], list[2], ["deepseek-reasoner"] = { opts = { can_reason = true } } }
 
     FILETYPE_TASK_MAP.codecompanion = function(bufnr, win)
       if BUF_VAR(bufnr, TASK_KEY) then
@@ -113,8 +111,8 @@ return {
             },
             schema = {
               model = {
-                default = AI.model.default,
-                choices = choices,
+                default = AI.model.thinking,
+                choices = AI.model.list,
               },
               num_ctx = {
                 default = AI.max.context,
