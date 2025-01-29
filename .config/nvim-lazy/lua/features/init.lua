@@ -8,3 +8,4 @@ SET_OPTS({
 
 require("features.qf-del-bind-and-stop-auto-scroll")
 require("features.reset-buffer")
+require("features.show-first-diagnostic-virtual-text")
