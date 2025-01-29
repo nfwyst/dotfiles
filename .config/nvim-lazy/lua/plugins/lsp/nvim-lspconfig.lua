@@ -111,7 +111,7 @@ return {
         virtual_text = virtual_text or false,
         severity_sort = true,
         float = {
-          focusable = false,
+          focusable = true,
           style = "minimal",
           border = "rounded",
           source = "always",
