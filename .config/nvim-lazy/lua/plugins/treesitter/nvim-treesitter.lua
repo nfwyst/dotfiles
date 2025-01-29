@@ -42,7 +42,7 @@ return {
   "nvim-treesitter/nvim-treesitter",
   keys = {
     { "<leader>cw", "", desc = "swap" },
-    { "L", "", desc = "left", mode = "v" },
+    { "=", "", desc = "assignment", mode = "v" },
   },
   opts = function(_, opts)
     -- wait for setup finish
@@ -95,10 +95,10 @@ return {
           enable = true,
           lookahead = true,
           keymaps = {
-            ["a="] = { query = "@assignment.outer", desc = "Select outer part of assignment" },
-            ["i="] = { query = "@assignment.inner", desc = "Select inner part of assignment" },
-            ["L="] = { query = "@assignment.lhs", desc = "Select left hand side of assignment" },
-            ["r="] = { query = "@assignment.rhs", desc = "Select right hand side of assignment" },
+            ["=a"] = { query = "@assignment.outer", desc = "Select outer part of assignment" },
+            ["=i"] = { query = "@assignment.inner", desc = "Select inner part of assignment" },
+            ["=l"] = { query = "@assignment.lhs", desc = "Select left hand side of assignment" },
+            ["=r"] = { query = "@assignment.rhs", desc = "Select right hand side of assignment" },
             ["am"] = { query = "@function.outer", desc = "Select outer part of method definition" },
             ["im"] = { query = "@function.inner", desc = "Select inner part of method definition" },
           },

@@ -31,7 +31,7 @@ return {
       },
       provider_options = {
         openai_fim_compatible = {
-          model = AI.model.default,
+          model = AI.model.chat,
           end_point = AI.fim.url,
           api_key = AI.api_key.name,
           name = "󱗻",

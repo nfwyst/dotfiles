@@ -11,6 +11,7 @@ return {
       },
     },
     win = {
+      no_overlap = false,
       height = { max = 38 },
     },
     icons = {

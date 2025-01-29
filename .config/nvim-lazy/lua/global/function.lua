@@ -40,11 +40,18 @@ function NOTIFY(...)
 end
 
 function REQUEST_USER_INPUT(title, on_submit)
-  vim.ui.input({ prompt = title }, function(result)
-    if not result then
-      return
+  ui.input({ prompt = title }, function(result)
+    if result then
+      on_submit(result)
     end
-    on_submit(result)
+  end)
+end
+
+function REQUEST_USER_SELECT(options, title, on_submit)
+  ui.select(options, { prompt = title }, function(result)
+    if result then
+      on_submit(result)
+    end
   end)
 end
 

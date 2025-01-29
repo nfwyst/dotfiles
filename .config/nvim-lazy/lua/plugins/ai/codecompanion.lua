@@ -11,6 +11,33 @@ local function toggle_prompt()
   is_default_prompt = not is_default_prompt
 end
 
+local function deepseek_factory(model)
+  return function()
+    return require("codecompanion.adapters").extend("deepseek", {
+      env = {
+        url = AI.endpoint,
+        chat_url = AI.chat.pathname,
+        api_key = AI.api_key.name,
+      },
+      schema = {
+        model = {
+          default = model,
+          choices = AI.model.list,
+        },
+        num_ctx = {
+          default = AI.max.context,
+        },
+        max_tokens = {
+          default = AI.max.tokens,
+        },
+        temperature = {
+          default = AI.temperature,
+        },
+      },
+    })
+  end
+end
+
 return {
   "olimorris/codecompanion.nvim",
   cond = HAS_AI_KEY,
@@ -103,30 +130,8 @@ return {
           allow_insecure = false,
           proxy = AI.proxy,
         },
-        deepseek = function()
-          return require("codecompanion.adapters").extend("deepseek", {
-            env = {
-              url = AI.endpoint,
-              chat_url = AI.chat.pathname,
-              api_key = AI.api_key.name,
-            },
-            schema = {
-              model = {
-                default = AI.model.thinking,
-                choices = AI.model.list,
-              },
-              num_ctx = {
-                default = AI.max.context,
-              },
-              max_tokens = {
-                default = AI.max.tokens,
-              },
-              temperature = {
-                default = AI.temperature,
-              },
-            },
-          })
-        end,
+        deepseek = deepseek_factory(AI.model.thinking),
+        deepseek_chat = deepseek_factory(AI.model.chat),
       },
       display = {
         diff = {

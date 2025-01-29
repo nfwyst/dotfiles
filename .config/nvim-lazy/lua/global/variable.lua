@@ -26,6 +26,8 @@ _G.cmd = vim.cmd
 _G.filter = vim.tbl_filter
 _G.islist = vim.islist
 _G.NIL = vim.NIL
+_G.ui = vim.ui
+_G.keys = vim.tbl_keys
 _G.shadow_merge = function(...)
   return vim.tbl_extend("force", ...)
 end
@@ -80,7 +82,7 @@ CONSTS = {
           "deepseek-reasoner",
           ["deepseek-reasoner"] = { opts = { can_reason = true } },
         },
-        default = "deepseek-chat",
+        chat = "deepseek-chat",
         thinking = "deepseek-reasoner",
       },
       api_key = {

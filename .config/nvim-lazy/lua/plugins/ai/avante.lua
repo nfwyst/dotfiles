@@ -44,6 +44,50 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
+local function deepseek_factory(model)
+  return {
+    endpoint = AI.endpoint,
+    model = model,
+    api_key_name = key_name,
+    parse_curl_args = function(opts, code_opts)
+      local headers = {
+        ["Accept"] = "application/json",
+        ["Content-Type"] = "application/json",
+      }
+      local key_value = AI.api_key.value
+      if key_value then
+        headers["Authorization"] = "Bearer " .. key_value
+      end
+      return {
+        url = opts.endpoint .. AI.chat.pathname,
+        insecure = false,
+        headers = headers,
+        timeout = AI.timeout,
+        body = {
+          model = opts.model,
+          messages = providers.openai.parse_messages(code_opts),
+          stream = true,
+          temperature = AI.temperature,
+          max_tokens = AI.max.tokens,
+          options = {
+            num_ctx = AI.max.context,
+          },
+        },
+      }
+    end,
+    parse_response_data = function(...)
+      return providers.openai.parse_response(...)
+    end,
+  }
+end
+
+local vendors = {
+  deepseek = deepseek_factory(AI.model.thinking),
+  deepseek_chat = deepseek_factory(AI.model.chat),
+}
+
+local providers = keys(vendors)
+
 return {
   "yetone/avante.nvim",
   cond = HAS_AI_KEY,
@@ -75,17 +119,25 @@ return {
       end,
       desc = "AvanteAsk",
     },
-    { "<leader>aaB", "<cmd>AvanteBuild<cr>", desc = "AvanteBuild" },
-    { "<leader>aac", "<cmd>AvanteChat<cr>", desc = "AvanteChat" },
-    { "<leader>aaH", "<cmd>AvanteClear history<cr>", desc = "AvanteClear" },
-    { "<leader>aaM", "<cmd>AvanteClear memory<cr>", desc = "AvanteClear memory" },
-    { "<leader>aaC", "<cmd>AvanteClear cache<cr>", desc = "AvanteClear cache" },
-    { "<leader>aae", "<cmd>AvanteEdit<cr>", desc = "AvanteEdit", mode = mode },
-    { "<leader>aar", "<cmd>AvanteRefresh<cr>", desc = "AvanteRefresh" },
-    { "<leader>aaR", "<cmd>AvanteShowRepoMap<cr>", desc = "AvanteShowRepoMap" },
-    { "<leader>aaP", "<cmd>AvanteSwitchFileSelectorProvider<cr>", desc = "AvanteSwitchFileSelectorProvider" },
-    { "<leader>aap", "<cmd>AvanteSwitchProvider<cr>", desc = "AvanteSwitchProvider" },
-    { "<leader>aat", "<cmd>AvanteToggle<cr>", desc = "AvanteToggle" },
+    { "<leader>aaB", "<cmd>AvanteBuild<cr>", desc = "Avante: Build Dependencies" },
+    { "<leader>aac", "<cmd>AvanteChat<cr>", desc = "Avante: Start Chat" },
+    { "<leader>aaH", "<cmd>AvanteClear history<cr>", desc = "Avante: Clear History" },
+    { "<leader>aaM", "<cmd>AvanteClear memory<cr>", desc = "Avante: Clear Memory" },
+    { "<leader>aaC", "<cmd>AvanteClear cache<cr>", desc = "Avante: Clear Cache" },
+    { "<leader>aae", "<cmd>AvanteEdit<cr>", desc = "Avante: Edit The Selected Code", mode = mode },
+    { "<leader>aaf", "<cmd>AvanteFocus<cr>", desc = "Avante: Switch Focus To/From The Sidebar" },
+    { "<leader>aar", "<cmd>AvanteRefresh<cr>", desc = "Avante: Refresh All Window" },
+    { "<leader>aaR", "<cmd>AvanteShowRepoMap<cr>", desc = "Avante: Show Repo Map" },
+    { "<leader>aat", "<cmd>AvanteToggle<cr>", desc = "Avante: Toggle The Sidebar" },
+    {
+      "<leader>aap",
+      function()
+        REQUEST_USER_SELECT(providers, "select provider: ", function(provider)
+          cmd("AvanteSwitchProvider " .. provider)
+        end)
+      end,
+      desc = "Avante: Switch AI Provider",
+    },
     {
       "<leader>aah",
       function()
@@ -110,7 +162,7 @@ return {
     {
       "<leader>aaT",
       "<cmd>TogglePrompt<cr>",
-      desc = "TogglePrompt",
+      desc = "Avante: TogglePrompt",
     },
   },
   config = function()
@@ -128,42 +180,7 @@ return {
 
     require("avante").setup({
       provider = "deepseek",
-      vendors = {
-        deepseek = {
-          endpoint = AI.endpoint,
-          model = AI.model.thinking,
-          api_key_name = key_name,
-          parse_curl_args = function(opts, code_opts)
-            local headers = {
-              ["Accept"] = "application/json",
-              ["Content-Type"] = "application/json",
-            }
-            local key_value = AI.api_key.value
-            if key_value then
-              headers["Authorization"] = "Bearer " .. key_value
-            end
-            return {
-              url = opts.endpoint .. AI.chat.pathname,
-              insecure = false,
-              headers = headers,
-              timeout = AI.timeout,
-              body = {
-                model = opts.model,
-                messages = providers.openai.parse_messages(code_opts),
-                stream = true,
-                temperature = AI.temperature,
-                max_tokens = AI.max.tokens,
-                options = {
-                  num_ctx = AI.max.context,
-                },
-              },
-            }
-          end,
-          parse_response_data = function(...)
-            return providers.openai.parse_response(...)
-          end,
-        },
-      },
+      vendors = vendors,
       behaviour = {
         auto_suggestions = false,
         auto_suggestions_respect_ignore = true,
