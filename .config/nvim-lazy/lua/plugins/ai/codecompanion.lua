@@ -63,19 +63,20 @@ return {
     { "<leader>act", toggle_prompt, desc = "TogglePrompt" },
   },
   config = function()
-    local system_prompt = require("codecompanion.config").config.opts.system_prompt
-
-    FILETYPE_TASK_MAP.codecompanion = function(bufnr, win)
-      if BUF_VAR(bufnr, TASK_KEY) then
-        return
+    -- hide left columns for code companion sidebar
+    if not FILETYPE_TASK_MAP.codecompanion then
+      FILETYPE_TASK_MAP.codecompanion = function(_, win)
+        if WIN_VAR(win, TASK_KEY) then
+          return
+        end
+        defer(function()
+          SET_OPTS(COLUMN_OPTS(false), { win = win })
+          WIN_VAR(win, TASK_KEY, true)
+        end, 10)
       end
-
-      defer(function()
-        SET_OPTS(COLUMN_OPTS(false), { win = win })
-      end, 10)
-
-      BUF_VAR(bufnr, TASK_KEY, true)
     end
+
+    local system_prompt = require("codecompanion.config").config.opts.system_prompt
 
     require("codecompanion").setup({
       strategies = {
@@ -130,6 +131,11 @@ return {
       display = {
         diff = {
           enabled = true,
+        },
+        chat = {
+          window = {
+            width = 0.3,
+          },
         },
       },
       prompt_library = require("features.codecompanion-prompt-lib"),
