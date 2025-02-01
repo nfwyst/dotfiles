@@ -86,6 +86,8 @@ return {
       ignore_install = IS_LINUX and { "nu" } or nil,
       textobjects = {
         move = {
+          enable = true,
+          set_jumps = true,
           goto_next_start = get_move_goto_config("next", "start"),
           goto_next_end = get_move_goto_config("next", "end"),
           goto_previous_start = get_move_goto_config("prev", "start"),

@@ -164,7 +164,7 @@ end
 function GIT_ROOT(bufnr_or_path)
   bufnr_or_path = bufnr_or_path or CUR_BUF()
   local root = fs.root(bufnr_or_path, ".git")
-  return root or fs.root(fn.getcwd(), ".git")
+  return root or fs.root(uv.cwd() or CUR_BUF(), ".git")
 end
 
 function MAX_WIDTH(offset, multiple)

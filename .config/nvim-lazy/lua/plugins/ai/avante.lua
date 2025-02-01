@@ -117,7 +117,7 @@ return {
           cmd("AvanteAsk " .. question)
         end)
       end,
-      desc = "AvanteAsk",
+      desc = "Avante: Ask AI About Code",
     },
     { "<leader>aaB", "<cmd>AvanteBuild<cr>", desc = "Avante: Build Dependencies" },
     { "<leader>aac", "<cmd>AvanteChat<cr>", desc = "Avante: Start Chat" },

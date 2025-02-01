@@ -33,7 +33,7 @@ local function init_path(dirpath)
 end
 
 local function path_getter()
-  return GIT_ROOT() or fn.getcwd()
+  return GIT_ROOT() or uv.cwd()
 end
 
 return {

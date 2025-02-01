@@ -109,6 +109,28 @@ return {
       strategies = {
         chat = {
           adapter = "deepseek",
+          keymaps = {
+            clear = {
+              modes = {
+                n = "gX",
+              },
+            },
+            system_prompt = {
+              modes = {
+                n = "gS",
+              },
+            },
+            completion = {
+              modes = {
+                i = "<C-m>",
+              },
+            },
+            codeblock = {
+              modes = {
+                n = "gC",
+              },
+            },
+          },
         },
         inline = {
           adapter = "deepseek",
