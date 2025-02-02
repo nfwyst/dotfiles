@@ -68,6 +68,7 @@ CONSTS = {
   ai = {
     deepseek = {
       endpoint = "https://api.deepseek.com",
+      endpoint_ollama = os.getenv("OLLAMA_API_BASE"),
       temperature = 0.1,
       timeout = 30000,
       max = {

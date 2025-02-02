@@ -11,30 +11,36 @@ local function toggle_prompt()
   is_default_prompt = not is_default_prompt
 end
 
-local function deepseek_factory(model)
+local function adapter_factory(model, adapter, opt)
+  opt = opt or {}
+  adapter = adapter or "deepseek"
+
+  local adapters = require("codecompanion.adapters")
+  local opts = {
+    env = {
+      url = AI.endpoint,
+      chat_url = AI.chat.pathname,
+      api_key = AI.api_key.name,
+    },
+    schema = {
+      model = {
+        default = model,
+        choices = AI.model.list,
+      },
+      num_ctx = {
+        default = AI.max.context,
+      },
+      max_tokens = {
+        default = AI.max.tokens,
+      },
+      temperature = {
+        default = AI.temperature,
+      },
+    },
+  }
+
   return function()
-    return require("codecompanion.adapters").extend("deepseek", {
-      env = {
-        url = AI.endpoint,
-        chat_url = AI.chat.pathname,
-        api_key = AI.api_key.name,
-      },
-      schema = {
-        model = {
-          default = model,
-          choices = AI.model.list,
-        },
-        num_ctx = {
-          default = AI.max.context,
-        },
-        max_tokens = {
-          default = AI.max.tokens,
-        },
-        temperature = {
-          default = AI.temperature,
-        },
-      },
-    })
+    return adapters.extend(adapter, merge(opts, opt))
   end
 end
 
@@ -87,7 +93,7 @@ return {
     { "<leader>acu", "<cmd>CodeCompanion /tests<cr>", desc = "CodeCompanion: Write Tests For Code Snip", mode = "v" },
     { "<leader>acv", "<cmd>CodeCompanion /review<cr>", desc = "CodeCompanion: Review Code Snip", mode = "v" },
     { "<leader>acn", "<cmd>CodeCompanion /naming<cr>", desc = "CodeCompanion: Better Naming", mode = "v" },
-    { "<leader>act", toggle_prompt, desc = "TogglePrompt" },
+    { "<leader>act", toggle_prompt, desc = "CodeCompanion: TogglePrompt" },
   },
   config = function()
     -- hide left columns for code companion sidebar
@@ -152,8 +158,16 @@ return {
           allow_insecure = false,
           proxy = AI.proxy,
         },
-        deepseek = deepseek_factory(AI.model.thinking),
-        deepseek_chat = deepseek_factory(AI.model.chat),
+        deepseek = adapter_factory(AI.model.thinking),
+        deepseek_chat = adapter_factory(AI.model.chat),
+        deepseek_ollama = adapter_factory(AI.model.thinking, "ollama", {
+          schema = {
+            model = { default = "deepseek-r1:32b" },
+          },
+          env = {
+            url = AI.endpoint_ollama,
+          },
+        }),
       },
       display = {
         diff = {

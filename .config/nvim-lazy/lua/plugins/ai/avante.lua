@@ -16,7 +16,6 @@ end
 
 local function init(config)
   CMD("TogglePrompt", switch_prompt(config), { desc = "Toggle Prompt" })
-  config.override({ system_prompt = PROMPT })
 end
 
 local mode = { "n", "v" }
@@ -44,42 +43,23 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
-local function deepseek_factory(model, providers)
+local function vendor_factory(model, endpoint)
   return {
-    endpoint = AI.endpoint,
-    model = model,
+    __inherited_from = "openai",
     api_key_name = AI.api_key.name,
-    parse_curl_args = function(opts, code_opts)
-      local headers = {
-        ["Accept"] = "application/json",
-        ["Content-Type"] = "application/json",
-      }
-      local key_value = AI.api_key.value
-      if key_value then
-        headers["Authorization"] = "Bearer " .. key_value
-      end
-      return {
-        url = opts.endpoint .. AI.chat.pathname,
-        insecure = false,
-        headers = headers,
-        timeout = AI.timeout,
-        body = {
-          model = opts.model,
-          messages = providers.openai.parse_messages(code_opts),
-          stream = true,
-          temperature = AI.temperature,
-          max_tokens = AI.max.tokens,
-          options = {
-            num_ctx = AI.max.context,
-          },
-        },
-      }
-    end,
-    parse_response_data = function(...)
-      return providers.openai.parse_response(...)
-    end,
+    endpoint = AI.endpoint or endpoint,
+    model = model,
+    allow_insecure = false,
+    timeout = AI.timeout,
+    temperature = AI.temperature,
+    max_tokens = AI.max.tokens,
+    options = {
+      num_ctx = AI.max.context,
+    },
   }
 end
+
+local vendor_names = { "deepseek", "deepseek_chat", "deepseek_ollama" }
 
 return {
   "yetone/avante.nvim",
@@ -125,8 +105,8 @@ return {
     {
       "<leader>aap",
       function()
-        REQUEST_USER_SELECT({ "deepseek", "deepseek_chat" }, "select provider: ", function(provider)
-          cmd("AvanteSwitchProvider " .. provider)
+        REQUEST_USER_SELECT(vendor_names, "select provider: ", function(name)
+          cmd("AvanteSwitchProvider " .. name)
         end)
       end,
       desc = "Avante: Switch AI Provider",
@@ -168,13 +148,13 @@ return {
     end
 
     local config = require("avante.config")
-    local providers = require("avante.providers")
 
     require("avante").setup({
       provider = "deepseek",
       vendors = {
-        deepseek = deepseek_factory(AI.model.thinking, providers),
-        deepseek_chat = deepseek_factory(AI.model.chat, providers),
+        deepseek = vendor_factory(AI.model.thinking),
+        deepseek_chat = vendor_factory(AI.model.chat),
+        deepseek_ollama = vendor_factory(AI.model.thinking, AI.endpoint_ollama),
       },
       behaviour = {
         auto_suggestions = false,
@@ -239,6 +219,7 @@ return {
         provider_opts = {},
       },
     })
+
     init(config)
   end,
 }
