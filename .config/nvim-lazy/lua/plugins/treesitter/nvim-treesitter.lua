@@ -11,15 +11,20 @@ local function get_move_goto_config(direction, position)
   return {
     [get_keymap_name("L")] = {
       query = "@call.outer",
-      desc = "Goto " .. direction .. " function call " .. position,
+      desc = "Goto " .. direction .. " Function Call " .. position,
     },
     [get_keymap_name("N")] = {
       query = "@conditional.outer",
-      desc = "Goto " .. direction .. " conditional " .. position,
+      desc = "Goto " .. direction .. " Conditional " .. position,
     },
     [get_keymap_name("O")] = {
       query = "@loop.outer",
-      desc = "Goto " .. direction .. " loop " .. position,
+      desc = "Goto " .. direction .. " Loop " .. position,
+    },
+    [get_keymap_name("Z")] = {
+      query = "@fold",
+      query_group = "folds",
+      desc = "Goto " .. direction .. " Fold " .. position,
     },
   }
 end
@@ -97,23 +102,27 @@ return {
           enable = true,
           lookahead = true,
           keymaps = {
-            ["=a"] = { query = "@assignment.outer", desc = "Select outer part of assignment" },
-            ["=i"] = { query = "@assignment.inner", desc = "Select inner part of assignment" },
-            ["=l"] = { query = "@assignment.lhs", desc = "Select left hand side of assignment" },
-            ["=r"] = { query = "@assignment.rhs", desc = "Select right hand side of assignment" },
-            ["am"] = { query = "@function.outer", desc = "Select outer part of method definition" },
-            ["im"] = { query = "@function.inner", desc = "Select inner part of method definition" },
+            ["=a"] = { query = "@assignment.outer", desc = "Select Assignment Outer" },
+            ["=i"] = { query = "@assignment.inner", desc = "Select Assignment Inner" },
+            ["=l"] = { query = "@assignment.lhs", desc = "Select Assignment Left Side" },
+            ["=r"] = { query = "@assignment.rhs", desc = "Select Assignment Right Side" },
+            [";a"] = { query = "@property.outer", desc = "Select Object Property Outer" },
+            [";i"] = { query = "@property.inner", desc = "Select Object Property Inner" },
+            [";l"] = { query = "@property.lhs", desc = "Select Object Property Left" },
+            [";r"] = { query = "@property.rhs", desc = "Select Object property Right" },
           },
         },
         swap = {
           enable = true,
           swap_next = {
             ["<leader>cwa"] = "@parameter.inner",
-            ["<leader>cwm"] = "@function.outer",
+            ["<leader>cwf"] = "@function.outer",
+            ["<leader>cwp"] = "@property.outer",
           },
           swap_previous = {
             ["<leader>cwA"] = "@parameter.inner",
-            ["<leader>cwM"] = "@function.outer",
+            ["<leader>cwF"] = "@function.outer",
+            ["<leader>cwP"] = "@property.outer",
           },
         },
       },
