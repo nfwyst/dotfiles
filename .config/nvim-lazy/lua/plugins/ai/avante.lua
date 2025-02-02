@@ -3,7 +3,7 @@ local function switch_prompt(config)
     local default_prompt = "你是一位出色的编程专家。"
     local prompt = default_prompt
     local msg = "prompt set to default"
-    if config.options.system_prompt == default_prompt then
+    if config._options.system_prompt == default_prompt then
       msg = "prompt set to expert"
       prompt = PROMPT
     else
@@ -44,11 +44,11 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
-local function deepseek_factory(model)
+local function deepseek_factory(model, providers)
   return {
     endpoint = AI.endpoint,
     model = model,
-    api_key_name = key_name,
+    api_key_name = AI.api_key.name,
     parse_curl_args = function(opts, code_opts)
       local headers = {
         ["Accept"] = "application/json",
@@ -80,13 +80,6 @@ local function deepseek_factory(model)
     end,
   }
 end
-
-local vendors = {
-  deepseek = deepseek_factory(AI.model.thinking),
-  deepseek_chat = deepseek_factory(AI.model.chat),
-}
-
-local providers = keys(vendors)
 
 return {
   "yetone/avante.nvim",
@@ -132,7 +125,7 @@ return {
     {
       "<leader>aap",
       function()
-        REQUEST_USER_SELECT(providers, "select provider: ", function(provider)
+        REQUEST_USER_SELECT({ "deepseek", "deepseek_chat" }, "select provider: ", function(provider)
           cmd("AvanteSwitchProvider " .. provider)
         end)
       end,
@@ -176,11 +169,13 @@ return {
 
     local config = require("avante.config")
     local providers = require("avante.providers")
-    local key_name = AI.api_key.name
 
     require("avante").setup({
       provider = "deepseek",
-      vendors = vendors,
+      vendors = {
+        deepseek = deepseek_factory(AI.model.thinking, providers),
+        deepseek_chat = deepseek_factory(AI.model.chat, providers),
+      },
       behaviour = {
         auto_suggestions = false,
         auto_suggestions_respect_ignore = true,
