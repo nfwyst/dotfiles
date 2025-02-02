@@ -96,6 +96,7 @@ CONSTS = {
       chat = {
         url = "https://api.deepseek.com/chat/completions",
         pathname = "/chat/completions",
+        pathname_ollama = "/v1/chat/completions",
       },
     },
   },

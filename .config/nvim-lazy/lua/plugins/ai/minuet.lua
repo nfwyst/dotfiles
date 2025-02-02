@@ -1,3 +1,22 @@
+local function provider_factory(opt)
+  local opts = {
+    model = AI.model.chat,
+    end_point = AI.fim.url,
+    api_key = AI.api_key.name,
+    name = "󱗻",
+    stream = true,
+    optional = {
+      max_tokens = AI.max.fim_tokens,
+      stop = { "\n\n" },
+      top_p = 0.9,
+    },
+  }
+
+  return merge(opts, opt)
+end
+
+local provider_names = { "openai_fim_compatible", "openai_compatible" }
+
 return {
   "milanglacier/minuet-ai.nvim",
   cmd = { "Minuet" },
@@ -11,8 +30,17 @@ return {
     {
       "<leader>amt",
       "<cmd>Minuet virtualtext toggle<cr>",
-      desc = "Minuet Togglee Virtual Text",
+      desc = "Minuet: Togglee Virtual Text",
       mode = { "n", "v" },
+    },
+    {
+      "<leader>amp",
+      function()
+        REQUEST_USER_SELECT(provider_names, "select provider: ", function(name)
+          cmd("Minuet change_provider " .. name)
+        end)
+      end,
+      desc = "Minuet: Switch Provider",
     },
   },
   dependencies = {
@@ -30,18 +58,12 @@ return {
         enable_auto_complete = false,
       },
       provider_options = {
-        openai_fim_compatible = {
-          model = AI.model.chat,
-          end_point = AI.fim.url,
-          api_key = AI.api_key.name,
-          name = "󱗻",
-          stream = true,
-          optional = {
-            max_tokens = AI.max.fim_tokens,
-            stop = { "\n\n" },
-            top_p = 0.9,
-          },
-        },
+        openai_fim_compatible = provider_factory(),
+        openai_compatible = provider_factory({
+          name = "󰈺",
+          end_point = AI.endpoint_ollama .. AI.chat.pathname_ollama,
+          model = "deepseek-coder-v2",
+        }),
       },
       virtualtext = {
         keymap = {
