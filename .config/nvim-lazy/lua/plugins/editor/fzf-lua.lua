@@ -4,14 +4,21 @@ return {
   opts = function(_, opts)
     local acts = require("fzf-lua").actions
     local actions = {
-      ["ctrl-i"] = { acts.toggle_ignore },
+      ["ctrl-g"] = { acts.toggle_ignore },
       ["ctrl-h"] = { acts.toggle_hidden },
       ["alt-i"] = false,
       ["alt-h"] = false,
-      ["ctrl-g"] = false,
     }
 
     local opt = {
+      keymap = {
+        fzf = {
+          ["ctrl-q"] = "select+accept",
+          ["ctrl-a"] = "select-all+accept",
+          ["tab"] = "toggle+down",
+          ["shift-tab"] = "up+toggle",
+        },
+      },
       fzf_colors = {
         ["gutter"] = "-1",
       },
