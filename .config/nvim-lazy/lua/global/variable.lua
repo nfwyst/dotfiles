@@ -84,23 +84,24 @@ CONSTS = {
           "deepseek-chat",
           "deepseek-reasoner",
         },
-        list_local = {
+        list_ollama = {
           "deepseek-coder-v2",
         },
         map = {
           ["deepseek-reasoner"] = { opts = { can_reason = true } },
         },
-        map_local = {
+        map_ollama = {
           ["deepseek-r1:32b"] = { opts = { can_reason = true } },
           ["deepseek-coder-v2"] = { opts = { can_reason = false } },
         },
         chat = "deepseek-chat",
-        chat_local = "deepseek-coder-v2",
+        chat_ollama = "deepseek-coder-v2",
         thinking = "deepseek-reasoner",
-        thinking_local = "deepseek-r1:32b",
+        thinking_ollama = "deepseek-r1:32b",
       },
       api_key = {
         name = "DEEPSEEK_API_KEY",
+        name_ollama = "TERM",
         value = os.getenv("DEEPSEEK_API_KEY"),
       },
       fim = {
@@ -109,6 +110,7 @@ CONSTS = {
       chat = {
         url = "https://api.deepseek.com/chat/completions",
         pathname = "/chat/completions",
+        pathname_ollama = "/v1/chat/completions",
       },
     },
   },

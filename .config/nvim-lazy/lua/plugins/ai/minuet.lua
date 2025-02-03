@@ -1,11 +1,11 @@
-local function provider_factory(is_local)
+local function provider_factory(is_ollama)
   local local_endpoint = AI.endpoint_ollama_v1 .. AI.chat.pathname
 
-  local opts = {
-    model = is_local and AI.model.chat_local or AI.model.chat,
-    end_point = is_local and local_endpoint or AI.fim.url,
-    api_key = AI.api_key.name,
-    name = is_local and "󰈺" or "󱗻",
+  return {
+    model = is_ollama and AI.model.chat_ollama or AI.model.chat,
+    end_point = is_ollama and local_endpoint or AI.fim.url,
+    api_key = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
+    name = is_ollama and "󰈺" or "󱗻",
     stream = true,
     optional = {
       max_tokens = AI.max.fim_tokens,
@@ -13,8 +13,6 @@ local function provider_factory(is_local)
       top_p = 0.9,
     },
   }
-
-  return merge(opts, opt)
 end
 
 local provider_names = { "openai_fim_compatible", "openai_compatible" }
@@ -54,6 +52,8 @@ return {
       notify = "error",
       request_timeout = 5,
       provider = "openai_fim_compatible",
+      n_completions = 1,
+      context_window = 512,
       cmp = {
         enable_auto_complete = false,
       },

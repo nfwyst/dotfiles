@@ -44,20 +44,20 @@ local function hide_input_columns(bufnr, win)
 end
 
 local function vendor_factory(model)
-  local is_local = contains({ AI.model.chat_local, AI.model.thinking_local }, model)
+  local is_ollama = contains({ AI.model.chat_ollama, AI.model.thinking_ollama }, model)
 
   return {
     __inherited_from = "openai",
     model = model,
     proxy = AI.proxy,
-    api_key_name = is_local and "" or AI.api_key.name,
-    endpoint = is_local and AI.endpoint_ollama_v1 or AI.endpoint,
+    api_key_name = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
+    endpoint = is_ollama and AI.endpoint_ollama_v1 or AI.endpoint,
     allow_insecure = false,
     timeout = AI.timeout,
     temperature = AI.temperature,
     max_tokens = AI.max.tokens,
     options = {
-      num_ctx = is_local and AI.max.context_ollama or AI.max.context,
+      num_ctx = is_ollama and AI.max.context_ollama or AI.max.context,
       temperature = AI.temperature,
     },
   }
@@ -158,8 +158,8 @@ return {
       vendors = {
         deepseek_thinking = vendor_factory(AI.model.thinking),
         deepseek_chat = vendor_factory(AI.model.chat),
-        deepseek_thinking_ollama = vendor_factory(AI.model.thinking_local),
-        deepseek_chat_ollama = vendor_factory(AI.model.chat_local),
+        deepseek_thinking_ollama = vendor_factory(AI.model.thinking_ollama),
+        deepseek_chat_ollama = vendor_factory(AI.model.chat_ollama),
       },
       behaviour = {
         auto_suggestions = false,

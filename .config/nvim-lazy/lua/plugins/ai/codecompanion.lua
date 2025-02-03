@@ -13,26 +13,22 @@ end
 
 local function adapter_factory(name)
   local adapters = require("codecompanion.adapters")
-  local is_local = name == "deepseek_ollama"
-  local env = { url = is_local and AI.endpoint_ollama or AI.endpoint }
-
-  if not is_local then
-    assign(env, {
-      chat_url = AI.chat.pathname,
-      api_key = AI.api_key.name,
-    })
-  end
+  local is_ollama = name == "deepseek_ollama"
 
   local opts = {
-    env = env,
+    env = {
+      url = is_ollama and AI.endpoint_ollama or AI.endpoint,
+      chat_url = is_ollama and AI.chat.pathname_ollama or AI.chat.pathname,
+      api_key = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
+    },
     name = name,
     schema = {
       model = {
-        default = is_local and AI.model.thinking_local or AI.model.thinking,
-        choices = is_local and AI.model.map_local or AI.model.map,
+        default = is_ollama and AI.model.thinking_ollama or AI.model.thinking,
+        choices = is_ollama and AI.model.map_ollama or AI.model.map,
       },
       num_ctx = {
-        default = is_local and AI.max.context_ollama or AI.max.context,
+        default = is_ollama and AI.max.context_ollama or AI.max.context,
       },
       max_tokens = {
         default = AI.max.tokens,
@@ -44,7 +40,7 @@ local function adapter_factory(name)
   }
 
   return function()
-    return adapters.extend(is_local and "ollama" or "deepseek", opts)
+    return adapters.extend(is_ollama and "ollama" or "deepseek", opts)
   end
 end
 
