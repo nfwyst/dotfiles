@@ -1,9 +1,11 @@
-local function provider_factory(opt)
+local function provider_factory(is_local)
+  local local_endpoint = AI.endpoint_ollama_v1 .. AI.chat.pathname
+
   local opts = {
-    model = AI.model.chat,
-    end_point = AI.fim.url,
+    model = is_local and AI.model.chat_local or AI.model.chat,
+    end_point = is_local and local_endpoint or AI.fim.url,
     api_key = AI.api_key.name,
-    name = "󱗻",
+    name = is_local and "󰈺" or "󱗻",
     stream = true,
     optional = {
       max_tokens = AI.max.fim_tokens,
@@ -59,11 +61,7 @@ return {
       },
       provider_options = {
         openai_fim_compatible = provider_factory(),
-        openai_compatible = provider_factory({
-          name = "󰈺",
-          end_point = AI.endpoint_ollama .. AI.chat.pathname_ollama,
-          model = "deepseek-coder-v2",
-        }),
+        openai_compatible = provider_factory(true),
       },
       virtualtext = {
         keymap = {

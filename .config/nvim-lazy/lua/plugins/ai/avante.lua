@@ -43,23 +43,27 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
-local function vendor_factory(model, endpoint)
+local function vendor_factory(model)
+  local is_local = contains({ AI.model.chat_local, AI.model.thinking_local }, model)
+
   return {
     __inherited_from = "openai",
-    api_key_name = AI.api_key.name,
-    endpoint = AI.endpoint or endpoint,
     model = model,
+    proxy = AI.proxy,
+    api_key_name = is_local and "" or AI.api_key.name,
+    endpoint = is_local and AI.endpoint_ollama_v1 or AI.endpoint,
     allow_insecure = false,
     timeout = AI.timeout,
     temperature = AI.temperature,
     max_tokens = AI.max.tokens,
     options = {
-      num_ctx = AI.max.context,
+      num_ctx = is_local and AI.max.context_ollama or AI.max.context,
+      temperature = AI.temperature,
     },
   }
 end
 
-local vendor_names = { "deepseek", "deepseek_chat", "deepseek_ollama" }
+local vendor_names = { "deepseek_thinking", "deepseek_chat", "deepseek_thinking_ollama", "deepseek_chat_ollama" }
 
 return {
   "yetone/avante.nvim",
@@ -150,11 +154,12 @@ return {
     local config = require("avante.config")
 
     require("avante").setup({
-      provider = "deepseek",
+      provider = "deepseek_thinking",
       vendors = {
-        deepseek = vendor_factory(AI.model.thinking),
+        deepseek_thinking = vendor_factory(AI.model.thinking),
         deepseek_chat = vendor_factory(AI.model.chat),
-        deepseek_ollama = vendor_factory(AI.model.thinking, AI.endpoint_ollama),
+        deepseek_thinking_ollama = vendor_factory(AI.model.thinking_local),
+        deepseek_chat_ollama = vendor_factory(AI.model.chat_local),
       },
       behaviour = {
         auto_suggestions = false,

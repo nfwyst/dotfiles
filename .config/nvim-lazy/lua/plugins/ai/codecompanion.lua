@@ -11,24 +11,28 @@ local function toggle_prompt()
   is_default_prompt = not is_default_prompt
 end
 
-local function adapter_factory(model, adapter, opt)
-  opt = opt or {}
-  adapter = adapter or "deepseek"
-
+local function adapter_factory(name)
   local adapters = require("codecompanion.adapters")
-  local opts = {
-    env = {
-      url = AI.endpoint,
+  local is_local = name == "deepseek_ollama"
+  local env = { url = is_local and AI.endpoint_ollama or AI.endpoint }
+
+  if not is_local then
+    assign(env, {
       chat_url = AI.chat.pathname,
       api_key = AI.api_key.name,
-    },
+    })
+  end
+
+  local opts = {
+    env = env,
+    name = name,
     schema = {
       model = {
-        default = model,
-        choices = AI.model.list,
+        default = is_local and AI.model.thinking_local or AI.model.thinking,
+        choices = is_local and AI.model.map_local or AI.model.map,
       },
       num_ctx = {
-        default = AI.max.context,
+        default = is_local and AI.max.context_ollama or AI.max.context,
       },
       max_tokens = {
         default = AI.max.tokens,
@@ -40,7 +44,7 @@ local function adapter_factory(model, adapter, opt)
   }
 
   return function()
-    return adapters.extend(adapter, merge(opts, opt))
+    return adapters.extend(is_local and "ollama" or "deepseek", opts)
   end
 end
 
@@ -158,16 +162,8 @@ return {
           allow_insecure = false,
           proxy = AI.proxy,
         },
-        deepseek = adapter_factory(AI.model.thinking),
-        deepseek_chat = adapter_factory(AI.model.chat),
-        deepseek_ollama = adapter_factory(AI.model.thinking, "ollama", {
-          schema = {
-            model = { default = "deepseek-r1:32b" },
-          },
-          env = {
-            url = AI.endpoint_ollama,
-          },
-        }),
+        deepseek = adapter_factory("deepseek"),
+        deepseek_ollama = adapter_factory("deepseek_ollama"),
       },
       display = {
         diff = {

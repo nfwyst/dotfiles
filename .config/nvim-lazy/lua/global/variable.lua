@@ -67,24 +67,37 @@ CONSTS = {
   IS_BUF_PINNED = "IS_BUF_PINNED",
   ai = {
     deepseek = {
+      proxy = os.getenv("ALL_PROXY"),
       endpoint = "https://api.deepseek.com",
       endpoint_ollama = os.getenv("OLLAMA_API_BASE"),
+      endpoint_ollama_v1 = os.getenv("OLLAMA_API_BASE") .. "/v1",
       temperature = 0.1,
-      timeout = 30000,
+      timeout = 5000,
       max = {
         tokens = 8192,
         fim_tokens = 256,
         context = 65536,
+        context_ollama = 16384,
       },
       model = {
         list = {
           "deepseek-chat",
-          "deepseek-coder",
           "deepseek-reasoner",
+        },
+        list_local = {
+          "deepseek-coder-v2",
+        },
+        map = {
           ["deepseek-reasoner"] = { opts = { can_reason = true } },
         },
+        map_local = {
+          ["deepseek-r1:32b"] = { opts = { can_reason = true } },
+          ["deepseek-coder-v2"] = { opts = { can_reason = false } },
+        },
         chat = "deepseek-chat",
+        chat_local = "deepseek-coder-v2",
         thinking = "deepseek-reasoner",
+        thinking_local = "deepseek-r1:32b",
       },
       api_key = {
         name = "DEEPSEEK_API_KEY",
@@ -96,7 +109,6 @@ CONSTS = {
       chat = {
         url = "https://api.deepseek.com/chat/completions",
         pathname = "/chat/completions",
-        pathname_ollama = "/v1/chat/completions",
       },
     },
   },
