@@ -52,6 +52,7 @@ return {
   config = function()
     require("minuet").setup({
       notify = "error",
+      request_timeout = 5,
       provider = "openai_fim_compatible",
       cmp = {
         enable_auto_complete = false,
@@ -72,6 +73,7 @@ return {
           dismiss = "<c-e>",
         },
       },
+      proxy = AI.proxy,
     })
   end,
 }
