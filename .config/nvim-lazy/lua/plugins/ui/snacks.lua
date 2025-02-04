@@ -27,7 +27,6 @@ local statuscolumn = ""
 -- show cursor line for specific filetypes
 assign(FILETYPE_TASK_MAP, {
   lazy = ENABLE_CURSORLINE,
-  markdown = ENABLE_CURSORLINE,
   snacks_dashboard = ENABLE_CURSORLINE,
 })
 

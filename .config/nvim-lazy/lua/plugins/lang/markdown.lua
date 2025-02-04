@@ -1,4 +1,43 @@
 local ft = { "markdown", "Avante", "codecompanion", "octo" }
+local bufnr_aucmd_map = {}
+
+local function reset_buf_aucmd(bufnr)
+  local move_cmd = bufnr_aucmd_map[bufnr]
+  if move_cmd then
+    api.nvim_del_autocmd(move_cmd)
+    bufnr_aucmd_map[bufnr] = nil
+  end
+end
+
+local function get_cursor_fixer(bufnr, win)
+  return function()
+    schedule(function()
+      if bufnr ~= CUR_BUF() then
+        return
+      end
+
+      local pos = WIN_CURSOR(win)
+      local row = pos[1]
+      local col = pos[2]
+      local prev_row = BUF_VAR(bufnr, CONSTS.PREV_ROW)
+      local prev_col = BUF_VAR(bufnr, CONSTS.PREV_COL)
+
+      if prev_col and prev_row ~= row then
+        col = prev_col
+
+        if col <= 0 then
+          local pos_info = fn.getcurpos(win)
+          col = math.max(col, pos_info[3], pos_info[5])
+        end
+
+        WIN_CURSOR(win, { row, col })
+      end
+
+      BUF_VAR(bufnr, CONSTS.PREV_ROW, row)
+      BUF_VAR(bufnr, CONSTS.PREV_COL, col)
+    end)
+  end
+end
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
@@ -19,6 +58,26 @@ return {
   opts = function(_, opts)
     local state = require("render-markdown.state")
     local anti_conceal = { enabled = false }
+
+    if not FILETYPE_TASK_MAP.markdown then
+      FILETYPE_TASK_MAP.markdown = function(bufnr, win)
+        ENABLE_CURSORLINE(bufnr, win)
+        if BUF_VAR(bufnr, TASK_KEY) then
+          return
+        end
+
+        reset_buf_aucmd(bufnr)
+
+        bufnr_aucmd_map[bufnr] = AUCMD({ "CursorMovedI", "CursorMoved" }, {
+          buffer = bufnr,
+          callback = get_cursor_fixer(bufnr, win),
+        })
+
+        BUF_VAR(bufnr, TASK_KEY, true)
+      end
+    end
+
+    SET_BUF_DEL_MAP("markdown", reset_buf_aucmd)
 
     local opt = {
       render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
