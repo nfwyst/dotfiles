@@ -1,7 +1,7 @@
 return {
   "echasnovski/mini.pairs",
   opts = function(_, opts)
-    schedule(function()
+    defer(function()
       local pairs = require("mini.pairs")
       local original_open = pairs.open
 
@@ -21,7 +21,7 @@ return {
 
         return original_open(pair, neigh_pattern)
       end
-    end)
+    end, 10)
 
     return opts
   end,
