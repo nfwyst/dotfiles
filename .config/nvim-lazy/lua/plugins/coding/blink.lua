@@ -119,6 +119,9 @@ return {
     { "moyiz/blink-emoji.nvim", cond = emoji_enabled },
     "Kaiser-Yang/blink-cmp-dictionary",
   },
+  keys = {
+    { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
+  },
   opts = function(_, opts)
     require("cmp").ConfirmBehavior = {
       Insert = "insert",
@@ -166,12 +169,11 @@ return {
             local height = (ch == 0) and 1 or ch
             return { o.lines - height, 0 }
           end,
-        },
-        documentation = {
-          window = {
-            border = "rounded",
+          draw = {
+            columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" }, { "source_name" } },
           },
         },
+        documentation = { window = { border = "rounded" } },
         list = {
           selection = {
             preselect = function(ctx)
@@ -180,7 +182,9 @@ return {
             auto_insert = true,
           },
         },
+        trigger = { prefetch_on_insert = false },
       },
+      signature = { window = { border = "rounded" } },
       sources = {
         per_filetype = {},
         providers = {
@@ -196,6 +200,9 @@ return {
             should_show_items = should_show_snip,
             transform_items = transform_snip_items,
             score_offset = 85,
+            opts = {
+              search_paths = { fn.stdpath("config") .. "/snippets" },
+            },
           },
           path = {
             should_show_items = shouldnt_show_snippets_emoji,
@@ -253,6 +260,11 @@ return {
           ["<c-j>"] = { "select_next", "fallback" },
           ["<c-k>"] = { "select_prev", "fallback" },
         },
+        ["<c-a>"] = { "cancel", "fallback" },
+        ["<c-l>"] = { "cancel", "fallback" },
+        ["<c-z>"] = { "cancel", "fallback" },
+        ["<c-j>"] = { "cancel", "fallback" },
+        ["<c-k>"] = { "cancel", "fallback" },
       },
       snippets = {
         preset = "default",

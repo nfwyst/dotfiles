@@ -46,9 +46,5 @@ MAPS({
         snippet.stop()
       end,
     },
-    -- { from = "<c-h>", to = "<Left>" },
-    -- { from = "<c-l>", to = "<Right>" },
-    -- { from = "<c-j>", to = "<Down>" },
-    -- { from = "<c-k>", to = "<Up>" },
   },
 })

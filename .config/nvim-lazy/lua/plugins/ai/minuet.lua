@@ -30,7 +30,7 @@ return {
     {
       "<leader>amt",
       "<cmd>Minuet virtualtext toggle<cr>",
-      desc = "Minuet: Togglee Virtual Text",
+      desc = "Minuet: Toggle Virtual Text",
       mode = { "n", "v" },
     },
     {
@@ -53,7 +53,7 @@ return {
       request_timeout = 5,
       provider = "openai_fim_compatible",
       n_completions = 1,
-      context_window = 512,
+      context_window = IS_LINUX and 1024 or 4096,
       cmp = {
         enable_auto_complete = false,
       },
@@ -68,10 +68,12 @@ return {
         keymap = {
           accept = "<c-a>",
           accept_line = "<c-l>",
+          accept_n_lines = "<c-z>",
           prev = "<c-k>",
           next = "<c-j>",
           dismiss = "<c-e>",
         },
+        show_on_completion_menu = false,
       },
       proxy = AI.proxy,
     })
