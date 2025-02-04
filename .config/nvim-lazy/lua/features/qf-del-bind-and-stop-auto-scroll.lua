@@ -82,6 +82,7 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
     buffer = bufnr,
     once = true,
     callback = function()
+      ON_BUF_DEL(bufnr)
       api.nvim_del_autocmd(leave_cmd)
       leave_cmd = nil
       close_cmd = nil

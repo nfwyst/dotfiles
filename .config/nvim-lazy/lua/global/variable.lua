@@ -60,6 +60,7 @@ IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
+MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
 
 CONSTS = {
   LINT_INITED = "LINT_INITED",

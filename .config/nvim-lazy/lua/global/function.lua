@@ -63,6 +63,22 @@ function MAP(mode, from, to, opt)
   if EMPTY(opt.remap) and EMPTY(opt.noremap) then
     opt.noremap = true
   end
+
+  local buffer = opt.buffer
+  if buffer then
+    local key = mode
+    if type(mode) == "table" then
+      key = table.concat(mode, ",")
+    end
+    key = key .. from
+    SET_BUF_DEL_MAP(key, function(bufnr)
+      if bufnr == buffer then
+        pcall(keymap.del, mode, from, { buffer = buffer })
+        SET_BUF_DEL_MAP(key, nil)
+      end
+    end)
+  end
+
   keymap.set(mode, from, to, opt)
 end
 
@@ -329,4 +345,12 @@ function ON_BUF_DEL(bufnr)
   for _, func in pairs(buf_del_map) do
     func(bufnr)
   end
+end
+
+function LINE_BEFORE_CURSOR()
+  local pos = WIN_CURSOR(CUR_WIN())
+  local col = pos[2]
+  local cur_line = api.nvim_get_current_line()
+  local contents_before_cursor = cur_line:sub(1, col)
+  return contents_before_cursor, pos
 end

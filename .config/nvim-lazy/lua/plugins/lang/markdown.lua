@@ -1,4 +1,4 @@
-local ft = { "markdown", "Avante", "codecompanion", "octo" }
+local ft = MARKDOWN_FILETYPE
 local bufnr_aucmd_map = {}
 
 local function reset_buf_aucmd(bufnr)

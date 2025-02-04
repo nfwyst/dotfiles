@@ -1,25 +1,17 @@
 local trigger_text = ";"
 local emoji_enabled = not IS_LINUX
 
-local function line_before_cursor()
-  local cursor = WIN_CURSOR(CUR_WIN())
-  local col = cursor[2]
-  local cur_line = api.nvim_get_current_line()
-  local contents_before_cursor = cur_line:sub(1, col)
-  return contents_before_cursor, cursor
-end
-
 local function should_show_snip(ctx)
   if ctx.mode == "cmdline" then
     return false
   end
-  local contents_before_cursor = line_before_cursor()
+  local contents_before_cursor = LINE_BEFORE_CURSOR()
   local trigger_pattern = trigger_text .. "%w*$"
   return contents_before_cursor:match(trigger_pattern) ~= nil
 end
 
 local function should_show_emoji()
-  return line_before_cursor():match(":%w*$") ~= nil
+  return LINE_BEFORE_CURSOR():match(":%w*$") ~= nil
 end
 
 local function shouldnt_show_emoji()
@@ -41,7 +33,7 @@ local function get_snip_range(ctx)
     return
   end
 
-  local contents_before_cursor, cursor = line_before_cursor()
+  local contents_before_cursor, cursor = LINE_BEFORE_CURSOR()
   local row = cursor[1]
   local col = cursor[2]
   local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
