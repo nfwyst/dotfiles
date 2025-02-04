@@ -24,12 +24,6 @@ local function get_cursor_fixer(bufnr, win)
 
       if prev_col and prev_row ~= row then
         col = prev_col
-
-        if col <= 0 then
-          local pos_info = fn.getcurpos(win)
-          col = math.max(col, pos_info[3], pos_info[5])
-        end
-
         WIN_CURSOR(win, { row, col })
       end
 
