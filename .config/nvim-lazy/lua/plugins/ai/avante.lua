@@ -155,6 +155,9 @@ return {
 
     require("avante").setup({
       provider = "deepseek_thinking",
+      web_search_engine = {
+        api_key_name = "TAVILY_API_KEY",
+      },
       vendors = {
         deepseek_thinking = vendor_factory(AI.model.thinking),
         deepseek_chat = vendor_factory(AI.model.chat),

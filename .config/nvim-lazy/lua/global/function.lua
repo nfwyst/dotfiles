@@ -155,8 +155,8 @@ function LINE_COUNT(bufnr)
   return api.nvim_buf_line_count(bufnr)
 end
 
-function BUF_LINES(bufnr, count)
-  return api.nvim_buf_get_lines(bufnr, 0, count, false)
+function BUF_LINES(bufnr, _end, start)
+  return api.nvim_buf_get_lines(bufnr, start or 0, _end, false)
 end
 
 local white_list = {
@@ -358,7 +358,7 @@ function LINE_BEFORE_CURSOR(opt)
     win = fn.bufwinid(bufnr)
   end
 
-  local pos = WIN_CURSOR(win or CUR_WIN())
+  local pos = WIN_CURSOR(win)
   local col = pos[2]
   local cur_line = api.nvim_get_current_line()
   local contents_before_cursor = cur_line:sub(1, col)

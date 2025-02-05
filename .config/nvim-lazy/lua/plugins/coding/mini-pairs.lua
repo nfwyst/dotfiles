@@ -1,7 +1,7 @@
 local function move_cursor_to_block_end(win, row)
   local trigger_text = "```"
   local bufnr = api.nvim_win_get_buf(win)
-  local cur_line = api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
+  local cur_line = BUF_LINES(bufnr, row, row - 1)[1]
   local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
   local trigger_pos = cur_line:find(trigger_pattern)
 
