@@ -90,6 +90,7 @@ return {
       },
       code = {
         sign = true,
+        width = "full",
         render_modes = true,
       },
       dash = {

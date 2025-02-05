@@ -84,6 +84,11 @@ return {
             wrap = true,
           },
         },
+        terminal = {
+          wo = {
+            winbar = "",
+          },
+        },
       },
       zen = {
         on_open = function()

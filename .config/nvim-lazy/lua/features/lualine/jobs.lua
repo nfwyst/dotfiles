@@ -5,6 +5,11 @@ local function is_ctx_valid(win, bufnr)
   return api.nvim_win_is_valid(win) and api.nvim_buf_is_valid(bufnr)
 end
 
+local function close_win_with_buf(win, bufnr)
+  DEL_BUF(bufnr, true)
+  api.nvim_win_close(win, false)
+end
+
 local function set(win, bufnr)
   _win = win
   _bufnr = bufnr
@@ -16,8 +21,7 @@ local function close_dashboard()
   end
 
   if is_ctx_valid(_win, _bufnr) then
-    DEL_BUF(_bufnr, true)
-    api.nvim_win_close(_win, false)
+    close_win_with_buf(_win, _bufnr)
   end
 
   set()
@@ -26,6 +30,7 @@ end
 local function open_dashboard(win, bufnr)
   if _bufnr and _win then
     if is_ctx_valid(_win, _bufnr) then
+      close_win_with_buf(win, bufnr)
       return
     end
     set()
