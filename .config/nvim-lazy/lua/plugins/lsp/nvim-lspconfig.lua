@@ -109,6 +109,7 @@ return {
         underline = false,
         update_in_insert = false,
         virtual_text = virtual_text or false,
+        virtual_lines = true,
         severity_sort = true,
         float = {
           focusable = true,

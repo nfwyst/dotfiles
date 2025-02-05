@@ -5,24 +5,24 @@ local function should_show_snip(ctx)
   if ctx.mode == "cmdline" then
     return false
   end
-  local contents_before_cursor = LINE_BEFORE_CURSOR()
+  local contents_before_cursor = LINE_BEFORE_CURSOR(ctx)
   local trigger_pattern = trigger_text .. "%w*$"
   return contents_before_cursor:match(trigger_pattern) ~= nil
 end
 
-local function should_show_emoji()
-  return LINE_BEFORE_CURSOR():match(":%w*$") ~= nil
+local function should_show_emoji(ctx)
+  return LINE_BEFORE_CURSOR(ctx):match(":%w*$") ~= nil
 end
 
-local function shouldnt_show_emoji()
-  return not should_show_emoji()
+local function shouldnt_show_emoji(ctx)
+  return not should_show_emoji(ctx)
 end
 
 local function shouldnt_show_snippets_emoji(ctx)
   local isnt_snip_mode = not should_show_snip(ctx)
 
   if emoji_enabled then
-    return isnt_snip_mode and shouldnt_show_emoji()
+    return isnt_snip_mode and shouldnt_show_emoji(ctx)
   end
 
   return isnt_snip_mode
@@ -33,9 +33,7 @@ local function get_snip_range(ctx)
     return
   end
 
-  local contents_before_cursor, cursor = LINE_BEFORE_CURSOR()
-  local row = cursor[1]
-  local col = cursor[2]
+  local contents_before_cursor = LINE_BEFORE_CURSOR(ctx)
   local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
   local trigger_pos = contents_before_cursor:find(trigger_pattern)
 
@@ -48,10 +46,12 @@ local function get_snip_range(ctx)
     require("blink.cmp").reload("snippets")
   end)
 
-  local line = row - 1
+  local bounds = ctx.bounds
+  local line = bounds.line_number - 1
+
   return {
     start = { line = line, character = trigger_pos - 1 },
-    ["end"] = { line = line, character = col },
+    ["end"] = { line = line, character = bounds.start_col },
   }
 end
 

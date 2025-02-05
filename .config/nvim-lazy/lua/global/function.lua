@@ -143,9 +143,12 @@ function WIN_CURSOR(win, value)
   api.nvim_win_set_cursor(win, value)
 end
 
+function GET_KEYS_CODE(keys)
+  return api.nvim_replace_termcodes(keys, true, true, true)
+end
+
 function PRESS_KEYS(keys, mode)
-  local codes = api.nvim_replace_termcodes(keys, false, true, true)
-  api.nvim_feedkeys(codes, mode, false)
+  api.nvim_feedkeys(GET_KEYS_CODE(keys), mode, false)
 end
 
 function LINE_COUNT(bufnr)
@@ -347,8 +350,15 @@ function ON_BUF_DEL(bufnr)
   end
 end
 
-function LINE_BEFORE_CURSOR()
-  local pos = WIN_CURSOR(CUR_WIN())
+function LINE_BEFORE_CURSOR(opt)
+  local win = opt.win
+  local bufnr = opt.bufnr
+
+  if bufnr then
+    win = fn.bufwinid(bufnr)
+  end
+
+  local pos = WIN_CURSOR(win or CUR_WIN())
   local col = pos[2]
   local cur_line = api.nvim_get_current_line()
   local contents_before_cursor = cur_line:sub(1, col)

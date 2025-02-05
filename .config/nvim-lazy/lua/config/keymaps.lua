@@ -35,14 +35,11 @@ MAPS({
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
     { from = "<s-k>", to = ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv" },
   },
-  v = {
-    { from = ";;", to = "<esc>" },
-  },
-  i = {
+  [{ "v", "x", "s", "i" }] = {
     {
       from = ";;",
       to = function()
-        cmd.stopinsert()
+        PRESS_KEYS("<esc>", "n")
         snippet.stop()
       end,
     },
