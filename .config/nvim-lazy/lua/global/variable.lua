@@ -61,6 +61,7 @@ FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
+MAX_OPEND_FILES = IS_LINUX and 3 or 7
 
 CONSTS = {
   LINT_INITED = "LINT_INITED",

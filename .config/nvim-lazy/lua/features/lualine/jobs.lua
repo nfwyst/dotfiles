@@ -74,9 +74,27 @@ local function run_filetype_task(win, bufnr, filetype)
   end, 0)
 end
 
+local first_bufnr
+
+local function auto_close_files(bufnr, index, first)
+  if first then
+    first_bufnr = bufnr
+  end
+
+  if index == "" then
+    return
+  end
+
+  if index > MAX_OPEND_FILES and first_bufnr then
+    Snacks.bufdelete(first_bufnr)
+    first_bufnr = nil
+  end
+end
+
 return {
   run_filetype_task = run_filetype_task,
   set_dashboard_win_buf = set,
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
+  auto_close_files = auto_close_files,
 }

@@ -18,6 +18,8 @@ local name = "hbac.command.actions"
 return {
   "axkirillov/hbac.nvim",
   event = "VeryLazy",
+  -- TODO: adapter pin
+  cond = false,
   keys = {
     { "<leader>bm", "", desc = "auto management" },
     {
