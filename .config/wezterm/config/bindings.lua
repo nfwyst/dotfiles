@@ -20,6 +20,7 @@ if platform.is_mac then
   env.PATH = brew_path .. ':' .. env.PATH
   env.DEEPSEEK_API_KEY = require('env').DEEPSEEK_API_KEY
   env.TAVILY_API_KEY = require('env').TAVILY_API_KEY
+  env.SERPAPI_API_KEY = require('env').SERPAPI_API_KEY
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'

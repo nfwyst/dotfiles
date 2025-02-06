@@ -56,6 +56,7 @@ local function vendor_factory(model)
     timeout = AI.timeout,
     temperature = AI.temperature,
     max_tokens = AI.max.tokens,
+    disable_tools = false,
     options = {
       num_ctx = is_ollama and AI.max.context_ollama or AI.max.context,
       temperature = AI.temperature,
@@ -156,7 +157,15 @@ return {
     require("avante").setup({
       provider = "deepseek_thinking",
       web_search_engine = {
-        api_key_name = "TAVILY_API_KEY",
+        provider = "tavily",
+        providers = {
+          tavily = {
+            api_key_name = "TAVILY_API_KEY",
+          },
+          serpapi = {
+            api_key_name = "SERPAPI_API_KEY",
+          },
+        },
       },
       vendors = {
         deepseek_thinking = vendor_factory(AI.model.thinking),
