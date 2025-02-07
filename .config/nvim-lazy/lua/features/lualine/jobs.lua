@@ -80,6 +80,9 @@ local function run_filetype_task(win, bufnr, filetype)
       if task then
         task(bufnr, win)
       end
+      if OPT("linebreak", { win = win }) then
+        OPT("linebreak", { win = win }, false)
+      end
     end
   end, 0)
 end
