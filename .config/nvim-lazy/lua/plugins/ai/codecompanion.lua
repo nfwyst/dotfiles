@@ -114,7 +114,7 @@ return {
     require("codecompanion").setup({
       strategies = {
         chat = {
-          adapter = "deepseek",
+          adapter = "gemini",
           keymaps = {
             clear = {
               modes = {
@@ -139,10 +139,10 @@ return {
           },
         },
         inline = {
-          adapter = "deepseek",
+          adapter = "gemini",
         },
         agent = {
-          adapter = "deepseek",
+          adapter = "gemini",
         },
       },
       opts = {
@@ -160,6 +160,20 @@ return {
         },
         deepseek = adapter_factory("deepseek"),
         deepseek_ollama = adapter_factory("deepseek_ollama"),
+        gemini = function()
+          return require("codecompanion.adapters").extend("gemini", {
+            name = "gemini",
+            schema = {
+              model = {
+                default = "gemini-2.0-pro-exp-02-05",
+                choices = { "gemini-2.0-pro-exp-02-05", "gemini-2.0-flash" },
+              },
+              temperature = {
+                default = AI.temperature,
+              },
+            },
+          })
+        end,
       },
       display = {
         diff = {

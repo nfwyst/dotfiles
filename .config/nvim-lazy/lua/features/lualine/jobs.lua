@@ -74,20 +74,55 @@ local function run_filetype_task(win, bufnr, filetype)
   end, 0)
 end
 
-local first_bufnr
+local function get_auto_close_files()
+  local first_bufnr
+  local first_index = math.huge
 
-local function auto_close_files(bufnr, index, first)
-  if first then
+  local function _set(bufnr, index)
     first_bufnr = bufnr
+    first_index = index or math.huge
   end
 
-  if index == "" then
-    return
+  local function del_buf(bufnr)
+    if not bufnr then
+      return
+    end
+
+    if not OPT("modified", { buf = bufnr }) then
+      Snacks.bufdelete(bufnr)
+    end
+
+    _set()
   end
 
-  if index > MAX_OPEND_FILES and first_bufnr then
-    Snacks.bufdelete(first_bufnr)
-    first_bufnr = nil
+  return function(bufnr, context)
+    local bufnrs = require("lualine.components.buffers").bufpos2nr
+    local index = context.buf_index
+    local is_current = context.current
+    local include_current = MAX_OPEND_FILES <= 1
+    local is_current_suit = not is_current or include_current
+
+    local modified = OPT("modified", { buf = bufnr })
+
+    if index < first_index and not modified and is_current_suit then
+      _set(bufnr, index)
+    end
+
+    if #bufnrs <= MAX_OPEND_FILES then
+      return
+    end
+
+    if not first_bufnr then
+      for idx, buf in ipairs(bufnrs) do
+        local is_valid_buf = bufnr ~= buf or is_current_suit
+        if is_valid_buf and not OPT("modified", { buf = buf }) then
+          _set(buf, idx)
+          break
+        end
+      end
+    end
+
+    del_buf(first_bufnr)
   end
 end
 
@@ -96,5 +131,5 @@ return {
   set_dashboard_win_buf = set,
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
-  auto_close_files = auto_close_files,
+  auto_close_files = get_auto_close_files(),
 }

@@ -43,25 +43,30 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
+local provider_common = {
+  proxy = AI.proxy,
+  allow_insecure = false,
+  timeout = AI.timeout,
+  disable_tools = false,
+}
+
 local function vendor_factory(model)
   local is_ollama = contains({ AI.model.chat_ollama, AI.model.thinking_ollama }, model)
 
-  return {
+  local opt = {
     __inherited_from = "openai",
     model = model,
-    proxy = AI.proxy,
     api_key_name = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
     endpoint = is_ollama and AI.endpoint_ollama_v1 or AI.endpoint,
-    allow_insecure = false,
-    timeout = AI.timeout,
     temperature = AI.temperature,
     max_tokens = AI.max.tokens,
-    disable_tools = false,
     options = {
       num_ctx = is_ollama and AI.max.context_ollama or AI.max.context,
       temperature = AI.temperature,
     },
   }
+
+  return merge(opt, provider_common)
 end
 
 local vendor_names = { "deepseek_thinking", "deepseek_chat", "deepseek_thinking_ollama", "deepseek_chat_ollama" }
@@ -155,7 +160,14 @@ return {
     local config = require("avante.config")
 
     require("avante").setup({
-      provider = "deepseek_thinking",
+      provider = "gemini",
+      gemini = merge(provider_common, {
+        model = "gemini-2.0-pro-exp-02-05",
+        api_key_name = "GEMINI_API_KEY",
+        temperature = AI.temperature,
+        max_tokens = AI.max.tokens,
+        generationConfig = {},
+      }),
       web_search_engine = {
         provider = "tavily",
         providers = {

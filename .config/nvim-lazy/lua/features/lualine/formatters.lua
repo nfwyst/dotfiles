@@ -59,7 +59,7 @@ local function buffers(name, context)
     if is_dashboard then
       jobs.set_dashboard_win_buf(win, bufnr)
     elseif is_file then
-      jobs.auto_close_files(bufnr, context.buf_index, context.first)
+      jobs.auto_close_files(bufnr, context)
       jobs.close_dashboard()
     elseif not name and IS_BUF_LISTED(bufnr) then
       name = jobs.open_dashboard(win, bufnr)

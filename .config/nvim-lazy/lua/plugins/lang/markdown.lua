@@ -132,13 +132,14 @@ return {
         },
       },
       on = {
-        render = function(buf)
-          if not OPT("modifiable", { buf = buf }) then
+        render = function(context)
+          local bufnr = context.buf
+          if not OPT("modifiable", { buf = bufnr }) then
             return
           end
 
-          state.get(buf).anti_conceal.enabled = true
-          OPT("concealcursor", { win = fn.bufwinid(buf) }, "")
+          state.get(bufnr).anti_conceal.enabled = true
+          OPT("concealcursor", { win = fn.bufwinid(bufnr) }, "")
         end,
       },
     }
