@@ -19,6 +19,15 @@ MAPS({
     { from = "p", to = paste },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
+    {
+      from = "<leader>xc",
+      to = function()
+        fn.setqflist({}, "r")
+      end,
+      opt = {
+        desc = "Clear Quickfix List",
+      },
+    },
     { from = "<leader>Q", to = "<cmd>quit<cr>", opt = {
       desc = "Quit",
     } },
@@ -37,7 +46,7 @@ MAPS({
   },
   [{ "v", "x", "s", "i" }] = {
     {
-      from = ";;",
+      from = "''",
       to = function()
         PRESS_KEYS("<esc>", "n")
         snippet.stop()

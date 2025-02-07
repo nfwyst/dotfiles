@@ -5,8 +5,18 @@ local function is_ctx_valid(win, bufnr)
   return api.nvim_win_is_valid(win) and api.nvim_buf_is_valid(bufnr)
 end
 
+local function del_buf(bufnr, wipe)
+  ON_BUF_DEL(bufnr)
+
+  if wipe then
+    return Snacks.bufdelete({ buf = bufnr, wipe = wipe })
+  end
+
+  api.nvim_buf_delete(bufnr, { force = false })
+end
+
 local function close_win_with_buf(win, bufnr)
-  DEL_BUF(bufnr, true)
+  del_buf(bufnr, true)
   api.nvim_win_close(win, false)
 end
 
@@ -74,55 +84,45 @@ local function run_filetype_task(win, bufnr, filetype)
   end, 0)
 end
 
-local function get_auto_close_files()
-  local first_bufnr
-  local first_index = math.huge
-
-  local function _set(bufnr, index)
-    first_bufnr = bufnr
-    first_index = index or math.huge
+local function is_buf_referenced(bufnr)
+  if fn.bufnr("#") == bufnr then
+    return true
   end
 
-  local function del_buf(bufnr)
-    if not bufnr then
-      return
+  for _, item in ipairs(fn.getqflist()) do
+    if item.bufnr == bufnr then
+      return true
     end
-
-    if not OPT("modified", { buf = bufnr }) then
-      Snacks.bufdelete(bufnr)
-    end
-
-    _set()
   end
 
-  return function(bufnr, context)
-    local bufnrs = require("lualine.components.buffers").bufpos2nr
-    local index = context.buf_index
-    local is_current = context.current
-    local include_current = MAX_OPEND_FILES <= 1
-    local is_current_suit = not is_current or include_current
-
-    local modified = OPT("modified", { buf = bufnr })
-
-    if index < first_index and not modified and is_current_suit then
-      _set(bufnr, index)
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(win) == bufnr then
+      return true
     end
 
-    if #bufnrs <= MAX_OPEND_FILES then
-      return
-    end
-
-    if not first_bufnr then
-      for idx, buf in ipairs(bufnrs) do
-        local is_valid_buf = bufnr ~= buf or is_current_suit
-        if is_valid_buf and not OPT("modified", { buf = buf }) then
-          _set(buf, idx)
-          break
-        end
+    for _, item in ipairs(fn.getloclist(win)) do
+      if item.bufnr == bufnr then
+        return true
       end
     end
+  end
+end
 
-    del_buf(first_bufnr)
+local function auto_close_files(bufnr, context)
+  if not context.current then
+    return
+  end
+
+  local bufnrs = require("lualine.components.buffers").bufpos2nr
+  if #bufnrs <= MAX_OPEND_FILES then
+    return
+  end
+
+  for _, buf in ipairs(bufnrs) do
+    local is_modified = OPT("modified", { buf = buf })
+    if buf ~= bufnr and not is_modified and not is_buf_referenced(buf) then
+      return del_buf(buf)
+    end
   end
 end
 
@@ -131,5 +131,5 @@ return {
   set_dashboard_win_buf = set,
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
-  auto_close_files = get_auto_close_files(),
+  auto_close_files = auto_close_files,
 }

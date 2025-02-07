@@ -64,9 +64,7 @@ return {
   opts = {
     autoclose = true,
     threshold = IS_LINUX and 3 or 7,
-    close_command = function(bufnr)
-      DEL_BUF(bufnr)
-    end,
+    close_command = function() end,
     close_buffers_with_windows = false,
   },
 }

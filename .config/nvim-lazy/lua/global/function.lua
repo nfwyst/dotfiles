@@ -331,14 +331,6 @@ function SCROLL(win, direction, scroll_len)
   end
 end
 
-function DEL_BUF(bufnr, wipe)
-  if wipe == nil then
-    wipe = false
-  end
-  ON_BUF_DEL(bufnr)
-  Snacks.bufdelete({ buf = bufnr, wipe = wipe })
-end
-
 local buf_del_map = {}
 function SET_BUF_DEL_MAP(key, func)
   buf_del_map[key] = func
