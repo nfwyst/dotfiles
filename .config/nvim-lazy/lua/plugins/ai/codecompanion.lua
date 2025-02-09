@@ -11,7 +11,7 @@ local function toggle_prompt()
   is_default_prompt = not is_default_prompt
 end
 
-local function adapter_factory(name, only_opt)
+local function adapter_factory(name)
   local config = LLM[name]
   if not config then
     return
@@ -30,32 +30,26 @@ local function adapter_factory(name, only_opt)
     chat_url = config.pathname
   end
 
-  local opt = {
-    name = name,
-    env = {
-      api_key = config.api_key,
-      url = url,
-      chat_url = chat_url,
-    },
-    schema = {
-      model = {
-        default = config.model,
-        choices = config.models,
-      },
-      temperature = {
-        default = LLM.temperature,
-      },
-      num_ctx = { default = config.num_ctx },
-      max_tokens = { default = config.max_tokens },
-    },
-  }
-
-  if only_opt then
-    return opt
-  end
-
   return function()
-    return adapters.extend(adapter_name, opt)
+    return adapters.extend(adapter_name, {
+      name = name,
+      env = {
+        api_key = config.api_key,
+        url = url,
+        chat_url = chat_url,
+      },
+      schema = {
+        model = {
+          default = config.model,
+          choices = config.models,
+        },
+        temperature = {
+          default = LLM.temperature,
+        },
+        num_ctx = { default = config.num_ctx },
+        max_tokens = { default = config.max_tokens },
+      },
+    })
   end
 end
 
