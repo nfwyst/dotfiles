@@ -73,6 +73,7 @@ LLM = {
   hyperbolic = {
     origin = "https://api.hyperbolic.xyz",
     pathname = OPENAI_PATHNAME,
+    fim_pathname = "/v1/completions",
     api_key = "HYPERBOLIC_API_KEY",
     max_tokens = 131072,
     num_ctx = 134144,

@@ -11,7 +11,8 @@ local function provider_factory(name, _provider_name)
   end
 
   local endpoint
-  local ok = pcall(require, "minuet.backends." .. provider_name)
+  local backend_path = "minuet/backends/" .. provider_name .. ".lua"
+  local ok = IS_FILEPATH(DATA_PATH .. "/lazy/minuet-ai.nvim/lua/" .. backend_path)
 
   if not ok then
     provider_name = "openai_compatible"
@@ -39,10 +40,11 @@ local function provider_factory(name, _provider_name)
   }
 end
 
-local provider_names = { "openai_fim_compatible", "openai_compatible" }
+local provider_names = { "openai_fim_compatible", "openai_compatible", "gemini" }
 
 return {
   "milanglacier/minuet-ai.nvim",
+  lazy = IS_LINUX,
   cmd = { "Minuet" },
   keys = {
     {
@@ -75,9 +77,11 @@ return {
     require("minuet").setup({
       notify = "error",
       request_timeout = 5,
-      provider = "openai_compatible",
+      throttle = 3000,
+      debounce = 1000,
+      provider = "openai_fim_compatible",
       n_completions = 1,
-      context_window = IS_LINUX and 1024 or 4096,
+      context_window = IS_LINUX and 4096 or 8192,
       cmp = {
         enable_auto_complete = false,
       },
@@ -87,10 +91,11 @@ return {
       proxy = LLM.proxy,
       provider_options = {
         openai_compatible = provider_factory("hyperbolic"),
-        openai_fim_compatible = provider_factory("deepseek", "openai_fim_compatible"),
+        openai_fim_compatible = provider_factory("hyperbolic", "openai_fim_compatible"),
         gemini = provider_factory("gemini"),
       },
       virtualtext = {
+        auto_trigger_ft = { "*" },
         keymap = {
           accept = "<c-a>",
           accept_line = "<c-l>",
