@@ -97,4 +97,4 @@ local function check_memory()
   end)
 end
 
-uv.new_timer():start(0, 5000, check_memory)
+uv.new_timer():start(0, 60000, check_memory)
