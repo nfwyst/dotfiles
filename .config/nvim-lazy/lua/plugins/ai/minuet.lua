@@ -95,7 +95,6 @@ return {
         gemini = provider_factory("gemini"),
       },
       virtualtext = {
-        auto_trigger_ft = { "*" },
         keymap = {
           accept = "<c-a>",
           accept_line = "<c-l>",
