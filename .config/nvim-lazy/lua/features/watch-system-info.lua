@@ -71,13 +71,11 @@ local function get_mac_memory_usage(callback)
 end
 
 local function get_memory_usage(callback)
-  local os_name = jit.os
-
-  if os_name == "Linux" then
+  if IS_LINUX then
     get_linux_memory_usage(callback)
   end
 
-  if os_name == "OSX" then
+  if jit.os == "OSX" then
     get_mac_memory_usage(callback)
   end
 end

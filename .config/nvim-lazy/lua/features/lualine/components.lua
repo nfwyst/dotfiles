@@ -84,6 +84,9 @@ local memory = {
   function()
     return "󰍛" .. MEMORY_USAGE .. "󱉸"
   end,
+  cond = function()
+    return MEMORY_USAGE ~= nil
+  end,
   padding = { left = 0, right = 1 },
 }
 
