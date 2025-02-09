@@ -1,16 +1,40 @@
-local function provider_factory(is_ollama)
-  local local_endpoint = AI.endpoint_ollama_v1 .. AI.chat.pathname
+local function provider_factory(name, _provider_name)
+  local config = LLM[name]
+  if not config then
+    return
+  end
+
+  local provider_name = _provider_name
+
+  if not provider_name then
+    provider_name = name
+  end
+
+  local endpoint
+  local ok = pcall(require, "minuet.backends." .. provider_name)
+
+  if not ok then
+    provider_name = "openai_compatible"
+    endpoint = config.origin .. config.pathname
+  end
+
+  if provider_name == "openai_fim_compatible" then
+    endpoint = config.origin .. config.fim_pathname
+  end
 
   return {
-    model = is_ollama and AI.model.chat_ollama or AI.model.chat,
-    end_point = is_ollama and local_endpoint or AI.fim.url,
-    api_key = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
-    name = is_ollama and "󰈺" or "󱗻",
+    model = config.models[2],
+    end_point = endpoint,
+    api_key = config.api_key,
+    name = "󱗻",
     stream = true,
     optional = {
-      max_tokens = AI.max.fim_tokens,
+      max_tokens = 256,
       stop = { "\n\n" },
       top_p = 0.9,
+      generationConfig = {
+        maxOutputTokens = 256,
+      },
     },
   }
 end
@@ -51,7 +75,7 @@ return {
     require("minuet").setup({
       notify = "error",
       request_timeout = 5,
-      provider = "openai_fim_compatible",
+      provider = "openai_compatible",
       n_completions = 1,
       context_window = IS_LINUX and 1024 or 4096,
       cmp = {
@@ -60,9 +84,11 @@ return {
       blink = {
         enable_auto_complete = false,
       },
+      proxy = LLM.proxy,
       provider_options = {
-        openai_fim_compatible = provider_factory(),
-        openai_compatible = provider_factory(true),
+        openai_compatible = provider_factory("hyperbolic"),
+        openai_fim_compatible = provider_factory("deepseek", "openai_fim_compatible"),
+        gemini = provider_factory("gemini"),
       },
       virtualtext = {
         keymap = {
@@ -75,7 +101,6 @@ return {
         },
         show_on_completion_menu = false,
       },
-      proxy = AI.proxy,
     })
   end,
 }

@@ -62,66 +62,68 @@ TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
 MAX_OPEND_FILES = IS_LINUX and 3 or 7
+OPENAI_PATHNAME = "/v1/chat/completions"
 
+LLM = {
+  proxy = os.getenv("ALL_PROXY"),
+  temperature = 0,
+  timeout = 5000,
+  hyperbolic = {
+    origin = "https://api.hyperbolic.xyz",
+    pathname = OPENAI_PATHNAME,
+    api_key = "HYPERBOLIC_API_KEY",
+    max_tokens = 131072,
+    num_ctx = 134144,
+    model = "deepseek-ai/DeepSeek-R1",
+    models = {
+      "deepseek-ai/DeepSeek-R1",
+      "deepseek-ai/DeepSeek-V3",
+    },
+  },
+  deepseek = {
+    origin = "https://api.deepseek.com",
+    pathname = OPENAI_PATHNAME,
+    fim_pathname = "/beta/completions",
+    api_key = "DEEPSEEK_API_KEY",
+    max_tokens = 8192,
+    num_ctx = 65536,
+    model = "deepseek-reasoner",
+    models = {
+      "deepseek-reasoner",
+      "deepseek-chat",
+    },
+  },
+  ollama = {
+    origin = os.getenv("OLLAMA_API_BASE"),
+    pathname = OPENAI_PATHNAME,
+    api_key = "TERM",
+    max_tokens = 8192,
+    num_ctx = 16384,
+    model = "deepseek-r1:32b",
+    models = {
+      "deepseek-r1:32b",
+      "deepseek-coder-v2",
+    },
+  },
+  gemini = {
+    origin = "https://generativelanguage.googleapis.com/v1beta/models",
+    api_key = "GEMINI_API_KEY",
+    model = "gemini-2.0-pro-exp-02-05",
+    models = {
+      "gemini-2.0-flash",
+      "gemini-2.0-pro-exp-02-05",
+    },
+  },
+}
+
+HAS_AI_KEY = os.getenv(LLM.hyperbolic.api_key) ~= nil
 CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
   IS_BUF_PINNED = "IS_BUF_PINNED",
   PREV_ROW = "PREV_ROW",
   PREV_COL = "PREV_COL",
-  ai = {
-    deepseek = {
-      proxy = os.getenv("ALL_PROXY"),
-      endpoint = "https://api.deepseek.com",
-      endpoint_ollama = os.getenv("OLLAMA_API_BASE"),
-      endpoint_ollama_v1 = os.getenv("OLLAMA_API_BASE") .. "/v1",
-      temperature = 0.1,
-      timeout = 5000,
-      max = {
-        tokens = 8192,
-        fim_tokens = 256,
-        context = 65536,
-        context_ollama = 16384,
-      },
-      model = {
-        list = {
-          "deepseek-chat",
-          "deepseek-reasoner",
-        },
-        list_ollama = {
-          "deepseek-coder-v2",
-        },
-        map = {
-          ["deepseek-reasoner"] = { opts = { can_reason = true } },
-        },
-        map_ollama = {
-          ["deepseek-r1:32b"] = { opts = { can_reason = true } },
-          ["deepseek-coder-v2"] = { opts = { can_reason = false } },
-        },
-        chat = "deepseek-chat",
-        chat_ollama = "deepseek-coder-v2",
-        thinking = "deepseek-reasoner",
-        thinking_ollama = "deepseek-r1:32b",
-      },
-      api_key = {
-        name = "DEEPSEEK_API_KEY",
-        name_ollama = "TERM",
-        value = os.getenv("DEEPSEEK_API_KEY"),
-      },
-      fim = {
-        url = "https://api.deepseek.com/beta/completions",
-      },
-      chat = {
-        url = "https://api.deepseek.com/chat/completions",
-        pathname = "/chat/completions",
-        pathname_ollama = "/v1/chat/completions",
-      },
-    },
-  },
 }
-
-AI = CONSTS.ai.deepseek
-HAS_AI_KEY = AI.api_key.value ~= nil
 
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。

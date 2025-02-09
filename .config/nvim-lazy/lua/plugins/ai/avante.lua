@@ -43,33 +43,46 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
-local provider_common = {
-  proxy = AI.proxy,
-  allow_insecure = false,
-  timeout = AI.timeout,
-  disable_tools = false,
-}
+local function vendor_factory(name)
+  local config = LLM[name]
+  if not config then
+    return
+  end
 
-local function vendor_factory(model)
-  local is_ollama = contains({ AI.model.chat_ollama, AI.model.thinking_ollama }, model)
+  local endpoint = config.origin
+  local vendor_name = name
+  local ok = pcall(require, "avante.providers." .. vendor_name)
 
-  local opt = {
-    __inherited_from = "openai",
-    model = model,
-    api_key_name = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
-    endpoint = is_ollama and AI.endpoint_ollama_v1 or AI.endpoint,
-    temperature = AI.temperature,
-    max_tokens = AI.max.tokens,
-    options = {
-      num_ctx = is_ollama and AI.max.context_ollama or AI.max.context,
-      temperature = AI.temperature,
-    },
+  if not ok then
+    vendor_name = "openai"
+  end
+
+  if config.pathname == OPENAI_PATHNAME then
+    endpoint = endpoint .. "/v1"
+  end
+
+  return {
+    __inherited_from = vendor_name,
+    model = config.model,
+    api_key_name = config.api_key,
+    endpoint = endpoint,
+    temperature = LLM.temperature,
+    max_tokens = config.max_tokens,
+    num_ctx = config.num_ctx,
+    proxy = LLM.proxy,
+    allow_insecure = false,
+    timeout = LLM.timeout,
+    disable_tools = false,
   }
-
-  return merge(opt, provider_common)
 end
 
-local vendor_names = { "deepseek_thinking", "deepseek_chat", "deepseek_thinking_ollama", "deepseek_chat_ollama" }
+local vendors = {
+  hyperbolic = vendor_factory("hyperbolic"),
+  deepseek = vendor_factory("deepseek"),
+  gemini = vendor_factory("gemini"),
+  ollama = vendor_factory("ollama"),
+}
+local vendor_names = keys(vendors)
 
 return {
   "yetone/avante.nvim",
@@ -160,14 +173,8 @@ return {
     local config = require("avante.config")
 
     require("avante").setup({
-      provider = "gemini",
-      gemini = merge(provider_common, {
-        model = "gemini-2.0-pro-exp-02-05",
-        api_key_name = "GEMINI_API_KEY",
-        temperature = AI.temperature,
-        max_tokens = AI.max.tokens,
-        generationConfig = {},
-      }),
+      provider = "hyperbolic",
+      vendors = vendors,
       web_search_engine = {
         provider = "tavily",
         providers = {
@@ -178,12 +185,6 @@ return {
             api_key_name = "SERPAPI_API_KEY",
           },
         },
-      },
-      vendors = {
-        deepseek_thinking = vendor_factory(AI.model.thinking),
-        deepseek_chat = vendor_factory(AI.model.chat),
-        deepseek_thinking_ollama = vendor_factory(AI.model.thinking_ollama),
-        deepseek_chat_ollama = vendor_factory(AI.model.chat_ollama),
       },
       behaviour = {
         auto_suggestions = false,

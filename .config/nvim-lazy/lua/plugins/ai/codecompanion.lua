@@ -11,36 +11,51 @@ local function toggle_prompt()
   is_default_prompt = not is_default_prompt
 end
 
-local function adapter_factory(name)
-  local adapters = require("codecompanion.adapters")
-  local is_ollama = name == "deepseek_ollama"
+local function adapter_factory(name, only_opt)
+  local config = LLM[name]
+  if not config then
+    return
+  end
 
-  local opts = {
-    env = {
-      url = is_ollama and AI.endpoint_ollama or AI.endpoint,
-      chat_url = is_ollama and AI.chat.pathname_ollama or AI.chat.pathname,
-      api_key = is_ollama and AI.api_key.name_ollama or AI.api_key.name,
-    },
+  local url
+  local chat_url
+  local require_base = "codecompanion.adapters"
+  local adapters = require(require_base)
+  local adapter_name = name
+  local ok = pcall(require, require_base .. "." .. adapter_name)
+
+  if not ok then
+    adapter_name = "openai_compatible"
+    url = config.origin
+    chat_url = config.pathname
+  end
+
+  local opt = {
     name = name,
+    env = {
+      api_key = config.api_key,
+      url = url,
+      chat_url = chat_url,
+    },
     schema = {
       model = {
-        default = is_ollama and AI.model.thinking_ollama or AI.model.thinking,
-        choices = is_ollama and AI.model.map_ollama or AI.model.map,
-      },
-      num_ctx = {
-        default = is_ollama and AI.max.context_ollama or AI.max.context,
-      },
-      max_tokens = {
-        default = AI.max.tokens,
+        default = config.model,
+        choices = config.models,
       },
       temperature = {
-        default = AI.temperature,
+        default = LLM.temperature,
       },
+      num_ctx = { default = config.num_ctx },
+      max_tokens = { default = config.max_tokens },
     },
   }
 
+  if only_opt then
+    return opt
+  end
+
   return function()
-    return adapters.extend(is_ollama and "ollama" or "deepseek", opts)
+    return adapters.extend(adapter_name, opt)
   end
 end
 
@@ -114,7 +129,7 @@ return {
     require("codecompanion").setup({
       strategies = {
         chat = {
-          adapter = "gemini",
+          adapter = "hyperbolic",
           keymaps = {
             clear = {
               modes = {
@@ -139,10 +154,10 @@ return {
           },
         },
         inline = {
-          adapter = "gemini",
+          adapter = "hyperbolic",
         },
         agent = {
-          adapter = "gemini",
+          adapter = "hyperbolic",
         },
       },
       opts = {
@@ -156,24 +171,12 @@ return {
       adapters = {
         opts = {
           allow_insecure = false,
-          proxy = AI.proxy,
+          proxy = LLM.proxy,
         },
+        hyperbolic = adapter_factory("hyperbolic"),
         deepseek = adapter_factory("deepseek"),
-        deepseek_ollama = adapter_factory("deepseek_ollama"),
-        gemini = function()
-          return require("codecompanion.adapters").extend("gemini", {
-            name = "gemini",
-            schema = {
-              model = {
-                default = "gemini-2.0-pro-exp-02-05",
-                choices = { "gemini-2.0-pro-exp-02-05", "gemini-2.0-flash" },
-              },
-              temperature = {
-                default = AI.temperature,
-              },
-            },
-          })
-        end,
+        gemini = adapter_factory("gemini"),
+        ollama = adapter_factory("ollama"),
       },
       display = {
         diff = {
