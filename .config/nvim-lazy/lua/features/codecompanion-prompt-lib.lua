@@ -21,50 +21,41 @@ If the code snippet has no readability issues, simply confirm that the code is c
 ]]
 )
 
+local opts = { contains_code = true }
+
 return {
   ["Generate a Commit Message"] = {
-    strategy = "chat",
-    description = "commit messages",
-    opts = {
-      index = 14,
-      is_default = true,
-      is_slash_cmd = true,
-      short_name = "commit",
-      auto_submit = true,
-    },
     prompts = {
       {
         role = "user",
-        contains_code = true,
         content = function()
-          return "You are an expert at following the Conventional Commit specification. Given the git diff listed below, please generate a commit message for me:"
-            .. "\n\n```diff\n"
-            .. fn.system("git diff")
+          return "Write commit message with commitizen convention. Write clear, informative commit messages that explain the 'what' and 'why' behind changes, not just the 'how'."
+            .. "\n\n```\n"
+            .. vim.fn.system("git diff")
             .. "\n```"
         end,
+        opts = opts,
       },
     },
   },
   ["Generate a Commit Message for Staged Files"] = {
     strategy = "chat",
-    description = "staged file commit messages",
+    description = "Generate a commit message for staged change",
     opts = {
-      index = 15,
-      is_default = true,
       is_slash_cmd = true,
-      short_name = "scommit",
+      short_name = "staged-commit",
       auto_submit = true,
     },
     prompts = {
       {
         role = "user",
-        contains_code = true,
         content = function()
-          return "You are an expert at following the Conventional Commit specification. Given the git diff listed below, please generate a commit message for me:"
-            .. "\n\n```diff\n"
-            .. fn.system("git diff --staged")
+          return "Write commit message for the change with commitizen convention. Write clear, informative commit messages that explain the 'what' and 'why' behind changes, not just the 'how'."
+            .. "\n\n```\n"
+            .. vim.fn.system("git diff --staged")
             .. "\n```"
         end,
+        opts = opts,
       },
     },
   },
@@ -72,7 +63,6 @@ return {
     strategy = "inline",
     description = "Add documentation to the selected code",
     opts = {
-      index = 16,
       is_default = true,
       modes = { "v" },
       short_name = "doc",
@@ -108,9 +98,7 @@ return {
 
           return "Please document the selected code:\n\n```" .. context.filetype .. "\n" .. code .. "\n```\n\n"
         end,
-        opts = {
-          contains_code = true,
-        },
+        opts = opts,
       },
     },
   },
@@ -118,7 +106,6 @@ return {
     strategy = "chat",
     description = "Refactor the selected code for readability, maintainability and performances",
     opts = {
-      index = 17,
       is_default = true,
       modes = { "v" },
       short_name = "refactor",
@@ -153,9 +140,7 @@ return {
 
           return "Please optimize the selected code:\n\n```" .. context.filetype .. "\n" .. code .. "\n```\n\n"
         end,
-        opts = {
-          contains_code = true,
-        },
+        opts = opts,
       },
     },
   },
@@ -163,7 +148,6 @@ return {
     strategy = "chat",
     description = "Generate a Pull Request message description",
     opts = {
-      index = 18,
       is_default = true,
       short_name = "pr",
       is_slash_cmd = true,
@@ -172,7 +156,6 @@ return {
     prompts = {
       {
         role = "user",
-        contains_code = true,
         content = function()
           return "You are an expert at writing detailed and clear pull request descriptions."
             .. "Please create a pull request message following standard convention from the provided diff changes."
@@ -181,6 +164,7 @@ return {
             .. fn.system("git diff $(git merge-base HEAD main)...HEAD")
             .. "\n```"
         end,
+        opts = opts,
       },
     },
   },
@@ -188,7 +172,6 @@ return {
     strategy = "inline",
     description = "Correct grammar and reformulate",
     opts = {
-      index = 19,
       is_default = true,
       short_name = "spell",
       is_slash_cmd = true,
@@ -197,11 +180,11 @@ return {
     prompts = {
       {
         role = "user",
-        contains_code = false,
         content = function(context)
           local text = require("codecompanion.helpers.actions").get_code(context.start_line, context.end_line)
           return "Correct grammar and reformulate:\n\n" .. text
         end,
+        opts = opts,
       },
     },
   },
@@ -209,7 +192,6 @@ return {
     strategy = "chat",
     description = "Review the provided code snippet.",
     opts = {
-      index = 20,
       modes = { "v" },
       short_name = "review",
       auto_submit = true,
@@ -235,9 +217,7 @@ return {
             .. code
             .. "\n```\n\n"
         end,
-        opts = {
-          contains_code = true,
-        },
+        opts = opts,
       },
     },
   },
@@ -245,7 +225,6 @@ return {
     strategy = "inline",
     description = "Give betting naming for the provided code snippet.",
     opts = {
-      index = 21,
       modes = { "v" },
       short_name = "naming",
       auto_submit = true,
@@ -264,9 +243,7 @@ return {
             .. code
             .. "\n```\n\n"
         end,
-        opts = {
-          contains_code = true,
-        },
+        opts = opts,
       },
     },
   },
