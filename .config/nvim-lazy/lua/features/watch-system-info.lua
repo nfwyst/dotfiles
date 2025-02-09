@@ -36,7 +36,7 @@ local function get_linux_memory_usage(callback)
     available = tonumber(available)
 
     if total and available then
-      callback(math.floor(((total - available) / total) * 100))
+      callback(math.ceil(((total - available) / total) * 100))
     end
   end)
 end
@@ -64,7 +64,7 @@ local function get_mac_memory_usage(callback)
 
       if free and inactive and speculative then
         local available = (free + inactive + speculative) * page_size
-        callback(math.floor(((total - available) / total) * 100))
+        callback(math.ceil(((total - available) / total) * 100))
       end
     end)
   end)
