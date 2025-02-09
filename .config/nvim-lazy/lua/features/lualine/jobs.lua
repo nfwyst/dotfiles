@@ -112,7 +112,7 @@ local function is_buf_referenced(bufnr)
 end
 
 local function auto_close_files(bufnr, context)
-  if not context.current then
+  if MEMORY_USAGE < MEMORY_LIMIT or not context.current then
     return
   end
 

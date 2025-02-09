@@ -80,8 +80,16 @@ local root_path_guide = {
   color = { fg = "#37f499" },
 }
 
+local memory = {
+  function()
+    return "󰍛" .. MEMORY_USAGE .. "󱉸"
+  end,
+  padding = { left = 0, right = 1 },
+}
+
 return {
   codecompanion = codecompanion,
   progress = progress,
   root_path_guide = root_path_guide,
+  memory = memory,
 }

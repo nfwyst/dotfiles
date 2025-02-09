@@ -30,32 +30,14 @@ local function run_command(cmd, args, callback)
 end
 
 local function get_linux_memory_usage(callback)
-  uv.fs_open("/proc/meminfo", "r", 438, function(error, fd)
-    if error then
-      return
+  run_command("free", { "-b" }, function(output)
+    local total, available = output:match("Mem:%s+(%d+)%s+%d+%s+%d+%s+%d+%s+%d+%s+(%d+)")
+    total = tonumber(total)
+    available = tonumber(available)
+
+    if total and available then
+      callback(math.floor(((total - available) / total) * 100))
     end
-
-    uv.fs_fstat(fd, function(err, stat)
-      if err or not stat then
-        return uv.fs_close(fd)
-      end
-
-      uv.fs_read(fd, stat.size, 0, function(e, data)
-        uv.fs_close(fd)
-        if e or not data then
-          return
-        end
-
-        local total = tonumber(data:match("MemTotal:%s+(%d+)"))
-        local available = tonumber(data:match("MemAvailable:%s+(%d+)"))
-
-        if not total or not available then
-          return
-        end
-
-        callback(math.floor(((total - available) / total) * 100))
-      end)
-    end)
   end)
 end
 
@@ -80,17 +62,15 @@ local function get_mac_memory_usage(callback)
       local inactive = parse_stat("Pages inactive")
       local speculative = parse_stat("Pages speculative")
 
-      if not free or not inactive or not speculative then
-        return
+      if free and inactive and speculative then
+        local available = (free + inactive + speculative) * page_size
+        callback(math.floor(((total - available) / total) * 100))
       end
-
-      local available = (free + inactive + speculative) * page_size
-      callback(math.floor(((total - available) / total) * 100))
     end)
   end)
 end
 
-local function get_memory_usage_percent(callback)
+local function get_memory_usage(callback)
   local os_name = jit.os
 
   if os_name == "Linux" then
@@ -104,12 +84,12 @@ end
 
 local notified = false
 local function check_memory()
-  get_memory_usage_percent(function(percent)
-    -- vim.print(percent)
+  get_memory_usage(function(usage)
+    MEMORY_USAGE = usage
 
-    if percent >= 80 then
+    if MEMORY_USAGE >= MEMORY_LIMIT then
       if not notified then
-        local msg = string.format("Warning: High memory usage (%.2f%%)", percent)
+        local msg = string.format("Warning: High memory usage (%.2f%%)", usage)
         NOTIFY(msg, levels.WARN)
         notified = true
       end

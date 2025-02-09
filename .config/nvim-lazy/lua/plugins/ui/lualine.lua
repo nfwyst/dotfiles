@@ -81,6 +81,7 @@ return {
         padding = { left = 0, right = 1 },
       },
       { "encoding", padding = { left = 0, right = 1 } },
+      components.memory,
     })
 
     local opt = {

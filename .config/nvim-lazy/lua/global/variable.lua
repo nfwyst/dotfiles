@@ -41,6 +41,8 @@ _G.assign = function(dest, from)
   return dest
 end
 
+MEMORY_LIMIT = 75
+MEMORY_USAGE = nil
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
 CMD = api.nvim_create_user_command
