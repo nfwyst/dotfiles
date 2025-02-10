@@ -1,8 +1,11 @@
-FILETYPE_TASK_MAP.nu = function()
-  if b.autoformat ~= nil then
+local key = "autoformat"
+
+FILETYPE_TASK_MAP.nu = function(bufnr)
+  if BUF_VAR(bufnr, key) ~= nil then
     return
   end
-  b.autoformat = false
+
+  BUF_VAR(bufnr, key, false)
 end
 
 return {

@@ -10,8 +10,8 @@ local diagnostics_filter = function(diagnostics, win)
     [severity.INFO] = false,
   }
 
-  table.sort(diagnostics, function(a, b)
-    return math.abs(a.lnum - row) < math.abs(b.lnum - row)
+  table.sort(diagnostics, function(cur, next)
+    return math.abs(cur.lnum - row) < math.abs(next.lnum - row)
   end)
 
   return filter(function(diagnostic)

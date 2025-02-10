@@ -86,7 +86,7 @@ return {
             command = "beautysh",
             args = {
               "-i",
-              opt.shiftwidth:get(),
+              o.shiftwidth,
               "$FILENAME",
             },
             stdin = false,

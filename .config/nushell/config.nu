@@ -216,8 +216,7 @@ $env.config = {
     }
 
     filesize: {
-        metric: false # true => KB, MB, GB (ISO standard), false => KiB, MiB, GiB (Windows standard)
-        format: "auto" # b, kb, kib, mb, mib, gb, gib, tb, tib, pb, pib, eb, eib, auto
+        unit: "metric" # true => KB, MB, GB (ISO standard), false => KiB, MiB, GiB (Windows standard)
     }
 
     cursor_shape: {
@@ -990,3 +989,6 @@ def switch_ctrl_caps_lock [] {
   }
 }
 
+def run_qwen_agent [] {
+    python3.10 run_server.py --llm deepseek-ai/DeepSeek-R1 --model_server https://api.hyperbolic.xyz --workstation_port 7864 --api_key $env.HYPERBOLIC_API_KEY --max_ref_token 89429
+}

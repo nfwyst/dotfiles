@@ -117,7 +117,11 @@ function OPT(name, opt, value)
     value = value(api.nvim_get_option_value(name, opt))
   end
 
-  api.nvim_set_option_value(name, value, opt)
+  if opt.scope ~= "global" then
+    return api.nvim_set_option_value(name, value, opt)
+  end
+
+  o[name] = value
 end
 
 function SET_OPTS(opts, opt)

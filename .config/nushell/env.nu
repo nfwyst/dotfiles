@@ -3,7 +3,7 @@
 # version = "0.93.0"
 
 def create_left_prompt [] {
-    let dir = match (do --ignore-shell-errors { $env.PWD | path relative-to $nu.home-path }) {
+    let dir = match (do --ignore-errors { $env.PWD | path relative-to $nu.home-path }) {
         null => $env.PWD
         '' => '~'
         $relative_pwd => ([~ $relative_pwd] | path join)
@@ -142,3 +142,7 @@ $env.OLLAMA_API_BASE = "http://127.0.0.1:11434"
 $env.PATH = ($env.PATH | uniq)
 
 $env.NODE_OPTIONS = "--no-warnings=ExperimentalWarning"
+
+# settings for qwen agent
+$env.QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS = 134144
+$env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429

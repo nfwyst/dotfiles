@@ -4,6 +4,7 @@
 /lua_modules
 /.luarocks
 /legacy
+.jira
 .config/nushell/history.txt
 .aider*
 todo.md

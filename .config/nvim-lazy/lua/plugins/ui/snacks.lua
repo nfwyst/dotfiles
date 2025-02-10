@@ -94,7 +94,7 @@ return {
         on_open = function()
           statuscolumn = o.statuscolumn
           on_zen(true)
-          opt_local.winbar = nil
+          vim.opt_local.winbar = nil
         end,
         on_close = function()
           on_zen(false, statuscolumn)

@@ -82,8 +82,8 @@ setopt hist_find_no_dups
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
-zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+zstyle ":fzf-tab:complete:cd:*" fzf-preview "ls --color $realpath"
+zstyle ":fzf-tab:complete:__zoxide_z:*" fzf-preview "ls --color $realpath"
 
 # env variable
 export ZSH_TAB_TITLE_PREFIX=" "
@@ -105,7 +105,11 @@ export EDITOR="$(which nvim)"
 export SHELL="$(which zsh)"
 export OLLAMA_API_BASE="http://127.0.0.1:11434"
 export NODE_OPTIONS="--no-warnings=ExperimentalWarning"
-PROMPT="${PROMPT}"$'\n'
+export PROMPT="${PROMPT}"$'\n'
+
+# settings for qwen agent
+export QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS=134144
+export QWEN_AGENT_DEFAULT_MAX_REF_TOKEN=89429
 
 # Shell integrations
 source <(starship init zsh)
@@ -165,3 +169,6 @@ function switch_ctrl_caps_lock() {
   fi
 }
 
+function run_qwen_agent() {
+  python3.10 run_server.py --llm deepseek-ai/DeepSeek-R1 --model_server https://api.hyperbolic.xyz --workstation_port 7864 --api_key "$HYPERBOLIC_API_KEY" --max_ref_token 89429
+}

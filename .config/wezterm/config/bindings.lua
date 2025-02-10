@@ -23,6 +23,7 @@ if platform.is_mac then
   env.SERPAPI_API_KEY = require('env').SERPAPI_API_KEY
   env.GEMINI_API_KEY = require('env').GEMINI_API_KEY
   env.HYPERBOLIC_API_KEY = require('env').HYPERBOLIC_API_KEY
+  env.JIRA_API_TOKEN = require('env').JIRA_API_TOKEN
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'

@@ -40,7 +40,14 @@ local function provider_factory(name, _provider_name)
   }
 end
 
-local provider_names = { "openai_fim_compatible", "openai_compatible", "gemini" }
+local provider_names = {
+  "openai_fim_compatible",
+  "openai_compatible",
+  "gemini",
+  openai_fim_compatible = "hyperbolic",
+  openai_compatible = "hyperbolic",
+}
+local current_llm_name = "hyperbolic"
 
 return {
   "milanglacier/minuet-ai.nvim",
@@ -63,10 +70,21 @@ return {
       "<leader>amp",
       function()
         REQUEST_USER_SELECT(provider_names, "select provider: ", function(name)
+          current_llm_name = provider_names[name] or name
           cmd("Minuet change_provider " .. name)
         end)
       end,
       desc = "Minuet: Switch Provider",
+    },
+    {
+      "<leader>amm",
+      function()
+        local models = LLM[current_llm_name].models
+        REQUEST_USER_SELECT(models, "select model: ", function(name)
+          cmd("Minuet change_model " .. name)
+        end)
+      end,
+      desc = "Minuet: Switch Model",
     },
   },
   dependencies = {

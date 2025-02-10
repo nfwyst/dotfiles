@@ -48,7 +48,7 @@ return {
       typescriptreact = eslint,
       javascriptreact = eslint,
       svelte = eslint,
-      sh = { "shellcheck" },
+      sh = { "bash" },
       zsh = { "zsh" },
       markdown = { "vale" },
     }

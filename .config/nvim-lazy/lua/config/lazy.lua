@@ -11,6 +11,7 @@ end
 local function install_pkg_manager()
   local lazypath = DATA_PATH .. "/lazy/lazy.nvim"
   local is_dir = IS_DIRPATH(lazypath)
+  local opt = vim.opt
 
   if is_dir then
     opt.rtp:prepend(lazypath)
