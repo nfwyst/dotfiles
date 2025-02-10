@@ -11,6 +11,7 @@ local lsp_servers = {
   "bashls",
   "taplo",
   "vtsls",
+  "nushell",
 }
 
 if not IS_LINUX then

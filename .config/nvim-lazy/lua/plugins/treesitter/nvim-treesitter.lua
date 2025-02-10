@@ -88,7 +88,7 @@ return {
         "yaml",
         "git_config",
       },
-      ignore_install = IS_LINUX and { "nu" } or nil,
+      ignore_install = nil,
       textobjects = {
         move = {
           enable = true,
