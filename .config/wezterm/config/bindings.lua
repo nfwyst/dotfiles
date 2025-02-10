@@ -19,11 +19,11 @@ if platform.is_mac then
   mod.SUPER_REV = 'SUPER|CTRL'
   env.PATH = brew_path .. ':' .. env.PATH
   env.DEEPSEEK_API_KEY = require('env').DEEPSEEK_API_KEY
-  env.TAVILY_API_KEY = require('env').TAVILY_API_KEY
-  env.SERPAPI_API_KEY = require('env').SERPAPI_API_KEY
   env.GEMINI_API_KEY = require('env').GEMINI_API_KEY
   env.HYPERBOLIC_API_KEY = require('env').HYPERBOLIC_API_KEY
   env.JIRA_API_TOKEN = require('env').JIRA_API_TOKEN
+  env.GOOGLE_SEARCH_API_KEY = require('env').GOOGLE_SEARCH_API_KEY
+  env.GOOGLE_SEARCH_ENGINE_ID = require('env').GOOGLE_SEARCH_ENGINE_ID
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'

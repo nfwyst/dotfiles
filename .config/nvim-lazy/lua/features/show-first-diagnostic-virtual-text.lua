@@ -2,6 +2,10 @@ local virtual_text = diagnostic.handlers.virtual_text
 local show = virtual_text.show
 
 local diagnostics_filter = function(diagnostics, win)
+  if not api.nvim_win_is_valid(win) then
+    return diagnostics
+  end
+
   local row = WIN_CURSOR(win)[1]
   local filtered_map = {
     [severity.ERROR] = false,

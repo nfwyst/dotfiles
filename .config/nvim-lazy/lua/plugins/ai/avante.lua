@@ -176,13 +176,11 @@ return {
       provider = "hyperbolic",
       vendors = vendors,
       web_search_engine = {
-        provider = "tavily",
+        provider = "google",
         providers = {
-          tavily = {
-            api_key_name = "TAVILY_API_KEY",
-          },
-          serpapi = {
-            api_key_name = "SERPAPI_API_KEY",
+          google = {
+            api_key_name = "GOOGLE_SEARCH_API_KEY",
+            engine_id_name = "GOOGLE_SEARCH_ENGINE_ID",
           },
         },
       },
