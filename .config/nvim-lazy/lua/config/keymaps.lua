@@ -46,7 +46,7 @@ MAPS({
   },
   [{ "v", "x", "s", "i" }] = {
     {
-      from = "''",
+      from = ",,",
       to = function()
         PRESS_KEYS("<esc>", "n")
         snippet.stop()

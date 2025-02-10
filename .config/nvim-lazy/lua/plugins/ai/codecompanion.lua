@@ -102,7 +102,7 @@ return {
     { "<leader>acu", "<cmd>CodeCompanion /tests<cr>", desc = "CodeCompanion: Write Tests For Code Snip", mode = "v" },
     { "<leader>acv", "<cmd>CodeCompanion /review<cr>", desc = "CodeCompanion: Review Code Snip", mode = "v" },
     { "<leader>acn", "<cmd>CodeCompanion /naming<cr>", desc = "CodeCompanion: Better Naming", mode = "v" },
-    { "<leader>act", toggle_prompt, desc = "CodeCompanion: TogglePrompt" },
+    { "<leader>act", toggle_prompt, desc = "CodeCompanion: Toggle Prompt" },
   },
   config = function()
     -- hide left columns for code companion sidebar
@@ -124,6 +124,13 @@ return {
       strategies = {
         chat = {
           adapter = "hyperbolic",
+          slash_commands = {
+            help = {
+              opts = {
+                provider = "fzf_lua",
+              },
+            },
+          },
           keymaps = {
             clear = {
               modes = {
@@ -178,7 +185,11 @@ return {
         },
         chat = {
           window = {
-            width = 0.3,
+            width = 0.35,
+            opts = {
+              cursorline = true,
+              linebreak = false,
+            },
           },
         },
       },
