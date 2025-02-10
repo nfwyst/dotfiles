@@ -187,7 +187,6 @@ return {
           window = {
             width = 0.35,
             opts = {
-              cursorline = true,
               linebreak = false,
             },
           },
