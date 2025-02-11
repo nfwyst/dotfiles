@@ -13,7 +13,14 @@ function BUF_INFO(bufnr)
   return fn.getbufinfo(bufnr)[1]
 end
 
-function IS_FILEPATH(path)
+function IS_FILEPATH(path, include_format)
+  if include_format then
+    local matched = string.match(path, "^/.*%.[%a]+$")
+    if matched then
+      return true
+    end
+  end
+
   return fn.filereadable(path) == 1
 end
 

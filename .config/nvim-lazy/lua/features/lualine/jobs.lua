@@ -39,9 +39,13 @@ end
 
 SET_HLS({
   WinBar1 = { fg = "#fad61d", bold = true },
-  WinBar2 = { fg = "#fbe260", bold = true },
+  WinBar2 = { fg = "#04d1f9", bold = true },
 })
 local function update_winbar(win, bufpath, bufnrs)
+  if IS_ZEN_MODE then
+    return
+  end
+
   bufpath = "%#WinBar1#" .. fn.fnamemodify(bufpath, ":~")
 
   local bufcount = "%*%=%#WinBar2#(" .. #bufnrs .. ")"

@@ -125,41 +125,17 @@ return {
         chat = {
           adapter = "hyperbolic",
           slash_commands = {
-            help = {
-              opts = {
-                provider = "fzf_lua",
-              },
-            },
+            help = { opts = { provider = "fzf_lua" } },
           },
           keymaps = {
-            clear = {
-              modes = {
-                n = "gX",
-              },
-            },
-            system_prompt = {
-              modes = {
-                n = "gS",
-              },
-            },
-            completion = {
-              modes = {
-                i = "<C-m>",
-              },
-            },
-            codeblock = {
-              modes = {
-                n = "gC",
-              },
-            },
+            clear = { modes = { n = "gX" } },
+            system_prompt = { modes = { n = "gS" } },
+            completion = { modes = { i = "<C-m>" } },
+            codeblock = { modes = { n = "gC" } },
           },
         },
-        inline = {
-          adapter = "hyperbolic",
-        },
-        agent = {
-          adapter = "hyperbolic",
-        },
+        inline = { adapter = "hyperbolic" },
+        agent = { adapter = "hyperbolic" },
       },
       opts = {
         language = "Chinese",
@@ -180,15 +156,11 @@ return {
         ollama = adapter_factory("ollama"),
       },
       display = {
-        diff = {
-          enabled = true,
-        },
+        diff = { enabled = true },
         chat = {
           window = {
             width = 0.35,
-            opts = {
-              linebreak = false,
-            },
+            opts = { linebreak = false },
           },
         },
       },

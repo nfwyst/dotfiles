@@ -69,7 +69,7 @@ return {
       },
       statuscolumn = {
         left = left,
-        refresh = 150,
+        refresh = 100,
       },
       dashboard = {
         preset = {

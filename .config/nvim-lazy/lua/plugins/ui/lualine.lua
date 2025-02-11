@@ -11,7 +11,7 @@ local buffers_title_map = formatters.buffers_title_map
 
 local function clean_buffers_title_map(bufnr)
   local bufpath = BUF_PATH(bufnr)
-  if not IS_FILEPATH(bufpath) then
+  if not IS_FILEPATH(bufpath, true) then
     return
   end
 

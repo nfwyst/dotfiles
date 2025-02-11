@@ -21,7 +21,7 @@ local function buffers(name, context)
   local bufpath = context.file
   local filetype = context.filetype
   local win = fn.bufwinid(bufnr)
-  local is_file = IS_FILEPATH(bufpath)
+  local is_file = IS_FILEPATH(bufpath, true)
   local win_valid = api.nvim_win_is_valid(win)
 
   if name == "[No Name]" or EMPTY(name) then
