@@ -89,12 +89,11 @@ return {
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
         ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion", "snacks_terminal" },
-        disabled_filetypes = { winbar = { "snacks_terminal" }, statusline = {} },
+        disabled_filetypes = { statusline = {} },
         globalstatus = true,
         refresh = {
           statusline = refresh_time,
           tabline = refresh_time / 2,
-          winbar = refresh_time,
         },
       },
       sections = {
@@ -130,22 +129,6 @@ return {
           },
         },
         lualine_x = { components.root_path_guide },
-      },
-      winbar = {
-        lualine_c = {
-          {
-            "filename",
-            file_status = false,
-            shorting_target = 0,
-            newfile_status = false,
-            cond = function()
-              local bufnr = CUR_BUF()
-              return not IS_ZEN_MODE and IS_BUF_LISTED(bufnr) and IS_FILEPATH(BUF_PATH(bufnr))
-            end,
-            path = 3,
-            color = { fg = "#04d1f9", bg = "NONE" },
-          },
-        },
       },
       extensions = extensions,
     }

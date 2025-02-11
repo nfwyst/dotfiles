@@ -125,6 +125,12 @@ return {
             [severity.HINT] = icons.Hint,
             [severity.INFO] = icons.Info,
           },
+          numhl = {
+            [severity.WARN] = "WarningMsg",
+            [severity.ERROR] = "ErrorMsg",
+            [severity.INFO] = "DiagnosticInfo",
+            [severity.HINT] = "DiagnosticHint",
+          },
         },
       },
       inlay_hints = {

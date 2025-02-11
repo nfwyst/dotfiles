@@ -59,8 +59,10 @@ local function buffers(name, context)
     if is_dashboard then
       jobs.set_dashboard_win_buf(win, bufnr)
     elseif is_file then
-      jobs.auto_close_files(bufnr, context)
+      local bufnrs = require("lualine.components.buffers").bufpos2nr
+      jobs.auto_close_files(bufnr, context, bufnrs)
       jobs.close_dashboard()
+      jobs.update_winbar(win, bufpath, bufnrs)
     elseif not name and IS_BUF_LISTED(bufnr) then
       name = jobs.open_dashboard(win, bufnr)
     end
@@ -69,7 +71,14 @@ local function buffers(name, context)
     return ""
   end
 
-  return name or "[No Name]"
+  if not name then
+    local win_info = api.nvim_win_get_config(win)
+    if not EMPTY(win_info.relative) then
+      return "Popup"
+    end
+  end
+
+  return name or "No Name"
 end
 
 return {

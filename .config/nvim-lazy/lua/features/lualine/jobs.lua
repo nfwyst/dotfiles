@@ -37,6 +37,22 @@ local function close_dashboard()
   set()
 end
 
+SET_HLS({
+  WinBar1 = { fg = "#fad61d", bold = true },
+  WinBar2 = { fg = "#fbe260", bold = true },
+})
+local function update_winbar(win, bufpath, bufnrs)
+  bufpath = "%#WinBar1#" .. fn.fnamemodify(bufpath, ":~")
+
+  local bufcount = "%*%=%#WinBar2#(" .. #bufnrs .. ")"
+  local winbar = bufpath .. bufcount
+  local opt = { win = win }
+
+  if winbar ~= OPT("winbar", opt) then
+    OPT("winbar", opt, winbar)
+  end
+end
+
 local function open_dashboard(win, bufnr)
   if _bufnr and _win then
     if is_ctx_valid(_win, _bufnr) then
@@ -111,12 +127,11 @@ local function is_buf_referenced(bufnr)
   end
 end
 
-local function auto_close_files(bufnr, context)
+local function auto_close_files(bufnr, context, bufnrs)
   if MEMORY_USAGE < MEMORY_LIMIT or not context.current then
     return
   end
 
-  local bufnrs = require("lualine.components.buffers").bufpos2nr
   if #bufnrs <= MAX_OPEND_FILES then
     return
   end
@@ -135,4 +150,5 @@ return {
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
   auto_close_files = auto_close_files,
+  update_winbar = update_winbar,
 }
