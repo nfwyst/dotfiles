@@ -170,5 +170,5 @@ function switch_ctrl_caps_lock() {
 }
 
 function run_qwen_agent() {
-  python3.10 run_server.py --llm deepseek-ai/DeepSeek-V3 --model_server https://api.hyperbolic.xyz/v1 --workstation_port 7864 --api_key "$HYPERBOLIC_API_KEY" --max_ref_token 89429
+  uv run run_server.py --llm deepseek-ai/DeepSeek-V3 --model_server https://api.hyperbolic.xyz/v1 --workstation_port 7864 --api_key "$HYPERBOLIC_API_KEY" --max_ref_token 89429
 }
