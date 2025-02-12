@@ -1,3 +1,4 @@
+local toggle_buffer_pin = require("features.lualine.toggle-buffer-pin")
 local formatters = require("features.lualine.formatters")
 local refresh_time = 500
 local extensions
@@ -33,6 +34,7 @@ end
 
 return {
   "nvim-lualine/lualine.nvim",
+  keys = toggle_buffer_pin.keys,
   opts = function(_, opts)
     local components = require("features.lualine.components")
     local sections = opts.sections

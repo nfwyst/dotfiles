@@ -367,3 +367,21 @@ function LINE_BEFORE_CURSOR(opt)
   local contents_before_cursor = cur_line:sub(1, col)
   return contents_before_cursor, pos
 end
+
+function STR_CONTAINS(str, substr)
+  if #substr == 0 then
+    return true
+  end
+
+  return string.find(str, substr, 1, true) ~= nil
+end
+
+function DEL_BUF(bufnr, wipe)
+  ON_BUF_DEL(bufnr)
+
+  if wipe then
+    return Snacks.bufdelete({ buf = bufnr, wipe = wipe })
+  end
+
+  api.nvim_buf_delete(bufnr, { force = false })
+end

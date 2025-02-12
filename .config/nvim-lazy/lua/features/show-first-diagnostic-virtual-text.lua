@@ -1,5 +1,6 @@
 local virtual_text = diagnostic.handlers.virtual_text
 local show = virtual_text.show
+local eslint_fixed = false
 
 local diagnostics_filter = function(diagnostics, win)
   if not api.nvim_win_is_valid(win) then
@@ -21,6 +22,13 @@ local diagnostics_filter = function(diagnostics, win)
   return filter(function(diagnostic)
     local st = diagnostic.severity
     local filtered = filtered_map[st]
+
+    if not eslint_fixed then
+      if STR_CONTAINS(diagnostic.message, "eslintrc") then
+        pcall(cmd.MasonInstall, "eslint_d@13.1.2")
+        eslint_fixed = true
+      end
+    end
 
     if filtered then
       return false

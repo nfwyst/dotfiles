@@ -5,18 +5,8 @@ local function is_ctx_valid(win, bufnr)
   return api.nvim_win_is_valid(win) and api.nvim_buf_is_valid(bufnr)
 end
 
-local function del_buf(bufnr, wipe)
-  ON_BUF_DEL(bufnr)
-
-  if wipe then
-    return Snacks.bufdelete({ buf = bufnr, wipe = wipe })
-  end
-
-  api.nvim_buf_delete(bufnr, { force = false })
-end
-
 local function close_win_with_buf(win, bufnr)
-  del_buf(bufnr, true)
+  DEL_BUF(bufnr, true)
   api.nvim_win_close(win, false)
 end
 
@@ -131,8 +121,12 @@ local function is_buf_referenced(bufnr)
   end
 end
 
-local function auto_close_files(bufnr, context, bufnrs)
-  if MEMORY_USAGE < MEMORY_LIMIT or not context.current then
+local function auto_close_buf(bufnr, context, bufnrs)
+  local is_memory_ok = MEMORY_USAGE < MEMORY_LIMIT
+  local no_current = not context.current
+  local disabled = not AUTO_CLOSE_BUF_ENABLED
+
+  if is_memory_ok or no_current or disabled then
     return
   end
 
@@ -141,9 +135,13 @@ local function auto_close_files(bufnr, context, bufnrs)
   end
 
   for _, buf in ipairs(bufnrs) do
-    local is_modified = OPT("modified", { buf = buf })
-    if buf ~= bufnr and not is_modified and not is_buf_referenced(buf) then
-      return del_buf(buf)
+    local not_current = buf ~= bufnr
+    local no_change = not OPT("modified", { buf = buf })
+    local no_reference = not is_buf_referenced(buf)
+    local no_pin = not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED)
+
+    if not_current and no_change and no_reference and no_pin then
+      return DEL_BUF(buf)
     end
   end
 end
@@ -153,6 +151,6 @@ return {
   set_dashboard_win_buf = set,
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
-  auto_close_files = auto_close_files,
+  auto_close_buf = auto_close_buf,
   update_winbar = update_winbar,
 }

@@ -61,6 +61,7 @@ TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
 MAX_OPEND_FILES = IS_LINUX and 3 or 7
+AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
 
 LLM = {

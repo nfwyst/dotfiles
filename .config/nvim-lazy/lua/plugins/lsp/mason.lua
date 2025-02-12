@@ -31,14 +31,6 @@ return {
       },
     }
 
-    schedule(function()
-      local mr = require("mason-registry")
-      local p = mr.get_package("eslint_d")
-      if not p:is_installed() then
-        cmd.MasonInstall("eslint_d@13.1.2")
-      end
-    end)
-
     return merge(opts, opt)
   end,
   keys = {

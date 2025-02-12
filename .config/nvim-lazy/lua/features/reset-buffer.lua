@@ -1,12 +1,13 @@
 local function is_tab_indent(bufnr)
   local line_count = math.min(LINE_COUNT(bufnr), 10)
   local lines = BUF_LINES(bufnr, line_count)
+
   for _, line in ipairs(lines) do
-    local pos = string.find(line, "\t", 1, true)
-    if pos then
+    if STR_CONTAINS(line, "\t") then
       return true
     end
   end
+
   return false
 end
 
