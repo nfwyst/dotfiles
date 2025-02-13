@@ -24,6 +24,10 @@ local function buffers(name, context)
   local is_file = IS_FILEPATH(bufpath, true)
   local win_valid = api.nvim_win_is_valid(win)
 
+  if filetype == "snacks_terminal" then
+    name = " terminal"
+  end
+
   if name == "[No Name]" or EMPTY(name) then
     name = nil
   end

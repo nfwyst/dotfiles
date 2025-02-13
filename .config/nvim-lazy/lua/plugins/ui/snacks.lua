@@ -53,6 +53,17 @@ return {
 
     PUSH(FT_HIDE_CURSOR, "snacks_dashboard")
 
+    if not FILETYPE_TASK_MAP.snacks_terminal then
+      FILETYPE_TASK_MAP.snacks_terminal = function(bufnr)
+        if BUF_VAR(bufnr, TASK_KEY) then
+          return
+        end
+
+        cmd.VimadeBufDisable()
+        BUF_VAR(bufnr, TASK_KEY, true)
+      end
+    end
+
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
 
     local opt = {
