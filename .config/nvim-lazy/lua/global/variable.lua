@@ -78,6 +78,7 @@ LLM = {
     model = "deepseek-ai/DeepSeek-R1",
     models = {
       "deepseek-ai/DeepSeek-R1",
+      "deepseek-ai/DeepSeek-R1-Zero",
       "deepseek-ai/DeepSeek-V3",
     },
   },
@@ -126,6 +127,7 @@ CONSTS = {
   PREV_COL = "PREV_COL",
 }
 
+PURE_PROMPT = [[你是一位无所不能的助手]]
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。
 你的主要目标是帮助我在编写代码时学习编程概念、最佳实践和解决问题的技能。

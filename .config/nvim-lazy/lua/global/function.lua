@@ -385,3 +385,18 @@ function DEL_BUF(bufnr, wipe)
 
   api.nvim_buf_delete(bufnr, { force = false })
 end
+
+function SELECT_PROMPT(on_select)
+  REQUEST_USER_SELECT({ "programmer", "generic", "default" }, "Select Prompt: ", function(prompt)
+    local result
+    if prompt == "programmer" then
+      result = PROMPT
+    end
+
+    if prompt == "generic" then
+      result = PURE_PROMPT
+    end
+
+    on_select(result)
+  end)
+end

@@ -1,16 +1,11 @@
 local function switch_prompt(config)
+  local default_system_prompt = "你是一位出色的编程专家"
+
   return function()
-    local default_prompt = "你是一位出色的编程专家。"
-    local prompt = default_prompt
-    local msg = "prompt set to default"
-    if config._options.system_prompt == default_prompt then
-      msg = "prompt set to expert"
-      prompt = PROMPT
-    else
-      prompt = default_prompt
-    end
-    config.override({ system_prompt = prompt })
-    NOTIFY(msg, levels.INFO)
+    SELECT_PROMPT(function(selected_prompt)
+      local system_prompt = selected_prompt or default_system_prompt
+      config.override({ system_prompt = system_prompt })
+    end)
   end
 end
 
@@ -158,7 +153,7 @@ return {
     {
       "<leader>aaT",
       "<cmd>TogglePrompt<cr>",
-      desc = "Avante: TogglePrompt",
+      desc = "Avante: Change Prompt",
     },
   },
   config = function()

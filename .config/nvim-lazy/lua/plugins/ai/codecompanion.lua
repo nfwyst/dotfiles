@@ -1,5 +1,5 @@
 local mode = { "n", "v" }
-local is_default_prompt = true
+local prompt
 
 local function actions()
   return require("codecompanion").actions({
@@ -7,8 +7,10 @@ local function actions()
   })
 end
 
-local function toggle_prompt()
-  is_default_prompt = not is_default_prompt
+local function change_prompt()
+  SELECT_PROMPT(function(selected_prompt)
+    prompt = selected_prompt
+  end)
 end
 
 local function adapter_factory(name)
@@ -102,7 +104,7 @@ return {
     { "<leader>acu", "<cmd>CodeCompanion /tests<cr>", desc = "CodeCompanion: Write Tests For Code Snip", mode = "v" },
     { "<leader>acv", "<cmd>CodeCompanion /review<cr>", desc = "CodeCompanion: Review Code Snip", mode = "v" },
     { "<leader>acn", "<cmd>CodeCompanion /naming<cr>", desc = "CodeCompanion: Better Naming", mode = "v" },
-    { "<leader>act", toggle_prompt, desc = "CodeCompanion: Toggle Prompt" },
+    { "<leader>act", change_prompt, desc = "CodeCompanion: Change Prompt" },
   },
   config = function()
     -- hide left columns for code companion sidebar
@@ -142,7 +144,7 @@ return {
         log_level = "ERROR",
         send_code = true,
         system_prompt = function(...)
-          return is_default_prompt and system_prompt(...) or PROMPT
+          return prompt or system_prompt(...)
         end,
       },
       adapters = {

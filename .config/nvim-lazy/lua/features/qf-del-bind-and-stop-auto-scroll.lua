@@ -69,6 +69,10 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   leave_cmd = AUCMD("WinLeave", {
     buffer = bufnr,
     callback = function()
+      if not api.nvim_win_is_valid(win) then
+        win = fn.bufwinid(bufnr)
+      end
+
       local pos = WIN_CURSOR(win)
       defer(function()
         if api.nvim_win_is_valid(win) then

@@ -49,7 +49,6 @@ return {
               { find = "Invalid commentstring" },
               { find = "Client %d quit with" },
               { find = "Failed to parse snippet" },
-              { find = "jump_to_single_result" },
             },
           },
         },
