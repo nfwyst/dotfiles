@@ -36,20 +36,13 @@ end
 return {
   "MeanderingProgrammer/render-markdown.nvim",
   ft = ft,
-  dependencies = {
-    {
-      "saghen/blink.cmp",
-      module = false,
-      opts = function(_, opts)
-        PUSH(opts.sources.default, "markdown")
-        opts.sources.providers.markdown = {
-          name = "RenderMarkdown",
-          module = "render-markdown.integ.blink",
-        }
-      end,
-    },
-  },
+  dependencies = { "saghen/blink.cmp" },
   opts = function(_, opts)
+    ADD_BLINK_SOURCE("markdown", nil, {
+      name = "RenderMarkdown",
+      module = "render-markdown.integ.blink",
+    })
+
     local state = require("render-markdown.state")
     local anti_conceal = { enabled = false }
 

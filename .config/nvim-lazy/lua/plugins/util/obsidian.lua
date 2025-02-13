@@ -40,29 +40,27 @@ return {
   "epwalsh/obsidian.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
-    {
-      "saghen/blink.cmp",
-      module = false,
-      opts = function(_, opts)
-        push_list(opts.sources.compat, {
-          "obsidian",
-          "obsidian_new",
-          "obsidian_tags",
-        })
-      end,
-    },
+    "saghen/blink.cmp",
   },
   ft = "markdown",
   config = function()
+    ADD_BLINK_COMPAT_SOURCES({
+      "obsidian",
+      "obsidian_new",
+      "obsidian_tags",
+    })
+
     local obsidian = require("obsidian")
     local work_path = HOME_PATH .. "/Documents/Obsidian/work"
     local personal_path = HOME_PATH .. "/Documents/Obsidian/personal"
     if not init_path(work_path) then
       work_path = HOME_PATH .. "/Documents"
     end
+
     if not init_path(personal_path) then
       personal_path = HOME_PATH
     end
+
     obsidian.setup({
       workspaces = {
         { name = "work", path = work_path },

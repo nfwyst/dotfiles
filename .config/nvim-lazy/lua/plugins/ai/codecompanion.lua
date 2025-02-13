@@ -62,22 +62,12 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
+    "saghen/blink.cmp",
     {
       "nvim-lualine/lualine.nvim",
       module = false,
       opts = function(_, opts)
         PUSH(opts.sections.lualine_x, require("features.lualine.components").codecompanion)
-      end,
-    },
-    {
-      "saghen/blink.cmp",
-      module = false,
-      opts = function(_, opts)
-        local sources = opts.sources
-        if not sources.per_filetype then
-          sources.per_filetype = {}
-        end
-        sources.per_filetype.codecompanion = { "codecompanion" }
       end,
     },
   },
@@ -107,6 +97,8 @@ return {
     { "<leader>act", change_prompt, desc = "CodeCompanion: Change Prompt" },
   },
   config = function()
+    ADD_BLINK_SOURCE("codecompanion", { "codecompanion" })
+
     -- hide left columns for code companion sidebar
     if not FILETYPE_TASK_MAP.codecompanion then
       FILETYPE_TASK_MAP.codecompanion = function(_, win)

@@ -86,17 +86,7 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
-    {
-      "saghen/blink.cmp",
-      module = false,
-      opts = function(_, opts)
-        push_list(opts.sources.compat, {
-          "avante_commands",
-          "avante_mentions",
-          "avante_files",
-        })
-      end,
-    },
+    "saghen/blink.cmp",
   },
   keys = {
     { "<leader>a", "", desc = "ai", mode = mode },
@@ -157,6 +147,12 @@ return {
     },
   },
   config = function()
+    ADD_BLINK_COMPAT_SOURCES({
+      "avante_commands",
+      "avante_mentions",
+      "avante_files",
+    })
+
     -- hide left columns for avante sidebar
     if not FILETYPE_TASK_MAP.Avante then
       assign(FILETYPE_TASK_MAP, {

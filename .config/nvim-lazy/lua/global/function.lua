@@ -400,3 +400,31 @@ function SELECT_PROMPT(on_select)
     on_select(result)
   end)
 end
+
+function ADD_BLINK_SOURCE(source, filetypes, config)
+  local cmp = require("blink.cmp")
+  if config then
+    cmp.add_provider(source, config)
+  end
+
+  if not filetypes then
+    local sources = require("blink.cmp.config").sources
+    return PUSH(sources.default, source)
+  end
+
+  for _, filetype in ipairs(filetypes) do
+    cmp.add_filetype_source(filetype, source)
+  end
+end
+
+---@class blink.cmp.SourceConfig
+---@field compat table[]
+function ADD_BLINK_COMPAT_SOURCES(_sources)
+  local sources = require("blink.cmp.config").sources
+
+  if not sources.compat then
+    sources.compat = {}
+  end
+
+  push_list(sources.compat, _sources)
+end

@@ -178,7 +178,6 @@ return {
       },
       signature = { window = { border = "rounded" } },
       sources = {
-        per_filetype = {},
         providers = {
           lsp = {
             should_show_items = shouldnt_show_emoji,
