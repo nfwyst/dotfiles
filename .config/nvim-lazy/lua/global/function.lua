@@ -145,12 +145,6 @@ function SET_OPTS(opts, opt)
   end
 end
 
-function SET_LOCAL_OPTS(opts, buf)
-  for k, v in pairs(opts) do
-    api.nvim_set_option_value(k, v, { buf = buf })
-  end
-end
-
 function WIN_CURSOR(win, value)
   if not value then
     return api.nvim_win_get_cursor(win)

@@ -17,13 +17,13 @@ local function is_tab_indent(bufnr)
   return false
 end
 
-local function set_tab(level, expand)
-  SET_LOCAL_OPTS({
+local function set_tab(level, expand, bufnr)
+  SET_OPTS({
     expandtab = expand,
     tabstop = level,
     softtabstop = level,
     shiftwidth = level,
-  })
+  }, { buf = bufnr })
 end
 
 local function sync_tab(bufnr)
@@ -31,9 +31,9 @@ local function sync_tab(bufnr)
     return
   end
 
-  set_tab(4, false)
+  set_tab(4, false, bufnr)
   MAP("n", "<leader>cT", function()
-    set_tab(2, true)
+    set_tab(2, true, bufnr)
   end, {
     desc = "Fix Tab Level",
     buffer = bufnr,

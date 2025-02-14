@@ -22,7 +22,7 @@ local function setup_prettier()
   prettierd.command = DATA_PATH .. "/mason/bin/prettierd"
 end
 
-local function add_keymap_pre_hook(modes, lhses, pre_hook)
+local function keymap_pre_hook(modes, lhses, pre_hook)
   for _, mode in ipairs(modes) do
     for _, lhs in ipairs(lhses) do
       local conf = fn.maparg(lhs, mode, false, true)
@@ -64,10 +64,16 @@ return {
     setup_prettier()
 
     local prettierd = require("conform.formatters.prettierd")
-    add_keymap_pre_hook({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
-      local v = OPT("shiftwidth", { buf = CUR_BUF() })
-      prettierd.args = { "--tab-width", v, "$FILENAME" }
+    keymap_pre_hook({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
+      local shiftwidth = OPT("shiftwidth", { buf = CUR_BUF() })
       NEED_ESLINT_FIX = false
+
+      if shiftwidth == 2 then
+        prettierd.args = { "$FILENAME" }
+        return
+      end
+
+      prettierd.args = { "--tab-width", shiftwidth, "$FILENAME" }
     end)
 
     local opt = {
