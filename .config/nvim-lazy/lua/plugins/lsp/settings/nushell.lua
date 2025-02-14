@@ -1,11 +1,13 @@
 local key = "autoformat"
 
-FILETYPE_TASK_MAP.nu = function(bufnr)
-  if BUF_VAR(bufnr, key) ~= nil then
-    return
-  end
+if g[key] then
+  FILETYPE_TASK_MAP.nu = function(bufnr)
+    if BUF_VAR(bufnr, key) ~= nil then
+      return
+    end
 
-  BUF_VAR(bufnr, key, false)
+    BUF_VAR(bufnr, key, false)
+  end
 end
 
 return {
