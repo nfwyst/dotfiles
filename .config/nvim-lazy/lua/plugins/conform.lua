@@ -22,40 +22,54 @@ local function setup_prettier()
   prettierd.command = DATA_PATH .. "/mason/bin/prettierd"
 end
 
-local format_opt = {
-  timeout_ms = 1000,
-  async = true,
-}
+local function add_keymap_pre_hook(modes, lhses, pre_hook)
+  for _, mode in ipairs(modes) do
+    for _, lhs in ipairs(lhses) do
+      local conf = fn.maparg(lhs, mode, false, true)
+      if not EMPTY(conf, true) then
+        local callback = conf.callback
+        if not callback then
+          callback = function()
+            PRESS_KEYS(conf.rhs, mode:lower())
+          end
+        end
 
-local mode = { "n", "v" }
+        local opt = {
+          noremap = conf.noremap == 1,
+          silent = conf.silent == 1,
+          nowait = conf.nowait == 1,
+          script = conf.script == 1,
+          expr = conf.expr == 1,
+          desc = conf.desc,
+        }
+        local function rhs()
+          pre_hook()
+          callback()
+        end
+
+        if conf.buffer ~= 0 then
+          opt.buffer = conf.buffer
+        end
+
+        MAP(mode, lhs, rhs, opt)
+      end
+    end
+  end
+end
 
 return {
   "stevearc/conform.nvim",
-  keys = {
-    {
-      "<leader>cF",
-      function()
-        NEED_ESLINT_FIX = false
-        require("conform").format(merge(format_opt, {
-          formatters = { "injected" },
-        }))
-      end,
-      mode = mode,
-      desc = "Format Injected Langs",
-    },
-    {
-      "<leader>cf",
-      function()
-        NEED_ESLINT_FIX = false
-        LazyVim.format({ force = true })
-      end,
-      mode = mode,
-      desc = "Format",
-    },
-  },
   opts = function(_, opts)
     setup_eslint()
     setup_prettier()
+
+    local prettierd = require("conform.formatters.prettierd")
+    add_keymap_pre_hook({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
+      local v = OPT("shiftwidth", { buf = CUR_BUF() })
+      prettierd.args = { "--tab-width", v, "$FILENAME" }
+      NEED_ESLINT_FIX = false
+    end)
+
     local opt = {
       log_level = levels.OFF,
       formatters_by_ft = {

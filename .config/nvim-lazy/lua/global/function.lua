@@ -101,7 +101,11 @@ function BUF_PATH(bufnr)
   return api.nvim_buf_get_name(bufnr)
 end
 
-function EMPTY(input)
+function EMPTY(input, table_mode)
+  if table_mode and type(input) == "table" then
+    return vim.tbl_isempty(input)
+  end
+
   return input == "" or not input
 end
 

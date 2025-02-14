@@ -30,6 +30,7 @@ local function sync_tab(bufnr)
   if not is_tab_indent(bufnr) then
     return
   end
+
   set_tab(4, false)
   MAP("n", "<leader>cT", function()
     set_tab(2, true)
