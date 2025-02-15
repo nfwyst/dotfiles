@@ -65,7 +65,7 @@ AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
 
 LLM = {
-  proxy = os.getenv("ALL_PROXY"),
+  proxy = env.all_proxy,
   temperature = 0,
   timeout = 5000,
   hyperbolic = {
@@ -96,7 +96,7 @@ LLM = {
     },
   },
   ollama = {
-    origin = os.getenv("OLLAMA_API_BASE"),
+    origin = env.OLLAMA_API_BASE,
     pathname = OPENAI_PATHNAME,
     api_key = "TERM",
     max_tokens = 8192,
@@ -118,7 +118,7 @@ LLM = {
   },
 }
 
-HAS_AI_KEY = os.getenv(LLM.hyperbolic.api_key) ~= nil
+HAS_AI_KEY = env[LLM.hyperbolic.api_key] ~= nil
 CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
@@ -161,6 +161,7 @@ PROMPT = [[
 ]]
 
 ESLINT_CONFIGS = {
+  ".eslintrc",
   ".eslintrc.js",
   ".eslintrc.cjs",
   ".eslintrc.yaml",

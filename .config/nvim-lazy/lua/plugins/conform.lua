@@ -63,17 +63,15 @@ return {
     setup_eslint()
     setup_prettier()
 
-    local prettierd = require("conform.formatters.prettierd")
     keymap_pre_hook({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
-      local shiftwidth = OPT("shiftwidth", { buf = CUR_BUF() })
       NEED_ESLINT_FIX = false
 
-      if shiftwidth == 2 then
-        prettierd.args = { "$FILENAME" }
-        return
+      local name = ".prettierrc.json"
+      if OPT("shiftwidth", { buf = CUR_BUF() }) == 4 then
+        name = ".prettierrc_tab.json"
       end
 
-      prettierd.args = { "--tab-width", shiftwidth, "$FILENAME" }
+      env.PRETTIERD_DEFAULT_CONFIG = HOME_PATH .. '/.config/' .. name
     end)
 
     local opt = {
@@ -102,13 +100,11 @@ return {
       },
       formatters = {
         beautysh = function()
+          local shiftwidth = OPT("shiftwidth", { buf = CUR_BUF() })
+
           return {
             command = "beautysh",
-            args = {
-              "-i",
-              o.shiftwidth,
-              "$FILENAME",
-            },
+            args = { "-i", tostring(shiftwidth), "$FILENAME" },
             stdin = false,
           }
         end,
