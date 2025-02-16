@@ -1,199 +1,140 @@
-local diagnostics = {
-  'diagnostics',
-  sources = { 'nvim_diagnostic' },
-  sections = { 'error', 'warn' },
-  symbols = { error = ' ', warn = ' ' },
-  colored = false,
-  update_in_insert = false,
-  always_visible = true,
-  cond = function()
-    local bufnr = GET_CURRENT_BUFFER()
-    return GET_BUFFER_VARIABLE(bufnr, CONSTANTS.DST_INITIALIZED)
-  end,
-}
+local toggle_buffer_pin = require("features.lualine.toggle-buffer-pin")
+local formatters = require("features.lualine.formatters")
+local refresh_time = 500
+local extensions
 
-local show_on_width = function(width)
-  if not width then
-    width = 80
-  end
-  return GET_EDITOR_WIDTH() > width
+if IS_LINUX then
+  extensions = {}
+  refresh_time = 2000
 end
 
-local diff = {
-  'diff',
-  colored = true,
-  symbols = { added = ' ', modified = ' ', removed = ' ' }, -- changes diff symbols
-  cond = show_on_width,
-}
+local buffers_title_map = formatters.buffers_title_map
 
-local mode = {
-  'mode',
-  fmt = function(str)
-    return str
-  end,
-  padding = { right = 0, left = 1 },
-}
-
-local filetype = {
-  'filetype',
-  icons_enabled = false,
-  icon = nil,
-}
-
-local branch = {
-  'branch',
-  icons_enabled = true,
-  icon = '',
-}
-
-local location = {
-  'location',
-  padding = 1,
-}
-
--- cool function for progress
-local progress = {
-  function()
-    local current_line = vim.fn.line('.')
-    local total_lines = vim.fn.line('$')
-    local chars = {
-      '  ',
-      '▁▁',
-      '▂▂',
-      '▃▃',
-      '▄▄',
-      '▅▅',
-      '▆▆',
-      '▇▇',
-      '██',
-    }
-    local line_ratio = current_line / total_lines
-    local index = math.ceil(line_ratio * #chars)
-    return chars[index]
-  end,
-  padding = 0,
-}
-
-local spaces = function()
-  local width = GET_EDITOR_WIDTH()
-  if width < 56 then
-    return ''
+local function clean_buffers_title_map(bufnr)
+  local bufpath = BUF_PATH(bufnr)
+  if not IS_FILEPATH(bufpath, true) then
+    return
   end
-  return 'space:' .. GET_OPT('shiftwidth', { buf = GET_CURRENT_BUFFER() })
+
+  local bufname = fs.basename(bufpath)
+  local showed_map = buffers_title_map[bufname]
+
+  if not showed_map then
+    return
+  end
+
+  buffers_title_map[bufname] = filter(function(buf)
+    return buf ~= bufnr
+  end, showed_map)
+
+  if #buffers_title_map[bufname] < 1 then
+    buffers_title_map[bufname] = nil
+  end
 end
-
-local noice_mode = {
-  function()
-    return require('noice').api.status.mode.get()
-  end,
-  cond = function()
-    return require('noice').api.status.mode.has()
-  end,
-  color = { fg = '#ffffff' },
-}
-
-local lsps = function()
-  local clients = vim.lsp.get_clients({ bufnr = GET_CURRENT_BUFFER() })
-  local width = GET_EDITOR_WIDTH()
-  if next(clients) == nil or width < 66 then
-    return ''
-  end
-
-  local c = {}
-  for _, client in pairs(clients) do
-    table.insert(c, client.name)
-  end
-  return '󱓞 ' .. table.concat(c, '•')
-end
-
-local debugger = {
-  function()
-    return '  ' .. require('dap').status()
-  end,
-  cond = function()
-    return IS_PACKAGE_LOADED('dap') and require('dap').status() ~= ''
-  end,
-  color = { fg = '#ff9e64' },
-}
-
-local timer = {
-  function()
-    return require('nomodoro').status()
-  end,
-  cond = function()
-    return IS_PACKAGE_LOADED('nomodoro')
-  end,
-  color = { fg = GET_COLOR().red },
-  padding = { left = 0, right = 1 },
-}
-
-local fileformat = {
-  function()
-    if IS_MAC then
-      return ''
-    end
-    local format = vim.bo.fileformat
-    if format == 'dos' then
-      return ''
-    end
-    if format == 'unix' then
-      return ''
-    end
-    return format
-  end,
-  cond = show_on_width,
-}
 
 return {
-  'nvim-lualine/lualine.nvim',
-  dependencies = { 'nvim-tree/nvim-web-devicons' },
-  event = 'VeryLazy',
-  config = function()
-    local lualine = require('lualine')
-    local lazy_status = require('lazy.status')
-    lualine.setup({
+  "nvim-lualine/lualine.nvim",
+  keys = toggle_buffer_pin.keys,
+  opts = function(_, opts)
+    local components = require("features.lualine.components")
+    local sections = opts.sections
+
+    SET_BUF_DEL_MAP("lualine", function(bufnr)
+      clean_buffers_title_map(bufnr)
+    end)
+
+    PUSH(sections.lualine_a, {
+      "tabs",
+      show_modified_status = false,
+      cond = function()
+        return fn.tabpagenr("$") > 1
+      end,
+    })
+
+    local lualine_c = filter(function(item)
+      local name = item[1]
+      local is_diag = name == "diagnostics"
+      if is_diag then
+        assign(item, {
+          update_in_insert = false,
+          cond = function()
+            return BUF_VAR(CUR_BUF(), CONSTS.LINT_INITED)
+          end,
+        })
+      end
+      return is_diag or name == "filetype"
+    end, sections.lualine_c)
+
+    local lualine_x = sections.lualine_x
+    if IS_LINUX then
+      lualine_x = filter(function(item)
+        return item[1] ~= require("lazy.status").updates
+      end, lualine_x)
+    end
+
+    local lualine_y = filter(function(item)
+      return item[1] ~= "progress"
+    end, sections.lualine_y)
+    push_list(lualine_y, {
+      {
+        function()
+          return "󱁐:" .. OPT("shiftwidth", { buf = CUR_BUF() })
+        end,
+        padding = { left = 0, right = 1 },
+      },
+      { "encoding", padding = { left = 0, right = 1 } },
+      components.memory,
+    })
+
+    local opt = {
       options = {
-        icons_enabled = true,
-        theme = DEFAULT_COLORSCHEME or 'auto',
-        component_separators = { left = '', right = '' },
-        section_separators = { left = '', right = '' },
-        ignore_focus = { 'NvimTree' },
+        component_separators = { left = "", right = "" },
+        section_separators = { left = "", right = "" },
+        ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion", "snacks_terminal" },
+        disabled_filetypes = { statusline = {} },
         globalstatus = true,
+        refresh = {
+          statusline = refresh_time,
+          tabline = refresh_time / 2,
+        },
       },
       sections = {
-        lualine_a = {
-          mode,
-          noice_mode,
-          branch,
-          {
-            'tabs',
-            use_mode_colors = true,
-          },
-        },
-        lualine_b = {
-          diagnostics,
-          filetype,
-          lsps,
-          'searchcount',
-        },
-        lualine_c = { timer },
-        lualine_x = {
-          {
-            lazy_status.updates,
-            cond = lazy_status.has_updates,
-            color = { fg = '#ff9e64' },
-          },
-        },
-        lualine_y = {
-          diff,
-          debugger,
-          spaces,
-          { cond = show_on_width, 'encoding' },
-          fileformat,
-          location,
-        },
-        lualine_z = { progress },
+        lualine_c = lualine_c,
+        lualine_x = lualine_x,
+        lualine_y = lualine_y,
+        lualine_z = { components.progress },
       },
-    })
+      tabline = {
+        lualine_a = {
+          {
+            "buffers",
+            show_modified_status = true,
+            max_length = o.columns,
+            filetype_names = {
+              snacks_dashboard = "dashboard",
+              ["neo-tree"] = "file tree",
+              AvanteInput = "avante input",
+              Avante = "avante chat",
+              lazy = "plugin manager",
+              mason = "package manager",
+            },
+            component_separators = { left = " ▎", right = " ▎" },
+            symbols = {
+              alternate_file = "󰁯 ",
+            },
+            fmt = formatters.buffers,
+            icons_enabled = false,
+            buffers_color = {
+              active = { fg = "#ffffff", bg = "#6f95ff" },
+            },
+            use_mode_colors = false,
+          },
+        },
+        lualine_x = { components.root_path_guide },
+      },
+      extensions = extensions,
+    }
+
+    return merge(opts, opt)
   end,
 }

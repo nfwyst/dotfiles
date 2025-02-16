@@ -911,7 +911,7 @@ source ~/.config/nushell/aliases/git.nu
 
 # alias
 alias e = nvim
-alias el = env NVIM_APPNAME=nvim-lazy nvim
+alias eo = env NVIM_APPNAME=nvim-old nvim
 alias vim = nvim
 alias vi = nvim
 alias ys = yarn start

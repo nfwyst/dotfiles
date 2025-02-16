@@ -1,22 +1,29 @@
 return {
   settings = {
     Lua = {
-      format = {
-        enable = false,
+      workspace = {
+        checkThirdParty = false,
       },
       diagnostics = {
-        globals = { 'vim', 'require' },
-        disable = { 'lowercase-global' },
+        globals = { "vim", "require" },
+        disable = {},
       },
-      runtime = {
-        version = 'LuaJIT',
+      codeLens = {
+        enable = true,
       },
-      workspace = {
-        checkThirdParty = 'Disable',
-        library = {
-          [os.getenv('VIMRUNTIME') .. '/lua'] = true,
-          [CONFIG_PATH .. '/lua'] = true,
-        },
+      completion = {
+        callSnippet = "Replace",
+      },
+      doc = {
+        privateName = { "^_" },
+      },
+      hint = {
+        enable = true,
+        setType = false,
+        paramType = true,
+        paramName = "Disable",
+        semicolon = "Disable",
+        arrayIndex = "Disable",
       },
       telemetry = {
         enable = false,

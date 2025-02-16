@@ -1,5 +1,4 @@
 <!--toc:start-->
-
 - [💤 perfect-neovim-config](#💤-perfect-neovim-config)
 - [Requirements](#requirements)
 - [Optional dependencies](#optional-dependencies)
@@ -25,14 +24,13 @@ make neovim as a perfect ide for development
 4. ncdu -- list file by size
 5. htop -- an interactive process viewer
 6. python3
-7. gzip
-8. wget
-9. rust
-10. tree-sitter -- for parser generator
-11. sed -- for formatter to use
-12. ripgrep -- for telescope to work
-13. go
-14. delta -- syntax highlighted git pager for git status previews
+8. gzip
+9. wget
+10. rust
+11. tree-sitter -- for parser generator
+12. sed -- for formatter to use
+13. ripgrep -- for telescope to work
+14. go
 
 # Optional dependencies
 
@@ -131,11 +129,4 @@ uv add ell-ai # agent
 uv run docling url # convert pdf
 uv run chat.py
 uv run input.md output.md
-```
-
-# edit and review gitHub issues and pull requests
-
-```sh
-gh auth login --scopes read:project
-# then login with token without github credentials
 ```

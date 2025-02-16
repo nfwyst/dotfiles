@@ -1,19 +1,19 @@
--- must use uppercase
-local keys = {
-  '<C-u>',
-  '<C-d>',
-  '<C-y>',
-  '<C-e>',
-  'zt',
-  'zz',
-  'zb',
-}
-
 return {
-  'karb94/neoscroll.nvim',
-  keys = keys,
+  "karb94/neoscroll.nvim",
+  cond = ENABLE_SCROLL_EFFECT,
+  event = { "BufReadPost", "BufNewFile" },
   opts = {
-    performance_mode = true,
-    mappings = keys,
+    performance_mode = IS_LINUX,
+    mappings = {
+      "<C-u>",
+      "<C-d>",
+      "<C-b>",
+      "<C-f>",
+      "<C-y>",
+      "<C-e>",
+      "zt",
+      "zz",
+      "zb",
+    },
   },
 }

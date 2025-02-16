@@ -1,307 +1,133 @@
-DATA_PATH = vim.fn.stdpath('data')
-CONFIG_PATH = vim.fn.stdpath('config')
-HOME_PATH = vim.fn.expand('~')
-AUTOCMD = vim.api.nvim_create_autocmd
-AUTOGROUP = vim.api.nvim_create_augroup
-IS_LEETING = false
-HAS_API_KEY = not not os.getenv('DEEPSEEK_API_KEY')
-HAS_GIT_ROOT = false
-SCHEME_BACKGROUND = 'dark'
+_G.api = vim.api
+_G.fn = vim.fn
+_G.g = vim.g
+_G.keymap = vim.keymap
+_G.lsp = vim.lsp
+_G.levels = vim.log.levels
+_G.diagnostic = vim.diagnostic
+_G.severity = diagnostic.severity
+_G.snippet = vim.snippet
+_G.v = vim.v
+_G.defer = vim.defer_fn
+_G.schedule = vim.schedule
+_G.push_list = vim.list_extend
+_G.language = vim.treesitter.language
+_G.fs = vim.fs
+_G.uv = vim.uv
+_G.filter = vim.tbl_filter
+_G.map = vim.tbl_map
+_G.contains = vim.tbl_contains
+_G.env = vim.env
+_G.o = vim.o
+_G.cmd = vim.cmd
+_G.filter = vim.tbl_filter
+_G.islist = vim.islist
+_G.NIL = vim.NIL
+_G.ui = vim.ui
+_G.keys = vim.tbl_keys
+_G.shadow_merge = function(...)
+  return vim.tbl_extend("force", ...)
+end
+_G.merge = function(...)
+  return vim.tbl_deep_extend("force", ...)
+end
+_G.assign = function(dest, from)
+  for key, value in pairs(from) do
+    dest[key] = value
+  end
+  return dest
+end
+
+MEMORY_LIMIT = 75
+MEMORY_USAGE = nil
+HOME_PATH = fn.expand("~")
+AUCMD = api.nvim_create_autocmd
+CMD = api.nvim_create_user_command
+GROUP = api.nvim_create_augroup
+IS_LINUX = jit.os == "Linux"
+DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
-OS = jit.os
-IS_MAC = OS == 'OSX'
-DEFAULT_COLORSCHEME = 'tokyonight'
-MAX_BUFFER_NUM = 7
-BUFFER_OPENED_TIME = {}
-VERSION = vim.version()
-CURSOR_HILIGHT_OPTS = {
-  Cursor = { bg = '#5f87af', ctermbg = 67, blend = 0 },
-  iCursor = { bg = '#ffffaf', ctermbg = 229 },
-  rCursor = { bg = '#d70000', ctermbg = 124 },
+STAY_CENTER = true
+ESLINT_BIN_NAME = "eslint_d"
+ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
+NEED_ESLINT_FIX = false
+IS_ZEN_MODE = false
+HAS_WEZTERM = fn.executable("wezterm") == 1
+TRANSPARENT_INDENT_HL = "#666666"
+ENABLE_SCROLL_EFFECT = not IS_LINUX
+IS_LAUNCH_FROM_GIT_REPO = false
+FILETYPE_TASK_MAP = {}
+TASK_KEY = "_TASK_DONE_"
+FT_HIDE_CURSOR = {}
+MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
+MAX_OPEND_FILES = IS_LINUX and 3 or 7
+AUTO_CLOSE_BUF_ENABLED = true
+OPENAI_PATHNAME = "/v1/chat/completions"
+
+LLM = {
+  proxy = env.all_proxy,
+  temperature = 0,
+  timeout = 5000,
+  hyperbolic = {
+    origin = "https://api.hyperbolic.xyz",
+    pathname = OPENAI_PATHNAME,
+    fim_pathname = "/v1/completions",
+    api_key = "HYPERBOLIC_API_KEY",
+    max_tokens = 131072,
+    num_ctx = 134144,
+    model = "deepseek-ai/DeepSeek-R1",
+    models = {
+      "deepseek-ai/DeepSeek-R1",
+      "deepseek-ai/DeepSeek-R1-Zero",
+      "deepseek-ai/DeepSeek-V3",
+    },
+  },
+  deepseek = {
+    origin = "https://api.deepseek.com",
+    pathname = OPENAI_PATHNAME,
+    fim_pathname = "/beta/completions",
+    api_key = "DEEPSEEK_API_KEY",
+    max_tokens = 8192,
+    num_ctx = 65536,
+    model = "deepseek-reasoner",
+    models = {
+      "deepseek-reasoner",
+      "deepseek-chat",
+    },
+  },
+  ollama = {
+    origin = env.OLLAMA_API_BASE,
+    pathname = OPENAI_PATHNAME,
+    api_key = "TERM",
+    max_tokens = 8192,
+    num_ctx = 16384,
+    model = "deepseek-r1:32b",
+    models = {
+      "deepseek-r1:32b",
+      "deepseek-coder-v2",
+    },
+  },
+  gemini = {
+    origin = "https://generativelanguage.googleapis.com/v1beta/models",
+    api_key = "GEMINI_API_KEY",
+    model = "gemini-2.0-pro-exp-02-05",
+    models = {
+      "gemini-2.0-flash",
+      "gemini-2.0-pro-exp-02-05",
+    },
+  },
 }
 
---- Manual open debug from command line
-if DAP_DEBUG_ENABLED == nil then
-  DAP_DEBUG_ENABLED = false
-end
-
-function GEN_PATH(path)
-  return vim.fn.fnamemodify(path, ':p')
-end
-
-OBSIDIAN_DIR = GEN_PATH(HOME_PATH .. '/Documents/Obsidian/personal')
-OBSIDIAN_WORK_DIR = GEN_PATH(HOME_PATH .. '/Documents/Obsidian/work')
-LAZY_PATH = DATA_PATH .. GEN_PATH('/lazy/lazy.nvim')
-SNIPPET_PATH = CONFIG_PATH .. GEN_PATH('/snippets')
-
-local svt = vim.diagnostic.severity
-local lv = vim.log.levels
-DERROR = svt.ERROR
-DWARN = svt.WARN
-DINFO = svt.INFO
-DHINT = svt.HINT
-INFO = lv.INFO
-WARN = lv.WARN
-ERROR = lv.ERROR
-OFF = lv.OFF
-
-TSX_COMMENT_INCLUDED_FILES = {
-  'javascriptreact',
-  'typescriptreact',
-  'javascript',
-  'typescript',
+HAS_AI_KEY = env[LLM.hyperbolic.api_key] ~= nil
+CONSTS = {
+  LINT_INITED = "LINT_INITED",
+  WIN_DIMED = "WIN_DIMED",
+  IS_BUF_PINNED = "IS_BUF_PINNED",
+  PREV_ROW = "PREV_ROW",
+  PREV_COL = "PREV_COL",
 }
 
-LSP_SERVERS = {
-  'jsonls',
-  'lua_ls',
-  'ts_ls',
-  'cssls',
-  'gopls',
-  'html',
-  'yamlls',
-  'tailwindcss',
-  'marksman',
-  'svelte',
-  'bashls',
-  'taplo',
-}
-
-INVALID_CURSORLINE_FILETYPE = {
-  'TelescopePrompt',
-  'DressingInput',
-  'DressingSelect',
-  'toggleterm',
-  'noice',
-  'notify',
-  'WhichKey',
-  'Avante',
-  'AvanteInput',
-}
-
-INVALID_FILETYPE = {
-  'NvimTree',
-  'alpha',
-  'qf',
-  'help',
-  'man',
-  'lspinfo',
-  'gitcommit',
-  'TelescopePrompt',
-  'DressingInput',
-  'DressingSelect',
-  'grug-far',
-  'Trouble',
-  'toggleterm',
-  'lazy',
-  'noice',
-  'notify',
-  'NeogitStatus',
-  'NeogitCommitMessage',
-  'NeogitLogView',
-  'NeogitCommitView',
-  'DiffviewFiles',
-  'DiffviewFileHistory',
-  'mason',
-  'WhichKey',
-  'TelescopeResults',
-  'Avante',
-  'AvanteInput',
-  'harpoon',
-}
-
-TREESITTER_ENSURE_INSTALL = {
-  'markdown',
-  'markdown_inline',
-  'bash',
-  'html',
-  'json',
-  'jsdoc',
-  'jsonc',
-  'javascript',
-  'typescript',
-  'tsx',
-  'css',
-  'scss',
-  'regex',
-  'yaml',
-  'go',
-  'lua',
-  'svelte',
-  'latex',
-  'vimdoc',
-}
-
-TELESCOPE_IGNORE_PATTERNS = {
-  '^%.dart_tool/',
-  '^%.github/',
-  '^%.gradle/',
-  '^%.idea/',
-  '^%.settings/',
-  '^%.vscode/',
-  '^%.umi/',
-  '^%.cache/',
-  '^%.husky/',
-  '^%.vale/',
-  '^smalljre_*/.*',
-  '^build/.*',
-  '^lib/.*',
-  '^env/.*',
-  '^vendor/.*',
-  '^dist/.*',
-  '^temp/.*',
-  '^gradle/.*',
-  '^target/.*',
-  '^__snapshots__/.*',
-  '^__pycache__/.*',
-  '%.webp',
-  '%.lock',
-  '%-lock%.yaml',
-  '%-lock%.json',
-  '%.sqlite3',
-  '%.ipynb',
-  '%.jpg',
-  '%.jpeg',
-  '%.png',
-  '%.svg',
-  '%.otf',
-  '%.ttf',
-  '%.pdb',
-  '%.dll',
-  '%.class',
-  '%.exe',
-  '%.map',
-  '%.cache',
-  '%.ico',
-  '%.pdf',
-  '%.dylib',
-  '%.jar',
-  '%.docx',
-  '%.min%.js',
-}
-
-PROJECT_PATTERNS = {
-  '_darcs',
-  '.hg',
-  '.bzr',
-  '.svn',
-  'Makefile',
-  'webpack.*js',
-  'node_modules',
-  'stylua.toml',
-  'tsconfig.json',
-  '.git',
-}
-
-LSP_SYMBOLS = {
-  'All',
-  'Text',
-  'Method',
-  'Function',
-  'Constructor',
-  'Field',
-  'Variable',
-  'Class',
-  'Interface',
-  'Module',
-  'Property',
-  'Unit',
-  'Value',
-  'Enum',
-  'Keyword',
-  'Snippet',
-  'Color',
-  'File',
-  'Reference',
-  'Folder',
-  'EnumMember',
-  'Constant',
-  'Struct',
-  'Event',
-  'Operator',
-  'TypeParameter',
-}
-
-KEYMAP_EXCLUDE_FTS = {
-  ['<c-o>'] = { 'qf' },
-  ['<c-i>'] = { 'qf' },
-  ['<leader>f'] = { 'qf' },
-  ['<leader>F'] = { 'qf' },
-  ['<leader>r'] = { 'qf' },
-  ['<leader>R'] = { 'qf' },
-}
-
-local function defaulter(f, default_opts)
-  default_opts = default_opts or {}
-  return {
-    new = function(options)
-      local conf = require('telescope.config').values
-      if conf.preview == false and not options.preview then
-        return false
-      end
-      options.preview = type(options.preview) ~= 'table' and {}
-        or options.preview
-      if type(conf.preview) == 'table' then
-        for k, v in pairs(conf.preview) do
-          options.preview[k] = vim.F.if_nil(options.preview[k], v)
-        end
-      end
-      return f(options)
-    end,
-    __call = function()
-      local ok, err = pcall(f(default_opts))
-      if not ok then
-        error(debug.traceback(err))
-      end
-    end,
-  }
-end
-
-function highlight_row(bufnr, row)
-  vim.api.nvim_buf_add_highlight(bufnr, -1, 'CursorLine', row - 1, 0, -1)
-end
-
-PREVIEWER = defaulter(function(options)
-  local previewers = require('telescope.previewers')
-  local from_entry = require('telescope.from_entry')
-  local conf = require('telescope.config').values
-  return previewers.new_buffer_previewer({
-    define_preview = function(self, entry)
-      local winid = self.state.winid
-      local bufnr = self.state.bufnr
-      local parsed_entry = entry
-      local row = nil
-      if options.entry_parser then
-        parsed_entry, row = options.entry_parser(entry)
-      end
-      local filepath = from_entry.path(parsed_entry, true, false)
-      if filepath == nil or filepath == '' then
-        return
-      end
-      conf.buffer_previewer_maker(filepath, bufnr, {
-        bufname = self.state.bufname,
-        winid = winid,
-        preview = options.preview,
-        file_encoding = options.file_encoding,
-      })
-      if not row then
-        return
-      end
-      SET_TIMEOUT(function()
-        highlight_row(bufnr, row)
-        local win_height = GET_VIEWPORT_HEIGHT(winid)
-        row = row - 1 - math.floor(win_height / 2)
-        if row <= 0 then
-          return
-        end
-        RUN_IN_WINDOW(winid, function()
-          vim.cmd.normal({ row .. '', bang = true })
-        end)
-      end, 50)
-    end,
-  })
-end, {})
-
+PURE_PROMPT = [[你是一位无所不能的助手]]
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。
 你的主要目标是帮助我在编写代码时学习编程概念、最佳实践和解决问题的技能。
@@ -329,29 +155,23 @@ PROMPT = [[
 2. 回答我的问题
 3. 提供代码审查和反馈
 4. 提供进一步学习或练习的建议
+5. 所有非代码回复必须为中文
 请记住，你的目标不仅是帮助我编写正确的代码，而且要帮助我理解基本原理并提高我的编程技能。
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
 
-ESLINT_CONFIG_NAMES = {
-  '.eslintrc.js',
-  '.eslintrc.cjs',
-  '.eslintrc.yaml',
-  '.eslintrc.yml',
-  '.eslintrc.json',
-  'eslint.config.js',
-  'eslint.config.mjs',
-  'eslint.config.cjs',
-  'eslint.config.ts',
-  'eslint.config.mts',
-  'eslint.config.cts',
-  'package.json',
-}
-
-CONSTANTS = {
-  INVALID_FILETYPE = 'INVALID_FILETYPE',
-  INVALID_CURSORLINE_FILETYPE = 'INVALID_CURSORLINE_FILETYPE',
-  DST_INITIALIZED = 'DIAGNOSTIC_INITIALIZED',
-  PREV_CURSOR_LINE = 'PREV_CURSOR_LINE',
-  VIMADE_FADE_CCTIVE = 'VIMADE_FADE_CCTIVE',
+ESLINT_CONFIGS = {
+  ".eslintrc",
+  ".eslintrc.js",
+  ".eslintrc.cjs",
+  ".eslintrc.yaml",
+  ".eslintrc.yml",
+  ".eslintrc.json",
+  "eslint.config.js",
+  "eslint.config.mjs",
+  "eslint.config.cjs",
+  "eslint.config.ts",
+  "eslint.config.mts",
+  "eslint.config.cts",
+  "package.json",
 }
