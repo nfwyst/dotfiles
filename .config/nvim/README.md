@@ -33,6 +33,7 @@ make neovim as a perfect ide for development
 12. ripgrep -- for telescope to work
 13. go
 14. delta -- syntax highlighted git pager for git status previews
+15. magick -- show image
 
 # Optional dependencies
 
