@@ -1,6 +1,18 @@
 return {
   "dbinagi/nomodoro",
   cmd = { "NomoTimer", "NomoMenu" },
+  keys = {
+    { "<leader>cum", "<cmd>NomoMenu<cr>", desc = "Nomodoro: Menu" },
+    {
+      "<leader>cuw",
+      function()
+        REQUEST_USER_INPUT("Enter minutes: ", function(minutes)
+          cmd.NomoTimer(minutes)
+        end)
+      end,
+      desc = "Nomodoro: Work With Custom Time",
+    },
+  },
   dependencies = {
     {
       "nvim-lualine/lualine.nvim",
@@ -8,12 +20,13 @@ return {
       opts = function(_, opts)
         PUSH(opts.sections.lualine_c, {
           function()
+            if not package.loaded["nomodoro"] then
+              return "🍅"
+            end
+
             return require("nomodoro").status()
           end,
-          cond = function()
-            return package.loaded["nomodoro"]
-          end,
-          color = { fg = "#dc322f" },
+          color = { fg = "#04d1f9" },
           padding = { left = 0, right = 1 },
         })
       end,

@@ -12,15 +12,18 @@ local function toggle_buf_pin(bufnr, val)
   BUF_VAR(bufnr, key, not value)
 end
 
+local function bufnrs()
+  return require("lualine.components.buffers").bufpos2nr
+end
+
 local keys = {
   { "<leader>bm", "", desc = "auto management" },
   {
     "<leader>bmt",
     function()
       local bufnr = CUR_BUF()
-      local bufnrs = require("lualine.components.buffers").bufpos2nr
 
-      if contains(bufnrs, bufnr) then
+      if contains(bufnrs(), bufnr) then
         toggle_buf_pin(bufnr)
       end
     end,
@@ -29,8 +32,7 @@ local keys = {
   {
     "<leader>bmc",
     function()
-      local bufnrs = require("lualine.components.buffers").bufpos2nr
-      for _, bufnr in ipairs(bufnrs) do
+      for _, bufnr in ipairs(bufnrs()) do
         if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
           DEL_BUF(bufnr)
         end
@@ -41,8 +43,7 @@ local keys = {
   {
     "<leader>bmp",
     function()
-      local bufnrs = require("lualine.components.buffers").bufpos2nr
-      for _, bufnr in ipairs(bufnrs) do
+      for _, bufnr in ipairs(bufnrs()) do
         if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
           toggle_buf_pin(bufnr, true)
         end
@@ -53,8 +54,7 @@ local keys = {
   {
     "<leader>bmu",
     function()
-      local bufnrs = require("lualine.components.buffers").bufpos2nr
-      for _, bufnr in ipairs(bufnrs) do
+      for _, bufnr in ipairs(bufnrs()) do
         if BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
           toggle_buf_pin(bufnr, false)
         end
@@ -68,6 +68,15 @@ local keys = {
       AUTO_CLOSE_BUF_ENABLED = not AUTO_CLOSE_BUF_ENABLED
     end,
     desc = "Toggle Autoclose Buffers",
+  },
+  {
+    "<leader>bmd",
+    function()
+      for _, bufnr in ipairs(bufnrs()) do
+        DEL_BUF(bufnr)
+      end
+    end,
+    desc = "Delete All Buffers",
   },
 }
 

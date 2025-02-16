@@ -109,7 +109,7 @@ return {
   keys = function()
     -- lazy require harpoon
     local keys = {
-      { "<leader>h", "", desc = "Harpoon Bookmark" },
+      { "<leader>h", "", desc = "harpoon bookmark" },
       {
         "<leader>hf",
         function()

@@ -17,6 +17,7 @@ end
 MAPS({
   n = {
     { from = "p", to = paste },
+    { from = "<leader>cu", to = "", opt = { desc = "utils" } },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
     {

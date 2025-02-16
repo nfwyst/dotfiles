@@ -143,6 +143,7 @@ return {
         opts = {
           allow_insecure = false,
           proxy = LLM.proxy,
+          show_defaults = false,
         },
         hyperbolic = adapter_factory("hyperbolic"),
         deepseek = adapter_factory("deepseek"),

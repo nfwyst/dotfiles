@@ -141,7 +141,7 @@ return {
 
     local opt = {
       enabled = function()
-        return not contains({ "neo-tree", "neo-tree-popup" }, OPT("filetype", { buf = CUR_BUF() }))
+        return not contains({ "neo-tree", "neo-tree-popup", "typr" }, OPT("filetype", { buf = CUR_BUF() }))
       end,
       completion = {
         menu = {

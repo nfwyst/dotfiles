@@ -71,7 +71,7 @@ return {
         name = ".prettierrc_tab.json"
       end
 
-      env.PRETTIERD_DEFAULT_CONFIG = HOME_PATH .. '/.config/' .. name
+      env.PRETTIERD_DEFAULT_CONFIG = HOME_PATH .. "/.config/" .. name
     end)
 
     local opt = {
