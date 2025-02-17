@@ -38,7 +38,7 @@ local function hide_input_columns(bufnr, win)
   end, 30)
 end
 
-local function vendor_factory(name)
+local function vendor_factory(name, extra)
   local config = LLM[name]
   if not config then
     return
@@ -56,7 +56,7 @@ local function vendor_factory(name)
     endpoint = endpoint .. "/v1"
   end
 
-  return {
+  return merge({
     __inherited_from = vendor_name,
     model = config.model,
     api_key_name = config.api_key,
@@ -68,7 +68,7 @@ local function vendor_factory(name)
     allow_insecure = false,
     timeout = LLM.timeout,
     disable_tools = false,
-  }
+  }, extra or {})
 end
 
 local vendors = {
@@ -76,6 +76,7 @@ local vendors = {
   deepseek = vendor_factory("deepseek"),
   gemini = vendor_factory("gemini"),
   ollama = vendor_factory("ollama"),
+  fastapply = vendor_factory("ollama", { model = "hf.co/Kortix/FastApply-7B-v1.0_GGUF:Q4_K_M" }),
 }
 local vendor_names = keys(vendors)
 
@@ -175,6 +176,7 @@ return {
           },
         },
       },
+      cursor_applying_provider = "fastapply",
       behaviour = {
         auto_suggestions = false,
         auto_suggestions_respect_ignore = true,
@@ -183,6 +185,7 @@ return {
         auto_set_keymaps = false,
         support_paste_from_clipboard = false,
         minimize_diff = true,
+        enable_cursor_planning_mode = not IS_LINUX,
       },
       windows = {
         height = 100,

@@ -46,10 +46,38 @@ local function adapter_factory(name)
           choices = config.models,
         },
         temperature = {
+          order = 2,
+          mapping = "parameters.options",
+          type = "number",
+          optional = true,
           default = LLM.temperature,
+          desc = "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.",
+          validate = function(n)
+            return n >= 0 and n <= 2, "Must be between 0 and 2"
+          end,
         },
-        num_ctx = { default = config.num_ctx },
-        max_tokens = { default = config.max_tokens },
+        num_ctx = {
+          order = 3,
+          mapping = "parameters.options",
+          type = "number",
+          optional = true,
+          default = config.num_ctx,
+          desc = "The maximum number of tokens that the language model can consider at once. This determines the size of the input context window, allowing the model to take into account longer text passages for generating responses. Adjusting this value can affect the model's performance and memory usage.",
+          validate = function(n)
+            return n > 0, "Must be a positive number"
+          end,
+        },
+        max_tokens = {
+          order = 4,
+          mapping = "parameters",
+          type = "integer",
+          optional = true,
+          default = config.max_tokens,
+          desc = "The maximum number of tokens to generate in the chat completion. The total length of input tokens and generated tokens is limited by the model's context length.",
+          validate = function(n)
+            return n > 0, "Must be greater than 0"
+          end,
+        },
       },
     })
   end
