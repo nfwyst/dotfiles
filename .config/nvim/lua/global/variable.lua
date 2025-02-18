@@ -37,7 +37,7 @@ _G.assign = function(dest, from)
   end
   return dest
 end
-_G.executable = function (...)
+_G.executable = function(...)
   return fn.executable(...) == 1
 end
 
@@ -68,7 +68,7 @@ AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
 
 LLM = {
-  proxy = env.all_proxy,
+  proxy = env.http_proxy,
   temperature = 0,
   timeout = 5000,
   hyperbolic = {

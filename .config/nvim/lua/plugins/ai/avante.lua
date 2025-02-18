@@ -238,7 +238,20 @@ return {
       },
       file_selector = {
         provider = "fzf",
-        provider_opts = {},
+        provider_opts = {
+          get_filepaths = function(params)
+            -- get better performance with fd
+            local cmd = string.format("fd --base-directory '%s' --hidden", fn.fnameescape(params.cwd))
+            local filepaths = vim.split(fn.system(cmd), "\n", { trimempty = true })
+
+            return vim
+              .iter(filepaths)
+              :filter(function(filepath)
+                return not contains(params.selected_filepaths, filepath)
+              end)
+              :totable()
+          end,
+        },
       },
     })
 
