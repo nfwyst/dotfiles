@@ -43,12 +43,13 @@ make neovim as a perfect ide for development
 4. clang_format -- c/c++ formatter
 5. eslint -- js/ts diagnostic
 6. fortune -- show a random quotation from a collection of quotes in alpha dashboard
-7. shfmt -- sehll formater `go install mvdan.cc/sh/v3/cmd/shfmt@latest`, then set environment variable for go path bin folder
+7. shfmt -- shell formater `go install mvdan.cc/sh/v3/cmd/shfmt@latest`, then set environment variable for go path bin folder
 8. shellcheck -- shell linter
 9. beautysh -- zshell formater
 10. zsh -- a shell with some useful plugins
 11. xclip -- clipboard tool for linux
 12. fd -- for telescope compatibility
+13. kulala-fmt -- http formatter `go install github.com/mistweaverco/kulala-fmt@latest`
 
 # Install
 

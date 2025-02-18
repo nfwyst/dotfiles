@@ -48,7 +48,7 @@ end
 local function get_image_enabled()
   local no_linux = not IS_LINUX
   local no_zellij = env.ZELLIJ ~= "0"
-  local has_magick = fn.executable("magick") == 1
+  local has_magick = executable("magick")
 
   return no_linux and no_zellij and has_magick
 end

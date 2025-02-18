@@ -87,6 +87,7 @@ return {
         "xml",
         "yaml",
         "git_config",
+        "http",
       },
       ignore_install = nil,
       textobjects = {

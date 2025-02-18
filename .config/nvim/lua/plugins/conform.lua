@@ -96,6 +96,7 @@ return {
         zsh = { "beautysh" },
         lua = { "stylua" },
         toml = { "taplo" },
+        http = { "kulala-fmt" },
         ["_"] = { "trim_whitespace" },
       },
       formatters = {

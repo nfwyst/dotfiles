@@ -85,7 +85,7 @@ local function set_keymaps(bufnr)
       {
         from = "<leader>ct",
         to = "",
-        opt = get_opt("Typescript Tools"),
+        opt = get_opt("typescript tools"),
       },
       {
         from = "<leader>cto",

@@ -37,6 +37,9 @@ _G.assign = function(dest, from)
   end
   return dest
 end
+_G.executable = function (...)
+  return fn.executable(...) == 1
+end
 
 MEMORY_LIMIT = 75
 MEMORY_USAGE = nil
@@ -52,7 +55,7 @@ ESLINT_BIN_NAME = "eslint_d"
 ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
-HAS_WEZTERM = fn.executable("wezterm") == 1
+HAS_WEZTERM = executable("wezterm")
 TRANSPARENT_INDENT_HL = "#666666"
 ENABLE_SCROLL_EFFECT = not IS_LINUX
 IS_LAUNCH_FROM_GIT_REPO = false

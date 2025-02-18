@@ -49,8 +49,25 @@ local function is_fe_ft(buf)
 end
 
 local eslint_checked = false
+local eslint_installed = IS_FILEPATH(ESLINT_BIN_PATH)
 diagnostic_cmd = AUCMD("DiagnosticChanged", {
   callback = function(event)
+    if not eslint_checked and eslint_installed then
+      eslint_checked = true
+      local version = fn.system(ESLINT_BIN_PATH .. " --version")
+      if STR_CONTAINS(version, "13.1.2") then
+        return api.nvim_del_autocmd(diagnostic_cmd)
+      end
+    end
+
+    if not is_fe_ft(event.buf) then
+      return
+    end
+
+    if not eslint_installed then
+      return pcall(cmd.MasonInstall, "eslint_d")
+    end
+
     local diagnostic = event.data.diagnostics[1]
     if not diagnostic then
       return
@@ -58,17 +75,8 @@ diagnostic_cmd = AUCMD("DiagnosticChanged", {
 
     if STR_CONTAINS(diagnostic.message, "eslintrc") then
       pcall(cmd.MasonInstall, "eslint_d@13.1.2")
-      api.nvim_del_autocmd(diagnostic_cmd)
-    elseif is_fe_ft(event.buf) then
-      api.nvim_del_autocmd(diagnostic_cmd)
     end
 
-    if not eslint_checked then
-      local version = fn.system(ESLINT_BIN_PATH .. " --version")
-      if STR_CONTAINS(version, "13.1.2") then
-        api.nvim_del_autocmd(diagnostic_cmd)
-      end
-      eslint_checked = true
-    end
+    api.nvim_del_autocmd(diagnostic_cmd)
   end,
 })
