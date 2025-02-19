@@ -146,6 +146,13 @@ return {
       "<cmd>TogglePrompt<cr>",
       desc = "Avante: Change Prompt",
     },
+    {
+      "<leader>aam",
+      function()
+        require("avante.api").select_model()
+      end,
+      desc = "Avante: Change Model",
+    },
   },
   config = function()
     ADD_BLINK_COMPAT_SOURCES({

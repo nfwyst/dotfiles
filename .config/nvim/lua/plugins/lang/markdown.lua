@@ -39,6 +39,9 @@ return {
   dependencies = { "saghen/blink.cmp" },
   opts = function(_, opts)
     ADD_BLINK_SOURCE("markdown", nil, {
+      enabled = function()
+        return OPT("filetype", { buf = CUR_BUF() }) == "markdown"
+      end,
       name = "RenderMarkdown",
       module = "render-markdown.integ.blink",
     })
