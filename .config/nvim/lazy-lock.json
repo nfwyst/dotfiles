@@ -5,6 +5,7 @@
   "avante.nvim": { "branch": "main", "commit": "82bf18147ea4a236abd872f7b1b9acd28f711f31" },
   "blink-cmp-avante": { "branch": "master", "commit": "e5a1be4c818520385f95fe2663c04e48f5f0c36a" },
   "blink-cmp-dictionary": { "branch": "master", "commit": "97c060e0751e95d2a1fbffe2871712bb676092ab" },
+  "blink-cmp-git": { "branch": "master", "commit": "66730921b9efb42d8b3ca55311c00bde18b38723" },
   "blink-emoji.nvim": { "branch": "master", "commit": "a77aebc092ebece1eed108f301452ae774d6b67a" },
   "blink.cmp": { "branch": "main", "commit": "22e63518beb26e4e8a9ba6725386ae4ed700658f" },
   "blink.compat": { "branch": "main", "commit": "4104671562c663d059d91a99da3780bead5bc467" },
