@@ -115,11 +115,6 @@ return {
     { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
   },
   opts = function(_, opts)
-    require("cmp").ConfirmBehavior = {
-      Insert = "insert",
-      Replace = "replace",
-    }
-
     local link = { link = "FloatBorder" }
     SET_HLS({
       BlinkCmpMenuBorder = link,
@@ -134,7 +129,6 @@ return {
       opts.sources.providers.emoji = {
         module = "blink-emoji",
         name = "Emoji",
-        score_offset = 15,
         opts = { insert = true },
       }
     end
@@ -182,7 +176,6 @@ return {
           lsp = {
             should_show_items = shouldnt_show_emoji,
             transform_items = transform_lsp_items,
-            score_offset = 90,
           },
           snippets = {
             min_keyword_length = 1,
@@ -190,7 +183,6 @@ return {
             -- only show snippets items if trigger_text is prefix
             should_show_items = should_show_snip,
             transform_items = transform_snip_items,
-            score_offset = 85,
             opts = {
               search_paths = { fn.stdpath("config") .. "/snippets" },
             },
@@ -206,7 +198,6 @@ return {
               end,
               show_hidden_files_by_default = true,
             },
-            score_offset = 25,
           },
           dictionary = {
             should_show_items = shouldnt_show_snippets_emoji,
@@ -228,13 +219,11 @@ return {
                 return items
               end,
             },
-            score_offset = 20,
           },
           buffer = {
             min_keyword_length = 3,
             max_items = 3,
             should_show_items = shouldnt_show_snippets_emoji,
-            score_offset = 15,
           },
         },
       },

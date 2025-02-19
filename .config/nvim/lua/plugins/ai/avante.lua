@@ -88,6 +88,7 @@ return {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
     "saghen/blink.cmp",
+    "Kaiser-Yang/blink-cmp-avante",
   },
   keys = {
     { "<leader>a", "", desc = "ai", mode = mode },
@@ -155,10 +156,10 @@ return {
     },
   },
   config = function()
-    ADD_BLINK_COMPAT_SOURCES({
-      "avante_commands",
-      "avante_mentions",
-      "avante_files",
+    ADD_BLINK_SOURCE("avante", { "AvanteInput" }, {
+      module = "blink-cmp-avante",
+      name = "Avante",
+      opts = {},
     })
 
     -- hide left columns for avante sidebar

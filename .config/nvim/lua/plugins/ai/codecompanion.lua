@@ -147,6 +147,7 @@ return {
         chat = {
           adapter = "hyperbolic",
           slash_commands = {
+            file = { opts = { provider = "fzf_lua" } },
             help = { opts = { provider = "fzf_lua" } },
           },
           keymaps = {

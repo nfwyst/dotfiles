@@ -81,7 +81,7 @@ require("lazy").setup({
     { import = "plugins.coding" },
   },
   defaults = {
-    version = nil,
+    version = false,
   },
   rocks = {
     enabled = false,

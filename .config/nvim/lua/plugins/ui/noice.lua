@@ -13,6 +13,44 @@ local function get_size(offset)
   }
 end
 
+local filters = {
+  msg_show = {
+    "; after #%d+",
+    "; before #%d+",
+    "%d fewer lines",
+    "%d more lines",
+    "%d+L, %d+B",
+    "%d+ lines ",
+    "No lines in buffer",
+    "No information available",
+    "not found:",
+    "hit BOTTOM",
+    "hit TOP",
+    "No fold found",
+    "filetype unknown",
+    "DiagnosticChanged",
+    "Invalid lnum",
+  },
+  notify = {
+    "method textDocument",
+    "Invalid commentstring",
+    "Client %d quit with",
+    "Failed to parse snippet",
+    "This command may require a client extension",
+    "file to the chat",
+  },
+}
+
+local routes = {}
+for name, msgs in pairs(filters) do
+  local finds = {}
+  for _, msg in ipairs(msgs) do
+    PUSH(finds, { find = msg })
+  end
+
+  PUSH(routes, { filter = { event = name, any = finds } })
+end
+
 return {
   "folke/noice.nvim",
   opts = function(_, opts)
@@ -20,39 +58,7 @@ return {
     function M:log() end
 
     local opt = {
-      routes = {
-        {
-          filter = {
-            event = "msg_show",
-            any = {
-              { find = "; after #%d+" },
-              { find = "; before #%d+" },
-              { find = "%d fewer lines" },
-              { find = "%d more lines" },
-              { find = "%d+L, %d+B" },
-              { find = "%d+ lines " },
-              { find = "No lines in buffer" },
-              { find = "No information available" },
-              { find = "not found:" },
-              { find = "hit BOTTOM" },
-              { find = "hit TOP" },
-              { find = "No fold found" },
-              { find = "filetype unknown" },
-            },
-          },
-        },
-        {
-          filter = {
-            event = "notify",
-            any = {
-              { find = "method textDocument" },
-              { find = "Invalid commentstring" },
-              { find = "Client %d quit with" },
-              { find = "Failed to parse snippet" },
-            },
-          },
-        },
-      },
+      routes = routes,
       lsp = {
         hover = {
           silent = IS_LINUX,
