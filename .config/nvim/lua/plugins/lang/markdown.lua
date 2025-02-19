@@ -106,12 +106,13 @@ return {
       on = {
         render = function(context)
           local bufnr = context.buf
-          if not OPT("modifiable", { buf = bufnr }) then
+          local win = fn.bufwinid(bufnr)
+          if not OPT("modifiable", { buf = bufnr }) or not api.nvim_win_is_valid(win) then
             return
           end
 
           state.get(bufnr).anti_conceal.enabled = true
-          OPT("concealcursor", { win = fn.bufwinid(bufnr) }, "")
+          OPT("concealcursor", { win = win }, "")
         end,
       },
     }
