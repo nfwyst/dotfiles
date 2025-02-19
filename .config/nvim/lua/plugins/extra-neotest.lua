@@ -32,7 +32,7 @@ return {
         }),
         require("neotest-jest")({
           env = { CI = true },
-          jestCommand = "yarn run test",
+          jestCommand = JS_PKG_MANAGER .. " run test",
           jestConfigFile = get_jest_config_path,
           cwd = function(filepath)
             local confpath = get_jest_config_path(filepath)

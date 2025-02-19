@@ -67,6 +67,18 @@ MAX_OPEND_FILES = IS_LINUX and 3 or 7
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
 
+local function get_js_pkg_manager()
+  local pkgs = { "bun", "pnpm", "yarn" }
+  for _, pkg in ipairs(pkgs) do
+    if executable(pkg) then
+      return pkg
+    end
+  end
+
+  return "npm"
+end
+JS_PKG_MANAGER = get_js_pkg_manager()
+
 LLM = {
   proxy = env.http_proxy,
   temperature = 0,
