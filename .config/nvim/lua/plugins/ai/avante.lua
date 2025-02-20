@@ -77,6 +77,7 @@ local vendors = {
   gemini = vendor_factory("gemini"),
   ollama = vendor_factory("ollama"),
   fastapply = vendor_factory("ollama", { model = "hf.co/Kortix/FastApply-7B-v1.0_GGUF:Q4_K_M" }),
+  applyer = vendor_factory("hyperbolic", { model = "Qwen/Qwen2.5-Coder-32B-Instruct" }),
 }
 local vendor_names = keys(vendors)
 
@@ -184,7 +185,7 @@ return {
           },
         },
       },
-      cursor_applying_provider = "fastapply",
+      cursor_applying_provider = "applyer",
       behaviour = {
         auto_suggestions = false,
         auto_suggestions_respect_ignore = true,
@@ -193,7 +194,7 @@ return {
         auto_set_keymaps = false,
         support_paste_from_clipboard = false,
         minimize_diff = true,
-        enable_cursor_planning_mode = not IS_LINUX,
+        enable_cursor_planning_mode = true,
       },
       windows = {
         height = 100,

@@ -94,6 +94,7 @@ LLM = {
     models = {
       "deepseek-ai/DeepSeek-R1",
       "deepseek-ai/DeepSeek-R1-Zero",
+      "Qwen/Qwen2.5-Coder-32B-Instruct",
       "deepseek-ai/DeepSeek-V3",
     },
   },

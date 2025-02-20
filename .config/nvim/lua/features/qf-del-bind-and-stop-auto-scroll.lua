@@ -34,9 +34,70 @@ local function remove_qf_item(is_normal)
   end
 end
 
-local leave_cmd
-local close_cmd
+local function get_cur_qfitem()
+  local row = fn.line(".")
+  return fn.getqflist()[row]
+end
 
+local function scheduler(opts)
+  defer(function()
+    if opts.is_timeout() or opts.cond() and opts.done() then
+      return
+    end
+
+    opts.task()
+    scheduler(opts)
+  end, opts.interval)
+end
+
+local function on_cr_in_qflist(win)
+  return function()
+    local pos = WIN_CURSOR(win)
+    local item = get_cur_qfitem()
+    local timeouted
+    defer(function()
+      timeouted = true
+    end, 200)
+
+    PRESS_KEYS("<cr>", "n")
+
+    scheduler({
+      task = function()
+        WIN_CURSOR(win, pos)
+      end,
+      cond = function()
+        return win ~= CUR_WIN()
+      end,
+      done = function()
+        local curpos = WIN_CURSOR(win)
+        return curpos[1] == pos[1] and curpos[2] == pos[2]
+      end,
+      interval = 1,
+      is_timeout = function()
+        return timeouted
+      end,
+    })
+
+    scheduler({
+      task = function()
+        WIN_CURSOR(fn.bufwinid(item.bufnr), { item.lnum, item.col - 1 })
+      end,
+      cond = function()
+        return CUR_BUF() == item.bufnr
+      end,
+      done = function()
+        local curpos = WIN_CURSOR(CUR_WIN())
+        return curpos[1] == item.lnum and curpos[2] == item.col - 1
+      end,
+      interval = 25,
+      is_timeout = function()
+        return timeouted
+      end,
+    })
+  end
+end
+
+local close_cmd
 FILETYPE_TASK_MAP.qf = function(bufnr, win)
   if BUF_VAR(bufnr, TASK_KEY) then
     return
@@ -52,43 +113,22 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   MAPS({
     n = {
       { from = "dd", to = remove_qf_item(true), opt = opt },
+      { from = "<cr>", to = on_cr_in_qflist(win), opt = opt },
     },
     x = {
       { from = "d", to = remove_qf_item(), opt = opt },
     },
   })
 
-  if leave_cmd then
-    api.nvim_del_autocmd(leave_cmd)
-  end
-
   if close_cmd then
     api.nvim_del_autocmd(close_cmd)
   end
-
-  leave_cmd = AUCMD("WinLeave", {
-    buffer = bufnr,
-    callback = function()
-      if not api.nvim_win_is_valid(win) then
-        win = fn.bufwinid(bufnr)
-      end
-
-      local pos = WIN_CURSOR(win)
-      defer(function()
-        if api.nvim_win_is_valid(win) then
-          WIN_CURSOR(win, pos)
-        end
-      end, 0)
-    end,
-  })
 
   close_cmd = AUCMD("WinClosed", {
     buffer = bufnr,
     once = true,
     callback = function()
       ON_BUF_DEL(bufnr)
-      api.nvim_del_autocmd(leave_cmd)
-      leave_cmd = nil
       close_cmd = nil
     end,
   })
