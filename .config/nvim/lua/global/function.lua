@@ -312,14 +312,20 @@ function COLUMN_OPTS(enable, statuscolumn)
   }
 end
 
-function WIN_HEIGHT(win, exclude_scrolloff)
-  local height = api.nvim_win_get_height(win)
-
-  if exclude_scrolloff then
-    return height
+function WIN_HEIGHT(win, height)
+  if not height then
+    return api.nvim_win_get_height(win)
   end
 
-  return height - 2 * OPT("scrolloff", { win = win })
+  api.nvim_win_set_height(win, height)
+end
+
+function WIN_WIDTH(win, width)
+  if not width then
+    return api.nvim_win_get_width(win)
+  end
+
+  api.nvim_win_set_width(win, width)
 end
 
 local direction_map = {
@@ -330,8 +336,9 @@ local direction_map = {
 }
 function SCROLL(win, direction, scroll_len)
   if not scroll_len then
-    scroll_len = WIN_HEIGHT(win, true)
+    scroll_len = WIN_HEIGHT(win)
   end
+
   if scroll_len > 0 then
     if api.nvim_get_mode().mode == "n" then
       -- only run in normal mode

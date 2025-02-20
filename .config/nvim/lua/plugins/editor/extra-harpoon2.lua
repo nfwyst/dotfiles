@@ -45,7 +45,8 @@ local function get_previewer()
       local win = self.win.preview_winid
       OPT("wrap", { win = win }, true)
       RUN_IN_WIN(win, function()
-        SCROLL(win, "down", row - 2 - math.floor(WIN_HEIGHT(win) / 2))
+        local win_height = WIN_HEIGHT(win) - 2 * OPT("scrolloff", { win = win })
+        SCROLL(win, "down", row - 2 - math.floor(win_height / 2))
       end)
     end, 50)
 

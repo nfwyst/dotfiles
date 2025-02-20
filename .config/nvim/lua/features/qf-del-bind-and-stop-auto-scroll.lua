@@ -50,7 +50,11 @@ local function scheduler(opts)
   end, opts.interval)
 end
 
-local function on_cr_in_qflist(win)
+local function get_on_qf_cr(win)
+  local function cond()
+    return win ~= CUR_WIN()
+  end
+
   return function()
     local pos = WIN_CURSOR(win)
     local item = get_cur_qfitem()
@@ -59,24 +63,46 @@ local function on_cr_in_qflist(win)
       timeouted = true
     end, 200)
 
+    local function is_timeout()
+      return timeouted
+    end
+
+    local function task()
+      WIN_CURSOR(win, pos)
+    end
+
     PRESS_KEYS("<cr>", "n")
 
-    scheduler({
-      task = function()
-        WIN_CURSOR(win, pos)
-      end,
-      cond = function()
-        return win ~= CUR_WIN()
-      end,
-      done = function()
-        local curpos = WIN_CURSOR(win)
-        return curpos[1] == pos[1] and curpos[2] == pos[2]
-      end,
-      interval = 1,
-      is_timeout = function()
-        return timeouted
-      end,
-    })
+    local prev_height = WIN_VAR(win, CONSTS.PREV_HEIGHT)
+    if prev_height then
+      scheduler({
+        task = function()
+          WIN_HEIGHT(win, prev_height)
+        end,
+        cond = cond,
+        done = function()
+          local is_done = prev_height == WIN_HEIGHT(win)
+          if is_done then
+            task()
+          end
+
+          return is_done
+        end,
+        interval = 1,
+        is_timeout = is_timeout,
+      })
+    else
+      scheduler({
+        task = task,
+        cond = cond,
+        done = function()
+          local curpos = WIN_CURSOR(win)
+          return curpos[1] == pos[1] and curpos[2] == pos[2]
+        end,
+        interval = 1,
+        is_timeout = is_timeout,
+      })
+    end
 
     scheduler({
       task = function()
@@ -90,15 +116,18 @@ local function on_cr_in_qflist(win)
         return curpos[1] == item.lnum and curpos[2] == item.col - 1
       end,
       interval = 25,
-      is_timeout = function()
-        return timeouted
-      end,
+      is_timeout = is_timeout,
     })
   end
 end
 
 local close_cmd
 FILETYPE_TASK_MAP.qf = function(bufnr, win)
+  local win_height = WIN_HEIGHT(win)
+  if win_height + 2 < o.lines then
+    WIN_VAR(win, CONSTS.PREV_HEIGHT, win_height)
+  end
+
   if BUF_VAR(bufnr, TASK_KEY) then
     return
   end
@@ -113,7 +142,7 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   MAPS({
     n = {
       { from = "dd", to = remove_qf_item(true), opt = opt },
-      { from = "<cr>", to = on_cr_in_qflist(win), opt = opt },
+      { from = "<cr>", to = get_on_qf_cr(win), opt = opt },
     },
     x = {
       { from = "d", to = remove_qf_item(), opt = opt },
