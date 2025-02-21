@@ -7,7 +7,7 @@
   "blink-cmp-dictionary": { "branch": "master", "commit": "97c060e0751e95d2a1fbffe2871712bb676092ab" },
   "blink-cmp-git": { "branch": "master", "commit": "66730921b9efb42d8b3ca55311c00bde18b38723" },
   "blink-emoji.nvim": { "branch": "master", "commit": "a77aebc092ebece1eed108f301452ae774d6b67a" },
-  "blink.cmp": { "branch": "main", "commit": "2f208a7b1621f0bc570dd3ef3673e3a3a25b1aa3" },
+  "blink.cmp": { "branch": "main", "commit": "3b768bb2c5880655b9b00d1529ff4b390218fc71" },
   "blink.compat": { "branch": "main", "commit": "4104671562c663d059d91a99da3780bead5bc467" },
   "catppuccin": { "branch": "main", "commit": "4bb938bbba41d306db18bf0eb0633a5f28fd7ba0" },
   "codecompanion.nvim": { "branch": "main", "commit": "9c3e01a5ff933566775119121e68c318fcfe219c" },

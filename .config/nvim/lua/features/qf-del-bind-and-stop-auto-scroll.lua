@@ -59,14 +59,14 @@ local function scheduler(opts)
   end, opts.interval)
 end
 
-local function get_is_win_pos_same(win, pos)
-  local _pos = WIN_CURSOR(win)
-  return _pos[1] == pos[1] and _pos[2] == pos[2]
-end
-
 local remove_qf_item_normal = remove_qf_item(true)
 
 local function get_on_qf_cr(win)
+  local function get_is_win_pos_same(winid, pos)
+    local _pos = WIN_CURSOR(winid)
+    return _pos[1] == pos[1] and _pos[2] == pos[2]
+  end
+
   return function()
     local pos = WIN_CURSOR(win)
     local item = get_cur_qfitem()
