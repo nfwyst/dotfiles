@@ -328,6 +328,11 @@ function WIN_WIDTH(win, width)
   api.nvim_win_set_width(win, width)
 end
 
+local function is_normal_mode()
+  local mode = api.nvim_get_mode().mode
+  return contains({ "n", "niI", "niR", "niV", "nt", "ntT" }, mode)
+end
+
 local direction_map = {
   up = "",
   down = "",
@@ -339,11 +344,9 @@ function SCROLL(win, direction, scroll_len)
     scroll_len = WIN_HEIGHT(win)
   end
 
-  if scroll_len > 0 then
-    if api.nvim_get_mode().mode == "n" then
-      -- only run in normal mode
-      cmd.normal({ scroll_len .. direction_map[direction], bang = true })
-    end
+  if scroll_len > 0 and is_normal_mode() then
+    -- only run in normal mode
+    cmd.normal({ scroll_len .. direction_map[direction], bang = true })
   end
 end
 

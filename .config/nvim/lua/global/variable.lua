@@ -66,6 +66,7 @@ MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
 MAX_OPEND_FILES = IS_LINUX and 3 or 7
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
+IS_DASHBOARD_OPEN = false
 
 local function get_js_pkg_manager()
   local pkgs = { "bun", "pnpm", "yarn" }

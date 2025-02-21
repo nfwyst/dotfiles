@@ -13,6 +13,7 @@ end
 local function set(win, bufnr)
   _win = win
   _bufnr = bufnr
+  IS_DASHBOARD_OPEN = _bufnr ~= nil
 end
 
 local function close_dashboard()
@@ -53,7 +54,7 @@ local function open_dashboard(win, bufnr)
       close_win_with_buf(win, bufnr)
       return
     end
-    set()
+    set(win, bufnr)
   end
 
   ---@diagnostic disable-next-line: missing-fields
@@ -62,12 +63,15 @@ local function open_dashboard(win, bufnr)
   return "dashboard"
 end
 
+local function is_command_mode()
+  local mode = api.nvim_get_mode().mode
+  return contains({ "c", "cr" }, mode)
+end
+
 local function toggle_cursor_visible(filetype)
   local is_hided = HL("Cursor").blend == 100
   local should_hide = contains(FT_HIDE_CURSOR, filetype)
-  local mode = api.nvim_get_mode().mode
-
-  if should_hide and mode == "c" or not should_hide then
+  if should_hide and is_command_mode() or not should_hide then
     -- show Cursor
     if is_hided then
       SET_HLS({ Cursor = { blend = 0 } })
@@ -146,9 +150,18 @@ local function auto_close_buf(bufnr, context, bufnrs)
   end
 end
 
+local function set_dashboard_win_buf(win, bufnr)
+  local should_close = _bufnr and _bufnr ~= bufnr
+  if should_close and is_ctx_valid(_win, _bufnr) then
+    close_win_with_buf(_win, _bufnr)
+  end
+
+  set(win, bufnr)
+end
+
 return {
   run_filetype_task = run_filetype_task,
-  set_dashboard_win_buf = set,
+  set_dashboard_win_buf = set_dashboard_win_buf,
   close_dashboard = close_dashboard,
   open_dashboard = open_dashboard,
   auto_close_buf = auto_close_buf,

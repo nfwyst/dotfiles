@@ -1,5 +1,5 @@
-local function remove_qf_normal()
-  local start_index = fn.line(".")
+local function remove_qf_normal(row)
+  local start_index = row or fn.line(".")
   local count = v.count > 0 and v.count or 1
   return start_index, count
 end
@@ -15,11 +15,11 @@ local function remove_qf_visual()
 end
 
 local function remove_qf_item(is_normal)
-  return function()
+  return function(row)
     local start_index
     local count
     if is_normal then
-      start_index, count = remove_qf_normal()
+      start_index, count = remove_qf_normal(row)
     else
       start_index, count = remove_qf_visual()
     end
@@ -41,7 +41,16 @@ end
 
 local function scheduler(opts)
   defer(function()
-    if opts.is_timeout() or opts.cond() and opts.done() then
+    if opts.get_is_timeout() then
+      return
+    end
+
+    local cond = opts.cond
+    if cond and not cond() then
+      return scheduler(opts)
+    end
+
+    if opts.done() then
       return
     end
 
@@ -50,11 +59,14 @@ local function scheduler(opts)
   end, opts.interval)
 end
 
-local function get_on_qf_cr(win)
-  local function cond()
-    return win ~= CUR_WIN()
-  end
+local function get_is_win_pos_same(win, pos)
+  local _pos = WIN_CURSOR(win)
+  return _pos[1] == pos[1] and _pos[2] == pos[2]
+end
 
+local remove_qf_item_normal = remove_qf_item(true)
+
+local function get_on_qf_cr(win)
   return function()
     local pos = WIN_CURSOR(win)
     local item = get_cur_qfitem()
@@ -63,60 +75,53 @@ local function get_on_qf_cr(win)
       timeouted = true
     end, 200)
 
-    local function is_timeout()
+    local function get_is_timeout()
       return timeouted
-    end
-
-    local function task()
-      WIN_CURSOR(win, pos)
     end
 
     PRESS_KEYS("<cr>", "n")
 
     local prev_height = WIN_VAR(win, CONSTS.PREV_HEIGHT)
-    if prev_height then
-      scheduler({
-        task = function()
-          WIN_HEIGHT(win, prev_height)
-        end,
-        cond = cond,
-        done = function()
-          local is_done = prev_height == WIN_HEIGHT(win)
-          if is_done then
-            task()
-          end
-
-          return is_done
-        end,
-        interval = 1,
-        is_timeout = is_timeout,
-      })
-    else
-      scheduler({
-        task = task,
-        cond = cond,
-        done = function()
-          local curpos = WIN_CURSOR(win)
-          return curpos[1] == pos[1] and curpos[2] == pos[2]
-        end,
-        interval = 1,
-        is_timeout = is_timeout,
-      })
-    end
-
     scheduler({
-      task = function()
-        WIN_CURSOR(fn.bufwinid(item.bufnr), { item.lnum, item.col - 1 })
-      end,
       cond = function()
-        return CUR_BUF() == item.bufnr
+        return win ~= CUR_WIN()
+      end,
+      task = function()
+        if prev_height then
+          WIN_HEIGHT(win, prev_height)
+        end
+
+        WIN_CURSOR(win, pos)
       end,
       done = function()
-        local curpos = WIN_CURSOR(CUR_WIN())
-        return curpos[1] == item.lnum and curpos[2] == item.col - 1
+        local is_same_height = not prev_height or prev_height == WIN_HEIGHT(win)
+        return is_same_height and get_is_win_pos_same(win, pos)
       end,
-      interval = 25,
-      is_timeout = is_timeout,
+      interval = 2,
+      get_is_timeout = get_is_timeout,
+    })
+
+    local target_pos = { item.lnum, item.col > 0 and item.col - 1 or 0 }
+    local bufnr = item.bufnr
+    scheduler({
+      cond = function()
+        return not IS_DASHBOARD_OPEN and CUR_BUF() == bufnr
+      end,
+      task = function()
+        local total_lines = LINE_COUNT(bufnr)
+        if target_pos[1] > total_lines then
+          target_pos[1] = total_lines
+          NOTIFY("position not exists, quickfix item removed", levels.WARN)
+          remove_qf_item_normal(pos[1])
+        end
+
+        WIN_CURSOR(CUR_WIN(), target_pos)
+      end,
+      done = function()
+        return get_is_win_pos_same(CUR_WIN(), target_pos)
+      end,
+      interval = 50,
+      get_is_timeout = get_is_timeout,
     })
   end
 end
@@ -141,7 +146,7 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   local opt = { buffer = bufnr }
   MAPS({
     n = {
-      { from = "dd", to = remove_qf_item(true), opt = opt },
+      { from = "dd", to = remove_qf_item_normal, opt = opt },
       { from = "<cr>", to = get_on_qf_cr(win), opt = opt },
     },
     x = {
