@@ -48,7 +48,7 @@
   "nvim-treesitter-textobjects": { "branch": "master", "commit": "ad8f0a472148c3e0ae9851e26a722ee4e29b1595" },
   "nvim-ts-autotag": { "branch": "main", "commit": "a1d526af391f6aebb25a8795cbc05351ed3620b5" },
   "obsidian.nvim": { "branch": "main", "commit": "14e0427bef6c55da0d63f9a313fd9941be3a2479" },
-  "octo.nvim": { "branch": "master", "commit": "2940fdcc0e38eca401b1f0a2e229d500128ccfcd" },
+  "octo.nvim": { "branch": "master", "commit": "208a9f5c58a45e695de6f1b2198a5974f711ef3c" },
   "persistence.nvim": { "branch": "main", "commit": "f6aad7dde7fcf54148ccfc5f622c6d5badd0cc3d" },
   "plenary.nvim": { "branch": "master", "commit": "857c5ac632080dba10aae49dba902ce3abf91b35" },
   "render-markdown.nvim": { "branch": "main", "commit": "57fa691b9e374c6539cc0340062dac8f42d4bd8b" },
@@ -65,5 +65,5 @@
   "volt": { "branch": "main", "commit": "3bedb1576db574af160643eea7df3b09dbe5ee9c" },
   "wezterm-types": { "branch": "main", "commit": "1518752906ba3fac0060d9efab6e4d3ec15d4b5a" },
   "wezterm.nvim": { "branch": "main", "commit": "032c33b621b96cc7228955b4352b48141c482098" },
-  "which-key.nvim": { "branch": "main", "commit": "5bf7a73fe851896d5ac26d313db849bf00f45b78" }
+  "which-key.nvim": { "branch": "main", "commit": "370ec46f710e058c9c1646273e6b225acf47cbed" }
 }

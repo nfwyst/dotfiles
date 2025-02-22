@@ -57,7 +57,7 @@ local function get_previewer()
   previewer.gen_winopts = function(self)
     return shadow_merge(self.winopts, {
       wrap = false,
-      number = false,
+      number = true,
       cursorline = false,
     })
   end

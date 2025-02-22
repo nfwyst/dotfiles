@@ -31,7 +31,7 @@ return {
         content = function()
           return "Write commit message with commitizen convention. Write clear, informative commit messages that explain the 'what' and 'why' behind changes, not just the 'how'."
             .. "\n\n```\n"
-            .. vim.fn.system("git diff")
+            .. fn.system("git diff")
             .. "\n```"
         end,
         opts = opts,
@@ -52,7 +52,7 @@ return {
         content = function()
           return "Write commit message for the change with commitizen convention. Write clear, informative commit messages that explain the 'what' and 'why' behind changes, not just the 'how'."
             .. "\n\n```\n"
-            .. vim.fn.system("git diff --staged")
+            .. fn.system("git diff --staged")
             .. "\n```"
         end,
         opts = opts,
