@@ -31,8 +31,10 @@ assign(FILETYPE_TASK_MAP, {
 })
 
 local function scroll_to_top(event)
-  local win = fn.bufwinid(event.buf)
-  if win == CUR_WIN() then
+  local buf = event.buf
+  local win = fn.bufwinid(buf)
+  local bufpath = BUF_PATH(buf)
+  if win == CUR_WIN() and EMPTY(bufpath) then
     RUN_IN_WIN(win, function()
       SCROLL(win, "up")
     end)

@@ -13,7 +13,6 @@ end
 local function set(win, bufnr)
   _win = win
   _bufnr = bufnr
-  IS_DASHBOARD_OPEN = _bufnr ~= nil
 end
 
 local function close_dashboard()
