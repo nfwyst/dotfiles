@@ -50,14 +50,12 @@ GROUP = api.nvim_create_augroup
 IS_LINUX = jit.os == "Linux"
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
-STAY_CENTER = true
 ESLINT_BIN_NAME = "eslint_d"
 ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
 HAS_WEZTERM = executable("wezterm")
 TRANSPARENT_INDENT_HL = "#666666"
-ENABLE_SCROLL_EFFECT = not IS_LINUX
 IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"

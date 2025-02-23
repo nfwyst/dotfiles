@@ -40,17 +40,6 @@ local function sync_tab(bufnr)
   })
 end
 
-local function center(bufnr)
-  if not STAY_CENTER then
-    return
-  end
-  defer(function()
-    RUN_IN_BUF(bufnr, function()
-      cmd("normal! zz")
-    end)
-  end, 10)
-end
-
 local function disable_lint(bufnr)
   local inited = BUF_VAR(bufnr, CONSTS.LINT_INITED)
   if inited then
@@ -92,7 +81,6 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
   callback = function(event)
     local bufnr = event.buf
     sync_tab(bufnr)
-    center(bufnr)
     disable_lint(bufnr)
     dim_win(bufnr)
     show_indent_guide(event)

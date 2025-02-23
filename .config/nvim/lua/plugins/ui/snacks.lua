@@ -78,7 +78,7 @@ return {
 
     local opt = {
       scroll = {
-        enabled = false,
+        enabled = true,
       },
       indent = {
         scope = {
