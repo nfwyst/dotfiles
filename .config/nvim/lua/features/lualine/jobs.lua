@@ -15,13 +15,28 @@ local function set(win, bufnr)
   _bufnr = bufnr
 end
 
-local function close_dashboard()
+local function close_dashboard(bufnrs)
   if not _bufnr or not _win then
     return
   end
 
+  local pos
+  local win
+  for _, buf in ipairs(bufnrs) do
+    if CUR_BUF() == buf then
+      win = fn.bufwinid(buf)
+      pos = WIN_CURSOR(win)
+    end
+  end
+
   if is_ctx_valid(_win, _bufnr) then
     close_win_with_buf(_win, _bufnr)
+  end
+
+  if pos then
+    schedule(function()
+      WIN_CURSOR(win, pos)
+    end)
   end
 
   set()

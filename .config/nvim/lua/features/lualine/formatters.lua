@@ -65,7 +65,7 @@ local function buffers(name, context)
     elseif is_file then
       local bufnrs = require("lualine.components.buffers").bufpos2nr
       jobs.auto_close_buf(bufnr, context, bufnrs)
-      jobs.close_dashboard()
+      jobs.close_dashboard(bufnrs)
       jobs.update_winbar(win, bufpath, bufnrs)
     elseif not name and IS_BUF_LISTED(bufnr) then
       name = jobs.open_dashboard(win, bufnr)

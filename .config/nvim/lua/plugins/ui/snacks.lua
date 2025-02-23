@@ -33,8 +33,7 @@ assign(FILETYPE_TASK_MAP, {
 local function scroll_to_top(event)
   local buf = event.buf
   local win = fn.bufwinid(buf)
-  local bufpath = BUF_PATH(buf)
-  if win == CUR_WIN() and EMPTY(bufpath) then
+  if win == CUR_WIN() and OPT("filetype", { buf = buf }) == "snacks_dashboard" then
     RUN_IN_WIN(win, function()
       SCROLL(win, "up")
     end)
