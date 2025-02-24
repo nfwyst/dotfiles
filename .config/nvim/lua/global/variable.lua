@@ -133,13 +133,16 @@ LLM = {
 }
 
 HAS_AI_KEY = env[LLM.hyperbolic.api_key] ~= nil
+FILETYPE_SIZE_MAP = {
+  qf = { height = 10, ignore_event = true },
+}
 CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
   IS_BUF_PINNED = "IS_BUF_PINNED",
   PREV_ROW = "PREV_ROW",
   PREV_COL = "PREV_COL",
-  PREV_HEIGHT = "PREV_HEIGHT",
+  RESIZE_MANULLY = "RESIZE_MANULLY",
 }
 
 PURE_PROMPT = [[你是一位无所不能的助手]]

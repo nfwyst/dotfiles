@@ -34,20 +34,36 @@ local function remove_qf_item(is_normal)
   end
 end
 
-local leave_cmd
-local close_cmd
-local pos
-FILETYPE_TASK_MAP.qf = function(bufnr, win)
-  pos = WIN_CURSOR(win)
-  local win_height = WIN_HEIGHT(win)
-  if win_height + 2 < o.lines then
-    WIN_VAR(win, CONSTS.PREV_HEIGHT, win_height)
+local function fix_qf_position()
+  local win = CUR_WIN()
+  local height = WIN_HEIGHT(win)
+  local pos = WIN_CURSOR(win)
+
+  defer(function()
+    WIN_CURSOR(win, pos)
+  end, 30)
+
+  PRESS_KEYS("<cr>", "n")
+
+  local is_resize_manully = WIN_VAR(win, CONSTS.RESIZE_MANULLY)
+  local standard_height = FILETYPE_SIZE_MAP.qf.height
+  local is_standard_height = standard_height == height
+  if is_resize_manully or is_standard_height then
+    return
   end
 
+  defer(function()
+    WIN_HEIGHT(win, standard_height)
+  end, 10)
+end
+
+local close_cmd
+FILETYPE_TASK_MAP.qf = function(bufnr, win)
   if BUF_VAR(bufnr, TASK_KEY) then
     return
   end
 
+  BUF_VAR(bufnr, "snacks_scroll", false)
   defer(function()
     local opts = COLUMN_OPTS(false)
     opts.number = true
@@ -58,46 +74,22 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   MAPS({
     n = {
       { from = "dd", to = remove_qf_item(true), opt = opt },
+      { from = "<cr>", to = fix_qf_position, opt = opt },
     },
     x = {
       { from = "d", to = remove_qf_item(), opt = opt },
     },
   })
 
-  if leave_cmd then
-    api.nvim_del_autocmd(leave_cmd)
-  end
-
   if close_cmd then
     api.nvim_del_autocmd(close_cmd)
   end
-
-  leave_cmd = AUCMD("WinLeave", {
-    buffer = bufnr,
-    callback = function()
-      if not api.nvim_win_is_valid(win) then
-        win = fn.bufwinid(bufnr)
-      end
-
-      defer(function()
-        if api.nvim_win_is_valid(win) then
-          WIN_CURSOR(win, pos)
-          local prev_height = WIN_VAR(win, CONSTS.PREV_HEIGHT)
-          if prev_height then
-            WIN_HEIGHT(win, prev_height)
-          end
-        end
-      end, 1)
-    end,
-  })
 
   close_cmd = AUCMD("WinClosed", {
     buffer = bufnr,
     once = true,
     callback = function()
       ON_BUF_DEL(bufnr)
-      api.nvim_del_autocmd(leave_cmd)
-      leave_cmd = nil
       close_cmd = nil
     end,
   })

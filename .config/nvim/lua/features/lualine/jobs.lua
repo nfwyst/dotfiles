@@ -34,9 +34,9 @@ local function close_dashboard(bufnrs)
   end
 
   if pos then
-    schedule(function()
+    defer(function()
       WIN_CURSOR(win, pos)
-    end)
+    end, 10)
   end
 
   set()

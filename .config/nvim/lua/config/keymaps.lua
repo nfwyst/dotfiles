@@ -14,6 +14,24 @@ local function paste()
   PRESS_KEYS("p", "n")
 end
 
+local function get_resizer(is_increase, is_vertical)
+  return function()
+    local win = CUR_WIN()
+    local key = CONSTS.RESIZE_MANULLY
+    if not WIN_VAR(win, key) then
+      WIN_VAR(win, key, true)
+    end
+
+    local delta = is_increase and "+2" or "-2"
+    local command = "resize " .. delta
+    if is_vertical then
+      command = "vertical " .. command
+    end
+
+    cmd(command)
+  end
+end
+
 MAPS({
   n = {
     { from = "p", to = paste },
@@ -35,6 +53,10 @@ MAPS({
     { from = "<leader>qf", to = "<cmd>ccl<cr>", opt = {
       desc = "Quit Quickfix List",
     } },
+    { from = "<s-up>", to = get_resizer(true), opt = { desc = "Increase Window Height" } },
+    { from = "<s-down>", to = get_resizer(false), opt = { desc = "Decrease Window Height" } },
+    { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
+    { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
   },
   [{ "n", "x", "s" }] = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
