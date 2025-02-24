@@ -103,6 +103,9 @@ return {
           rendered = "nvic",
         },
       },
+      latex = {
+        enabled = executable("latex2text"),
+      },
       on = {
         render = function(context)
           local bufnr = context.buf

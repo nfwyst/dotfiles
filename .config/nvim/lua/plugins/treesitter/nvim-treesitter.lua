@@ -88,6 +88,8 @@ return {
         "yaml",
         "git_config",
         "http",
+        "typst",
+        "vue",
       },
       ignore_install = nil,
       textobjects = {

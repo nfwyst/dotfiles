@@ -1,15 +1,26 @@
 local ensure_installed = {
-  ["kulala-fmt"] = "go install github.com/mistweaverco/kulala-fmt@latest",
+  ["kulala-fmt"] = {
+    installer = "go",
+    params = "install github.com/mistweaverco/kulala-fmt@latest",
+  },
+  ["sg"] = {
+    installer = "cargo",
+    params = "install ast-grep --locked",
+  },
+  ["latex2text"] = {
+    installer = "uv",
+    params = "pip install pylatexenc --system --break-system-packages",
+  },
 }
 
--- TODO: auto install other dependencies
-for cmd, install_cmd in pairs(ensure_installed) do
+for cmd, opt in pairs(ensure_installed) do
   local installed = executable(cmd)
-  if not installed then
+  local installer = opt.installer
+  if not installed and executable(installer) then
     NOTIFY("installing " .. cmd .. "...", levels.INFO)
 
     local stderr_buffer = {}
-    fn.jobstart(install_cmd, {
+    fn.jobstart(installer .. " " .. opt.params, {
       on_stderr = function(_, data)
         for _, line in ipairs(data) do
           if not EMPTY(line) then
