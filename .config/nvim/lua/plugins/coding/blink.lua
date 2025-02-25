@@ -94,12 +94,14 @@ end
 
 local function get_by_cmdtype(search_val, cmd_val, default)
   local cmdtype = fn.getcmdtype()
-  if cmdtype == "/" or cmdtype == "?" then
+  if contains({ "/", "?" }, cmdtype) then
     return search_val
   end
-  if cmdtype == ":" then
+
+  if contains({ ":", "@" }, cmdtype) then
     return cmd_val
   end
+
   return default
 end
 
@@ -140,12 +142,6 @@ return {
       completion = {
         menu = {
           border = "rounded",
-          auto_show = function(ctx)
-            if not IS_LINUX or ctx.mode ~= "cmdline" then
-              return true
-            end
-            return get_by_cmdtype(false, false, true)
-          end,
           cmdline_position = function()
             local pos = g.ui_cmdline_pos
             if pos then
@@ -160,14 +156,6 @@ return {
           },
         },
         documentation = { window = { border = "rounded" } },
-        list = {
-          selection = {
-            preselect = function(ctx)
-              return ctx.mode ~= "cmdline"
-            end,
-            auto_insert = true,
-          },
-        },
         trigger = { prefetch_on_insert = false },
       },
       signature = { window = { border = "rounded" } },
@@ -238,6 +226,19 @@ return {
         sources = function()
           return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
         end,
+        completion = {
+          list = { selection = { preselect = false } },
+          menu = {
+            auto_show = function()
+              if not IS_LINUX then
+                return true
+              end
+
+              return get_by_cmdtype(false, false, true)
+            end,
+          },
+          ghost_text = { enabled = false },
+        },
       },
       keymap = {
         ["<c-a>"] = { "cancel", "fallback" },
