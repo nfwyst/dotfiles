@@ -16,6 +16,44 @@ local function with_parent_when_duplicated(name, bufpath, bufnr)
   return fs.basename(fs.dirname(bufpath)) .. "/" .. name
 end
 
+local function get_win_title(title)
+  if title and title[1] then
+    title = title[1][1]
+    if not EMPTY(title) then
+      return vim.trim(title)
+    end
+  end
+end
+
+local function ends_width(str, suffix)
+  if not str then
+    return false
+  end
+
+  if suffix == "" then
+    return true
+  end
+
+  local target_len = #suffix
+  return target_len <= #str and str:sub(-target_len) == suffix
+end
+
+local function load_render_markdown(name)
+  if name ~= "FZF" then
+    return
+  end
+
+  local wins = api.nvim_list_wins()
+  for _, winid in ipairs(wins) do
+    local win_info = api.nvim_win_get_config(winid)
+    if not EMPTY(win_info.relative) then
+      if ends_width(get_win_title(win_info.title), ".md") then
+        cmd.LoadRenderMarkdown()
+      end
+    end
+  end
+end
+
 local function buffers(name, context)
   local bufnr = context.bufnr
   local bufpath = context.file
@@ -23,6 +61,8 @@ local function buffers(name, context)
   local win = fn.bufwinid(bufnr)
   local is_file = IS_FILEPATH(bufpath, true)
   local win_valid = api.nvim_win_is_valid(win)
+
+  load_render_markdown(name)
 
   if filetype == "snacks_terminal" then
     name = " terminal"
@@ -41,10 +81,7 @@ local function buffers(name, context)
   end
 
   if not name and win_valid then
-    local title = api.nvim_win_get_config(win).title
-    if title and title[1] and not EMPTY(title[1][1]) then
-      name = title[1][1]
-    end
+    name = get_win_title(api.nvim_win_get_config(win).title)
   end
 
   if name and filetype == "octo" and tonumber(name) then

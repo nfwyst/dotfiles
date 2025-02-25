@@ -22,7 +22,7 @@ return {
       ---@diagnostic disable-next-line: duplicate-set-field
       pairs.open = function(pair, neigh_pattern)
         local filetype = OPT("filetype", { buf = CUR_BUF() })
-        local is_markdown = contains(MARKDOWN_FILETYPE, filetype)
+        local is_markdown = contains(MARKDOWN_FILETYPES, filetype)
         local win = CUR_WIN()
         local contents_before_cursor, pos = LINE_BEFORE_CURSOR({ win = win })
         local is_block = contents_before_cursor:match("^%s*``")

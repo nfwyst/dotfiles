@@ -28,6 +28,7 @@ local statuscolumn = ""
 assign(FILETYPE_TASK_MAP, {
   lazy = ENABLE_CURSORLINE,
   snacks_dashboard = ENABLE_CURSORLINE,
+  markdown = ENABLE_CURSORLINE,
 })
 
 local function scroll_to_top(event)

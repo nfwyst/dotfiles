@@ -60,7 +60,7 @@ IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
-MARKDOWN_FILETYPE = { "markdown", "Avante", "codecompanion", "octo" }
+MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo" }
 MAX_OPEND_FILES = IS_LINUX and 3 or 7
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
@@ -140,8 +140,6 @@ CONSTS = {
   LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
   IS_BUF_PINNED = "IS_BUF_PINNED",
-  PREV_ROW = "PREV_ROW",
-  PREV_COL = "PREV_COL",
   RESIZE_MANULLY = "RESIZE_MANULLY",
 }
 
