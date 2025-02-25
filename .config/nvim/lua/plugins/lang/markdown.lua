@@ -1,10 +1,8 @@
 return {
   "MeanderingProgrammer/render-markdown.nvim",
-  ft = MARKDOWN_FILETYPES,
-  cmd = { "LoadRenderMarkdown" },
+  lazy = false,
   dependencies = { "saghen/blink.cmp" },
   opts = function(_, opts)
-    CMD("LoadRenderMarkdown", function() end, { desc = "Lazy Load Render Markdown" })
     ADD_BLINK_SOURCE("markdown", nil, {
       enabled = function()
         return OPT("filetype", { buf = CUR_BUF() }) == "markdown"
