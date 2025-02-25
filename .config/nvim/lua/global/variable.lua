@@ -76,6 +76,11 @@ local function get_js_pkg_manager()
   return "npm"
 end
 JS_PKG_MANAGER = get_js_pkg_manager()
+REASONABLE_MODELS = {
+  "deepseek-reasoner",
+  "deepseek-ai/DeepSeek-R1",
+  "deepseek-r1:32b",
+}
 
 LLM = {
   proxy = env.http_proxy,
@@ -91,7 +96,6 @@ LLM = {
     model = "deepseek-ai/DeepSeek-R1",
     models = {
       "deepseek-ai/DeepSeek-R1",
-      "deepseek-ai/DeepSeek-R1-Zero",
       "Qwen/Qwen2.5-Coder-32B-Instruct",
       "deepseek-ai/DeepSeek-V3",
     },
@@ -108,6 +112,7 @@ LLM = {
       "deepseek-reasoner",
       "deepseek-chat",
     },
+    support_tools = false,
   },
   ollama = {
     origin = env.OLLAMA_API_BASE,

@@ -56,6 +56,12 @@ local function vendor_factory(name, extra)
     endpoint = endpoint .. "/v1"
   end
 
+  local disable_tools = false
+  local support_tools = config.support_tools
+  if support_tools ~= nil then
+    disable_tools = not support_tools
+  end
+
   return merge({
     __inherited_from = vendor_name,
     model = config.model,
@@ -67,7 +73,7 @@ local function vendor_factory(name, extra)
     proxy = LLM.proxy,
     allow_insecure = false,
     timeout = LLM.timeout,
-    disable_tools = false,
+    disable_tools = disable_tools,
   }, extra or {})
 end
 

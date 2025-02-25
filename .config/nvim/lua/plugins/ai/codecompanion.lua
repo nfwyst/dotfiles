@@ -32,6 +32,15 @@ local function adapter_factory(name)
     chat_url = config.pathname
   end
 
+  local models = {}
+  for _, model in ipairs(config.models) do
+    if contains(REASONABLE_MODELS, model) then
+      models[model] = { opts = { can_reason = true } }
+    else
+      PUSH(models, model)
+    end
+  end
+
   return function()
     return adapters.extend(adapter_name, {
       name = name,
@@ -43,7 +52,7 @@ local function adapter_factory(name)
       schema = {
         model = {
           default = config.model,
-          choices = config.models,
+          choices = models,
         },
         temperature = {
           order = 2,
