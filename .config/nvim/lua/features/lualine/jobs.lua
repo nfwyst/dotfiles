@@ -140,7 +140,7 @@ local function is_buf_referenced(bufnr)
 end
 
 local function auto_close_buf(bufnr, context, bufnrs)
-  local is_memory_ok = MEMORY_USAGE < MEMORY_LIMIT
+  local is_memory_ok = MEMORY_USAGE and MEMORY_USAGE < MEMORY_LIMIT
   local no_current = not context.current
   local disabled = not AUTO_CLOSE_BUF_ENABLED
 
