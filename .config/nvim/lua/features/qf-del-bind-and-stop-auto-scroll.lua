@@ -30,6 +30,10 @@ local function remove_qf_item(is_normal)
     end
 
     fn.setqflist(qflist, "r")
+    if EMPTY(qflist, true) then
+      return cmd.ccl()
+    end
+
     fn.cursor(start_index, 1)
   end
 end

@@ -369,11 +369,15 @@ function LINE_BEFORE_CURSOR(opt)
     win = fn.bufwinid(bufnr)
   end
 
+  if not api.nvim_win_is_valid(win) then
+    return
+  end
+
   local pos = WIN_CURSOR(win)
-  local col = pos[2]
   local cur_line = api.nvim_get_current_line()
-  local contents_before_cursor = cur_line:sub(1, col)
-  return contents_before_cursor, pos
+  local prefix = cur_line:sub(1, pos[2])
+
+  return prefix, pos
 end
 
 function STR_CONTAINS(str, substr)

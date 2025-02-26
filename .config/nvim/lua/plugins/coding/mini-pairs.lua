@@ -4,7 +4,6 @@ local function move_cursor_to_block_end(win, row)
   local cur_line = BUF_LINES(bufnr, row, row - 1)[1]
   local trigger_pattern = trigger_text .. "[^" .. trigger_text .. "]*$"
   local trigger_pos = cur_line:find(trigger_pattern)
-
   if not trigger_pos then
     return
   end
@@ -24,8 +23,8 @@ return {
         local filetype = OPT("filetype", { buf = CUR_BUF() })
         local is_markdown = contains(MARKDOWN_FILETYPES, filetype)
         local win = CUR_WIN()
-        local contents_before_cursor, pos = LINE_BEFORE_CURSOR({ win = win })
-        local is_block = contents_before_cursor:match("^%s*``")
+        local prefix, pos = LINE_BEFORE_CURSOR({ win = win })
+        local is_block = prefix and prefix:match("^%s*``")
         local char = pair:sub(1, 1)
 
         if opts.markdown and char == "`" and is_markdown and is_block then
