@@ -12,7 +12,7 @@ local function should_show_snip(ctx)
   end
 
   local trigger_pattern = trigger_text .. "%w*$"
-  return prefix:match(trigger_pattern) ~= nil
+  return prefix:find(trigger_pattern)
 end
 
 local function should_show_emoji(ctx)

@@ -9,6 +9,7 @@ SET_OPTS({
 }, "g")
 
 SET_OPTS({
+  number = false,
   relativenumber = not IS_LINUX,
   showtabline = 0,
   swapfile = false,

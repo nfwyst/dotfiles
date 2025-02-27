@@ -1,9 +1,3 @@
-local left = { "mark" }
-
-if IS_LINUX then
-  left[2] = "sign"
-end
-
 local header = [[
 ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
 ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
@@ -89,8 +83,8 @@ return {
         size = 524288, -- 0.5 * 1024 * 1024
       },
       statuscolumn = {
-        left = left,
-        refresh = 100,
+        left = IS_LINUX and { "sign" } or { "mark", "sign" },
+        refresh = IS_LINUX and 200 or 100,
       },
       dashboard = {
         preset = {

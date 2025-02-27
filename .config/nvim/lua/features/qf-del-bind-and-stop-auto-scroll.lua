@@ -61,6 +61,16 @@ local function fix_qf_position()
   end, 10)
 end
 
+local function should_show_number(bufnr)
+  if CUR_BUF() ~= bufnr then
+    return false
+  end
+
+  local cur_line = api.nvim_get_current_line()
+  local prefix = vim.split(cur_line, " ")[2]
+  return prefix and not prefix:find("^%d.*%.")
+end
+
 local close_cmd
 FILETYPE_TASK_MAP.qf = function(bufnr, win)
   if BUF_VAR(bufnr, TASK_KEY) then
@@ -70,7 +80,10 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
   BUF_VAR(bufnr, "snacks_scroll", false)
   defer(function()
     local opts = COLUMN_OPTS(false)
-    opts.number = true
+    if should_show_number(bufnr) then
+      opts.number = true
+    end
+
     SET_OPTS(opts, { win = win })
   end, 10)
 
