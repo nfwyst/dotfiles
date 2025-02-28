@@ -2,9 +2,10 @@ return {
   "dbinagi/nomodoro",
   cmd = { "NomoTimer", "NomoMenu" },
   keys = {
-    { "<leader>cum", "<cmd>NomoMenu<cr>", desc = "Nomodoro: Menu" },
+    { "<leader>cut", "", desc = "timer" },
+    { "<leader>cutm", "<cmd>NomoMenu<cr>", desc = "Nomodoro: Menu" },
     {
-      "<leader>cuw",
+      "<leader>cutw",
       function()
         REQUEST_USER_INPUT("Enter minutes: ", function(minutes)
           cmd.NomoTimer(minutes)

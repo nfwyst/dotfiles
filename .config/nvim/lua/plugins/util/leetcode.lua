@@ -2,7 +2,7 @@ return {
   "kawre/leetcode.nvim",
   cmd = "Leet",
   keys = {
-    { "<leader>cul", "", desc = "Leet Code" },
+    { "<leader>cul", "", desc = "leet code" },
     { "<leader>culm", "<cmd>Leet<cr>", desc = "Leet Code: Menu" },
     { "<leader>cula", "<cmd>Leet random<cr>", desc = "Leet Code: Random" },
     { "<leader>culc", "<cmd>Leet console<cr>", desc = "Leet Code: Console" },

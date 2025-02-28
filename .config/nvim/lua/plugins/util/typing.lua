@@ -4,8 +4,9 @@ return {
   cmd = { "Typr", "TyprStats" },
   dependencies = "nvzone/volt",
   keys = {
-    { "<leader>cut", "<cmd>Typr<cr>", desc = "Typr: Typing Practice" },
-    { "<leader>cus", "<cmd>TyprStats<cr>", desc = "Typr: Typing Status" },
+    { "<leader>cuk", "", desc = "keyboard practice" },
+    { "<leader>cukt", "<cmd>Typr<cr>", desc = "Typr: Typing Practice" },
+    { "<leader>cuks", "<cmd>TyprStats<cr>", desc = "Typr: Typing Status" },
   },
   opts = function()
     require("typr.state").linecount = 3
