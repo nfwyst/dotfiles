@@ -192,7 +192,7 @@ return {
         diff = { enabled = true },
         chat = {
           window = {
-            width = 0.35,
+            width = FILETYPE_SIZE_MAP.codecompanion.width,
             opts = { linebreak = false },
           },
         },

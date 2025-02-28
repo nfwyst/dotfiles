@@ -8,9 +8,11 @@ SET_OPTS({
   autoformat = false,
 }, "g")
 
+local enable_number = false
+
 SET_OPTS({
-  number = false,
-  relativenumber = not IS_LINUX,
+  number = enable_number,
+  relativenumber = enable_number,
   showtabline = 0,
   swapfile = false,
   timeoutlen = 350,

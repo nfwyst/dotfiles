@@ -204,6 +204,7 @@ return {
       },
       windows = {
         height = 100,
+        width = FILETYPE_SIZE_MAP.Avante.width * 100,
         input = { prefix = "➜ " },
         sidebar_header = {
           enabled = false,

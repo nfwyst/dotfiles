@@ -25,7 +25,6 @@ AUCMD("BufDelete", {
 })
 
 local function reset_win_size(win, target, totals, totals_offset)
-  totals_offset = totals_offset or 0
   if not target then
     return
   end
@@ -36,7 +35,7 @@ local function reset_win_size(win, target, totals, totals_offset)
 
   local func = totals_offset and WIN_HEIGHT or WIN_WIDTH
   local size = func(win)
-  local is_full_size = totals + totals_offset == size
+  local is_full_size = totals + (totals_offset or 0) == size
   if not is_full_size and size > target then
     func(win, target)
   end

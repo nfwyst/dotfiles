@@ -140,6 +140,8 @@ LLM = {
 HAS_AI_KEY = env[LLM.hyperbolic.api_key] ~= nil
 FILETYPE_SIZE_MAP = {
   qf = { height = 10, ignore_event = true },
+  codecompanion = { width = 0.35 },
+  Avante = { width = 0.35 },
 }
 CONSTS = {
   LINT_INITED = "LINT_INITED",
