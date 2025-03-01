@@ -28,6 +28,14 @@ local function shouldnt_show_emoji(ctx)
   return not should_show_emoji(ctx)
 end
 
+local function should_show_lsp(ctx)
+  if OPT("filetype", { buf = ctx.bufnr }) == "lua" then
+    return true
+  end
+
+  return shouldnt_show_emoji(ctx)
+end
+
 local function shouldnt_show_snippets_emoji(ctx)
   local isnt_snip_mode = not should_show_snip(ctx)
 
@@ -175,7 +183,7 @@ return {
       sources = {
         providers = {
           lsp = {
-            should_show_items = shouldnt_show_emoji,
+            should_show_items = should_show_lsp,
             transform_items = transform_lsp_items,
           },
           snippets = {
@@ -204,7 +212,7 @@ return {
             should_show_items = shouldnt_show_snippets_emoji,
             module = "blink-cmp-dictionary",
             name = "Dict",
-            max_items = 2,
+            max_items = 3,
             min_keyword_length = 3,
             opts = {
               dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
