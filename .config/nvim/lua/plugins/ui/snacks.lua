@@ -73,6 +73,12 @@ return {
     local opt = {
       scroll = {
         enabled = true,
+        filter = function(bufnr)
+          return EMPTY(api.nvim_win_get_config(fn.bufwinid(bufnr)).relative)
+            and g.snacks_scroll ~= false
+            and BUF_VAR(bufnr, "snacks_scroll") ~= false
+            and OPT("buftype", { buf = bufnr }) ~= "terminal"
+        end,
       },
       indent = {
         scope = {
