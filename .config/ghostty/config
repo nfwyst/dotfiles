@@ -1,8 +1,8 @@
 theme = tokyonight-storm
 
 adjust-cell-height = 10%
-initial-command = env XDG_CONFIG_HOME="$HOME/.config" PATH="/opt/homebrew/bin:$PATH" nu -c "tmux new -A -s work"
-command = env XDG_CONFIG_HOME="$HOME/.config" PATH="/opt/homebrew/bin:$PATH" nu
+initial-command = /opt/homebrew/bin/tmux new -A -s work
+command = env XDG_CONFIG_HOME="$HOME/.config" /opt/homebrew/bin/nu
 copy-on-select = true
 font-family = "0xProto Nerd Font"
 font-size = 16

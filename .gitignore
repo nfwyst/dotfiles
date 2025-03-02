@@ -14,3 +14,4 @@ cache
 zjframes.rs
 zjstatus/target/
 env.lua
+custom-env.nu
