@@ -96,6 +96,7 @@ $env.XDG_DATA_HOME = ($env.HOME | path join ".local/share")
 use std "path add"
 path add ($env.GOPATH | path join "bin")
 path add ($env.CARGO_HOME | path join "bin")
+path add ($env.HOME | path join ".local/bin")
 
 if $env.UNAME == "Darwin" {
   let brew = "/opt/homebrew"
@@ -110,7 +111,6 @@ if $env.UNAME == "Darwin" {
 }
 
 if $env.UNAME == "Linux" {
-  path add ($env.HOME | path join ".local/bin")
   $env.PKG_CONFIG_PATH = "/usr/lib64/pkgconfig"
   $env.OPENSSL_DIR = "/usr"
 }
