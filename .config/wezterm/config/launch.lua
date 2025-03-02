@@ -18,7 +18,7 @@ if platform.is_win then
     },
   }
 else
-  options.default_prog = { 'zellij' }
+  options.default_prog = { 'tmux' } -- zellij
   options.launch_menu = {
     { label = 'Nushell', args = { 'nu', '-l' } },
     { label = 'Zsh', args = { 'zsh', '-l' } },

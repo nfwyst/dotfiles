@@ -1,0 +1,70 @@
+theme = tokyonight-storm
+
+adjust-cell-height = 10%
+initial-command = env XDG_CONFIG_HOME="$HOME/.config" PATH="/opt/homebrew/bin:$PATH" nu -c "tmux new -A -s work"
+command = env XDG_CONFIG_HOME="$HOME/.config" PATH="/opt/homebrew/bin:$PATH" nu
+copy-on-select = true
+font-family = "0xProto Nerd Font"
+font-size = 16
+mouse-hide-while-typing = true
+macos-non-native-fullscreen=visible-menu
+macos-option-as-alt = true
+macos-titlebar-style = hidden
+window-decoration=false
+window-padding-y = 0
+window-padding-x = 0
+window-padding-color = extend
+window-padding-balance = true
+window-save-state = always
+background-blur-radius = 10
+background-opacity = 0.97
+custom-shader = ghostty-shaders/just-snow.glsl
+confirm-close-surface = false
+
+# Open float quick terminal on top
+keybind = super+s=toggle_quick_terminal
+
+# TMUX integration
+# Go to the N window in tmux in tmux it is Alt+p+number
+keybind = super+one=text:\x1B\x70\x31
+keybind = super+two=text:\x1B\x70\x32
+keybind = super+three=text:\x1B\x70\x33
+keybind = super+four=text:\x1B\x70\x34
+keybind = super+five=text:\x1B\x70\x35
+keybind = super+six=text:\x1B\x70\x36
+keybind = super+seven=text:\x1B\x70\x37
+keybind = super+eight=text:\x1B\x70\x38
+keybind = super+nine=text:\x1B\x70\x39
+
+# New tmux window on Cmd+t in tmux it is Alt+p+c
+keybind = super+t=text:\x1B\x70\x63
+
+# Close tmux pane on Cmd+w in tmux it is Alt+p+x (it is using a custom keybind in tmux to kill the pane)
+keybind = super+w=text:\x1B\x70\x78
+
+# Switch to a window using tmux-fzf on Cmd+p in tmux it is Alt+p+w
+keybind = super+p=text:\x1B\x70\x77
+
+# Rename a tmux window on Cmd+r in tmux it is Alt+p+,
+keybind = super+r=text:\x1B\x70\x2c
+
+# Go to the previous tmux window on Cmd+h in tmux it is Alt+p+p
+keybind = super+h=text:\x1B\x70\x70
+
+# Go to te next tmux window on Cmd+l in tmux it is Alt+p+n
+keybind = super+l=text:\x1B\x70\x6e
+
+# Split the window horizontally on Cmd+minus in tmux it is Alt+p+"
+keybind = super+slash=text:\x1B\x70\x22
+
+# Split the window vertically on Cmd+backslash in tmux it is Alt+p+%
+keybind = super+backslash=text:\x1B\x70\x25
+
+# Toggle pane zoom on Cmd+z in tmux it is Alt+p+z
+keybind = super+z=text:\x1B\x70\x7a
+
+# Move tmux window to left on Cmd+i in tmux it is M-i (alt+i it is a custom keybind)
+keybind = super+i=text:\x1bi
+
+# Move tmux window to right on Cmd+o in tmux it is M-o (alt+o it is a custom keybind)
+keybind = super+o=text:\x1bo

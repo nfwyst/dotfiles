@@ -4,3 +4,6 @@
 [submodule ".config/zellij/plugins/zjstatus"]
 	path = .config/zellij/plugins/zjstatus
 	url = https://github.com/dj95/zjstatus.git
+[submodule ".config/.config/ghostty/ghostty-shaders"]
+	path = .config/.config/ghostty/ghostty-shaders
+	url = https://github.com/hackr-sh/ghostty-shaders.git
