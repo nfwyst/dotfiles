@@ -31,6 +31,7 @@ local function sync_tab(bufnr)
     return
   end
 
+  OPT("list", { win = fn.bufwinid(bufnr) }, false)
   set_tab(4, false, bufnr)
   MAP("n", "<leader>cT", function()
     set_tab(2, true, bufnr)
@@ -62,7 +63,10 @@ local function dim_win(bufnr)
   local win = fn.bufwinid(bufnr)
   RUN_IN_WIN(win, function()
     pcall(function()
-      cmd.VimadeFadeActive()
+      if VIMADE_ENABLED then
+        cmd.VimadeFadeActive()
+      end
+
       BUF_VAR(bufnr, var_key, true)
     end)
   end)

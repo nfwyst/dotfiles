@@ -1,4 +1,8 @@
 local function set_custom_highlight()
+  if not IS_INIT_BG_DARK then
+    return
+  end
+
   local fg1 = "#657b83"
   local fg0 = "#839496"
   local fg2 = "#586e75"

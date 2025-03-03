@@ -63,7 +63,10 @@ return {
           return
         end
 
-        cmd.VimadeBufDisable()
+        if VIMADE_ENABLED then
+          cmd.VimadeBufDisable()
+        end
+
         BUF_VAR(bufnr, TASK_KEY, true)
       end
     end
