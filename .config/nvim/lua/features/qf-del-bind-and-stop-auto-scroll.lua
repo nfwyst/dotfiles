@@ -67,7 +67,7 @@ local function should_show_number(bufnr)
   end
 
   local cur_line = api.nvim_get_current_line()
-  local prefix = vim.split(cur_line, " ")[2]
+  local prefix = split(cur_line, " ")[2]
   return prefix and not prefix:find("^%d.*%.")
 end
 

@@ -258,7 +258,7 @@ return {
           get_filepaths = function(params)
             -- get better performance with fd
             local cmd = string.format("fd --base-directory '%s' --hidden", fn.fnameescape(params.cwd))
-            local filepaths = vim.split(fn.system(cmd), "\n", { trimempty = true })
+            local filepaths = split(fn.system(cmd), "\n", { trimempty = true })
 
             return vim
               .iter(filepaths)

@@ -6,6 +6,10 @@ command = env XDG_CONFIG_HOME="$HOME/.config" /opt/homebrew/bin/nu
 copy-on-select = true
 font-family = "0xProto Nerd Font"
 font-size = 16
+font-style = Italic SemiBold
+font-style-bold = Italic ExtraBold
+font-style-italic = Italic SemiBold
+font-style-bold-italic = Italic ExtraBold
 mouse-hide-while-typing = true
 macos-non-native-fullscreen=visible-menu
 macos-option-as-alt = true

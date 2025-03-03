@@ -17,6 +17,7 @@ _G.fs = vim.fs
 _G.uv = vim.uv
 _G.filter = vim.tbl_filter
 _G.map = vim.tbl_map
+_G.split = vim.split
 _G.contains = vim.tbl_contains
 _G.env = vim.env
 _G.o = vim.o
