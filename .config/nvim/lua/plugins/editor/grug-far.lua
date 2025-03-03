@@ -29,6 +29,7 @@ return {
       },
     }
 
+    language.register("markdown", "grug-far-help")
     return merge(opts, opt)
   end,
 }

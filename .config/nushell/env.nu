@@ -119,10 +119,7 @@ $env.EDITOR = (which nvim | get path | first)
 $env.SHELL = (which nu | get path | first)
 
 # To load env from custom file
-let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
-if ($custom_env_path | path exists) {
-  source ($nu.default-config-dir | path join 'custom-env.nu')
-}
+source ($nu.default-config-dir | path join 'custom-env.nu')
 
 # prepare for starship
 mkdir ~/.config/nushell/cache/starship
