@@ -53,7 +53,7 @@ local function update_winbar(win, bufpath, bufnrs)
 
   bufpath = "%#WinBar1#" .. fn.fnamemodify(bufpath, ":~")
 
-  local bufcount = "%*%=%#WinBar2#(" .. #bufnrs .. ")"
+  local bufcount = "%=%#WinBar2#(" .. #bufnrs .. ")"
   local winbar = bufpath .. bufcount
   local opt = { win = win }
 

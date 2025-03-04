@@ -72,7 +72,7 @@ local function set_keymaps(bufnr)
   MAPS({
     n = {
       {
-        from = "<leader>ci",
+        from = "<leader>cte",
         to = function()
           NEED_ESLINT_FIX = true
           require("conform").format({
