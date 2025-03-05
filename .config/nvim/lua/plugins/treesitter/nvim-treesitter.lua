@@ -90,6 +90,7 @@ return {
         "http",
         "typst",
         "vue",
+        "norg",
       },
       ignore_install = nil,
       textobjects = {

@@ -3,13 +3,26 @@ local ensure_installed = {
     installer = "go",
     params = "install github.com/mistweaverco/kulala-fmt@latest",
   },
-  ["sg"] = {
+  sg = {
     installer = "cargo",
     params = "install ast-grep --locked",
   },
-  ["latex2text"] = {
+  latex2text = {
     installer = "uv",
-    params = "pip install pylatexenc --system --break-system-packages",
+    params_mac = "pip install pylatexenc --system --break-system-packages",
+    params_linux = "pip install pylatexenc",
+  },
+  grpcurl = {
+    installer = "go",
+    params = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
+  },
+  bun = {
+    installer = "curl",
+    params = "-fsSL https://bun.sh/install | bash",
+  },
+  mmdc = {
+    installer = "bun",
+    params = "install -g @mermaid-js/mermaid-cli",
   },
 }
 
@@ -20,7 +33,20 @@ for cmd, opt in pairs(ensure_installed) do
     NOTIFY("installing " .. cmd .. "...", levels.INFO)
 
     local stderr_buffer = {}
-    fn.jobstart(installer .. " " .. opt.params, {
+    local params = opt.params
+    if not params then
+      if IS_LINUX then
+        params = opt.params_linux
+      else
+        params = opt.params_mac
+      end
+
+      if not params then
+        return
+      end
+    end
+
+    fn.jobstart(installer .. " " .. params, {
       on_stderr = function(_, data)
         for _, line in ipairs(data) do
           if not EMPTY(line) then
@@ -37,6 +63,10 @@ for cmd, opt in pairs(ensure_installed) do
           level = levels.ERROR
           status = "failed"
           details = "\n" .. table.concat(stderr_buffer, "\n")
+        end
+
+        if opt.post_install then
+          opt.post_install()
         end
 
         NOTIFY(cmd .. " install " .. status .. details, level)

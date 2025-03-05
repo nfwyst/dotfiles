@@ -97,6 +97,7 @@ use std "path add"
 path add ($env.GOPATH | path join "bin")
 path add ($env.CARGO_HOME | path join "bin")
 path add ($env.HOME | path join ".local/bin")
+path add ($env.HOME | path join ".bun/bin")
 
 if $env.UNAME == "Darwin" {
   let brew = "/opt/homebrew"

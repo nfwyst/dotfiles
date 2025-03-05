@@ -95,6 +95,7 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export PATH="$PATH:$GOPATH/bin"
 export PATH="$PATH:$CARGO_HOME/bin"
 export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/.bun/bin"
 
 if [[ "$(uname)" == "Linux" ]]; then
   export PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
