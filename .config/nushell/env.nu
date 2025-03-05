@@ -115,6 +115,7 @@ if $env.UNAME == "Linux" {
   $env.OPENSSL_DIR = "/usr"
 }
 
+$env.LANG = "en_US.UTF-8"
 $env.EDITOR = (which nvim | get path | first)
 $env.SHELL = (which nu | get path | first)
 

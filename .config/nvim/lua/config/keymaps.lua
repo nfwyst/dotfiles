@@ -32,10 +32,11 @@ local function get_resizer(is_increase, is_vertical)
   end
 end
 
-MAPS({
+local keymaps = {
   n = {
     { from = "p", to = paste },
     { from = "<leader>cu", to = "", opt = { desc = "utils" } },
+    { from = "<leader>fn", to = NewFile, opt = { desc = "utils" } },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
     {
@@ -76,4 +77,8 @@ MAPS({
       end,
     },
   },
-})
+}
+
+function SET_KEYMAPS()
+  MAPS(keymaps)
+end

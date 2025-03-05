@@ -22,7 +22,7 @@ window-padding-balance = true
 window-save-state = always
 background-blur-radius = 10
 background-opacity = 0.97
-custom-shader = ghostty-shaders/just-snow.glsl
+custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
 
 # Open float quick terminal on top

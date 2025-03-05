@@ -73,7 +73,9 @@ local function buffers(name, context)
       jobs.close_dashboard(bufnrs)
       jobs.update_winbar(win, bufpath, bufnrs)
     elseif not name and IS_BUF_LISTED(bufnr) then
-      name = jobs.open_dashboard(win, bufnr)
+      if not BUF_VAR(bufnr, CONSTS.IS_NEW_FILE) then
+        name = jobs.open_dashboard(win, bufnr)
+      end
     end
   elseif not name then
     OPT("buflisted", { buf = bufnr }, false)

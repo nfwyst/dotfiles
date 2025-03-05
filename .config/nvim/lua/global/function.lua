@@ -440,3 +440,13 @@ function ADD_BLINK_COMPAT_SOURCES(_sources)
 
   push_list(sources.compat, _sources)
 end
+
+function NewFile()
+  local buf = CUR_BUF()
+  cmd("ene | startinsert")
+
+  local bufnr = CUR_BUF()
+  if bufnr ~= buf then
+    BUF_VAR(bufnr, CONSTS.IS_NEW_FILE, true)
+  end
+end

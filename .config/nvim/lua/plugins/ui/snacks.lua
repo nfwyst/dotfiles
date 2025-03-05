@@ -90,6 +90,14 @@ local function get_image_enabled()
   return no_linux and no_zellij and has_magick
 end
 
+local function get_new_file_key(opts)
+  for _, key in ipairs(opts.dashboard.preset.keys) do
+    if key.key == "n" then
+      return key
+    end
+  end
+end
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
@@ -114,6 +122,7 @@ return {
 
     SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
 
+    get_new_file_key(opts).action = NewFile
     local opt = {
       scroll = {
         enabled = true,
@@ -173,6 +182,7 @@ return {
         enabled = get_image_enabled(),
       },
     }
+
     return merge(opts, opt)
   end,
 }
