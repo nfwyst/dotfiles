@@ -32,11 +32,22 @@ local function get_resizer(is_increase, is_vertical)
   end
 end
 
+local function toggle_diagnostics()
+  local bufnr = CUR_BUF()
+  local key = CONSTS.LINT_INITED
+  if not BUF_VAR(bufnr, key) then
+    BUF_VAR(bufnr, key, true)
+  end
+
+  Snacks.toggle.diagnostics():toggle()
+end
+
 local keymaps = {
   n = {
     { from = "p", to = paste },
     { from = "<leader>cu", to = "", opt = { desc = "utils" } },
-    { from = "<leader>fn", to = NewFile, opt = { desc = "utils" } },
+    { from = "<leader>fn", to = NewFile, opt = { desc = "New File" } },
+    { from = "<leader>ud", to = toggle_diagnostics },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
     {

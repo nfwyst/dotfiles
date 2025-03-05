@@ -65,7 +65,7 @@ require("lazy").setup({
     {
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
-      opts = { colorscheme = IS_INIT_BG_DARK and "tokyonight" or "e-ink" },
+      opts = { colorscheme = IS_INIT_BG_DARK and "tokyonight" or "NeoSolarized" },
     },
     { import = "plugins" },
     { import = "plugins.colorscheme" },

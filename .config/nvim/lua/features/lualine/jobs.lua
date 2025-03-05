@@ -43,7 +43,7 @@ local function close_dashboard(bufnrs)
 end
 
 SET_HLS({
-  WinBar1 = { fg = "#fad61d", bold = true },
+  WinBar1 = { fg = IS_INIT_BG_DARK and "#fad61d" or "#5f87af", bold = true },
   WinBar2 = { fg = "#04d1f9", bold = true },
 })
 local function update_winbar(win, bufpath, bufnrs)

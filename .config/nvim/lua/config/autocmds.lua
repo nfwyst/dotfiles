@@ -1,7 +1,15 @@
 api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
 local keys_to_delete = {
-  n = { "<leader>gL", "<c-up>", "<c-down>", "<c-left>", "<c-right>", "<leader>fn" },
+  n = {
+    "<leader>gL",
+    "<c-up>",
+    "<c-down>",
+    "<c-left>",
+    "<c-right>",
+    "<leader>fn",
+    "<leader>ud",
+  },
 }
 
 -- remove default keymap

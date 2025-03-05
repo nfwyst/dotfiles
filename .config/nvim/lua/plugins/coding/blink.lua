@@ -268,9 +268,8 @@ return {
         ["<c-j>"] = { "cancel", "fallback" },
         ["<c-k>"] = { "cancel", "fallback" },
       },
-      snippets = {
-        preset = "default",
-      },
+      snippets = { preset = "default" },
+      fuzzy = { prebuilt_binaries = { ignore_version_mismatch = IS_LINUX } },
     }
 
     return merge(opts, opt)
