@@ -27,7 +27,7 @@ return {
 
             return require("nomodoro").status()
           end,
-          color = { fg = "#04d1f9" },
+          color = IS_INIT_BG_DARK and { fg = "#04d1f9" } or nil,
           padding = { left = 0, right = 1 },
         })
       end,

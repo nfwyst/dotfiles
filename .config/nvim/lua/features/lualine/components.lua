@@ -77,7 +77,7 @@ local root_path_guide = {
     return root .. "" .. git
   end,
   padding = { left = 1, right = 1 },
-  color = { fg = "#37f499" },
+  color = IS_INIT_BG_DARK and { fg = "#37f499" } or nil,
 }
 
 local memory = {

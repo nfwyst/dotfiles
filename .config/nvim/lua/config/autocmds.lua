@@ -62,3 +62,8 @@ AUCMD({ "VimResized", "WinResized" }, {
     reset_win_size(win, conf.height, o.lines, -2)
   end,
 })
+
+AUCMD("ColorScheme", {
+  group = GROUP("scheme_changed", { clear = true }),
+  callback = OVERWRITE_HLS,
+})

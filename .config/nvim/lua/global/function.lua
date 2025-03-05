@@ -450,3 +450,27 @@ function NewFile()
     BUF_VAR(bufnr, CONSTS.IS_NEW_FILE, true)
   end
 end
+
+function OVERWRITE_HLS()
+  if not IS_INIT_BG_DARK then
+    return SET_HLS({ LineNr = { bg = "NONE" } })
+  end
+
+  local fg1 = "#657b83"
+  local fg0 = "#839496"
+  local fg2 = "#586e75"
+  SET_HLS({
+    CursorLine = { bg = "#3d4a4f" },
+    ["@variable"] = { fg = fg0 },
+    Normal = { fg = fg0 },
+    Comment = { fg = fg2 },
+    LineNrAbove = { fg = fg1 },
+    LineNr = { fg = fg1 },
+    LineNrBelow = { fg = fg1 },
+    CursorLineNr = { fg = "#388bfd" },
+    MatchParen = { bg = "#000000" },
+    Cursor = { bg = "#5f87af", ctermbg = 67, blend = 0 },
+    iCursor = { bg = "#ffffaf", ctermbg = 229 },
+    rCursor = { bg = "#d70000", ctermbg = 124 },
+  })
+end
