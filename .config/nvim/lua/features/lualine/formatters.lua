@@ -41,8 +41,13 @@ local function buffers(name, context)
   end
 
   local win_info
-  if not name and win_valid then
+  local is_win_float
+  if win_valid then
     win_info = api.nvim_win_get_config(win)
+    is_win_float = not EMPTY(win_info.relative)
+  end
+
+  if not name and win_info then
     local title = win_info.title
     if title and title[1] then
       title = vim.trim(title[1][1] or "")
@@ -71,7 +76,9 @@ local function buffers(name, context)
       local bufnrs = require("lualine.components.buffers").bufpos2nr
       jobs.auto_close_buf(bufnr, context, bufnrs)
       jobs.close_dashboard(bufnrs)
-      jobs.update_winbar(win, bufpath, bufnrs)
+      if not is_win_float then
+        jobs.update_winbar(win, bufpath, bufnrs)
+      end
     elseif not name and IS_BUF_LISTED(bufnr) then
       if not BUF_VAR(bufnr, CONSTS.IS_NEW_FILE) then
         name = jobs.open_dashboard(win, bufnr)
@@ -82,11 +89,8 @@ local function buffers(name, context)
     return ""
   end
 
-  if not name then
-    win_info = win_info or api.nvim_win_get_config(win)
-    if not EMPTY(win_info.relative) then
-      return "Popup"
-    end
+  if not name and is_win_float then
+    return "Popup"
   end
 
   return name or "No Name"
