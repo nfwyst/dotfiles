@@ -11,7 +11,7 @@
 	#define LAYERS 50
 	#define DEPTH .5
 	#define WIDTH .3
-	#define SPEED 0.1
+	#define SPEED 0.03
 #else // BLIZZARD
 	#define LAYERS 200
 	#define DEPTH .1
