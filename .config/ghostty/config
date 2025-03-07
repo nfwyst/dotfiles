@@ -21,7 +21,7 @@ window-padding-color = extend
 window-padding-balance = true
 window-save-state = always
 background-blur-radius = 10
-background-opacity = 0.97
+background-opacity = 0.96
 custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
 
