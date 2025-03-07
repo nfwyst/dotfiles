@@ -1,4 +1,10 @@
-api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+local function del_aucmds(group_names)
+  for _, group_name in ipairs(group_names) do
+    api.nvim_del_augroup_by_name("lazyvim_" .. group_name)
+  end
+end
+
+del_aucmds({ "wrap_spell" })
 
 local keys_to_delete = {
   n = {

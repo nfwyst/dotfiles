@@ -83,6 +83,11 @@ local function transform_snip_items(ctx, items)
     return items
   end
 
+  if snippet.active() then
+    -- stop prev snippet session
+    snippet.stop()
+  end
+
   return map(function(item)
     item.textEdit = {
       newText = item.insertText or item.label,
@@ -125,6 +130,8 @@ local function get_by_cmdtype(search_val, cmd_val, default)
 
   return default
 end
+
+local cancel = { "cancel", "fallback" }
 
 return {
   "saghen/blink.cmp",
@@ -240,9 +247,11 @@ return {
         enabled = true,
         keymap = {
           ["<c-l>"] = { "show", "fallback" },
-          ["<c-e>"] = { "hide", "fallback" },
+          ["<c-e>"] = cancel,
           ["<c-j>"] = { "select_next", "fallback" },
           ["<c-k>"] = { "select_prev", "fallback" },
+          ["<right>"] = cancel,
+          ["<left>"] = cancel,
         },
         sources = function()
           return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
@@ -262,11 +271,11 @@ return {
         },
       },
       keymap = {
-        ["<c-a>"] = { "cancel", "fallback" },
-        ["<c-l>"] = { "cancel", "fallback" },
-        ["<c-z>"] = { "cancel", "fallback" },
-        ["<c-j>"] = { "cancel", "fallback" },
-        ["<c-k>"] = { "cancel", "fallback" },
+        ["<c-a>"] = cancel,
+        ["<c-l>"] = cancel,
+        ["<c-z>"] = cancel,
+        ["<c-j>"] = cancel,
+        ["<c-k>"] = cancel,
       },
       snippets = { preset = "default" },
       fuzzy = { prebuilt_binaries = { ignore_version_mismatch = IS_LINUX } },
