@@ -4,7 +4,7 @@ local function del_aucmds(group_names)
   end
 end
 
-del_aucmds({ "wrap_spell" })
+del_aucmds({ "wrap_spell", "last_loc" })
 
 local keys_to_delete = {
   n = {
