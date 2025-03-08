@@ -8,6 +8,7 @@ gh
 .jira
 history.txt
 .aider*
+!.aider.conf.yml
 todo.md
 .gp.md
 cache
@@ -15,3 +16,4 @@ zjframes.rs
 zjstatus/target/
 env.lua
 custom-env.nu
+custom-env.zsh

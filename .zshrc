@@ -174,3 +174,10 @@ function switch_ctrl_caps_lock() {
 function run_qwen_agent() {
   uv run run_server.py --llm deepseek-ai/DeepSeek-V3 --model_server https://api.hyperbolic.xyz/v1 --workstation_port 7864 --api_key "$HYPERBOLIC_API_KEY" --max_ref_token 89429
 }
+
+env_path="$HOME/dotfiles/custom-env.zsh"
+if [[ -f $env_path ]]; then
+  source "$env_path"
+else
+  touch "$env_path"
+fi
