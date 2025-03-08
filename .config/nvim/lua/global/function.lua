@@ -413,32 +413,48 @@ function SELECT_PROMPT(on_select)
   end)
 end
 
-function ADD_BLINK_SOURCE(source, filetypes, config)
+function ADD_BLINK_SOURCE(opt)
+  local id = opt.id
+  local config = opt.config
+  local is_default = opt.default
+  local filetypes = opt.filetypes
   local cmp = require("blink.cmp")
+  local has_filetypes = not EMPTY(filetypes, true)
+
   if config then
-    cmp.add_provider(source, config)
+    config.opts = config.opts or {}
+    if is_default and has_filetypes then
+      config.enabled = function()
+        local filetype = OPT("filetype", { buf = CUR_BUF() })
+        return contains(filetypes, filetype)
+      end
+    end
+
+    cmp.add_provider(id, config)
   end
 
-  if not filetypes then
+  if is_default or not has_filetypes then
     local sources = require("blink.cmp.config").sources
-    return PUSH(sources.default, source)
+    return PUSH(sources.default, id)
   end
 
   for _, filetype in ipairs(filetypes) do
-    cmp.add_filetype_source(filetype, source)
+    cmp.add_filetype_source(filetype, id)
   end
 end
 
----@class blink.cmp.SourceConfig
----@field compat table[]
-function ADD_BLINK_COMPAT_SOURCES(_sources)
-  local sources = require("blink.cmp.config").sources
-
-  if not sources.compat then
-    sources.compat = {}
+function ADD_BLINK_COMPAT_SOURCES(opt)
+  for _, id in ipairs(opt.ids) do
+    ADD_BLINK_SOURCE({
+      id = id,
+      filetypes = opt.filetypes,
+      default = opt.default,
+      config = {
+        name = id,
+        module = "blink.compat.source",
+      },
+    })
   end
-
-  push_list(sources.compat, _sources)
 end
 
 function NewFile()

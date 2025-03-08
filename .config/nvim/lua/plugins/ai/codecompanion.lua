@@ -134,7 +134,10 @@ return {
     { "<leader>act", change_prompt, desc = "CodeCompanion: Change Prompt" },
   },
   config = function()
-    ADD_BLINK_SOURCE("codecompanion", { "codecompanion" })
+    ADD_BLINK_SOURCE({
+      id = "codecompanion",
+      filetypes = { "codecompanion" },
+    })
 
     -- hide left columns for code companion sidebar
     if not FILETYPE_TASK_MAP.codecompanion then

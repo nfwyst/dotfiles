@@ -46,9 +46,13 @@ return {
   ft = "markdown",
   config = function()
     ADD_BLINK_COMPAT_SOURCES({
-      "obsidian",
-      "obsidian_new",
-      "obsidian_tags",
+      default = true,
+      filetypes = { "markdown" },
+      ids = {
+        "obsidian",
+        "obsidian_new",
+        "obsidian_tags",
+      },
     })
 
     local obsidian = require("obsidian")

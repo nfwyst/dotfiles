@@ -3,12 +3,14 @@ return {
   lazy = false,
   dependencies = { "saghen/blink.cmp" },
   opts = function(_, opts)
-    ADD_BLINK_SOURCE("markdown", nil, {
-      enabled = function()
-        return OPT("filetype", { buf = CUR_BUF() }) == "markdown"
-      end,
-      name = "RenderMarkdown",
-      module = "render-markdown.integ.blink",
+    ADD_BLINK_SOURCE({
+      id = "markdown",
+      filetypes = { "markdown" },
+      default = true,
+      config = {
+        name = "RenderMarkdown",
+        module = "render-markdown.integ.blink",
+      },
     })
 
     local state = require("render-markdown.state")

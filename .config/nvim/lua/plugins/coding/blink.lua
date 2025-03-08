@@ -133,6 +133,46 @@ end
 
 local cancel = { "cancel", "fallback" }
 
+local function add_emoji()
+  if emoji_enabled then
+    ADD_BLINK_SOURCE({
+      id = "emoji",
+      config = {
+        name = "Emoji",
+        module = "blink-emoji",
+        opts = { insert = true },
+      },
+    })
+  end
+end
+
+local function add_dictionary()
+  ADD_BLINK_SOURCE({
+    id = "dictionary",
+    config = {
+      should_show_items = shouldnt_show_snippets_emoji,
+      module = "blink-cmp-dictionary",
+      name = "Dict",
+      max_items = 3,
+      min_keyword_length = 3,
+      opts = {
+        dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
+        separate_output = function(output)
+          local items = {}
+          for line in output:gmatch("[^\r\n]+") do
+            table.insert(items, {
+              label = line,
+              insert_text = line,
+              documentation = nil,
+            })
+          end
+          return items
+        end,
+      },
+    },
+  })
+end
+
 return {
   "saghen/blink.cmp",
   event = "CmdlineEnter",
@@ -145,6 +185,11 @@ return {
     { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
   },
   opts = function(_, opts)
+    require("cmp").ConfirmBehavior = {
+      Insert = "insert",
+      Replace = "replace",
+    }
+
     local link = { link = "FloatBorder" }
     SET_HLS({
       BlinkCmpMenuBorder = link,
@@ -153,15 +198,10 @@ return {
       Pmenu = { bg = "NONE" },
     })
 
-    PUSH(opts.sources.default, "dictionary")
-    if emoji_enabled then
-      PUSH(opts.sources.default, "emoji")
-      opts.sources.providers.emoji = {
-        module = "blink-emoji",
-        name = "Emoji",
-        opts = { insert = true },
-      }
-    end
+    schedule(function()
+      add_dictionary()
+      add_emoji()
+    end)
 
     local opt = {
       enabled = function()
@@ -213,27 +253,6 @@ return {
                 return fs.dirname(BUF_PATH(context.bufnr))
               end,
               show_hidden_files_by_default = true,
-            },
-          },
-          dictionary = {
-            should_show_items = shouldnt_show_snippets_emoji,
-            module = "blink-cmp-dictionary",
-            name = "Dict",
-            max_items = 3,
-            min_keyword_length = 3,
-            opts = {
-              dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
-              separate_output = function(output)
-                local items = {}
-                for line in output:gmatch("[^\r\n]+") do
-                  table.insert(items, {
-                    label = line,
-                    insert_text = line,
-                    documentation = nil,
-                  })
-                end
-                return items
-              end,
             },
           },
           buffer = {
