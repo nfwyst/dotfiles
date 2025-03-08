@@ -4,7 +4,7 @@ local function del_aucmds(group_names)
   end
 end
 
-del_aucmds({ "wrap_spell", "last_loc" })
+del_aucmds({ "wrap_spell", "last_loc", "resize_splits" })
 
 local keys_to_delete = {
   n = {
@@ -57,23 +57,50 @@ local function reset_win_size(win, target, totals, totals_offset)
   end
 end
 
+local function resize_normal_win()
+  cmd.tabdo("wincmd =")
+  cmd.tabnext(fn.tabpagenr())
+end
+
+local function get_filetype_by_subft(filetype)
+  for _, sub_ft in ipairs(FILETYPE_SIZE_MAP._sub_fts) do
+    if STR_CONTAINS(filetype, sub_ft) then
+      return sub_ft
+    end
+  end
+
+  return filetype
+end
+
+local function resize_special_win(event)
+  local bufnr = event.buf
+  local win = fn.bufwinid(bufnr)
+  if WIN_VAR(win, CONSTS.RESIZE_MANULLY) then
+    return
+  end
+
+  local filetype = get_filetype_by_subft(OPT("filetype", { buf = bufnr }))
+  local conf = FILETYPE_SIZE_MAP[filetype]
+  if not conf or conf.ignore_event then
+    return
+  end
+
+  reset_win_size(win, conf.width, o.columns)
+  reset_win_size(win, conf.height, o.lines, -2)
+
+  return true
+end
+
 AUCMD({ "VimResized", "WinResized" }, {
   group = GROUP("resize_watcher", { clear = true }),
   callback = function(event)
-    local bufnr = event.buf
-    local win = fn.bufwinid(bufnr)
-    if WIN_VAR(win, CONSTS.RESIZE_MANULLY) then
+    if resize_special_win(event) then
       return
     end
 
-    local filetype = OPT("filetype", { buf = bufnr })
-    local conf = FILETYPE_SIZE_MAP[filetype]
-    if not conf or conf.ignore_event then
-      return
+    if event.event == "VimResized" then
+      resize_normal_win()
     end
-
-    reset_win_size(win, conf.width, o.columns)
-    reset_win_size(win, conf.height, o.lines, -2)
   end,
 })
 

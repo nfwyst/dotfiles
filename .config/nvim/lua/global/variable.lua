@@ -145,6 +145,7 @@ FILETYPE_SIZE_MAP = {
   qf = { height = 10, ignore_event = true },
   codecompanion = { width = 0.35 },
   Avante = { width = 0.35 },
+  _sub_fts = { "Avante" },
 }
 CONSTS = {
   LINT_INITED = "LINT_INITED",
