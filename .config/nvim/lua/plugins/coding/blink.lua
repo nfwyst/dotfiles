@@ -225,6 +225,7 @@ return {
         },
         documentation = { window = { border = "rounded" } },
         trigger = { prefetch_on_insert = false },
+        accept = { dot_repeat = false },
       },
       signature = { window = { border = "rounded" } },
       sources = {
