@@ -21,7 +21,7 @@ window-padding-color = extend
 window-padding-balance = true
 window-save-state = always
 background-blur-radius = 10
-background-opacity = 0.96
+background-opacity = 0.95
 custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
 
@@ -72,3 +72,7 @@ keybind = super+i=text:\x1bi
 
 # Move tmux window to right on Cmd+o in tmux it is M-o (alt+o it is a custom keybind)
 keybind = super+o=text:\x1bo
+
+# set env TODO: wait for v1.2 release
+# env = SNACKS_KITTY=1
+# env = XDG_CONFIG_HOME="$HOME/.config"
