@@ -21,5 +21,9 @@ return {
     beacon = {
       enable = false,
     },
+    ui = {
+      expand = "",
+      collapse = " ",
+    },
   },
 }

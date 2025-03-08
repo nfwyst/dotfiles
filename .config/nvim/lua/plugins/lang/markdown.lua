@@ -54,6 +54,11 @@ return {
       latex = {
         enabled = executable("latex2text"),
       },
+      html = {
+        tag = {
+          think = { icon = "󰛨 ", highlight = "Normal" },
+        },
+      },
       on = {
         render = function(context)
           local bufnr = context.buf
