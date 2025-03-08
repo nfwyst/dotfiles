@@ -25,14 +25,13 @@ local function hide_response_columns(_, win)
   end, 30)
 end
 
-local function hide_input_columns(bufnr, win)
+local function hide_input_columns(_, win)
   if WIN_VAR(win, TASK_KEY) then
     return
   end
   defer(function()
     local opts = COLUMN_OPTS(false)
     opts.signcolumn = "yes"
-    pcall(keymap.del, "i", "<tab>", { buffer = bufnr })
     SET_OPTS(opts, { win = win })
     WIN_VAR(win, TASK_KEY, true)
   end, 30)
@@ -216,6 +215,11 @@ return {
       mappings = {
         files = {
           add_current = "<leader>aab",
+        },
+        sidebar = {
+          close_from_input = {
+            normal = "q",
+          },
         },
       },
       hints = {
