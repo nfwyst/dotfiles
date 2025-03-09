@@ -50,7 +50,6 @@ end
 
 local function on_zen(is_open, statuscolumn)
   IS_ZEN_MODE = is_open
-  diagnostic.enable(not is_open)
   local opts = COLUMN_OPTS(not is_open, statuscolumn)
   -- dont show fold signs for files buffer, use snacks fold
   opts.foldcolumn = "0"
@@ -80,6 +79,7 @@ local function set_events()
   local dashboard = Snacks.dashboard.Dashboard
   dashboard.on("UpdatePost", scroll_to_top)
   dashboard.on("Opened", scroll_to_top)
+  Snacks.dim.enable()
 end
 
 local function get_image_enabled()
@@ -98,6 +98,11 @@ local function get_new_file_key(opts)
   end
 end
 
+local hls = { SnacksIndent = { fg = TRANSPARENT_INDENT_HL } }
+if not IS_LINUX then
+  hls.SnacksDim = { fg = "#656da4" }
+end
+
 return {
   "snacks.nvim",
   opts = function(_, opts)
@@ -105,7 +110,6 @@ return {
     defer(set_events, 0)
 
     PUSH(FT_HIDE_CURSOR, "snacks_dashboard")
-
     if not FILETYPE_TASK_MAP.snacks_terminal then
       FILETYPE_TASK_MAP.snacks_terminal = function(bufnr)
         if BUF_VAR(bufnr, TASK_KEY) then
@@ -120,8 +124,7 @@ return {
       end
     end
 
-    SET_HLS({ SnacksIndent = { fg = TRANSPARENT_INDENT_HL } })
-
+    SET_HLS(hls)
     get_new_file_key(opts).action = NewFile
     local opt = {
       scroll = {
@@ -133,42 +136,23 @@ return {
             and OPT("buftype", { buf = bufnr }) ~= "terminal"
         end,
       },
-      indent = {
-        scope = {
-          enabled = not IS_LINUX,
-        },
-      },
-      bigfile = {
-        size = 524288, -- 0.5 * 1024 * 1024
-      },
+      indent = { scope = { enabled = not IS_LINUX } },
+      bigfile = { size = 524288 }, -- 0.5 * 1024 * 1024
       statuscolumn = {
         left = IS_LINUX and { "sign" } or { "mark", "sign" },
         refresh = IS_LINUX and 200 or 100,
       },
       dashboard = {
-        preset = {
-          header = header,
-        },
-        formats = {
-          header = { align = align },
-        },
+        preset = { header = header },
+        formats = { header = { align = align } },
       },
-      lazygit = {
-        enabled = false,
-      },
+      lazygit = { enabled = false },
       styles = {
-        notification = {
-          wo = {
-            wrap = true,
-          },
-        },
-        terminal = {
-          wo = {
-            winbar = "",
-          },
-        },
+        notification = { wo = { wrap = true } },
+        terminal = { wo = { winbar = "" } },
       },
       zen = {
+        toggles = { diagnostics = false, inlay_hints = false },
         on_open = function()
           statuscolumn = o.statuscolumn
           on_zen(true)
@@ -178,9 +162,8 @@ return {
           on_zen(false, statuscolumn)
         end,
       },
-      image = {
-        enabled = get_image_enabled(),
-      },
+      dim = { animate = { enabled = not IS_LINUX } },
+      image = { enabled = get_image_enabled() },
     }
 
     return merge(opts, opt)
