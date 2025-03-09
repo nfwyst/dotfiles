@@ -12,6 +12,7 @@
   "catppuccin": { "branch": "main", "commit": "5b5e3aef9ad7af84f463d17b5479f06b87d5c429" },
   "codecompanion.nvim": { "branch": "main", "commit": "855c4bce42eca5209a0ef53f7a4188d78d520ed1" },
   "conform.nvim": { "branch": "master", "commit": "db8a4a9edb217067b1d7a2e0362c74bfe9cc944d" },
+  "e-ink.nvim": { "branch": "main", "commit": "bb839bd3f5b03e09885c7b4fdcb9a8df4b33a6cb" },
   "emmet-vim": { "branch": "master", "commit": "6c511a8d7d2863066f32e25543e2bb99d505172c" },
   "flash.nvim": { "branch": "main", "commit": "3c942666f115e2811e959eabbdd361a025db8b63" },
   "friendly-snippets": { "branch": "main", "commit": "efff286dd74c22f731cdec26a70b46e5b203c619" },
