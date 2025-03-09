@@ -30,7 +30,6 @@ AUCMD("BufWinEnter", {
     local opt = { buf = bufnr }
     local filetype = OPT("filetype", opt)
     local ignored = { "gitcommit", "gitrebase", "svg", "hgcommit" }
-
     if contains(ignored, filetype) then
       return
     end

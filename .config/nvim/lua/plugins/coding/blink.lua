@@ -203,9 +203,10 @@ return {
       add_emoji()
     end)
 
+    local ignored = { "neo-tree", "neo-tree-popup", "typr", "snacks_picker_input" }
     local opt = {
       enabled = function()
-        return not contains({ "neo-tree", "neo-tree-popup", "typr" }, OPT("filetype", { buf = CUR_BUF() }))
+        return not contains(ignored, OPT("filetype", { buf = CUR_BUF() }))
       end,
       completion = {
         menu = {

@@ -47,7 +47,7 @@ SET_HLS({
   WinBar2 = { fg = "#04d1f9", bold = true },
 })
 local function update_winbar(win, bufpath, bufnrs)
-  if IS_ZEN_MODE then
+  if IS_ZEN_MODE or IS_REALTIME_SYMBOLS then
     return
   end
 

@@ -1,6 +1,41 @@
+IS_REALTIME_SYMBOLS = false
+
+local layout = {
+  preview = "main",
+  layout = {
+    backdrop = false,
+    row = 1,
+    width = 0.2,
+    min_width = 50,
+    height = 0.2,
+    min_height = 8,
+    border = "rounded",
+    box = "vertical",
+    { win = "input", height = 1, border = "bottom", title = "{title} {live} {flags}", title_pos = "center" },
+    { win = "list", border = "hpad" },
+    { win = "preview", title = "{preview}", border = "rounded" },
+  },
+}
+
 return {
   "ibhagwan/fzf-lua",
   cmd = "FzfLua",
+  keys = {
+    {
+      "<leader>ss",
+      function()
+        IS_REALTIME_SYMBOLS = true
+        OPT("winbar", { win = CUR_WIN() }, "")
+        Snacks.picker.lsp_symbols({
+          layout = layout,
+          on_close = function()
+            IS_REALTIME_SYMBOLS = false
+          end,
+        })
+      end,
+      desc = "Goto Symbol",
+    },
+  },
   opts = function(_, opts)
     local acts = require("fzf-lua").actions
     local actions = {
