@@ -69,11 +69,17 @@ keybind = super+backslash=text:\x1B\x70\x25
 # Toggle pane zoom on Cmd+z in tmux it is Alt+p+z
 keybind = super+z=text:\x1B\x70\x7a
 
-# Move tmux window to left on Cmd+i in tmux it is M-i (alt+i it is a custom keybind)
+# Move tmux window to left on Cmd+i in tmux it is M-i (Alt+i it is a custom keybind)
 keybind = super+i=text:\x1bi
 
-# Move tmux window to right on Cmd+o in tmux it is M-o (alt+o it is a custom keybind)
+# Move tmux window to right on Cmd+o in tmux it is M-o (Alt+o it is a custom keybind)
 keybind = super+o=text:\x1bo
+
+# Open tmux which key menu. in tmux it is Alt+p+space
+keybind = super+m=text:\x1B\x70\x20
+
+# Enter tmux copy mode. in tmux it is Alt+p+[
+keybind = super+[=text:\x1B\x70\x5B
 
 # set env TODO: wait for v1.2 release
 # env = SNACKS_KITTY=1
