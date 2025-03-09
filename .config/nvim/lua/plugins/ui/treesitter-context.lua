@@ -1,9 +1,3 @@
-local max_lines = 5
-
-if IS_LINUX then
-  max_lines = 3
-end
-
 return {
   "nvim-treesitter/nvim-treesitter-context",
   keys = {
@@ -16,7 +10,7 @@ return {
     },
   },
   opts = {
-    max_lines = max_lines,
+    max_lines = IS_LINUX and 3 or 5,
     zindex = 30,
     min_window_height = 10,
     on_attach = function(bufnr)
