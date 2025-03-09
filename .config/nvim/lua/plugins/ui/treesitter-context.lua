@@ -10,7 +10,7 @@ return {
     },
   },
   opts = {
-    max_lines = IS_LINUX and 3 or 5,
+    max_lines = IS_LINUX and 3 or 6,
     zindex = 30,
     min_window_height = 10,
     on_attach = function(bufnr)
