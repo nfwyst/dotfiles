@@ -38,7 +38,7 @@ local function path_getter()
 end
 
 return {
-  "epwalsh/obsidian.nvim",
+  "obsidian-nvim/obsidian.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "saghen/blink.cmp",
