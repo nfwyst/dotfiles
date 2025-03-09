@@ -45,6 +45,10 @@ end
 local keymaps = {
   n = {
     { from = "p", to = paste },
+    { from = "<c-d>", to = "<c-d>zz" },
+    { from = "<c-u>", to = "<c-u>zz" },
+    { from = "<c-f>", to = "<c-f>zz" },
+    { from = "<c-b>", to = "<c-b>zz" },
     { from = "<leader>cu", to = "", opt = { desc = "utils" } },
     { from = "<leader>fn", to = NewFile, opt = { desc = "New File" } },
     { from = "<leader>ud", to = toggle_diagnostics },
