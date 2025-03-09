@@ -29,6 +29,7 @@ SET_OPTS({
   undolevels = IS_LINUX and 1000 or 100000,
   showcmd = false,
   breakindent = true,
+  modeline = false,
   background = IS_INIT_BG_DARK and "dark" or "light",
   guicursor = function(guicursor)
     return guicursor .. ",a:Cursor/lCursor"
