@@ -24,6 +24,8 @@ background-blur-radius = 10
 background-opacity = 0.95
 custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
+quit-after-last-window-closed = true
+fullscreen = true
 
 # Open float quick terminal on top
 keybind = super+s=toggle_quick_terminal
