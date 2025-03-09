@@ -1,4 +1,4 @@
-local max_lines
+local max_lines = 5
 
 if IS_LINUX then
   max_lines = 3
