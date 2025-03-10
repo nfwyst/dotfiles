@@ -191,7 +191,7 @@ return {
     }
 
     local link = { link = "FloatBorder" }
-    SET_HLS({
+    UPDATE_HLS({
       BlinkCmpMenuBorder = link,
       BlinkCmpDocBorder = link,
       BlinkCmpSignatureHelpBorder = link,

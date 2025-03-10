@@ -79,7 +79,7 @@ local function init()
   local dashboard = Snacks.dashboard.Dashboard
   dashboard.on("UpdatePost", scroll_to_top)
   dashboard.on("Opened", scroll_to_top)
-  INIT_SCOPE_DIM()
+  SET_SCOPE_DIM()
 end
 
 local function get_image_enabled()
@@ -124,7 +124,8 @@ return {
       end
     end
 
-    SET_HLS(hls)
+    UPDATE_HLS(hls)
+
     get_new_file_key(opts).action = NewFile
     local opt = {
       scroll = {

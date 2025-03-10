@@ -42,10 +42,6 @@ local function close_dashboard(bufnrs)
   set()
 end
 
-SET_HLS({
-  WinBar1 = { fg = IS_INIT_BG_DARK and "#fad61d" or "#5f87af", bold = true },
-  WinBar2 = { fg = "#04d1f9", bold = true },
-})
 local function update_winbar(win, bufpath, bufnrs)
   if IS_ZEN_MODE or IS_REALTIME_SYMBOLS then
     return

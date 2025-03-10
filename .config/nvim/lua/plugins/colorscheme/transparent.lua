@@ -1,5 +1,3 @@
-defer(OVERWRITE_HLS, 0)
-
 return {
   "xiyaowong/transparent.nvim",
   cond = not IS_LINUX,

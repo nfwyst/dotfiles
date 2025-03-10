@@ -205,3 +205,33 @@ ESLINT_CONFIGS = {
   "eslint.config.cts",
   "package.json",
 }
+
+local fg0 = "#839496"
+local fg1 = "#657b83"
+local fg2 = "#586e75"
+HIGHLIGHTS = {
+  ["@variable"] = { dark = { fg = fg0 } },
+  Conceal = { light = { fg = "#c7b375", bold = true } },
+  Normal = { dark = { fg = fg0 } },
+  Comment = { dark = { fg = fg2 } },
+  LineNrAbove = { dark = { fg = fg1 } },
+  LineNrBelow = { dark = { fg = fg1 } },
+  CursorLineNr = { dark = { fg = "#388bfd" } },
+  MatchParen = { dark = { bg = "#000000" } },
+  Cursor = { dark = { bg = "#5f87af", ctermbg = 67, blend = 0 } },
+  iCursor = { dark = { bg = "#ffffaf", ctermbg = 229 } },
+  rCursor = { dark = { bg = "#d70000", ctermbg = 124 } },
+  WinBar2 = { fg = "#04d1f9", bold = true },
+  LineNr = {
+    light = { bg = "NONE" },
+    dark = { fg = fg1 },
+  },
+  CursorLine = {
+    light = { bg = "#e1d6b5" },
+    dark = { bg = "#3d4a4f" },
+  },
+  WinBar1 = {
+    light = { fg = "#5f87af", bold = true },
+    dark = { fg = "#fad61d", bold = true },
+  },
+}

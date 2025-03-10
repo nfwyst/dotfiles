@@ -467,40 +467,32 @@ function NewFile()
   end
 end
 
-function OVERWRITE_HLS()
-  if not IS_INIT_BG_DARK then
-    return SET_HLS({
-      LineNr = { bg = "NONE" },
-      Conceal = { fg = "#c7b375", bold = true },
-      CursorLine = { bg = "#e1d6b5" },
-    })
+function UPDATE_HLS(hls)
+  local highlights = {}
+  if hls then
+    assign(HIGHLIGHTS, hls)
   end
 
-  local fg1 = "#657b83"
-  local fg0 = "#839496"
-  local fg2 = "#586e75"
-  SET_HLS({
-    CursorLine = { bg = "#3d4a4f" },
-    ["@variable"] = { fg = fg0 },
-    Normal = { fg = fg0 },
-    Comment = { fg = fg2 },
-    LineNrAbove = { fg = fg1 },
-    LineNr = { fg = fg1 },
-    LineNrBelow = { fg = fg1 },
-    CursorLineNr = { fg = "#388bfd" },
-    MatchParen = { bg = "#000000" },
-    Cursor = { bg = "#5f87af", ctermbg = 67, blend = 0 },
-    iCursor = { bg = "#ffffaf", ctermbg = 229 },
-    rCursor = { bg = "#d70000", ctermbg = 124 },
-  })
+  for name, conf in pairs(HIGHLIGHTS) do
+    local val = conf[o.background]
+    if not val and not conf.light and not conf.dark then
+      val = conf
+    end
+
+    if val then
+      highlights[name] = val
+    end
+  end
+
+  SET_HLS(highlights)
 end
 
-function INIT_SCOPE_DIM()
-  local enable = not contains(BINARY_SCHEMES, g.colors_name)
+function SET_SCOPE_DIM()
   if not Snacks then
     return
   end
 
+  local enable = not contains(BINARY_SCHEMES, g.colors_name)
   local enabled = Snacks.dim.enabled
   if enable and not enabled then
     Snacks.dim.enable()
