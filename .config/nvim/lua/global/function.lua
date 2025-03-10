@@ -469,7 +469,11 @@ end
 
 function OVERWRITE_HLS()
   if not IS_INIT_BG_DARK then
-    return SET_HLS({ LineNr = { bg = "NONE" } })
+    return SET_HLS({
+      LineNr = { bg = "NONE" },
+      Conceal = { fg = "#c7b375", bold = true },
+      CursorLine = { bg = "#e1d6b5" },
+    })
   end
 
   local fg1 = "#657b83"
@@ -493,6 +497,10 @@ end
 
 function INIT_SCOPE_DIM()
   local enable = not contains(BINARY_SCHEMES, g.colors_name)
+  if not Snacks then
+    return
+  end
+
   local enabled = Snacks.dim.enabled
   if enable and not enabled then
     Snacks.dim.enable()
