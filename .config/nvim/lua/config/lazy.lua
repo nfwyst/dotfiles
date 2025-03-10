@@ -61,6 +61,7 @@ local function get_disabled_plugins()
 end
 
 require("lazy").setup({
+  install = { colorscheme = { "tokyonight", "NeoSolarized", "e-ink" } },
   spec = {
     {
       "LazyVim/LazyVim",
@@ -88,7 +89,6 @@ require("lazy").setup({
   git = {
     timeout = 1000,
   },
-  install = { colorscheme = { "tokyonight", "NeoSolarized", "e-ink" } },
   ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
     enabled = not IS_LINUX,

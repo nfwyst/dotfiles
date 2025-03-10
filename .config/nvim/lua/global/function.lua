@@ -490,3 +490,15 @@ function OVERWRITE_HLS()
     rCursor = { bg = "#d70000", ctermbg = 124 },
   })
 end
+
+function INIT_SCOPE_DIM()
+  local enable = not contains(BINARY_SCHEMES, g.colors_name)
+  local enabled = Snacks.dim.enabled
+  if enable and not enabled then
+    Snacks.dim.enable()
+  end
+
+  if not enable and enabled then
+    Snacks.dim.disable()
+  end
+end

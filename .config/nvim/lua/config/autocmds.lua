@@ -106,5 +106,8 @@ AUCMD({ "VimResized", "WinResized" }, {
 
 AUCMD("ColorScheme", {
   group = GROUP("scheme_changed", { clear = true }),
-  callback = OVERWRITE_HLS,
+  callback = function()
+    OVERWRITE_HLS()
+    INIT_SCOPE_DIM()
+  end,
 })

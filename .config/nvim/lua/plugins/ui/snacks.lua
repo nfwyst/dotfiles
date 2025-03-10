@@ -75,11 +75,11 @@ local function scroll_to_top(event)
   end
 end
 
-local function set_events()
+local function init()
   local dashboard = Snacks.dashboard.Dashboard
   dashboard.on("UpdatePost", scroll_to_top)
   dashboard.on("Opened", scroll_to_top)
-  Snacks.dim.enable()
+  INIT_SCOPE_DIM()
 end
 
 local function get_image_enabled()
@@ -107,7 +107,7 @@ return {
   "snacks.nvim",
   opts = function(_, opts)
     -- wait for setup finish
-    defer(set_events, 0)
+    defer(init, 0)
 
     PUSH(FT_HIDE_CURSOR, "snacks_dashboard")
     if not FILETYPE_TASK_MAP.snacks_terminal then
@@ -164,6 +164,7 @@ return {
       },
       dim = { animate = { enabled = not IS_LINUX } },
       image = { enabled = get_image_enabled() },
+      words = { debounce = IS_LINUX and 500 or nil },
     }
 
     return merge(opts, opt)
