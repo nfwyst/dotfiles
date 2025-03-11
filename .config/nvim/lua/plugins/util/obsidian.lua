@@ -23,12 +23,10 @@ local function create_dir(dirpath, confirm)
     return
   end
 
-  local ok, Path = pcall(require, "plenary.path")
-  if not ok then
-    return
+  local ok = pcall(fn.mkdir, dirpath, "p")
+  if ok then
+    return IS_DIRPATH(dirpath)
   end
-
-  Path:new(dirpath):mkdir({ parents = true, mode = 493 })
 
   return true
 end
@@ -39,11 +37,25 @@ end
 
 return {
   "obsidian-nvim/obsidian.nvim",
+  ft = "markdown",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "saghen/blink.cmp",
   },
-  ft = "markdown",
+  keys = {
+    { "<leader>cuo", "", desc = "obsidian" },
+    { "<leader>cuoc", "<cmd>ObsidianLinkNew<cr>", desc = "Obsidian: Link To New" },
+    { "<leader>cuoy", "<cmd>ObsidianYesterday<cr>", desc = "Obsidian: Yesterday Note" },
+    { "<leader>cuoe", "<cmd>ObsidianTemplate<cr>", desc = "Obsidian: Insert template" },
+    { "<leader>cuol", "<cmd>ObsidianLink<cr>", desc = "Obsidian: Link To" },
+    { "<leader>cuon", "<cmd>ObsidianNew<cr>", desc = "Obsidian: New" },
+    { "<leader>cuox", "<cmd>ObsidianOpen<cr>", desc = "Obsidian: Open In App" },
+    { "<leader>cuoq", "<cmd>ObsidianQuickSwitch<cr>", desc = "Obsidian: Quick Switch" },
+    { "<leader>cuob", "<cmd>ObsidianBacklinks<cr>", desc = "Obsidian: Back Links" },
+    { "<leader>cuos", "<cmd>ObsidianSearch<cr>", desc = "Obsidian: Search" },
+    { "<leader>cuot", "<cmd>ObsidianToday<cr>", desc = "Obsidian: Today Note" },
+    { "<leader>cuow", "<cmd>ObsidianWorkspace<cr>", desc = "Obsidian: Workspace" },
+  },
   config = function()
     ADD_BLINK_COMPAT_SOURCES({
       default = true,
