@@ -488,17 +488,14 @@ function UPDATE_HLS(hls)
 end
 
 function SET_SCOPE_DIM()
-  if not Snacks then
+  if IS_LINUX or not Snacks then
     return
   end
 
   local enable = not contains(BINARY_SCHEMES, g.colors_name)
-  local enabled = Snacks.dim.enabled
-  if enable and not enabled then
-    Snacks.dim.enable()
+  if enable then
+    return Snacks.dim.enable()
   end
 
-  if not enable and enabled then
-    Snacks.dim.disable()
-  end
+  Snacks.dim.disable()
 end

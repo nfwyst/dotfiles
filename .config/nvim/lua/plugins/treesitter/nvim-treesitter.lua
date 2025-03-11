@@ -56,6 +56,7 @@ return {
     language.register("bash", "zsh")
 
     local opt = {
+      highlight = { enable = not IS_LINUX },
       ensure_installed = {
         "css",
         "scss",
