@@ -125,6 +125,9 @@ return {
     end
 
     UPDATE_HLS(hls)
+    SET_KEYMAP_PRE_HOOK({ "n" }, { "<leader>ud" }, function()
+      TOGGLE_DIAGNOSTIC_MANULLY = true
+    end)
 
     get_new_file_key(opts).action = NewFile
     local opt = {

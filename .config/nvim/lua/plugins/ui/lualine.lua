@@ -39,7 +39,7 @@ return {
     local components = require("features.lualine.components")
     local sections = opts.sections
 
-    SET_BUF_DEL_MAP("lualine", function(bufnr)
+    ADD_BUF_DEL_CALLBACK("lualine", function(bufnr)
       clean_buffers_title_map(bufnr)
     end)
 
@@ -58,7 +58,7 @@ return {
         assign(item, {
           update_in_insert = false,
           cond = function()
-            return BUF_VAR(CUR_BUF(), CONSTS.LINT_INITED)
+            return diagnostic.is_enabled({ bufnr = CUR_BUF() })
           end,
         })
       end

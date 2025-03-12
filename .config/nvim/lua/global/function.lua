@@ -78,10 +78,10 @@ function MAP(mode, from, to, opt)
       key = table.concat(mode, ",")
     end
     key = key .. from
-    SET_BUF_DEL_MAP(key, function(bufnr)
+    ADD_BUF_DEL_CALLBACK(key, function(bufnr)
       if bufnr == buffer then
         pcall(keymap.del, mode, from, { buffer = buffer })
-        SET_BUF_DEL_MAP(key, nil)
+        ADD_BUF_DEL_CALLBACK(key, nil)
       end
     end)
   end
@@ -350,14 +350,25 @@ function SCROLL(win, direction, scroll_len)
   end
 end
 
-local buf_del_map = {}
-function SET_BUF_DEL_MAP(key, func)
-  buf_del_map[key] = func
+local cursor_move_callback_map = {}
+function ADD_CURSOR_MOVE_CALLBACK(key, callback)
+  cursor_move_callback_map[key] = callback
+end
+
+function ON_CURSOR_MOVE(event)
+  for _, callback in pairs(cursor_move_callback_map) do
+    callback(event)
+  end
+end
+
+local buf_del_callback_map = {}
+function ADD_BUF_DEL_CALLBACK(key, func)
+  buf_del_callback_map[key] = func
 end
 
 function ON_BUF_DEL(bufnr)
-  for _, func in pairs(buf_del_map) do
-    func(bufnr)
+  for _, callback in pairs(buf_del_callback_map) do
+    callback(bufnr)
   end
 end
 
@@ -498,4 +509,48 @@ function SET_SCOPE_DIM()
   end
 
   Snacks.dim.disable()
+end
+
+function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)
+  for _, mode in ipairs(modes) do
+    for _, lhs in ipairs(lhses) do
+      local function hook()
+        local conf = fn.maparg(lhs, mode, false, true)
+        if not EMPTY(conf, true) then
+          local callback = conf.callback
+          if not callback then
+            callback = function()
+              PRESS_KEYS(conf.rhs, mode:lower())
+            end
+          end
+
+          local opt = {
+            noremap = conf.noremap == 1,
+            silent = conf.silent == 1,
+            nowait = conf.nowait == 1,
+            script = conf.script == 1,
+            expr = conf.expr == 1,
+            desc = conf.desc,
+          }
+          local function rhs()
+            if pre_hook() ~= false then
+              callback()
+            end
+          end
+
+          if conf.buffer ~= 0 then
+            opt.buffer = conf.buffer
+          end
+
+          MAP(mode, lhs, rhs, opt)
+        end
+      end
+
+      if LAZYVIM_KEYMAP_INITED then
+        hook()
+      else
+        KEYMAP_PRE_HOOKS[mode .. lhs] = hook
+      end
+    end
+  end
 end

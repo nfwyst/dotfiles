@@ -1,18 +1,16 @@
 local eslint = { "eslint_d" }
-local lint_events = "BufWritePost"
-local group = GROUP("enable_linter", { clear = true })
+local lint_events = { "BufWritePost" }
 
-local function enable_lint(event)
-  if IS_ZEN_MODE then
+local function enable_diagnostic_on_save(event)
+  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANULLY then
     return
   end
-  local bufnr = event.buf
-  local inited = BUF_VAR(bufnr, CONSTS.LINT_INITED)
-  if inited then
-    return
+
+  local opt = { bufnr = event.buf }
+  local enabled = diagnostic.is_enabled(opt)
+  if not enabled then
+    diagnostic.enable(true, opt)
   end
-  BUF_VAR(bufnr, CONSTS.LINT_INITED, true)
-  diagnostic.enable(true, { bufnr = bufnr })
 end
 
 env.ESLINT_D_PPID = fn.getpid()
@@ -22,8 +20,8 @@ return {
   opts = function(_, opts)
     -- enable lint when event occured
     AUCMD(lint_events, {
-      group = group,
-      callback = enable_lint,
+      group = GROUP("enable_diagnostic_on_event", { clear = true }),
+      callback = enable_diagnostic_on_save,
     })
 
     local eslint_linter = require("lint").linters.eslint_d
@@ -41,17 +39,20 @@ return {
       end,
     })
 
-    opts.events = lint_events
-    opts.linters_by_ft = {
-      javascript = eslint,
-      typescript = eslint,
-      typescriptreact = eslint,
-      javascriptreact = eslint,
-      svelte = eslint,
-      sh = { "bash" },
-      zsh = { "zsh" },
-      markdown = { "vale" },
-    }
+    assign(opts, {
+      events = lint_events,
+      linters_by_ft = {
+        javascript = eslint,
+        typescript = eslint,
+        typescriptreact = eslint,
+        javascriptreact = eslint,
+        svelte = eslint,
+        sh = { "bash" },
+        zsh = { "zsh" },
+        markdown = { "vale" },
+      },
+    })
+
     return opts
   end,
 }

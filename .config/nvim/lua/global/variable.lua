@@ -48,7 +48,10 @@ MEMORY_USAGE = nil
 HOME_PATH = fn.expand("~")
 AUCMD = api.nvim_create_autocmd
 CMD = api.nvim_create_user_command
-GROUP = api.nvim_create_augroup
+GROUP_PREFIX = "_au_local_group_name_"
+GROUP = function(name, opts)
+  return api.nvim_create_augroup(GROUP_PREFIX .. name, opts)
+end
 IS_LINUX = jit.os == "Linux"
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
@@ -149,13 +152,16 @@ FILETYPE_SIZE_MAP = {
   _sub_fts = { "Avante" },
 }
 CONSTS = {
-  LINT_INITED = "LINT_INITED",
   WIN_DIMED = "WIN_DIMED",
   IS_BUF_PINNED = "IS_BUF_PINNED",
   RESIZE_MANULLY = "RESIZE_MANULLY",
   IS_NEW_FILE = "IS_NEW_FILE",
   VIEW_ACTIVATED = "VIEW_ACTIVATED",
+  PREV_ROW_NUMBER = "PREV_ROW_NUMBER",
 }
+LAZYVIM_KEYMAP_INITED = false
+TOGGLE_DIAGNOSTIC_MANULLY = false
+KEYMAP_PRE_HOOKS = {}
 
 PURE_PROMPT = [[你是一位无所不能的助手]]
 PROMPT = [[
@@ -221,7 +227,7 @@ HIGHLIGHTS = {
   Cursor = { dark = { bg = "#5f87af", ctermbg = 67, blend = 0 } },
   iCursor = { dark = { bg = "#ffffaf", ctermbg = 229 } },
   rCursor = { dark = { bg = "#d70000", ctermbg = 124 } },
-  WinBar2 = { fg = "#04d1f9", bold = true },
+  WinBar = { bg = "NONE" },
   LineNr = {
     light = { bg = "NONE" },
     dark = { fg = fg1 },
@@ -233,5 +239,9 @@ HIGHLIGHTS = {
   WinBar1 = {
     light = { fg = "#5f87af", bold = true },
     dark = { fg = "#fad61d", bold = true },
+  },
+  WinBar2 = {
+    light = { fg = "#5f87af", bold = true },
+    dark = { fg = "#04d1f9", bold = true },
   },
 }

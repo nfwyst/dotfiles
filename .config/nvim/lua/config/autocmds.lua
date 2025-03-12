@@ -14,7 +14,6 @@ local keys_to_delete = {
     "<c-left>",
     "<c-right>",
     "<leader>fn",
-    "<leader>ud",
   },
 }
 
@@ -23,6 +22,7 @@ AUCMD("User", {
   pattern = "LazyVimKeymaps",
   once = true,
   callback = function()
+    LAZYVIM_KEYMAP_INITED = true
     for mode, keys in pairs(keys_to_delete) do
       for _, key in ipairs(keys) do
         pcall(keymap.del, mode, key)
@@ -30,6 +30,9 @@ AUCMD("User", {
     end
 
     SET_KEYMAPS()
+    for _, hook in pairs(KEYMAP_PRE_HOOKS) do
+      hook()
+    end
   end,
 })
 
@@ -110,4 +113,9 @@ AUCMD("ColorScheme", {
     UPDATE_HLS()
     SET_SCOPE_DIM()
   end,
+})
+
+AUCMD({ "CursorMoved", "CursorMovedI" }, {
+  group = GROUP("cursor_moved", { clear = true }),
+  callback = ON_CURSOR_MOVE,
 })

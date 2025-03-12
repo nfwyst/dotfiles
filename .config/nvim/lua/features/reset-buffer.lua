@@ -41,17 +41,16 @@ local function sync_tab(bufnr)
   })
 end
 
-local function disable_lint(bufnr)
-  local inited = BUF_VAR(bufnr, CONSTS.LINT_INITED)
-  if inited then
+local function disable_diagnostic_on_open(bufnr)
+  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANULLY then
     return
   end
+
   local opt = { bufnr = bufnr }
   local enabled = diagnostic.is_enabled(opt)
-  if not enabled then
-    return
+  if enabled then
+    diagnostic.enable(false, opt)
   end
-  diagnostic.enable(false, opt)
 end
 
 local function dim_win(bufnr)
@@ -85,7 +84,7 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
   callback = function(event)
     local bufnr = event.buf
     sync_tab(bufnr)
-    disable_lint(bufnr)
+    disable_diagnostic_on_open(bufnr)
     dim_win(bufnr)
     show_indent_guide(event)
   end,
