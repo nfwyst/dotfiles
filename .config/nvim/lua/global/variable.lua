@@ -163,6 +163,11 @@ LAZYVIM_KEYMAP_INITED = false
 TOGGLE_DIAGNOSTIC_MANULLY = false
 KEYMAP_PRE_HOOKS = {}
 
+if IS_LINUX then
+  TOGGLE_DIAGNOSTIC_MANULLY = true
+  diagnostic.enable(false)
+end
+
 PURE_PROMPT = [[你是一位无所不能的助手]]
 PROMPT = [[
 你是一位专业的编程导师和编程专家, 旨在帮助和指导我学习编程。

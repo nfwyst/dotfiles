@@ -60,6 +60,10 @@ local function get_disabled_plugins()
   }
 end
 
+if IS_LINUX then
+  cmd.syntax("off")
+end
+
 require("lazy").setup({
   install = { colorscheme = { "tokyonight", "NeoSolarized", "e-ink" } },
   spec = {
