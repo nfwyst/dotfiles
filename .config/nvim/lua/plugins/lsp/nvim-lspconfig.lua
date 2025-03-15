@@ -12,6 +12,7 @@ local lsp_servers = {
   "taplo",
   "vtsls",
   "nushell",
+  "pylyzer"
 }
 
 if not IS_LINUX then
