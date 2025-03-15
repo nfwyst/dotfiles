@@ -24,6 +24,7 @@ if platform.is_mac then
   env.JIRA_API_TOKEN = require('env').JIRA_API_TOKEN
   env.GOOGLE_SEARCH_API_KEY = require('env').GOOGLE_SEARCH_API_KEY
   env.GOOGLE_SEARCH_ENGINE_ID = require('env').GOOGLE_SEARCH_ENGINE_ID
+  env.TERMINAL = "wezterm"
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'

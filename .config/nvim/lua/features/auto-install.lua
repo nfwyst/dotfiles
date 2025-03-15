@@ -1,12 +1,4 @@
 local ensure_installed = {
-  ["kulala-fmt"] = {
-    installer = "go",
-    params = "install github.com/mistweaverco/kulala-fmt@latest",
-  },
-  sg = {
-    installer = "cargo",
-    params = "install ast-grep --locked",
-  },
   latex2text = {
     installer = "uv",
     params_mac = "pip install pylatexenc --system --break-system-packages",

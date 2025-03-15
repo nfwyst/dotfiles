@@ -1,4 +1,4 @@
-local ensure_installed = {
+local to_install = {
   "prettierd",
   "shellcheck",
   "vale",
@@ -8,10 +8,14 @@ local ensure_installed = {
   "gitui",
   "markdown-toc",
   "markdownlint-cli2",
+  "ast-grep",
 }
 
-if not IS_LINUX then
-  PUSH(ensure_installed, "stylua")
+local ensure_installed = {}
+for _, name in ipairs(to_install) do
+  if not executable(name) then
+    PUSH(ensure_installed, name)
+  end
 end
 
 return {

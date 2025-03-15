@@ -1,10 +1,10 @@
 return {
   "folke/lazydev.nvim",
   dependencies = {
-    { "justinsgithub/wezterm-types", cond = HAS_WEZTERM },
+    { "justinsgithub/wezterm-types", cond = IS_IN_WEZTERM },
   },
   opts = function(_, opts)
-    if not HAS_WEZTERM then
+    if not IS_IN_WEZTERM then
       return opts
     end
 

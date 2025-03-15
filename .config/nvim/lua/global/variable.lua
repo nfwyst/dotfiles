@@ -59,7 +59,7 @@ ESLINT_BIN_NAME = "eslint_d"
 ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
-HAS_WEZTERM = executable("wezterm")
+IS_IN_WEZTERM = env.TERMINAL == "wezterm"
 TRANSPARENT_INDENT_HL = "#666666"
 IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}

@@ -1,5 +1,6 @@
 local fixer = { "eslint_d" }
 local formatter = { "prettierd" }
+local md_formatter = { "prettierd", "markdownlint-cli2", "markdown-toc" }
 
 local function fix_or_format()
   if NEED_ESLINT_FIX then
@@ -54,8 +55,8 @@ return {
         jsonc = formatter,
         yaml = formatter,
         graphql = formatter,
-        ["markdown"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
-        ["markdown.mdx"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
+        ["markdown"] = md_formatter,
+        ["markdown.mdx"] = md_formatter,
         nu = { "nufmt" },
         sh = { "shfmt" },
         zsh = { "beautysh" },
