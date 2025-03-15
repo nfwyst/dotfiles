@@ -13,7 +13,7 @@
 - [find and replace all](#find-and-replace-all)
 <!--toc:end-->
 
-# 💤 perfect-neovim-config
+# 💤 Perfect neovim config
 
 make neovim as a perfect ide for development
 
@@ -61,8 +61,8 @@ git clone https://github.com/nfwyst/perfect-neovim-config.git ~/.config/nvim
 
 0. run `:checkhealth` in command mode to check nvim enviroment is ok, you can install missing dependencies by check it
 1. run `:Lazy install` in command mode to install all plugins
-2. run `:LspInstallInfo` in command mode to install language server protocol manually, it give us language specific completion and diagnostic
-3. run `:TSInstall` in command mode to install treesitter, it give us a tons of context syntax highlight support, indent, folds, etc...
+2. run `:LspInstallInfo` in command mode to install language server protocol manually, it give you language specific completion and diagnostic
+3. run `:TSInstall` in command mode to install treesitter, it give you a tons of context syntax highlight support, indent, folds, etc
 
 # Features
 
@@ -77,18 +77,18 @@ git clone https://github.com/nfwyst/perfect-neovim-config.git ~/.config/nvim
 9. window/buffer/tab control
 10. marks, text objects
 11. find and replace all
-12. folds, spelling etc...
+12. folds, spelling etc
 13. nerd font
 14. vscode integration
 
-# Nerd Font
+# Nerd font
 
 a font that has a collection of icons builtin, you can install the prebuild 0xProto font, or download from
 [0xProto](https://github.com/ryanoasis/nerd-fonts/releases)
 
 # Vscode integration
 
-The config file can work with vscode, and the `VSCode Neovim` plugin is required.
+The config file can work with vscode, and the `VSCode Neovim` plugin required.
 there are some suggested plugins:
 
 - Apc Customize UI++
@@ -99,7 +99,7 @@ there are some suggested plugins:
 if you want to use your own code snippets, you can create it under snippets folder,
 the language tell snippet engine what language to use the snippets specified by path
 
-## create snippets template
+## Create snippets template
 
 you can create your code template, for example in javascript.json:
 
@@ -112,16 +112,16 @@ you can create your code template, for example in javascript.json:
 }
 ```
 
-# find and replace all
+# Find and replace all
 
 you can find and replace all with telescope and quickfix list, here is the steps:
 
-1. press ctrl+q add the search result to the quickfix list above telescope view
+1. press ctrl+q add the search result to the quickfix list from telescope view
 2. enter `:cfdo %s/old/new/g | update | bd`, update will write the buffer to disk after replace finished.
 
-# reading pdf
+# Reading pdf
 
-> use uv manage python package, convert pdf to markdown by docling. build rag with ell-ai agent
+> use uv manage python package, convert pdf to markdown by docling. build rag with ell-ai personal digital assistant
 
 ```sh
 brew install uv
@@ -135,7 +135,7 @@ uv run chat.py
 uv run input.md output.md
 ```
 
-# edit and review gitHub issues and pull requests
+# Edit and review gitHub issues and pull requests
 
 ```sh
 gh auth login --scopes read:project

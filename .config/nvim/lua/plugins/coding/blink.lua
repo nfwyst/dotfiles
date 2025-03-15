@@ -156,16 +156,13 @@ local function add_dictionary()
       max_items = 3,
       min_keyword_length = 3,
       opts = {
-        dictionary_directories = { HOME_PATH .. "/dotfiles/.config/dictionaries" },
+        dictionary_directories = { HOME_PATH .. "/.config/dictionaries" },
         separate_output = function(output)
           local items = {}
           for line in output:gmatch("[^\r\n]+") do
-            table.insert(items, {
-              label = line,
-              insert_text = line,
-              documentation = nil,
-            })
+            PUSH(items, line)
           end
+
           return items
         end,
       },
