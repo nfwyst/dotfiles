@@ -92,6 +92,7 @@ return {
         "typst",
         "vue",
         "norg",
+        "solidity",
       },
       ignore_install = nil,
       textobjects = {

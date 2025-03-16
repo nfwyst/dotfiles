@@ -17,7 +17,7 @@ local disabled_lsp_servers = {
   "pyright",
 }
 if not IS_LINUX then
-  push_list(lsp_servers, { "gopls", "pylyzer", "solang" })
+  push_list(lsp_servers, { "gopls", "pylyzer" })
 end
 
 local function override(servers)
