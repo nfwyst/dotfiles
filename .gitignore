@@ -17,3 +17,4 @@ zjstatus/target/
 env.lua
 custom-env.nu
 custom-env.zsh
+.gitconfig

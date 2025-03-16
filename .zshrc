@@ -90,7 +90,9 @@ export ZSH_TAB_TITLE_PREFIX=" "
 export GOPATH="$HOME/go"
 export CARGO_HOME="$HOME/.cargo"
 export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_BIN_HOME="$HOME/.local/bin"
 export XDG_DATA_HOME="$HOME/.local/share"
+export GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig"
 
 export PATH="$PATH:$GOPATH/bin"
 export PATH="$PATH:$CARGO_HOME/bin"
@@ -175,7 +177,7 @@ function run_qwen_agent() {
   uv run run_server.py --llm deepseek-ai/DeepSeek-V3 --model_server https://api.hyperbolic.xyz/v1 --workstation_port 7864 --api_key "$HYPERBOLIC_API_KEY" --max_ref_token 89429
 }
 
-env_path="$HOME/dotfiles/custom-env.zsh"
+env_path="$HOME/.config/custom-env.zsh"
 if [[ -f $env_path ]]; then
   source "$env_path"
 else

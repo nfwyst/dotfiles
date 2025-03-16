@@ -9,7 +9,9 @@ local HOME = os.getenv('HOME')
 local brew_path = '/opt/homebrew/bin'
 local env = {
   XDG_CONFIG_HOME = HOME .. '/.config',
+  XDG_BIN_HOME = HOME .. '/.local/bin',
   XDG_DATA_HOME = HOME .. '/.local/share',
+  GIT_CONFIG_GLOBAL = HOME .. '/.config/.gitconfig',
   PATH = PATH,
   SHELL = 'nu',
 }

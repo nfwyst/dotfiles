@@ -91,7 +91,9 @@ $env.UNAME = (uname | get kernel-name)
 $env.GOPATH = ($env.HOME | path join "go")
 $env.CARGO_HOME = ($env.HOME | path join ".cargo")
 $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
+$env.XDG_BIN_HOME = ($env.HOME | path join ".local/bin")
 $env.XDG_DATA_HOME = ($env.HOME | path join ".local/share")
+$env.GIT_CONFIG_GLOBAL = ($env.HOME | path join ".config/.gitconfig")
 
 use std "path add"
 path add ($env.GOPATH | path join "bin")

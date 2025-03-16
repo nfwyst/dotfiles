@@ -3,3 +3,6 @@
 .gitignore
 README.md
 LICENSE
+.aider*
+legacy
+custom-env.zsh
