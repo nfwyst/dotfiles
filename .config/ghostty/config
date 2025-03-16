@@ -83,8 +83,8 @@ keybind = super+[=text:\x1B\x70\x5B
 
 # set env TODO: wait for v1.2 release
 # env = SNACKS_KITTY=1
+# env = TERMINAL="ghostty"
 # env = XDG_CONFIG_HOME="$HOME/.config"
 # env = XDG_BIN_HOME="$HOME/.local/bin"
 # env = XDG_DATA_HOME="$HOME/.local/share"
 # env = GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig"
-# env = TERMINAL="ghostty"
