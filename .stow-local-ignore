@@ -3,6 +3,9 @@
 .gitignore
 README.md
 LICENSE
-.aider*
+.aider.chat.history.md
+.aider.conf.yml
+.aider.input.history
+.aider.tags.cache.v3
 legacy
 custom-env.zsh
