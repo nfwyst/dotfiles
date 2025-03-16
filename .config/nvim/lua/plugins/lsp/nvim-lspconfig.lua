@@ -11,14 +11,13 @@ local lsp_servers = {
   "bashls",
   "taplo",
   "nushell",
-  "pylyzer",
 }
 local disabled_lsp_servers = {
   "vtsls",
   "pyright",
 }
 if not IS_LINUX then
-  PUSH(lsp_servers, "gopls")
+  push_list(lsp_servers, { "gopls", "pylyzer", "solang" })
 end
 
 local function override(servers)
@@ -27,9 +26,11 @@ local function override(servers)
   for _, name in ipairs(lsp_servers) do
     local path = "plugins.lsp.settings." .. name
     local ok, settings = pcall(require, path)
-    if ok and settings then
-      servers[name] = merge(servers[name] or {}, settings)
+    if not ok or not settings then
+      settings = {}
     end
+
+    servers[name] = merge(servers[name] or {}, settings)
   end
 
   for _, name in ipairs(disabled_lsp_servers) do

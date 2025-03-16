@@ -153,8 +153,9 @@ local function add_dictionary()
       should_show_items = shouldnt_show_snippets_emoji,
       module = "blink-cmp-dictionary",
       name = "Dict",
-      max_items = 3,
-      min_keyword_length = 3,
+      max_items = IS_LINUX and 1 or 3,
+      min_keyword_length = IS_LINUX and 4 or 3,
+      score_offset = -1,
       opts = {
         dictionary_directories = { HOME_PATH .. "/.config/dictionaries" },
         separate_output = function(output)
