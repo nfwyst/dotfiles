@@ -10,28 +10,34 @@ local lsp_servers = {
   "svelte",
   "bashls",
   "taplo",
-  "vtsls",
   "nushell",
-  "pylyzer"
+  "pylyzer",
+}
+
+local disabled_ls_servers = {
+  "vtsls",
+  "pyright",
 }
 
 if not IS_LINUX then
   PUSH(lsp_servers, "gopls")
 end
 
-local function get_servers()
-  local servers = {}
+local function override(servers)
+  local windows = require("lspconfig.ui.windows")
+  windows.default_options.border = "rounded"
   for _, name in ipairs(lsp_servers) do
     local path = "plugins.lsp.settings." .. name
     local ok, settings = pcall(require, path)
-    servers[name] = ok and settings or {}
+    servers[name] = servers[name] or {}
+    if ok and settings then
+      servers[name] = merge(servers[name], settings)
+    end
   end
-  return servers
-end
 
-local function override()
-  local windows = require("lspconfig.ui.windows")
-  windows.default_options.border = "rounded"
+  for _, name in ipairs(disabled_ls_servers) do
+    servers[name] = nil
+  end
 
   local keys = require("lazyvim.plugins.lsp.keymaps").get()
   push_list(keys, {
@@ -96,7 +102,7 @@ return {
     },
   },
   opts = function(_, opts)
-    override()
+    override(opts.servers)
 
     local icons = LazyVim.config.icons.diagnostics
     local md = lsp.protocol.Methods
@@ -106,7 +112,6 @@ return {
     hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, ui_opt)
 
     local opt = {
-      servers = get_servers(),
       diagnostics = {
         underline = false,
         update_in_insert = false,
