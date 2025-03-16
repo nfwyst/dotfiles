@@ -5,7 +5,7 @@ SET_OPTS({
   editorconfig = true,
   lazyvim_picker = "fzf",
   transparent_enabled = true,
-  autoformat = false,
+  autoformat = not IS_LINUX,
 }, "g")
 
 local enable_number = false
