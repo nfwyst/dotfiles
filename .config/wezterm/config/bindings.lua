@@ -8,6 +8,8 @@ local PATH = os.getenv('PATH')
 local HOME = os.getenv('HOME')
 local brew_path = '/opt/homebrew/bin'
 local env = {
+  SNACKS_KITTY = 1,
+  TERMINAL = "wezterm",
   XDG_CONFIG_HOME = HOME .. '/.config',
   XDG_BIN_HOME = HOME .. '/.local/bin',
   XDG_DATA_HOME = HOME .. '/.local/share',
@@ -26,7 +28,6 @@ if platform.is_mac then
   env.JIRA_API_TOKEN = require('env').JIRA_API_TOKEN
   env.GOOGLE_SEARCH_API_KEY = require('env').GOOGLE_SEARCH_API_KEY
   env.GOOGLE_SEARCH_ENGINE_ID = require('env').GOOGLE_SEARCH_ENGINE_ID
-  env.TERMINAL = "wezterm"
 elseif platform.is_win or platform.is_linux then
   mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
   mod.SUPER_REV = 'ALT|CTRL'
