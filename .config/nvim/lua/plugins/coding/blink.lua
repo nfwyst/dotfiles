@@ -209,6 +209,7 @@ return {
       completion = {
         menu = {
           border = "rounded",
+          scrollbar = false,
           cmdline_position = function()
             local pos = g.ui_cmdline_pos
             if pos then

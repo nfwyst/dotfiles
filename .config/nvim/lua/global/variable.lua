@@ -201,6 +201,12 @@ PROMPT = [[
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
 
+FE_FILETYPES = {
+  "javascript",
+  "typescript",
+  "javascriptreact",
+  "typescriptreact",
+}
 ESLINT_CONFIGS = {
   ".eslintrc",
   ".eslintrc.js",
@@ -248,5 +254,14 @@ HIGHLIGHTS = {
   WinBar2 = {
     light = { fg = "#5f87af", bold = true },
     dark = { fg = "#04d1f9", bold = true },
+  },
+  LspReferenceText = {
+    dark = { bg = "#4f5882" },
+  },
+  LspReferenceRead = {
+    dark = { bg = "#4f5882" },
+  },
+  LspReferenceWrite = {
+    dark = { bg = "#4f5882" },
   },
 }

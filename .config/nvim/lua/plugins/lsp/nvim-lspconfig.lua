@@ -64,13 +64,6 @@ if IS_LINUX then
   virtual_text = nil
 end
 
-local ui_opt = {
-  border = "rounded",
-  width = "auto",
-  silent = true,
-  max_width = MAX_WIDTH(),
-}
-
 lsp.set_log_level(levels.OFF)
 
 return {
@@ -103,12 +96,6 @@ return {
     override(opts.servers)
 
     local icons = LazyVim.config.icons.diagnostics
-    local md = lsp.protocol.Methods
-    local hl = lsp.handlers
-
-    hl[md.textDocument_hover] = lsp.with(hl.hover, ui_opt)
-    hl[md.textDocument_signatureHelp] = lsp.with(hl.signature_help, ui_opt)
-
     local opt = {
       diagnostics = {
         underline = false,

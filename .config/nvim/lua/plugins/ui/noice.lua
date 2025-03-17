@@ -38,6 +38,7 @@ local filters = {
     "Failed to parse snippet",
     "This command may require a client extension",
     "file to the chat",
+    "Done running with ts",
   },
 }
 

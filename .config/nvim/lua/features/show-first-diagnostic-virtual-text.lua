@@ -1,5 +1,5 @@
-local virtual_text = diagnostic.handlers.virtual_text
-local show = virtual_text.show
+local show_scopes = { "signs", "underline", "virtual_lines", "virtual_text" }
+local no_eslint_config_msg = "Expected value but found invalid token at character 1"
 
 local diagnostics_filter = function(diagnostics, win)
   if not api.nvim_win_is_valid(win) then
@@ -18,10 +18,14 @@ local diagnostics_filter = function(diagnostics, win)
     return math.abs(cur.lnum - row) < math.abs(next.lnum - row)
   end)
 
-  return filter(function(diagnostic)
-    local st = diagnostic.severity
+  return filter(function(diag)
+    local st = diag.severity
     local filtered = filtered_map[st]
     if filtered then
+      return false
+    end
+
+    if STR_CONTAINS(diag.message, no_eslint_config_msg) then
       return false
     end
 
@@ -31,21 +35,20 @@ local diagnostics_filter = function(diagnostics, win)
   end, diagnostics)
 end
 
-virtual_text.show = function(namespace, bufnr, diagnostics, opts)
-  ---@diagnostic disable-next-line: need-check-nil
-  show(namespace, bufnr, diagnostics_filter(diagnostics, fn.bufwinid(bufnr)), opts)
+for _, scope in ipairs(show_scopes) do
+  local handler = diagnostic.handlers[scope]
+  local show = handler.show
+  handler.show = function(namespace, bufnr, diagnostics, opts)
+    ---@diagnostic disable-next-line: need-check-nil
+    show(namespace, bufnr, diagnostics_filter(diagnostics, fn.bufwinid(bufnr)), opts)
+  end
 end
 
 local diagnostic_cmd
 
 local function is_fe_ft(buf)
   local filetype = OPT("filetype", { buf = buf })
-  return contains({
-    "javascript",
-    "typescript",
-    "javascriptreact",
-    "typescriptreact",
-  }, filetype)
+  return contains(FE_FILETYPES, filetype)
 end
 
 local eslint_checked = false
