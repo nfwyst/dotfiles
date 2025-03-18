@@ -201,6 +201,7 @@ PROMPT = [[
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
 
+IS_SYNTAX_OFF = IS_LINUX
 FE_FILETYPES = {
   "javascript",
   "typescript",

@@ -60,7 +60,7 @@ local function get_disabled_plugins()
   }
 end
 
-if IS_LINUX then
+if IS_SYNTAX_OFF then
   cmd.syntax("off")
 end
 
