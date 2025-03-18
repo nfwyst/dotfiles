@@ -265,3 +265,5 @@ HIGHLIGHTS = {
     dark = { bg = "#4f5882" },
   },
 }
+
+LSP_METHODS = lsp.protocol.Methods

@@ -11,14 +11,13 @@ local lsp_servers = {
   "bashls",
   "taplo",
   "nushell",
+  "gopls",
+  "pylyzer",
 }
 local disabled_lsp_servers = {
   "vtsls",
   "pyright",
 }
-if not IS_LINUX then
-  push_list(lsp_servers, { "gopls", "pylyzer" })
-end
 
 local function override(servers)
   local windows = require("lspconfig.ui.windows")

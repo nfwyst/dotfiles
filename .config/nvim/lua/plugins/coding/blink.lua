@@ -155,7 +155,7 @@ local function add_dictionary()
       name = "Dict",
       max_items = IS_LINUX and 1 or 2,
       min_keyword_length = IS_LINUX and 4 or 3,
-      score_offset = -1,
+      score_offset = -10,
       opts = {
         dictionary_directories = { HOME_PATH .. "/.config/dictionaries" },
         separate_output = function(output)

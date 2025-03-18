@@ -1,5 +1,6 @@
-local methods = lsp.protocol.Methods
 local handlers = lsp.handlers
+local name = "typescript-tools"
+local ignored_codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 }
 
 local function filter_hints_result(result)
   return filter(function(_hint)
@@ -15,13 +16,14 @@ local function filter_hints_result(result)
   end, result)
 end
 
+local tinlayHint = LSP_METHODS.textDocument_inlayHint
 local function inlay_hint(err, result, ctx, config)
   local client = lsp.get_client_by_id(ctx.client_id)
-  if client and client.name == "typescript-tools" and result then
+  if client and client.name == name and result then
     result = filter_hints_result(result)
   end
-  local base_hint = handlers[methods.textDocument_inlayHint]
-  return base_hint(err, result, ctx, config)
+
+  return handlers[tinlayHint](err, result, ctx, config)
 end
 
 local filter_react_dts = function(value)
@@ -32,8 +34,9 @@ local filter_react_dts = function(value)
   end
 end
 
+local tdefinition = LSP_METHODS.textDocument_definition
 local function definition(err, result, method, ...)
-  local base_definition = handlers[methods.textDocument_definition]
+  local base_definition = handlers[tdefinition]
   if islist(result) and #result > 1 then
     local filtered_result = filter(filter_react_dts, result)
     return base_definition(err, filtered_result, method, ...)
@@ -42,6 +45,7 @@ local function definition(err, result, method, ...)
   return base_definition(err, result, method, ...)
 end
 
+local tfoldingRange = LSP_METHODS.textDocument_foldingRange
 local function folding_range(err, result, ctx, config)
   if not err and result then
     for _, r in pairs(result) do
@@ -50,8 +54,8 @@ local function folding_range(err, result, ctx, config)
       end
     end
   end
-  local base_fold = handlers[methods.textDocument_foldingRange]
-  return base_fold(err, result, ctx, config)
+
+  return handlers[tfoldingRange](err, result, ctx, config)
 end
 
 local hint = {
@@ -142,30 +146,21 @@ return {
   ft = FE_FILETYPES,
   config = function()
     local api = require("typescript-tools.api")
-    require("typescript-tools").setup({
+    require(name).setup({
       on_attach = function(client, bufnr)
         set_keymaps(bufnr)
         local cap = client.server_capabilities
-        if client.name ~= "typescript-tools" then
+        if client.name ~= name then
           return
         end
         cap.documentFormattingProvider = false
         cap.documentRangeFormattingProvider = false
       end,
       handlers = {
-        ["textDocument/inlayHint"] = inlay_hint,
-        ["textDocument/publishDiagnostics"] = api.filter_diagnostics({
-          7016,
-          80001,
-          80006,
-          80007,
-          2305,
-          6387,
-          7044,
-          1149,
-        }),
-        ["textDocument/definition"] = definition,
-        ["textDocument/foldingRange"] = folding_range,
+        [tinlayHint] = inlay_hint,
+        [tdefinition] = definition,
+        [tfoldingRange] = folding_range,
+        [LSP_METHODS.textDocument_publishDiagnostics] = api.filter_diagnostics(ignored_codes),
       },
       settings = {
         expose_as_code_action = "all",

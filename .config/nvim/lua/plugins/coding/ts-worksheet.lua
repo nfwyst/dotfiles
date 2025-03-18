@@ -1,6 +1,5 @@
 return {
   "typed-rocks/ts-worksheet-neovim",
-  cond = not IS_LINUX,
   keys = {
     {
       "<leader>ce",

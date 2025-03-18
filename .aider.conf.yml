@@ -1,3 +1,3 @@
 model: openai/deepseek-ai/DeepSeek-R1
-chat_language: zh-cn
+chat-language: zh-cn
 vim: true
