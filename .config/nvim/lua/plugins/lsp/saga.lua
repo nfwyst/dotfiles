@@ -2,13 +2,11 @@ local lspMethodMap = {
   [LSP_METHODS.textDocument_typeDefinition] = "lsp_typedefs",
   [LSP_METHODS.textDocument_declaration] = "lsp_declarations",
   [LSP_METHODS.textDocument_references] = "lsp_references",
-  [LSP_METHODS.textDocument_codeAction] = "lsp_code_actions",
   [LSP_METHODS.textDocument_definition] = "lsp_definitions",
   [LSP_METHODS.textDocument_implementation] = "lsp_implementations",
-  [LSP_METHODS.workspace_diagnostic] = "diagnostics_workspace",
 }
 
-function fix_lsp_handlers()
+local function fix_lsp_handlers()
   local handlers = lsp.handlers
   local fzf = package.loaded["fzf-lua"]
   if not fzf then
@@ -34,7 +32,7 @@ return {
   },
   config = function()
     -- FIXME: some handler messing in nvim 0.11
-    schedule(fix_lsp_handlers)
+    defer(fix_lsp_handlers, 10)
 
     require("lspsaga").setup({
       implement = {

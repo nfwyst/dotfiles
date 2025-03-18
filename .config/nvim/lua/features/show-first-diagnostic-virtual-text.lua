@@ -37,6 +37,10 @@ end
 
 for _, scope in ipairs(show_scopes) do
   local handler = diagnostic.handlers[scope]
+  if not handler then
+    return
+  end
+
   local show = handler.show
   handler.show = function(namespace, bufnr, diagnostics, opts)
     ---@diagnostic disable-next-line: need-check-nil
