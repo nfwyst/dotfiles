@@ -33,7 +33,7 @@ return {
 
     require("NeoSolarized").setup({
       style = o.background,
-      transparent = IS_INIT_BG_DARK,
+      transparent = g.transparent_enabled and o.background == "dark",
       terminal_colors = true,
       enable_italics = italic,
       styles = {

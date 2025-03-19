@@ -2,7 +2,7 @@ return {
   "nvim-neo-tree/neo-tree.nvim",
   opts = function(_, opts)
     UPDATE_HLS({
-      NeoTreeIndentMarker = { fg = TRANSPARENT_INDENT_HL },
+      NeoTreeIndentMarker = { fg = INDENT_HL },
       NeoTreeMessage = { link = "NeoTreeIndentMarker" },
     })
 

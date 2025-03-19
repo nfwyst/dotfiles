@@ -60,7 +60,7 @@ ESLINT_BIN_PATH = DATA_PATH .. "/mason/bin/" .. ESLINT_BIN_NAME
 NEED_ESLINT_FIX = false
 IS_ZEN_MODE = false
 IS_IN_WEZTERM = env.TERMINAL == "wezterm"
-TRANSPARENT_INDENT_HL = "#666666"
+INDENT_HL = "#666666"
 IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"
@@ -69,7 +69,6 @@ MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo", "grug-far-
 MAX_OPEND_FILES = IS_LINUX and 3 or 7
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
-IS_INIT_BG_DARK = not IS_LINUX
 BINARY_SCHEMES = {}
 
 local function get_js_pkg_manager()

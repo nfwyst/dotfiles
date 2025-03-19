@@ -98,10 +98,10 @@ local function get_new_file_key(opts)
   end
 end
 
-local hls = { SnacksIndent = { fg = TRANSPARENT_INDENT_HL } }
-if not IS_LINUX then
-  hls.SnacksDim = { fg = "#656da4" }
-end
+local hls = {
+  SnacksIndent = { fg = INDENT_HL },
+  SnacksDim = { fg = "#656da4" },
+}
 
 return {
   "snacks.nvim",

@@ -1,13 +1,26 @@
+local function get_style()
+  if g.transparent_enabled then
+    return "transparent"
+  end
+
+  if o.background == "dark" then
+    return "dark"
+  end
+
+  return "normal"
+end
+
 return {
   "folke/tokyonight.nvim",
   lazy = true,
   opts = function(_, opts)
+    local style = get_style()
     local opt = {
       light_style = "day",
       transparent = g.transparent_enabled,
       styles = {
-        floats = "transparent",
-        sidebars = "transparent",
+        floats = style,
+        sidebars = style,
       },
       lualine_bold = true,
       on_colors = function(colors)
@@ -20,6 +33,7 @@ return {
         colors.fg_sidebar = fg_dark
       end,
     }
+
     return merge(opts, opt)
   end,
 }
