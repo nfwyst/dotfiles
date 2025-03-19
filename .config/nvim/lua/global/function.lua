@@ -284,16 +284,29 @@ function FIND_FILE(file_or_dirs, opts)
   return path_wraper[1]
 end
 
-function HL(group_name)
-  return api.nvim_get_hl(0, { name = group_name })
+function HL(group_name, hl)
+  local ns_id = 0
+  if not hl then
+    return api.nvim_get_hl(ns_id, { name = group_name })
+  end
+
+  api.nvim_set_hl(ns_id, group_name, hl)
 end
 
-function SET_HLS(highlights)
-  for group, highlight in pairs(highlights) do
-    if highlight.force == nil then
-      highlight.force = true
+function SET_HLS(hls)
+  for group_name, hl in pairs(hls) do
+    local origin_hl = HL(group_name)
+    if type(hl) == "function" then
+      hl = hl(origin_hl)
+    else
+      hl = merge(origin_hl, hl)
     end
-    api.nvim_set_hl(0, group, merge(HL(group), highlight))
+
+    if hl.force == nil then
+      hl.force = true
+    end
+
+    HL(group_name, hl)
   end
 end
 
@@ -478,24 +491,27 @@ function NewFile()
   end
 end
 
-function UPDATE_HLS(hls)
-  local highlights = {}
-  if hls then
-    assign(HIGHLIGHTS, hls)
+function UPDATE_HLS(new_hls)
+  local hls = {}
+  if new_hls then
+    assign(HIGHLIGHTS, new_hls)
   end
 
-  for name, conf in pairs(HIGHLIGHTS) do
-    local val = conf[o.background]
-    if not val and not conf.light and not conf.dark then
-      val = conf
+  for group_name, hl in pairs(HIGHLIGHTS) do
+    local new_hl = hl
+    if type(hl) ~= "function" then
+      new_hl = hl[o.background]
+      if not new_hl and not hl.light and not hl.dark then
+        new_hl = hl
+      end
     end
 
-    if val then
-      highlights[name] = val
+    if new_hl then
+      hls[group_name] = new_hl
     end
   end
 
-  SET_HLS(highlights)
+  SET_HLS(hls)
 end
 
 function SET_SCOPE_DIM()
