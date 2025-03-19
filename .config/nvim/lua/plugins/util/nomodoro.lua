@@ -27,7 +27,14 @@ return {
 
             return require("nomodoro").status()
           end,
-          color = o.background == "dark" and { fg = "#04d1f9" } or nil,
+          color = function()
+            local color = {}
+            if o.background == "dark" then
+              color.fg = "#04d1f9"
+            end
+
+            return color
+          end,
           padding = { left = 0, right = 1 },
         })
       end,

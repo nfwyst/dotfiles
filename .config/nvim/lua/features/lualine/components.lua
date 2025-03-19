@@ -77,7 +77,14 @@ local root_path_guide = {
     return root .. "" .. git
   end,
   padding = { left = 1, right = 1 },
-  color = o.background == "dark" and { fg = "#37f499" } or nil,
+  color = function()
+    local color = {}
+    if o.background == "dark" then
+      color.fg = "#37f499"
+    end
+
+    return color
+  end,
 }
 
 local memory = {

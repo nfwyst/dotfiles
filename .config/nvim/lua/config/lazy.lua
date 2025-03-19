@@ -60,6 +60,7 @@ local function get_disabled_plugins()
   }
 end
 
+o.background = IS_LINUX and "light" or "dark"
 if IS_SYNTAX_OFF then
   cmd.syntax("off")
 end

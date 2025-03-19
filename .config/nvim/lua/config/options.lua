@@ -30,7 +30,6 @@ SET_OPTS({
   showcmd = false,
   breakindent = true,
   modeline = false,
-  background = IS_LINUX and "light" or "dark",
   guicursor = function(cursor)
     cursor:remove("t:block-blinkon500-blinkoff500-TermCursor")
     cursor:append("a:Cursor/lCursor")
