@@ -31,7 +31,10 @@ SET_OPTS({
   breakindent = true,
   modeline = false,
   background = IS_INIT_BG_DARK and "dark" or "light",
-  guicursor = function(guicursor)
-    return guicursor .. ",a:Cursor/lCursor"
+  guicursor = function(cursor)
+    cursor:remove("t:block-blinkon500-blinkoff500-TermCursor")
+    cursor:append("a:Cursor/lCursor")
+
+    return o.guicursor
   end,
 })

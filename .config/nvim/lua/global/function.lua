@@ -124,11 +124,16 @@ function OPT(name, opt, value)
     return api.nvim_get_option_value(name, opt)
   end
 
+  local is_global = opt.scope == "global"
   if type(value) == "function" then
-    value = value(api.nvim_get_option_value(name, opt))
+    if is_global then
+      value = value(vim.opt[name])
+    else
+      value = value(api.nvim_get_option_value(name, opt))
+    end
   end
 
-  if opt.scope ~= "global" then
+  if not is_global then
     return api.nvim_set_option_value(name, value, opt)
   end
 
