@@ -2,7 +2,7 @@ theme = tokyonight-storm
 
 adjust-cell-height = 10%
 initial-command = /opt/homebrew/bin/tmux new -A -s work
-command = env SNACKS_KITTY=1 TERMINAL="ghostty" XDG_CONFIG_HOME="$HOME/.config" XDG_BIN_HOME="$HOME/.local/bin" XDG_DATA_HOME="$HOME/.local/share" GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig" /opt/homebrew/bin/nu
+command = env SNACKS_KITTY="1" TERMINAL="ghostty" XDG_CONFIG_HOME="$HOME/.config" XDG_BIN_HOME="$HOME/.local/bin" XDG_DATA_HOME="$HOME/.local/share" GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig" /opt/homebrew/bin/nu
 copy-on-select = true
 font-family = "0xProto Nerd Font"
 font-size = 16
@@ -82,7 +82,7 @@ keybind = super+m=text:\x1B\x70\x20
 keybind = super+[=text:\x1B\x70\x5B
 
 # set env TODO: wait for v1.2 release
-# env = SNACKS_KITTY=1
+# env = SNACKS_KITTY="1"
 # env = TERMINAL="ghostty"
 # env = XDG_CONFIG_HOME="$HOME/.config"
 # env = XDG_BIN_HOME="$HOME/.local/bin"

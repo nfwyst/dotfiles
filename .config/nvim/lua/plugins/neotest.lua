@@ -32,7 +32,7 @@ return {
         }),
         require("neotest-jest")({
           env = { CI = true },
-          jestCommand = JS_PKG_MANAGER .. " run test",
+          jestCommand = JS_PKG_MANAGER .. " run test --no-watch --no-watchAll",
           jestConfigFile = get_jest_config_path,
           cwd = function(filepath)
             local confpath = get_jest_config_path(filepath)

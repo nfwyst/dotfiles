@@ -18,8 +18,11 @@ local link = { link = "Normal" }
 if IS_SYNTAX_OFF then
   assign(hls, {
     Function = link,
-    Identifier = link,
-    Keyword = link,
+    Type = link,
+    TSVariableBuiltin = link,
+    TSProperty = link,
+    TSConstructor = link,
+    ["@lsp"] = link,
   })
 end
 

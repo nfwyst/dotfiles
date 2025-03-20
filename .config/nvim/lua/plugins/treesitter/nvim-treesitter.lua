@@ -93,6 +93,7 @@ return {
         "vue",
         "norg",
         "solidity",
+        "kdl",
       },
       ignore_install = nil,
       textobjects = {
