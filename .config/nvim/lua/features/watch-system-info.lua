@@ -24,7 +24,7 @@ local function run_command(cmd, args, callback)
     end
 
     if data then
-      table.insert(output_chunks, data)
+      PUSH(output_chunks, data)
     end
   end)
 end

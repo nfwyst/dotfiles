@@ -575,3 +575,41 @@ function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)
     end
   end
 end
+
+function ADD_LUALINE_COMPONENT(section_name, component, index)
+  local lualine = package.loaded["lualine"]
+  if not lualine then
+    return
+  end
+
+  local config = lualine.get_config()
+
+  local target_section = config.sections[section_name]
+  if not target_section then
+    target_section = {}
+    config.sections[section_name] = target_section
+  end
+
+  for _, existing in ipairs(target_section) do
+    if vim.deep_equal(existing, component) then
+      return
+    end
+  end
+
+  if type(index) == "number" then
+    local last_pos = #target_section + 1
+    if index < 0 then
+      index = index + last_pos
+    end
+
+    index = math.max(1, math.min(index, last_pos))
+
+    table.insert(target_section, index, component)
+  else
+    PUSH(target_section, component)
+  end
+
+  schedule(function()
+    lualine.setup(config)
+  end)
+end
