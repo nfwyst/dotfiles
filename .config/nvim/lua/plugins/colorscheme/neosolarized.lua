@@ -22,6 +22,7 @@ if IS_SYNTAX_OFF then
     TSVariableBuiltin = link,
     TSProperty = link,
     TSConstructor = link,
+    TSNamespace = link,
     ["@lsp"] = link,
   })
 end
