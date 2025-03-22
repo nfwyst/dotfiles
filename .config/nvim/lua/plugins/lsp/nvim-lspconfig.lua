@@ -64,28 +64,28 @@ if IS_LINUX then
 end
 
 lsp.set_log_level(levels.OFF)
+local lualine_lsp = {
+  function()
+    local clients = lsp.get_clients({ bufnr = CUR_BUF() })
+    local names = {}
+    for _, client in pairs(clients) do
+      PUSH(names, client.name)
+    end
+    local result = table.concat(names, "•")
+    if result == "" then
+      return ""
+    end
+    local prefix = IS_LAUNCH_FROM_GIT_REPO and "" or " "
+    return prefix .. "󱓞 " .. result
+  end,
+  padding = { left = 0, right = 1 },
+}
 
 return {
   "neovim/nvim-lspconfig",
   opts = function(_, opts)
+    ADD_LUALINE_COMPONENT("lualine_b", lualine_lsp)
     override(opts.servers)
-    ADD_LUALINE_COMPONENT("lualine_b", {
-      function()
-        local clients = lsp.get_clients({ bufnr = CUR_BUF() })
-        local names = {}
-        for _, client in pairs(clients) do
-          PUSH(names, client.name)
-        end
-        local result = table.concat(names, "•")
-        if result == "" then
-          return ""
-        end
-        local prefix = IS_LAUNCH_FROM_GIT_REPO and "" or " "
-        return prefix .. "󱓞 " .. result
-      end,
-      padding = { left = 0, right = 1 },
-    })
-
     local icons = LazyVim.config.icons.diagnostics
     local opt = {
       diagnostics = {

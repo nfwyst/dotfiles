@@ -48,10 +48,19 @@ local provider_names = {
   openai_compatible = "hyperbolic",
 }
 local current_llm_name = "hyperbolic"
+local event
+if not IS_LINUX then
+  event = "InsertEnter"
+end
+
+local function lualine_minuet()
+  return require("minuet.lualine")
+end
 
 return {
   "milanglacier/minuet-ai.nvim",
-  lazy = IS_LINUX,
+  cond = HAS_AI_KEY,
+  event = event,
   cmd = { "Minuet" },
   keys = {
     {
@@ -64,6 +73,12 @@ return {
       "<leader>amt",
       "<cmd>Minuet virtualtext toggle<cr>",
       desc = "Minuet: Toggle Virtual Text",
+      mode = { "n", "v" },
+    },
+    {
+      "<leader>amb",
+      "<cmd>Minuet blink toggle<cr>",
+      desc = "Minuet: Toggle Blink AutoCompletion",
       mode = { "n", "v" },
     },
     {
@@ -87,11 +102,25 @@ return {
       desc = "Minuet: Switch Model",
     },
   },
-  dependencies = {
-    { "nvim-lua/plenary.nvim" },
-  },
-  cond = HAS_AI_KEY,
+  dependencies = { "nvim-lua/plenary.nvim" },
   config = function()
+    ADD_LUALINE_COMPONENT("lualine_x", lualine_minuet)
+    ADD_BLINK_SOURCE({
+      id = "minuet",
+      keymap = {
+        ["<a-y>"] = {
+          function(blink)
+            blink.show({ providers = { "minuet" } })
+          end,
+        },
+      },
+      config = {
+        name = "minuet",
+        module = "minuet.blink",
+        score_offset = 100,
+      },
+    })
+
     require("minuet").setup({
       notify = "error",
       request_timeout = 5,
@@ -100,12 +129,8 @@ return {
       provider = "openai_fim_compatible",
       n_completions = 1,
       context_window = IS_LINUX and 4096 or 8192,
-      cmp = {
-        enable_auto_complete = false,
-      },
-      blink = {
-        enable_auto_complete = false,
-      },
+      cmp = { enable_auto_complete = false },
+      blink = { enable_auto_complete = false },
       proxy = LLM.proxy,
       provider_options = {
         openai_compatible = provider_factory("hyperbolic"),

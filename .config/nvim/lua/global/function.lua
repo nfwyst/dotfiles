@@ -74,7 +74,7 @@ function MAP(mode, from, to, opt)
   local buffer = opt.buffer
   if buffer then
     local key = mode
-    if type(mode) == "table" then
+    if islist(mode) then
       key = table.concat(mode, ",")
     end
     key = key .. from
@@ -443,33 +443,43 @@ function SELECT_PROMPT(on_select)
 end
 
 function ADD_BLINK_SOURCE(opt)
-  local id = opt.id
-  local config = opt.config
-  local is_default = opt.default
-  local filetypes = opt.filetypes
-  local cmp = require("blink.cmp")
-  local has_filetypes = not EMPTY(filetypes, true)
+  local blink = require("blink.cmp")
 
-  if config then
-    config.opts = config.opts or {}
-    if is_default and has_filetypes then
-      config.enabled = function()
-        local filetype = OPT("filetype", { buf = CUR_BUF() })
-        return contains(filetypes, filetype)
+  schedule(function()
+    local id = opt.id
+    local config = opt.config
+    local is_default = opt.default
+    local filetypes = opt.filetypes
+    local origin_config = require("blink.cmp.config")
+    local has_filetypes = not EMPTY(filetypes, true)
+
+    if config then
+      config.opts = config.opts or {}
+      if is_default and has_filetypes then
+        config.enabled = function()
+          local filetype = OPT("filetype", { buf = CUR_BUF() })
+          return contains(filetypes, filetype)
+        end
+      end
+
+      blink.add_source_provider(id, config)
+    end
+
+    if opt.keymap then
+      assign(origin_config.keymap, opt.keymap)
+    end
+
+    if is_default or not has_filetypes then
+      local defaults = origin_config.sources.default
+      if not contains(defaults, id) then
+        return PUSH(defaults, id)
       end
     end
 
-    cmp.add_provider(id, config)
-  end
-
-  if is_default or not has_filetypes then
-    local sources = require("blink.cmp.config").sources
-    return PUSH(sources.default, id)
-  end
-
-  for _, filetype in ipairs(filetypes) do
-    cmp.add_filetype_source(filetype, id)
-  end
+    for _, filetype in ipairs(filetypes) do
+      blink.add_filetype_source(filetype, id)
+    end
+  end)
 end
 
 function ADD_BLINK_COMPAT_SOURCES(opt)
@@ -577,39 +587,39 @@ function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)
 end
 
 function ADD_LUALINE_COMPONENT(section_name, component, index)
-  local lualine = package.loaded["lualine"]
-  if not lualine then
-    return
-  end
-
-  local config = lualine.get_config()
-
-  local target_section = config.sections[section_name]
-  if not target_section then
-    target_section = {}
-    config.sections[section_name] = target_section
-  end
-
-  for _, existing in ipairs(target_section) do
-    if vim.deep_equal(existing, component) then
-      return
-    end
-  end
-
-  if type(index) == "number" then
-    local last_pos = #target_section + 1
-    if index < 0 then
-      index = index + last_pos
-    end
-
-    index = math.max(1, math.min(index, last_pos))
-
-    table.insert(target_section, index, component)
-  else
-    PUSH(target_section, component)
-  end
+  local lualine = require("lualine")
 
   schedule(function()
+    local config = lualine.get_config()
+    if type(component) == "function" then
+      component = component()
+    end
+
+    local target_section = config.sections[section_name]
+    if not target_section then
+      target_section = {}
+      config.sections[section_name] = target_section
+    end
+
+    for _, existing in ipairs(target_section) do
+      if existing == component then
+        return
+      end
+    end
+
+    if type(index) == "number" then
+      local last_pos = #target_section + 1
+      if index < 0 then
+        index = index + last_pos
+      end
+
+      index = math.max(1, math.min(index, last_pos))
+
+      table.insert(target_section, index, component)
+    else
+      PUSH(target_section, component)
+    end
+
     lualine.setup(config)
   end)
 end

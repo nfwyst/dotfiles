@@ -1,3 +1,22 @@
+local lualine_nomodoro = {
+  function()
+    if not package.loaded["nomodoro"] then
+      return "🍅"
+    end
+
+    return require("nomodoro").status()
+  end,
+  color = function()
+    local color = {}
+    if o.background == "dark" then
+      color.fg = "#04d1f9"
+    end
+
+    return color
+  end,
+  padding = { left = 0, right = 1 },
+}
+
 return {
   "dbinagi/nomodoro",
   cmd = { "NomoTimer", "NomoMenu" },
@@ -15,25 +34,7 @@ return {
     },
   },
   config = function()
-    ADD_LUALINE_COMPONENT("lualine_c", {
-      function()
-        if not package.loaded["nomodoro"] then
-          return "🍅"
-        end
-
-        return require("nomodoro").status()
-      end,
-      color = function()
-        local color = {}
-        if o.background == "dark" then
-          color.fg = "#04d1f9"
-        end
-
-        return color
-      end,
-      padding = { left = 0, right = 1 },
-    })
-
+    ADD_LUALINE_COMPONENT("lualine_c", lualine_nomodoro)
     require("nomodoro").setup({
       work_time = 25,
       short_break_time = 5,

@@ -127,7 +127,6 @@ return {
     { "<leader>act", change_prompt, desc = "CodeCompanion: Change Prompt" },
   },
   config = function()
-    ADD_BLINK_SOURCE({ id = "codecompanion", filetypes = { "codecompanion" } })
     ADD_LUALINE_COMPONENT("lualine_x", require("features.lualine.components").codecompanion)
 
     -- hide left columns for code companion sidebar

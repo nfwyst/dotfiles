@@ -1,23 +1,13 @@
 return {
   "MeanderingProgrammer/render-markdown.nvim",
   lazy = false,
-  dependencies = { "saghen/blink.cmp" },
   opts = function(_, opts)
-    ADD_BLINK_SOURCE({
-      id = "markdown",
-      filetypes = { "markdown" },
-      default = true,
-      config = {
-        name = "RenderMarkdown",
-        module = "render-markdown.integ.blink",
-      },
-    })
-
     local state = require("render-markdown.state")
     local anti_conceal = { enabled = false }
     local opt = {
       render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
       file_types = MARKDOWN_FILETYPES,
+      completions = { blink = { enabled = true } },
       heading = {
         sign = true,
         render_modes = true,
