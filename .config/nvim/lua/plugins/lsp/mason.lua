@@ -1,21 +1,32 @@
 local to_install = {
   "prettierd",
-  "shellcheck",
   "vale",
-  "shfmt",
   "beautysh",
   "js-debug-adapter",
-  "gitui",
-  "markdown-toc",
-  "markdownlint-cli2",
   "ast-grep",
 }
 
-local ensure_installed = {}
-for _, name in ipairs(to_install) do
-  if not executable(name) then
-    PUSH(ensure_installed, name)
+local function get_ensure_installed(packages)
+  local visited = {}
+  local ensure_installed = {}
+
+  for _, name in ipairs(packages) do
+    if not visited[name] and not executable(name) then
+      PUSH(ensure_installed, name)
+    end
+
+    visited[name] = true
   end
+
+  for _, name in ipairs(to_install) do
+    if not visited[name] and not executable(name) then
+      PUSH(ensure_installed, name)
+    end
+
+    visited[name] = true
+  end
+
+  return ensure_installed
 end
 
 local function get_gitui_theme()
@@ -38,9 +49,9 @@ end
 return {
   "williamboman/mason.nvim",
   opts = function(_, opts)
-    opts.ensure_installed = ensure_installed
     local opt = {
       log_level = levels.OFF,
+      ensure_installed = get_ensure_installed(opts.ensure_installed),
       ui = {
         border = "rounded",
         height = 0.7,
