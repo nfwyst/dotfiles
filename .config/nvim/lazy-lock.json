@@ -1,8 +1,8 @@
 {
   "LazyVim": { "branch": "main", "commit": "ec5981dfb1222c3bf246d9bcaa713d5cfa486fbd" },
   "NeoSolarized.nvim": { "branch": "master", "commit": "fb395ea220c9befc06a91bd97e80fbfec939add5" },
-  "SchemaStore.nvim": { "branch": "main", "commit": "3ddaf211bf971f4d06bd971f4664ecdab9bf8bcb" },
-  "avante.nvim": { "branch": "main", "commit": "b59cbf4392d206c0f9bc7ad378bc179e1dcfe820" },
+  "SchemaStore.nvim": { "branch": "main", "commit": "bffbd2279c8376c6d72b5057e0660c7a5b8a6728" },
+  "avante.nvim": { "branch": "main", "commit": "cc966194d0111d1ffc1f7fc12ad2b0a7c8a705b8" },
   "blink-cmp-dictionary": { "branch": "master", "commit": "3d49f934059fb59f657b547d90a526d00540634e" },
   "blink-cmp-git": { "branch": "master", "commit": "863e0670217d0dffb9edc6ab41b676a4128f813b" },
   "blink-emoji.nvim": { "branch": "master", "commit": "a77aebc092ebece1eed108f301452ae774d6b67a" },
