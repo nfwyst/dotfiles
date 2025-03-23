@@ -16,6 +16,10 @@ local ensure_installed = {
     installer = "bun",
     params = "install -g @mermaid-js/mermaid-cli",
   },
+  websocat = {
+    installer = "cargo",
+    params = "install websocat",
+  },
 }
 
 for cmd, opt in pairs(ensure_installed) do
