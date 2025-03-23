@@ -32,6 +32,33 @@ local function get_resizer(is_increase, is_vertical)
   end
 end
 
+local function toggle_mark()
+  local char_code = fn.getchar()
+  if char_code == 0 then
+    return
+  end
+
+  local char = fn.nr2char(char_code)
+  if not char:match("^[a-zA-Z]$") then
+    return PRESS_KEYS("m" .. char, "n")
+  end
+
+  local mark = fn.getpos("'" .. char)
+  local buf = mark[1]
+  local bufnr = CUR_BUF()
+  if buf == 0 then
+    buf = bufnr
+  end
+
+  local mark_row = mark[2]
+  local row = WIN_CURSOR(CUR_WIN())[1]
+  if buf == bufnr and mark_row == row then
+    return cmd.delmarks(char)
+  end
+
+  cmd.normal({ "m" .. char, bang = true })
+end
+
 local keymaps = {
   n = {
     { from = "p", to = paste },
@@ -67,6 +94,7 @@ local keymaps = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
     { from = "<leader>I", to = "<cmd>wall<cr>", opt = { desc = "Save All" } },
     { from = "<leader>X", to = "<cmd>xall<cr>", opt = { desc = "Save And Quit" } },
+    { from = "m", to = toggle_mark },
   },
   [{ "v", "x" }] = {
     { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
