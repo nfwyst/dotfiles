@@ -516,11 +516,12 @@ local function get_hl(hl)
     return new_hl
   end
 
-  if IS_SYNTAX_OFF and hl.syntax_off then
-    return hl.syntax_off
+  local syntax_off = hl.syntax_off
+  if IS_SYNTAX_OFF and syntax_off then
+    return syntax_off
   end
 
-  if not hl.light and not hl.dark then
+  if not hl.light and not hl.dark and not syntax_off then
     return hl
   end
 end
