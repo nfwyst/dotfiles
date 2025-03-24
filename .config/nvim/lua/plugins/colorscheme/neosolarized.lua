@@ -14,19 +14,6 @@ local hls = {
   LspReferenceWrite = lsp_hl_getter,
 }
 
-local link = { link = "Normal" }
-if IS_SYNTAX_OFF then
-  assign(hls, {
-    Function = link,
-    Type = link,
-    TSVariableBuiltin = link,
-    TSProperty = link,
-    TSConstructor = link,
-    TSNamespace = link,
-    ["@lsp"] = link,
-  })
-end
-
 return {
   "Tsuzat/NeoSolarized.nvim",
   lazy = true,

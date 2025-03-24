@@ -61,6 +61,7 @@ return {
         backdrop = 100,
         height = 0.9,
         width = 0.9,
+        zindex = 100,
         preview = {
           scrollbar = false,
           layout = "vertical",

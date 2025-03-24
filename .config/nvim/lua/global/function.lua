@@ -506,6 +506,25 @@ function NewFile()
   end
 end
 
+local function get_hl(hl)
+  if type(hl) == "function" then
+    return hl
+  end
+
+  local new_hl = hl[o.background]
+  if new_hl then
+    return new_hl
+  end
+
+  if IS_SYNTAX_OFF and hl.syntax_off then
+    return hl.syntax_off
+  end
+
+  if not hl.light and not hl.dark then
+    return hl
+  end
+end
+
 function UPDATE_HLS(new_hls)
   local hls = {}
   if new_hls then
@@ -513,17 +532,7 @@ function UPDATE_HLS(new_hls)
   end
 
   for group_name, hl in pairs(HIGHLIGHTS) do
-    local new_hl = hl
-    if type(hl) ~= "function" then
-      new_hl = hl[o.background]
-      if not new_hl and not hl.light and not hl.dark then
-        new_hl = hl
-      end
-    end
-
-    if new_hl then
-      hls[group_name] = new_hl
-    end
+    hls[group_name] = get_hl(hl)
   end
 
   SET_HLS(hls)
