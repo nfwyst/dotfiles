@@ -154,7 +154,8 @@ function WIN_CURSOR(win, value)
   if not value then
     return api.nvim_win_get_cursor(win)
   end
-  api.nvim_win_set_cursor(win, value)
+
+  pcall(api.nvim_win_set_cursor, win, value)
 end
 
 function GET_KEYS_CODE(keys)
