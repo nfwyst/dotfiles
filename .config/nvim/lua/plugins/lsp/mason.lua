@@ -4,6 +4,7 @@ local to_install = {
   "beautysh",
   "js-debug-adapter",
   "ast-grep",
+  "eslint_d",
 }
 
 local function get_ensure_installed(packages)

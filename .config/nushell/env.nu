@@ -150,3 +150,13 @@ $env.NODE_OPTIONS = "--no-warnings=ExperimentalWarning"
 # settings for qwen agent
 $env.QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS = 134144
 $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
+
+# load go env
+if (which go | is-not-empty) {
+  go env | parse "{key}={value}" | each { |row|
+    let key = $row.key
+    if ($env | get -i $key | is-empty) {
+      { ($key): ($row.value) }
+    }
+  } | reduce -f {} { |it, acc| $acc | merge $it } | load-env
+}
