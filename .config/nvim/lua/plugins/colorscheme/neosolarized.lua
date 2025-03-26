@@ -1,5 +1,5 @@
-local italic = not IS_LINUX
-local style = { italic = italic }
+local is_italic_enabled = not IS_LINUX
+local style = { italic = is_italic_enabled }
 
 local function lsp_hl_getter(hl)
   hl.link = nil
@@ -26,9 +26,9 @@ return {
       style = o.background,
       transparent = g.transparent_enabled and o.background == "dark",
       terminal_colors = true,
-      enable_italics = italic,
+      enable_italics = is_italic_enabled,
       styles = {
-        functions = { bold = true, italic = italic },
+        functions = { bold = true, italic = is_italic_enabled },
         comments = style,
         keywords = style,
         string = style,

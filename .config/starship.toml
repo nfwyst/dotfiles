@@ -5,13 +5,14 @@ $directory\
 [](fg:#769ff0 bg:#394260)\
 $git_branch\
 $git_status\
+[](fg:#394260)\
 $all\
 $character"""
 
 command_timeout = 5000
 
 [directory]
-style = "fg:#e3e5e5 bg:#769ff0"
+style = 'fg:#e3e5e5 bg:#769ff0'
 home_symbol='~'
 format = '[ $path ]($style)[$read_only]($read_only_style)'
 truncation_length = 0
@@ -21,18 +22,18 @@ read_only_style = '197'
 read_only = '?'
 
 [directory.substitutions]
-"Documents" = "󰈙 "
-"Downloads" = " "
-"Music" = " "
-"Pictures" = " "
+'Documents' = '󰈙 '
+'Downloads' = ' '
+'Music' = ' '
+'Pictures' = ' '
 
 [git_branch]
-symbol = ""
-style = "bg:#394260"
+symbol = ''
+style = 'bg:#394260'
 format = '[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)'
 
 [git_status]
-style = "bg:#394260"
+style = 'bg:#394260'
 format = '[[($all_status$ahead_behind)](fg:#769ff0 bg:#394260)]($style)'
 conflicted = '[ confliced=${count}](fg:red bg:#394260)'
 up_to_date = '[󰘽 up-to-date](fg:green bg:#394260)'
@@ -49,32 +50,72 @@ deleted = '[󰍶 deleted=${count}](fg:red bg:#394260)'
 [aws]
 format = '[$symbol(profile: "$profile" )(\(region: $region\) )]($style)'
 disabled = false
-style = 'fg:blue bg:#212736'
-symbol = "? "
+style = 'fg:blue'
+symbol = ''
 
 [kubernetes]
-symbol = '☸ '
+symbol = '☸'
 disabled = false
 detect_files = ['Dockerfile']
 format = '[$symbol$context( \($namespace\))]($style) '
 contexts = [
-  { context_pattern = "arn:aws:eks:us-west-2:577926974532:cluster/zd-pvc-omer", style = "green", context_alias = "omerxx", symbol = " " },
+  { context_pattern = 'arn:aws:eks:us-west-2:577926974532:cluster/zd-pvc-omer', style = 'green', context_alias = 'omerxx', symbol = ' ' },
 ]
 
 [docker_context]
 disabled = true
 
+[package]
+symbol = ""
+format = '[ $symbol ($version) ]($style)'
+
+[lua]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[php]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[bun]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[cmake]
+format = '[ $symbol ($version) ]($style)'
+
+[ruby]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[python]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[solidity]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[c]
+symbol = '󰯲'
+format = '[ $symbol ($version) ]($style)'
+
+[deno]
+symbol = ''
+format = '[ $symbol ($version) ]($style)'
+
+[zig]
+symbol = '↯'
+format = '[ $symbol ($version) ]($style)'
+
 [nodejs]
-symbol = ""
-style = "bg:#212736"
-format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
+symbol = ''
+format = '[[ $symbol ($version) ](fg:#769ff0)]($style)'
 
 [rust]
-symbol = ""
-style = "bg:#212736"
-format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
+symbol = ''
+format = '[[ $symbol ($version) ](fg:#769ff0)]($style)'
 
 [golang]
-symbol = ""
-style = "bg:#212736"
-format = '[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)'
+symbol = ''
+format = '[[ $symbol ($version) ](fg:#769ff0)]($style)'

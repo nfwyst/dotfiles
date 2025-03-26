@@ -119,7 +119,10 @@ if $env.UNAME == "Linux" {
 }
 
 $env.LANG = "en_US.UTF-8"
-$env.EDITOR = (which nvim | get path | first)
+let nvim_path = which nvim
+if ($nvim_path | is-not-empty) {
+  $env.EDITOR = ($nvim_path | get path | first)
+}
 $env.SHELL = (which nu | get path | first)
 
 # To load env from custom file
@@ -151,12 +154,5 @@ $env.NODE_OPTIONS = "--no-warnings=ExperimentalWarning"
 $env.QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS = 134144
 $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
 
-# load go env
-if (which go | is-not-empty) {
-  go env | parse "{key}={value}" | each { |row|
-    let key = $row.key
-    if ($env | get -i $key | is-empty) {
-      { ($key): ($row.value) }
-    }
-  } | reduce -f {} { |it, acc| $acc | merge $it } | load-env
-}
+# settings for go
+$env.CGO_ENABLED = '1'

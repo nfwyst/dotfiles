@@ -104,7 +104,7 @@ local hls = {
 }
 
 return {
-  "snacks.nvim",
+  "folke/snacks.nvim",
   opts = function(_, opts)
     -- wait for setup finish
     defer(init, 0)

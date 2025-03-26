@@ -5,6 +5,7 @@ local to_install = {
   "js-debug-adapter",
   "ast-grep",
   "eslint_d",
+  "tectonic",
 }
 
 local function get_ensure_installed(packages)

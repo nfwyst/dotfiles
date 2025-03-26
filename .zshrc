@@ -115,6 +115,9 @@ export PROMPT="${PROMPT}"$'\n'
 export QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS=134144
 export QWEN_AGENT_DEFAULT_MAX_REF_TOKEN=89429
 
+# settings for go
+export CGO_ENABLED='1'
+
 # Shell integrations
 source <(starship init zsh)
 source <(zoxide init zsh)

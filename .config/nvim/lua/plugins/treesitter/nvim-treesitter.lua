@@ -30,7 +30,11 @@ local function get_move_goto_config(direction, position)
 end
 
 local function set_keymaps()
-  local rm = require("nvim-treesitter.textobjects.repeatable_move")
+  local ok, rm = pcall(require, "nvim-treesitter.textobjects.repeatable_move")
+  if not ok then
+    return
+  end
+
   MAPS({
     [{ "n", "x", "o" }] = {
       { from = ";", to = rm.repeat_last_move },
