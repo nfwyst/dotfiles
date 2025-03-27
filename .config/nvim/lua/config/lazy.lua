@@ -65,6 +65,8 @@ if IS_SYNTAX_OFF then
   cmd.syntax("off")
 end
 
+language.register("markdown", "checkhealth")
+
 require("lazy").setup({
   install = { colorscheme = { "tokyonight", "NeoSolarized", "e-ink" } },
   spec = {

@@ -13,8 +13,10 @@ todo.md
 .gp.md
 cache
 zjframes.rs
-zjstatus/target/
+**/zjstatus/target/
 env.lua
 custom-env.nu
 custom-env.zsh
 .gitconfig
+**/zed/conversations/
+**/zed/prompts/

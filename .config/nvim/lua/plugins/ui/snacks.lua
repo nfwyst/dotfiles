@@ -98,6 +98,22 @@ local function get_new_file_key(opts)
   end
 end
 
+local function scope_filter(bufnr)
+  local buftype = OPT("buftype", { buf = bufnr })
+  if not EMPTY(buftype) or not package.loaded["lualine"] then
+    return false
+  end
+
+  local buffers = require("lualine.components.buffers")
+  if not contains(buffers.bufpos2nr, bufnr) then
+    return false
+  end
+
+  local snacks_indent = BUF_VAR(bufnr, "snacks_indent")
+
+  return g.snacks_indent ~= false and snacks_indent ~= false
+end
+
 local hls = {
   SnacksIndent = { fg = INDENT_HL },
   SnacksDim = { fg = "#656da4" },
@@ -140,7 +156,7 @@ return {
             and OPT("buftype", { buf = bufnr }) ~= "terminal"
         end,
       },
-      indent = { scope = { enabled = not IS_LINUX } },
+      indent = { scope = { enabled = not IS_LINUX, filter = scope_filter } },
       bigfile = { size = 524288 }, -- 0.5 * 1024 * 1024
       statuscolumn = {
         left = IS_LINUX and { "sign" } or { "mark", "sign" },
