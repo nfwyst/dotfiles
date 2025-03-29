@@ -93,11 +93,14 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_BIN_HOME="$HOME/.local/bin"
 export XDG_DATA_HOME="$HOME/.local/share"
 export GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig"
+export BOB_CONFIG="$HOME/.config/bob/config.json"
 
 export PATH="$PATH:$GOPATH/bin"
 export PATH="$PATH:$CARGO_HOME/bin"
 export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/.local/share/bob/nvim-bin"
 export PATH="$PATH:$HOME/.bun/bin"
+export PATH="$PATH:/usr/local/bin"
 
 if [[ "$(uname)" == "Linux" ]]; then
   export PKG_CONFIG_PATH="/usr/lib64/pkgconfig"

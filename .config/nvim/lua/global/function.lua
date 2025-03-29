@@ -210,12 +210,6 @@ function MAX_WIDTH(offset, multiple)
   return width > 0 and width or editor_width
 end
 
-function EXCLUDE_LIST(list, excludes)
-  return filter(function(item)
-    return not contains(excludes or {}, item)
-  end, list)
-end
-
 function ENABLE_CURSORLINE(bufnr, win)
   win = win or fn.bufwinid(bufnr)
   if OPT("cursorline", { win = win }) then

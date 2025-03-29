@@ -94,12 +94,15 @@ $env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
 $env.XDG_BIN_HOME = ($env.HOME | path join ".local/bin")
 $env.XDG_DATA_HOME = ($env.HOME | path join ".local/share")
 $env.GIT_CONFIG_GLOBAL = ($env.HOME | path join ".config/.gitconfig")
+$env.BOB_CONFIG = ($env.HOME | path join ".config/bob/config.json")
 
 use std "path add"
 path add ($env.GOPATH | path join "bin")
 path add ($env.CARGO_HOME | path join "bin")
 path add ($env.HOME | path join ".local/bin")
+path add ($env.HOME | path join ".local/share/bob/nvim-bin")
 path add ($env.HOME | path join ".bun/bin")
+path add "/usr/local/bin"
 
 if $env.UNAME == "Darwin" {
   let brew = "/opt/homebrew"

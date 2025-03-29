@@ -1,7 +1,6 @@
 local lsp_servers = {
   "jsonls",
   "lua_ls",
-  "ts_ls",
   "cssls",
   "html",
   "yamlls",
@@ -17,6 +16,9 @@ local lsp_servers = {
 local disabled_lsp_servers = {
   "vtsls",
   "pyright",
+  "basedpyright",
+  "tsserver",
+  "ts_ls",
 }
 
 local function override(servers)
@@ -49,16 +51,6 @@ local function override(servers)
     },
   })
 end
-
-local virtual_text = {
-  spacing = 4,
-  source = "if_many",
-  prefix = "",
-  suffix = "",
-  format = function(diagnostic)
-    return "● " .. diagnostic.message
-  end,
-}
 
 lsp.set_log_level(levels.OFF)
 local lualine_lsp = {
@@ -113,19 +105,7 @@ return {
         enabled = false,
       },
       setup = {
-        tailwindcss = function(_, tw_opts)
-          local tw = LazyVim.lsp.get_raw_config("tailwindcss")
-          tw_opts.filetypes = tw_opts.filetypes or {}
-          push_list(tw_opts.filetypes, tw.default_config.filetypes)
-
-          tw_opts.filetypes = EXCLUDE_LIST(tw_opts.filetypes, tw_opts.filetypes_exclude)
-
-          push_list(tw_opts.filetypes, tw_opts.filetypes_include or {})
-        end,
         vtsls = function()
-          return true
-        end,
-        ts_ls = function()
           return true
         end,
       },
