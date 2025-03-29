@@ -7,7 +7,14 @@ return {
     {
       "<leader>cue",
       function()
-        cmd.EmmetInstall()
+        local bufnr = CUR_BUF()
+        local var_key = CONSTS.EMMET_INSTALLED
+        local is_installed = BUF_VAR(bufnr, var_key)
+        if not is_installed then
+          cmd.EmmetInstall()
+          BUF_VAR(bufnr, var_key, true)
+        end
+
         PRESS_KEYS("<Plug>(emmet-expand-abbr)", mode)
       end,
       desc = "Expand Emmet",
