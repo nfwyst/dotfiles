@@ -1,23 +1,31 @@
 local ensure_installed = {
   latex2text = {
     installer = "uv",
-    params_mac = "pip install pylatexenc --system --break-system-packages",
-    params_linux = "pip install pylatexenc",
+    params = {
+      normal = "pip install pylatexenc",
+      mac = "pip install pylatexenc --system --break-system-packages",
+    },
   },
   grpcurl = {
-    installer = "go",
-    params = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
+    installer = { normal = "go", mac = "brew" },
+    params = {
+      normal = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
+      mac = "install grpcurl",
+    },
   },
   bun = {
-    installer = "curl",
-    params = "-fsSL https://bun.sh/install | bash",
+    installer = { normal = "curl", mac = "brew" },
+    params = {
+      normal = "-fsSL https://bun.sh/install | bash",
+      mac = "install oven-sh/bun/bun",
+    },
   },
   mmdc = {
     installer = "bun",
     params = "install -g @mermaid-js/mermaid-cli",
   },
   websocat = {
-    installer = "cargo",
+    installer = { normal = "cargo", mac = "brew" },
     params = "install websocat",
   },
 }
@@ -25,18 +33,18 @@ local ensure_installed = {
 for cmd, opt in pairs(ensure_installed) do
   local installed = executable(cmd)
   local installer = opt.installer
+  local type_key = IS_LINUX and "normal" or "mac"
+  if type(installer) == "table" then
+    installer = installer[type_key]
+  end
+
   if not installed and executable(installer) then
     NOTIFY("installing " .. cmd .. "...", levels.INFO)
 
     local stderr_buffer = {}
     local params = opt.params
-    if not params then
-      if IS_LINUX then
-        params = opt.params_linux
-      else
-        params = opt.params_mac
-      end
-
+    if type(params) == "table" then
+      params = params[type_key]
       if not params then
         return
       end
