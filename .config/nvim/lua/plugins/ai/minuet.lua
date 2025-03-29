@@ -108,11 +108,9 @@ return {
     ADD_BLINK_SOURCE({
       id = "minuet",
       keymap = {
-        ["<a-y>"] = {
-          function(blink)
-            blink.show({ providers = { "minuet" } })
-          end,
-        },
+        ["<A-y>"] = function(blink)
+          blink.show({ providers = { "minuet" } })
+        end,
       },
       config = {
         name = "minuet",

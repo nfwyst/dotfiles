@@ -454,6 +454,13 @@ function ADD_BLINK_SOURCE(opt)
     local origin_config = require("blink.cmp.config")
     local has_filetypes = not EMPTY(filetypes, true)
 
+    if is_default and not has_filetypes then
+      local defaults = origin_config.sources.default
+      if type(defaults) ~= "function" and not contains(defaults, id) then
+        return PUSH(defaults, id)
+      end
+    end
+
     if config then
       config.opts = config.opts or {}
       if is_default and has_filetypes then
@@ -466,19 +473,23 @@ function ADD_BLINK_SOURCE(opt)
       blink.add_source_provider(id, config)
     end
 
-    if opt.keymap then
-      assign(origin_config.keymap, opt.keymap)
-    end
-
-    if is_default or not has_filetypes then
-      local defaults = origin_config.sources.default
-      if not contains(defaults, id) then
-        return PUSH(defaults, id)
+    if has_filetypes then
+      for _, filetype in ipairs(filetypes) do
+        blink.add_filetype_source(filetype, id)
       end
     end
 
-    for _, filetype in ipairs(filetypes) do
-      blink.add_filetype_source(filetype, id)
+    if opt.keymap then
+      local apply = require("blink.cmp.keymap.apply")
+      for key, callback in pairs(opt.keymap) do
+        if type(callback) == "function" then
+          apply.set("i", key, function()
+            return callback(blink)
+          end)
+        else
+          NOTIFY("ADD_BLINK_SOURCE: callback for " .. key .. " should be function")
+        end
+      end
     end
   end)
 end

@@ -104,8 +104,8 @@ local function scope_filter(bufnr)
     return false
   end
 
-  local buffers = require("lualine.components.buffers")
-  if not contains(buffers.bufpos2nr, bufnr) then
+  local bufnrs = require("lualine.components.buffers").bufpos2nr
+  if not bufnrs or not contains(bufnrs, bufnr) then
     return false
   end
 

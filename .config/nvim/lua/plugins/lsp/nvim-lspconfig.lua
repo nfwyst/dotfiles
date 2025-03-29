@@ -59,9 +59,6 @@ local virtual_text = {
     return "● " .. diagnostic.message
   end,
 }
-if IS_LINUX then
-  virtual_text = nil
-end
 
 lsp.set_log_level(levels.OFF)
 local lualine_lsp = {
@@ -91,7 +88,7 @@ return {
       diagnostics = {
         underline = false,
         update_in_insert = false,
-        virtual_text = virtual_text or false,
+        virtual_text = false,
         virtual_lines = false,
         severity_sort = true,
         float = {
@@ -107,12 +104,6 @@ return {
             [severity.HINT] = icons.Hint,
             [severity.INFO] = icons.Info,
           },
-          -- numhl = {
-          --   [severity.WARN] = "WarningMsg",
-          --   [severity.ERROR] = "ErrorMsg",
-          --   [severity.INFO] = "DiagnosticInfo",
-          --   [severity.HINT] = "DiagnosticHint",
-          -- },
         },
       },
       inlay_hints = {
