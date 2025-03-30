@@ -6,6 +6,8 @@ local to_install = {
   "ast-grep",
   "eslint_d",
   "tectonic",
+  "tree-sitter-cli",
+  "delve",
 }
 
 local function get_ensure_installed(packages)
