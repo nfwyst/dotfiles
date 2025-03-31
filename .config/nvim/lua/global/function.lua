@@ -448,10 +448,10 @@ function ADD_BLINK_SOURCE(opt)
     local origin_config = require("blink.cmp.config")
     local has_filetypes = not EMPTY(filetypes, true)
 
-    if is_default and not has_filetypes then
+    if is_default or not has_filetypes then
       local defaults = origin_config.sources.default
       if type(defaults) ~= "function" and not contains(defaults, id) then
-        return PUSH(defaults, id)
+        PUSH(defaults, id)
       end
     end
 
@@ -467,7 +467,7 @@ function ADD_BLINK_SOURCE(opt)
       blink.add_source_provider(id, config)
     end
 
-    if has_filetypes then
+    if not is_default and has_filetypes then
       for _, filetype in ipairs(filetypes) do
         blink.add_filetype_source(filetype, id)
       end
