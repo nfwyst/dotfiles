@@ -45,12 +45,18 @@ return {
       },
       latex = {
         enabled = executable("latex2text"),
+        render_modes = true,
       },
       html = {
-        tag = {
-          think = { icon = "󰛨 ", highlight = "Normal" },
-        },
+        tag = { think = { icon = "󰛨 ", highlight = "Normal" } },
+        render_modes = true,
       },
+      dash = { render_modes = true },
+      bullet = { render_modes = true },
+      quote = { render_modes = true },
+      pipe_table = { render_modes = true },
+      link = { render_modes = true },
+      inline_highlight = { render_modes = true },
       on = {
         render = function(context)
           local bufnr = context.buf

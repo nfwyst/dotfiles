@@ -39,7 +39,7 @@ local function get_previewer()
     api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     local filetype = vim.filetype.match({ filename = filepath })
     OPT("filetype", { buf = bufnr }, filetype)
-    api.nvim_buf_add_highlight(bufnr, -1, "Cursor", row - 1, 0, -1)
+    api.nvim_buf_set_extmark(bufnr, -1, row - 1, 0, { end_col = -1, hl_group = "Cursor" })
 
     defer(function()
       local win = self.win.preview_winid
