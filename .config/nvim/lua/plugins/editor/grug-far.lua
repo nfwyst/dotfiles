@@ -18,9 +18,9 @@ return {
 
     local opt = {
       minSearchChars = 3,
-      maxWorkers = IS_LINUX and 2 or nil,
+      maxWorkers = PERFORMANCE_MODE and 2 or 4,
       reportDuration = false,
-      maxSearchMatches = IS_LINUX and 1000 or nil,
+      maxSearchMatches = PERFORMANCE_MODE and 1000 or 2000,
       normalModeSearch = true,
       engines = {
         ripgrep = {

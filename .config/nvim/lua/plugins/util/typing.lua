@@ -1,8 +1,7 @@
 return {
   "nvzone/typr",
-  cond = not IS_LINUX,
   cmd = { "Typr", "TyprStats" },
-  dependencies = "nvzone/volt",
+  dependencies = { "nvzone/volt" },
   keys = {
     { "<leader>cuk", "", desc = "keyboard practice" },
     { "<leader>cukt", "<cmd>Typr<cr>", desc = "Typr: Typing Practice" },

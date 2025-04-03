@@ -79,6 +79,15 @@ local keymaps = {
         desc = "Clear Quickfix List",
       },
     },
+    {
+      from = "<leader>uH",
+      to = function()
+        IS_SYNTAX_OFF = not IS_SYNTAX_OFF
+      end,
+      opt = {
+        desc = "Toggle Syntax Highlight",
+      },
+    },
     { from = "<leader>Q", to = "<cmd>quit<cr>", opt = {
       desc = "Quit",
     } },

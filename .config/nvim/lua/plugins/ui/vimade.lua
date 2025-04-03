@@ -1,8 +1,6 @@
-VIMADE_ENABLED = not IS_LINUX
-
 return {
   "tadaa/vimade",
-  cond = VIMADE_ENABLED,
+  cond = not PERFORMANCE_MODE,
   event = "VeryLazy",
   opts = {
     fadelevel = 0.7,

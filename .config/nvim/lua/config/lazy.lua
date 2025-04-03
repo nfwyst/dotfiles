@@ -60,10 +60,7 @@ local function get_disabled_plugins()
   }
 end
 
-o.background = IS_LINUX and "light" or "dark"
-if IS_SYNTAX_OFF then
-  cmd.syntax("off")
-end
+o.background = BACKGROUND
 
 require("lazy").setup({
   install = { colorscheme = { "tokyonight", "NeoSolarized" } },
@@ -96,7 +93,7 @@ require("lazy").setup({
   },
   ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
-    enabled = not IS_LINUX,
+    enabled = not PERFORMANCE_MODE,
     notify = false,
   },
   change_detection = { notify = false },

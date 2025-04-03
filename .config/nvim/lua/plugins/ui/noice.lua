@@ -62,10 +62,10 @@ return {
       routes = routes,
       lsp = {
         hover = {
-          silent = IS_LINUX,
+          silent = PERFORMANCE_MODE,
         },
         progress = {
-          enabled = not IS_LINUX,
+          enabled = not PERFORMANCE_MODE,
         },
         signature = {
           auto_open = {

@@ -84,7 +84,7 @@ return {
         actions = actions,
       },
       lsp = {
-        async_or_timeout = IS_LINUX and 30000 or 5000,
+        async_or_timeout = PERFORMANCE_MODE and 30000 or 5000,
       },
     }
     return merge(opts, opt)

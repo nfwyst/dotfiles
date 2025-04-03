@@ -167,6 +167,54 @@ local function set_dashboard_win_buf(win, bufnr)
   set(win, bufnr)
 end
 
+local function sync_lsp_hl()
+  local clients = lsp.get_clients()
+  for _, client in ipairs(clients) do
+    local client_id = client.id
+    local provider = client.server_capabilities.semanticTokensProvider
+    local highlighted = provider.full
+    local bufnrs = keys(client.attached_buffers)
+    provider.full = not IS_SYNTAX_OFF
+    for _, bufnr in ipairs(bufnrs) do
+      if IS_SYNTAX_OFF and highlighted then
+        lsp.semantic_tokens.stop(bufnr, client_id)
+      elseif not IS_SYNTAX_OFF and not highlighted then
+        lsp.semantic_tokens.start(bufnr, client_id)
+      end
+    end
+  end
+end
+
+local function sync_ts_hl()
+  local bufnrs = api.nvim_list_bufs()
+  local dont_support_key = CONSTS.DONT_SUPPORT_TS_HL
+  for _, bufnr in ipairs(bufnrs) do
+    local highlighted = BUF_VAR(bufnr, CONSTS.TS_HIGHLIGHT)
+    local dont_support = BUF_VAR(bufnr, dont_support_key)
+    if not dont_support then
+      if IS_SYNTAX_OFF and highlighted then
+        ts.stop(bufnr)
+      elseif not IS_SYNTAX_OFF and not highlighted then
+        local ok = pcall(ts.start, bufnr)
+        if not ok then
+          BUF_VAR(bufnr, dont_support_key, true)
+        end
+      end
+    end
+  end
+end
+
+local function sync_syntax_off()
+  if g.syntax_on then
+    cmd.syntax("off")
+  end
+
+  sync_ts_hl()
+  if not PERFORMANCE_MODE then
+    sync_lsp_hl()
+  end
+end
+
 return {
   run_filetype_task = run_filetype_task,
   set_dashboard_win_buf = set_dashboard_win_buf,
@@ -174,4 +222,5 @@ return {
   open_dashboard = open_dashboard,
   auto_close_buf = auto_close_buf,
   update_winbar = update_winbar,
+  sync_syntax_off = sync_syntax_off,
 }

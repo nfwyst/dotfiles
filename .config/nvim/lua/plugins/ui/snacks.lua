@@ -156,11 +156,11 @@ return {
             and OPT("buftype", { buf = bufnr }) ~= "terminal"
         end,
       },
-      indent = { scope = { enabled = not IS_LINUX, filter = scope_filter } },
+      indent = { scope = { enabled = not PERFORMANCE_MODE, filter = scope_filter } },
       bigfile = { size = 524288 }, -- 0.5 * 1024 * 1024
       statuscolumn = {
-        left = IS_LINUX and { "sign" } or { "mark", "sign" },
-        refresh = IS_LINUX and 200 or 100,
+        left = PERFORMANCE_MODE and { "sign" } or { "mark", "sign" },
+        refresh = PERFORMANCE_MODE and 100 or 50,
       },
       dashboard = {
         preset = { header = header },
@@ -182,9 +182,9 @@ return {
           on_zen(false, statuscolumn)
         end,
       },
-      dim = { animate = { enabled = not IS_LINUX } },
+      dim = { animate = { enabled = not PERFORMANCE_MODE } },
       image = { enabled = get_image_enabled() },
-      words = { debounce = IS_LINUX and 500 or nil },
+      words = { debounce = PERFORMANCE_MODE and 300 or 200 },
     }
 
     return merge(opts, opt)

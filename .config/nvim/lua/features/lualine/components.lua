@@ -21,7 +21,7 @@ local group = GROUP("codecompanion_hooks", { clear = true })
 function codecompanion:init(options)
   codecompanion.super.init(self, options)
 
-  AUCMD({ "User" }, {
+  AUCMD("User", {
     pattern = "CodeCompanionRequest*",
     group = group,
     callback = function(event)

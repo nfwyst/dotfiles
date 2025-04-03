@@ -1,11 +1,11 @@
 local toggle_buffer_pin = require("features.lualine.toggle-buffer-pin")
 local formatters = require("features.lualine.formatters")
-local refresh_time = 500
+local refresh_time = 100
 local extensions
 
-if IS_LINUX then
+if PERFORMANCE_MODE then
   extensions = {}
-  refresh_time = 2000
+  refresh_time = 300
 end
 
 local buffers_title_map = formatters.buffers_title_map
@@ -66,7 +66,7 @@ return {
     end, sections.lualine_c)
 
     local lualine_x = sections.lualine_x
-    if IS_LINUX then
+    if PERFORMANCE_MODE then
       lualine_x = filter(function(item)
         return item[1] ~= require("lazy.status").updates
       end, lualine_x)
@@ -95,7 +95,7 @@ return {
         globalstatus = true,
         refresh = {
           statusline = refresh_time,
-          tabline = refresh_time / 2,
+          tabline = refresh_time,
         },
       },
       sections = {

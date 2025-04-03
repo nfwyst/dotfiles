@@ -1,5 +1,5 @@
 local trigger_text = ";"
-local emoji_enabled = not IS_LINUX
+local emoji_enabled = not PERFORMANCE_MODE
 
 local function should_show_snip(ctx)
   if ctx.mode == "cmdline" then
@@ -153,8 +153,8 @@ local function add_dictionary()
       should_show_items = shouldnt_show_snippets_emoji,
       module = "blink-cmp-dictionary",
       name = "Dict",
-      max_items = IS_LINUX and 1 or 2,
-      min_keyword_length = IS_LINUX and 4 or 3,
+      max_items = PERFORMANCE_MODE and 1 or 2,
+      min_keyword_length = PERFORMANCE_MODE and 4 or 3,
       score_offset = -10,
       opts = {
         dictionary_directories = { HOME_PATH .. "/.config/dictionaries" },
@@ -280,7 +280,7 @@ return {
           list = { selection = { preselect = false } },
           menu = {
             auto_show = function()
-              if not IS_LINUX then
+              if not PERFORMANCE_MODE then
                 return true
               end
 

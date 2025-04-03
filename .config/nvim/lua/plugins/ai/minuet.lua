@@ -49,7 +49,7 @@ local provider_names = {
 }
 local current_llm_name = "hyperbolic"
 local event
-if not IS_LINUX then
+if not PERFORMANCE_MODE then
   event = "InsertEnter"
 end
 
@@ -126,7 +126,7 @@ return {
       debounce = 1000,
       provider = "openai_fim_compatible",
       n_completions = 1,
-      context_window = IS_LINUX and 4096 or 8192,
+      context_window = PERFORMANCE_MODE and 4096 or 8192,
       cmp = { enable_auto_complete = false },
       blink = { enable_auto_complete = false },
       proxy = LLM.proxy,

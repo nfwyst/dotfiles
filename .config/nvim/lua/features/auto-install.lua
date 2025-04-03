@@ -2,21 +2,21 @@ local ensure_installed = {
   latex2text = {
     installer = "uv",
     params = {
-      normal = "pip install pylatexenc",
+      linux = "pip install pylatexenc",
       mac = "pip install pylatexenc --system --break-system-packages",
     },
   },
   grpcurl = {
-    installer = { normal = "go", mac = "brew" },
+    installer = { linux = "go", mac = "brew" },
     params = {
-      normal = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
+      linux = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
       mac = "install grpcurl",
     },
   },
   bun = {
-    installer = { normal = "curl", mac = "brew" },
+    installer = { linux = "curl", mac = "brew" },
     params = {
-      normal = "-fsSL https://bun.sh/install | bash",
+      linux = "-fsSL https://bun.sh/install | bash",
       mac = "install oven-sh/bun/bun",
     },
   },
@@ -25,7 +25,7 @@ local ensure_installed = {
     params = "install -g @mermaid-js/mermaid-cli",
   },
   websocat = {
-    installer = { normal = "cargo", mac = "brew" },
+    installer = { linux = "cargo", mac = "brew" },
     params = "install websocat",
   },
 }
@@ -33,7 +33,7 @@ local ensure_installed = {
 for cmd, opt in pairs(ensure_installed) do
   local installed = executable(cmd)
   local installer = opt.installer
-  local type_key = IS_LINUX and "normal" or "mac"
+  local type_key = IS_LINUX and "linux" or "mac"
   if type(installer) == "table" then
     installer = installer[type_key]
   end

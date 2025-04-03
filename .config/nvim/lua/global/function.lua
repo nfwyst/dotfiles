@@ -522,12 +522,7 @@ local function get_hl(hl)
     return new_hl
   end
 
-  local syntax_off = hl.syntax_off
-  if IS_SYNTAX_OFF and syntax_off then
-    return syntax_off
-  end
-
-  if not hl.light and not hl.dark and not syntax_off then
+  if not hl.light and not hl.dark then
     return hl
   end
 end
@@ -546,7 +541,7 @@ function UPDATE_HLS(new_hls)
 end
 
 function SET_SCOPE_DIM()
-  if IS_LINUX or not Snacks then
+  if PERFORMANCE_MODE or not Snacks then
     return
   end
 

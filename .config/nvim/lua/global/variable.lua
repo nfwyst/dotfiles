@@ -53,6 +53,9 @@ GROUP = function(name, opts)
   return api.nvim_create_augroup(GROUP_PREFIX .. name, opts)
 end
 IS_LINUX = jit.os == "Linux"
+PERFORMANCE_MODE = IS_LINUX
+BACKGROUND = IS_LINUX and "light" or "dark"
+MAX_OPEND_FILES = IS_LINUX and 5 or 10
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 ESLINT_BIN_NAME = "eslint_d"
@@ -66,7 +69,6 @@ FILETYPE_TASK_MAP = {}
 TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" }
-MAX_OPEND_FILES = IS_LINUX and 3 or 7
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
 BINARY_SCHEMES = {}
@@ -158,12 +160,13 @@ CONSTS = {
   VIEW_ACTIVATED = "VIEW_ACTIVATED",
   PREV_ROW_NUMBER = "PREV_ROW_NUMBER",
   EMMET_INSTALLED = "EMMET_INSTALLED",
+  TS_HIGHLIGHT = "ts_highlight",
+  DONT_SUPPORT_TS_HL = "DONT_SUPPORT_TS_HL",
 }
 LAZYVIM_KEYMAP_INITED = false
 TOGGLE_DIAGNOSTIC_MANULLY = false
 KEYMAP_PRE_HOOKS = {}
-
-if IS_LINUX then
+if PERFORMANCE_MODE then
   TOGGLE_DIAGNOSTIC_MANULLY = true
   diagnostic.enable(false)
 end
@@ -201,7 +204,7 @@ PROMPT = [[
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
 
-IS_SYNTAX_OFF = IS_LINUX
+IS_SYNTAX_OFF = false
 FE_FILETYPES = {
   "javascript",
   "typescript",
@@ -227,35 +230,10 @@ ESLINT_CONFIGS = {
 local fg0 = "#839496"
 local fg1 = "#657b83"
 local fg2 = "#586e75"
-local no_syntax = { syntax_off = { link = "Normal" } }
 HIGHLIGHTS = {
   Conceal = { light = { fg = "#c7b375", bold = true } },
-  Normal = { dark = { fg = fg0 }, syntax_off = { bg = "NONE" } },
-  Function = no_syntax,
-  Type = no_syntax,
-  TSVariableBuiltin = no_syntax,
-  TSProperty = no_syntax,
-  TSConstructor = no_syntax,
-  TSNamespace = no_syntax,
-  Keyword = no_syntax,
-  String = no_syntax,
-  Special = no_syntax,
-  Operator = no_syntax,
-  Boolean = no_syntax,
-  Number = no_syntax,
-  Conditional = no_syntax,
-  SpecialChar = no_syntax,
-  Constant = no_syntax,
-  Label = no_syntax,
-  Identifier = no_syntax,
-  Include = no_syntax,
-  TSFuncBuiltin = no_syntax,
-  ["@_jsx_element"] = no_syntax,
-  ["@_jsx_attribute"] = no_syntax,
-  ["@lsp"] = no_syntax,
-  ["@lsp.type.interface"] = no_syntax,
-  ["@variable.builtin"] = no_syntax,
-  ["@variable"] = { dark = { fg = fg0 }, syntax_off = no_syntax.syntax_off },
+  Normal = { dark = { fg = fg0 } },
+  ["@variable"] = { dark = { fg = fg0 } },
   Comment = { dark = { fg = fg2 } },
   LineNrAbove = { dark = { fg = fg1 } },
   LineNrBelow = { dark = { fg = fg1 } },

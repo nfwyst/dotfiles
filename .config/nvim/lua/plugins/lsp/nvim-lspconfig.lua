@@ -111,6 +111,12 @@ return {
       },
     }
 
+    if PERFORMANCE_MODE then
+      LazyVim.lsp.on_attach(function(client)
+        client.server_capabilities.semanticTokensProvider.full = false
+      end)
+    end
+
     return merge(opts, opt)
   end,
 }

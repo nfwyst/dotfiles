@@ -54,8 +54,8 @@ return {
     ADD_CURSOR_MOVE_CALLBACK("tscontext", get_on_cursor_move())
 
     local opt = {
-      max_lines = IS_LINUX and 3 or 6,
-      zindex = 30,
+      max_lines = PERFORMANCE_MODE and 3 or 10,
+      zindex = 25,
       min_window_height = 10,
       on_attach = function(bufnr)
         return not IS_BIG_FILE(bufnr)

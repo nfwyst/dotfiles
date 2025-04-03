@@ -67,8 +67,10 @@ local function buffers(name, context)
 
   if win_valid then
     local is_dashboard = filetype == "snacks_dashboard"
-
     jobs.run_filetype_task(win, bufnr, filetype)
+    if context.current then
+      jobs.sync_syntax_off()
+    end
 
     if is_dashboard then
       jobs.set_dashboard_win_buf(win, bufnr)
