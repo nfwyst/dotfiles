@@ -71,7 +71,6 @@ FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" }
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
-BINARY_SCHEMES = {}
 
 local function get_js_pkg_manager()
   local pkgs = { "bun", "pnpm", "yarn" }
@@ -160,8 +159,8 @@ CONSTS = {
   VIEW_ACTIVATED = "VIEW_ACTIVATED",
   PREV_ROW_NUMBER = "PREV_ROW_NUMBER",
   EMMET_INSTALLED = "EMMET_INSTALLED",
-  TS_HIGHLIGHT = "ts_highlight",
-  DONT_SUPPORT_TS_HL = "DONT_SUPPORT_TS_HL",
+  IS_TS_HL_ENABLED = "ts_highlight",
+  IS_TS_HL_NOT_SURPPORT = "IS_TS_HL_NOT_SURPPORT",
 }
 LAZYVIM_KEYMAP_INITED = false
 TOGGLE_DIAGNOSTIC_MANULLY = false

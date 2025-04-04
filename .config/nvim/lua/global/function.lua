@@ -545,8 +545,7 @@ function SET_SCOPE_DIM()
     return
   end
 
-  local enable = not contains(BINARY_SCHEMES, g.colors_name)
-  if enable then
+  if not IS_SYNTAX_OFF then
     return Snacks.dim.enable()
   end
 

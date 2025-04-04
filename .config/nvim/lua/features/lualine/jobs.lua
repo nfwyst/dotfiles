@@ -171,7 +171,7 @@ local function sync_lsp_hl()
   local clients = lsp.get_clients()
   for _, client in ipairs(clients) do
     local client_id = client.id
-    local provider = client.server_capabilities.semanticTokensProvider
+    local provider = client.server_capabilities.semanticTokensProvider or {}
     local highlighted = provider.full
     local bufnrs = keys(client.attached_buffers)
     provider.full = not IS_SYNTAX_OFF
@@ -187,17 +187,16 @@ end
 
 local function sync_ts_hl()
   local bufnrs = api.nvim_list_bufs()
-  local dont_support_key = CONSTS.DONT_SUPPORT_TS_HL
+  local not_support_key = CONSTS.IS_TS_HL_NOT_SURPPORT
   for _, bufnr in ipairs(bufnrs) do
-    local highlighted = BUF_VAR(bufnr, CONSTS.TS_HIGHLIGHT)
-    local dont_support = BUF_VAR(bufnr, dont_support_key)
-    if not dont_support then
+    local highlighted = BUF_VAR(bufnr, CONSTS.IS_TS_HL_ENABLED)
+    if not BUF_VAR(bufnr, not_support_key) then
       if IS_SYNTAX_OFF and highlighted then
         ts.stop(bufnr)
       elseif not IS_SYNTAX_OFF and not highlighted then
         local ok = pcall(ts.start, bufnr)
         if not ok then
-          BUF_VAR(bufnr, dont_support_key, true)
+          BUF_VAR(bufnr, not_support_key, true)
         end
       end
     end
