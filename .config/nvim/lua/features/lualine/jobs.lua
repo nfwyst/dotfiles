@@ -150,7 +150,7 @@ local function auto_close_buf(bufnr, context, bufnrs)
     local not_current = buf ~= bufnr
     local no_change = not OPT("modified", { buf = buf })
     local no_reference = not is_buf_referenced(buf)
-    local no_pin = not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED)
+    local no_pin = not BUF_VAR(bufnr, CONSTS.BUF_PINNED)
 
     if not_current and no_change and no_reference and no_pin then
       return DEL_BUF(buf)
@@ -189,9 +189,9 @@ end
 
 local function sync_ts_hl()
   local bufnrs = api.nvim_list_bufs()
-  local var_key = CONSTS.IS_TS_HL_NOT_SURPPORT
+  local var_key = CONSTS.TS_HL_NOT_SURPPORT
   for _, bufnr in ipairs(bufnrs) do
-    local highlighted = BUF_VAR(bufnr, CONSTS.IS_TS_HL_ENABLED)
+    local highlighted = BUF_VAR(bufnr, CONSTS.TS_HL_ENABLED)
     local is_bufloaded = api.nvim_buf_is_loaded(bufnr)
     if is_bufloaded and not BUF_VAR(bufnr, var_key) then
       if IS_SYNTAX_OFF and highlighted then

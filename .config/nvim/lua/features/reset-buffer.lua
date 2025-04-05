@@ -42,7 +42,7 @@ local function sync_tab(bufnr)
 end
 
 local function disable_diagnostic_on_open(bufnr)
-  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANULLY then
+  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANUL then
     return
   end
 
@@ -58,7 +58,7 @@ local function dim_buf(bufnr)
     return
   end
 
-  local var_key = CONSTS.IS_BUF_DIMED
+  local var_key = CONSTS.BUF_DIMED
   if BUF_VAR(bufnr, var_key) then
     return
   end

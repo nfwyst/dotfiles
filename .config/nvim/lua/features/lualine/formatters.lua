@@ -61,7 +61,7 @@ local function buffers(name, context)
     name = " PR:" .. name
   end
 
-  if name and BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+  if name and BUF_VAR(bufnr, CONSTS.BUF_PINNED) then
     name = name .. " "
   end
 
@@ -82,7 +82,7 @@ local function buffers(name, context)
         jobs.update_winbar(win, bufpath, bufnrs)
       end
     elseif not name and IS_BUF_LISTED(bufnr) then
-      if not BUF_VAR(bufnr, CONSTS.IS_NEW_FILE) then
+      if not BUF_VAR(bufnr, CONSTS.NEW_FILE) then
         name = jobs.open_dashboard(win, bufnr)
       end
     end

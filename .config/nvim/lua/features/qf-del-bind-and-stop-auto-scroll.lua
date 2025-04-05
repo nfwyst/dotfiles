@@ -49,7 +49,7 @@ local function fix_qf_position()
 
   PRESS_KEYS("<cr>", "n")
 
-  local is_resize_manully = WIN_VAR(win, CONSTS.RESIZE_MANULLY)
+  local is_resize_manully = WIN_VAR(win, CONSTS.RESIZE_MANUL)
   local standard_height = FILETYPE_SIZE_MAP.qf.height
   local is_standard_height = standard_height == height
   if is_resize_manully or is_standard_height then

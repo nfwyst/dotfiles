@@ -2,7 +2,7 @@ local eslint = { "eslint_d" }
 local lint_events = { "BufWritePost" }
 
 local function enable_diagnostic_on_save(event)
-  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANULLY then
+  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANUL then
     return
   end
 

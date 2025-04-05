@@ -521,7 +521,7 @@ function NewFile()
 
   local bufnr = CUR_BUF()
   if bufnr ~= buf then
-    BUF_VAR(bufnr, CONSTS.IS_NEW_FILE, true)
+    BUF_VAR(bufnr, CONSTS.NEW_FILE, true)
   end
 end
 

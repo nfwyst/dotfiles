@@ -78,7 +78,7 @@ end
 local function resize_special_win(event)
   local bufnr = event.buf
   local win = fn.bufwinid(bufnr)
-  if WIN_VAR(win, CONSTS.RESIZE_MANULLY) then
+  if WIN_VAR(win, CONSTS.RESIZE_MANUL) then
     return
   end
 

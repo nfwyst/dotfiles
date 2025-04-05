@@ -17,7 +17,7 @@ end
 local function get_resizer(is_increase, is_vertical)
   return function()
     local win = CUR_WIN()
-    local key = CONSTS.RESIZE_MANULLY
+    local key = CONSTS.RESIZE_MANUL
     if not WIN_VAR(win, key) then
       WIN_VAR(win, key, true)
     end

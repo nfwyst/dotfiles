@@ -1,5 +1,5 @@
 local function toggle_buf_pin(bufnr, val)
-  local key = CONSTS.IS_BUF_PINNED
+  local key = CONSTS.BUF_PINNED
   if val then
     return BUF_VAR(bufnr, key, val)
   end
@@ -33,7 +33,7 @@ local keys = {
     "<leader>bmc",
     function()
       for _, bufnr in ipairs(bufnrs()) do
-        if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+        if not BUF_VAR(bufnr, CONSTS.BUF_PINNED) then
           DEL_BUF(bufnr)
         end
       end
@@ -44,7 +44,7 @@ local keys = {
     "<leader>bmp",
     function()
       for _, bufnr in ipairs(bufnrs()) do
-        if not BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+        if not BUF_VAR(bufnr, CONSTS.BUF_PINNED) then
           toggle_buf_pin(bufnr, true)
         end
       end
@@ -55,7 +55,7 @@ local keys = {
     "<leader>bmu",
     function()
       for _, bufnr in ipairs(bufnrs()) do
-        if BUF_VAR(bufnr, CONSTS.IS_BUF_PINNED) then
+        if BUF_VAR(bufnr, CONSTS.BUF_PINNED) then
           toggle_buf_pin(bufnr, false)
         end
       end
