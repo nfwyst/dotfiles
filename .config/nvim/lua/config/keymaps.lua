@@ -83,6 +83,7 @@ local keymaps = {
       from = "<leader>uH",
       to = function()
         IS_SYNTAX_OFF = not IS_SYNTAX_OFF
+        SET_SCOPE_DIM()
       end,
       opt = {
         desc = "Toggle Syntax Highlight",

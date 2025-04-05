@@ -16,24 +16,24 @@ end
 local mode = { "n", "v" }
 
 local function hide_response_columns(_, win)
-  if WIN_VAR(win, TASK_KEY) then
+  if WIN_VAR(win, FILETYPE_TASK_KEY) then
     return
   end
   defer(function()
     SET_OPTS(COLUMN_OPTS(false), { win = win })
-    WIN_VAR(win, TASK_KEY, true)
+    WIN_VAR(win, FILETYPE_TASK_KEY, true)
   end, 30)
 end
 
 local function hide_input_columns(_, win)
-  if WIN_VAR(win, TASK_KEY) then
+  if WIN_VAR(win, FILETYPE_TASK_KEY) then
     return
   end
   defer(function()
     local opts = COLUMN_OPTS(false)
     opts.signcolumn = "yes"
     SET_OPTS(opts, { win = win })
-    WIN_VAR(win, TASK_KEY, true)
+    WIN_VAR(win, FILETYPE_TASK_KEY, true)
   end, 30)
 end
 

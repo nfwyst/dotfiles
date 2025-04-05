@@ -53,19 +53,20 @@ local function disable_diagnostic_on_open(bufnr)
   end
 end
 
-local function dim_win(bufnr)
-  local var_key = CONSTS.WIN_DIMED
-  local is_actived = BUF_VAR(bufnr, var_key)
-  if is_actived then
+local function dim_buf(bufnr)
+  if not package.loaded["vimade"] then
     return
   end
+
+  local var_key = CONSTS.IS_BUF_DIMED
+  if BUF_VAR(bufnr, var_key) then
+    return
+  end
+
   local win = fn.bufwinid(bufnr)
   RUN_IN_WIN(win, function()
     pcall(function()
-      if VIMADE_ENABLED then
-        cmd.VimadeFadeActive()
-      end
-
+      cmd.VimadeFadeActive()
       BUF_VAR(bufnr, var_key, true)
     end)
   end)
@@ -85,7 +86,7 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
     local bufnr = event.buf
     sync_tab(bufnr)
     disable_diagnostic_on_open(bufnr)
-    dim_win(bufnr)
+    dim_buf(bufnr)
     show_indent_guide(event)
   end,
 })

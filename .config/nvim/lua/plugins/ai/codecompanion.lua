@@ -132,12 +132,12 @@ return {
     -- hide left columns for code companion sidebar
     if not FILETYPE_TASK_MAP.codecompanion then
       FILETYPE_TASK_MAP.codecompanion = function(_, win)
-        if WIN_VAR(win, TASK_KEY) then
+        if WIN_VAR(win, FILETYPE_TASK_KEY) then
           return
         end
         defer(function()
           SET_OPTS(COLUMN_OPTS(false), { win = win })
-          WIN_VAR(win, TASK_KEY, true)
+          WIN_VAR(win, FILETYPE_TASK_KEY, true)
         end, 10)
       end
     end

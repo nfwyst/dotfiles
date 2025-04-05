@@ -7,9 +7,9 @@ local function with_parent_when_duplicated(name, bufpath, bufnr)
     buffers_title_map[name] = { bufnr }
     return name
   end
-  if not contains(showed_map, bufnr) then
-    PUSH(showed_map, bufnr)
-  end
+
+  PUSH_WHEN_NOT_EXIST(showed_map, bufnr)
+
   if #showed_map <= 1 then
     return name
   end

@@ -8,10 +8,13 @@ return {
       return opts
     end
 
-    PUSH(opts.library, {
-      path = "wezterm-types",
+    local path = "wezterm-types"
+    PUSH_WHEN_NOT_EXIST(opts.library, {
+      path = path,
       mods = { "wezterm" },
-    })
+    }, function(v)
+      return v.path == path
+    end)
 
     return opts
   end,

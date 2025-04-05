@@ -6,17 +6,17 @@ return {
       NeoTreeMessage = { link = "NeoTreeIndentMarker" },
     })
 
-    PUSH(FT_HIDE_CURSOR, "neo-tree")
+    PUSH_WHEN_NOT_EXIST(FT_HIDE_CURSOR, "neo-tree")
 
     -- hide left columns for file tree
     if not FILETYPE_TASK_MAP["neo-tree"] then
       FILETYPE_TASK_MAP["neo-tree"] = function(_, win)
-        if WIN_VAR(win, TASK_KEY) then
+        if WIN_VAR(win, FILETYPE_TASK_KEY) then
           return
         end
         defer(function()
           SET_OPTS(COLUMN_OPTS(false), { win = win })
-          WIN_VAR(win, TASK_KEY, true)
+          WIN_VAR(win, FILETYPE_TASK_KEY, true)
         end, 10)
       end
     end

@@ -124,21 +124,8 @@ return {
   opts = function(_, opts)
     -- wait for setup finish
     defer(init, 0)
-
-    PUSH(FT_HIDE_CURSOR, "snacks_dashboard")
-    if not FILETYPE_TASK_MAP.snacks_terminal then
-      FILETYPE_TASK_MAP.snacks_terminal = function(bufnr)
-        if BUF_VAR(bufnr, TASK_KEY) then
-          return
-        end
-
-        if VIMADE_ENABLED then
-          cmd.VimadeBufDisable()
-        end
-
-        BUF_VAR(bufnr, TASK_KEY, true)
-      end
-    end
+    PUSH_WHEN_NOT_EXIST(FT_DISABLE_DIM, "snacks_terminal")
+    PUSH_WHEN_NOT_EXIST(FT_HIDE_CURSOR, "snacks_dashboard")
 
     UPDATE_HLS(hls)
     SET_KEYMAP_PRE_HOOK({ "n" }, { "<leader>ud" }, function()
@@ -182,7 +169,7 @@ return {
           on_zen(false, statuscolumn)
         end,
       },
-      dim = { animate = { enabled = not PERFORMANCE_MODE } },
+      dim = { enabled = not IS_SYNTAX_OFF, animate = { enabled = not PERFORMANCE_MODE } },
       image = { enabled = get_image_enabled() },
       words = { debounce = PERFORMANCE_MODE and 300 or 200 },
     }

@@ -314,6 +314,19 @@ function PUSH(dest, from)
   dest[#dest + 1] = from
 end
 
+function PUSH_WHEN_NOT_EXIST(dest, from, predicate)
+  local is_exist = false
+  if type(predicate) == "function" then
+    is_exist = contains(dest, predicate, { predicate = true })
+  else
+    is_exist = contains(dest, from)
+  end
+
+  if not is_exist then
+    PUSH(dest, from)
+  end
+end
+
 function COLUMN_OPTS(enable, statuscolumn)
   local signcolumn = enable and "yes" or "no"
   return {
@@ -450,8 +463,8 @@ function ADD_BLINK_SOURCE(opt)
 
     if is_default or not has_filetypes then
       local defaults = origin_config.sources.default
-      if type(defaults) ~= "function" and not contains(defaults, id) then
-        PUSH(defaults, id)
+      if type(defaults) ~= "function" then
+        PUSH_WHEN_NOT_EXIST(defaults, id)
       end
     end
 
@@ -541,15 +554,15 @@ function UPDATE_HLS(new_hls)
 end
 
 function SET_SCOPE_DIM()
-  if PERFORMANCE_MODE or not Snacks then
+  if not Snacks then
     return
   end
 
-  if not IS_SYNTAX_OFF then
-    return Snacks.dim.enable()
+  if IS_SYNTAX_OFF then
+    return Snacks.dim.disable()
   end
 
-  Snacks.dim.disable()
+  Snacks.dim.enable()
 end
 
 function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)

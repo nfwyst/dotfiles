@@ -73,7 +73,7 @@ end
 
 local close_cmd
 FILETYPE_TASK_MAP.qf = function(bufnr, win)
-  if BUF_VAR(bufnr, TASK_KEY) then
+  if BUF_VAR(bufnr, FILETYPE_TASK_KEY) then
     return
   end
 
@@ -111,5 +111,5 @@ FILETYPE_TASK_MAP.qf = function(bufnr, win)
     end,
   })
 
-  BUF_VAR(bufnr, TASK_KEY, true)
+  BUF_VAR(bufnr, FILETYPE_TASK_KEY, true)
 end

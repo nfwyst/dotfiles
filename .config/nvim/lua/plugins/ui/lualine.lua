@@ -43,13 +43,16 @@ return {
       clean_buffers_title_map(bufnr)
     end)
 
-    PUSH(sections.lualine_a, {
-      "tabs",
+    local tabs_name = "tabs"
+    PUSH_WHEN_NOT_EXIST(sections.lualine_a, {
+      tabs_name,
       show_modified_status = false,
       cond = function()
         return fn.tabpagenr("$") > 1
       end,
-    })
+    }, function(v)
+      return v[1] == tabs_name
+    end)
 
     local lualine_c = filter(function(item)
       local name = item[1]

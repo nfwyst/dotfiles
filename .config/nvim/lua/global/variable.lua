@@ -56,6 +56,12 @@ IS_LINUX = jit.os == "Linux"
 PERFORMANCE_MODE = IS_LINUX
 BACKGROUND = IS_LINUX and "light" or "dark"
 MAX_OPEND_FILES = IS_LINUX and 5 or 10
+TOGGLE_DIAGNOSTIC_MANULLY = false
+if PERFORMANCE_MODE then
+  TOGGLE_DIAGNOSTIC_MANULLY = true
+  diagnostic.enable(false)
+end
+IS_SYNTAX_OFF = false
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 ESLINT_BIN_NAME = "eslint_d"
@@ -66,7 +72,7 @@ IS_IN_WEZTERM = env.TERMINAL == "wezterm"
 INDENT_HL = "#666666"
 IS_LAUNCH_FROM_GIT_REPO = false
 FILETYPE_TASK_MAP = {}
-TASK_KEY = "_TASK_DONE_"
+FILETYPE_TASK_KEY = "_TASK_DONE_"
 FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" }
 AUTO_CLOSE_BUF_ENABLED = true
@@ -152,7 +158,7 @@ FILETYPE_SIZE_MAP = {
   _sub_fts = { "Avante" },
 }
 CONSTS = {
-  WIN_DIMED = "WIN_DIMED",
+  IS_BUF_DIMED = "IS_BUF_DIMED",
   IS_BUF_PINNED = "IS_BUF_PINNED",
   RESIZE_MANULLY = "RESIZE_MANULLY",
   IS_NEW_FILE = "IS_NEW_FILE",
@@ -163,12 +169,8 @@ CONSTS = {
   IS_TS_HL_NOT_SURPPORT = "IS_TS_HL_NOT_SURPPORT",
 }
 LAZYVIM_KEYMAP_INITED = false
-TOGGLE_DIAGNOSTIC_MANULLY = false
 KEYMAP_PRE_HOOKS = {}
-if PERFORMANCE_MODE then
-  TOGGLE_DIAGNOSTIC_MANULLY = true
-  diagnostic.enable(false)
-end
+FT_DISABLE_DIM = {}
 
 PURE_PROMPT = [[你是一位无所不能的助手]]
 PROMPT = [[
@@ -203,7 +205,6 @@ PROMPT = [[
 始终努力在你的回复中做到清晰、耐心和鼓励。
 ]]
 
-IS_SYNTAX_OFF = false
 FE_FILETYPES = {
   "javascript",
   "typescript",
