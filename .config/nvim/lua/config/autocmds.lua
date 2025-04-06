@@ -111,7 +111,6 @@ AUCMD("ColorScheme", {
   group = GROUP("scheme_changed", { clear = true }),
   callback = function()
     UPDATE_HLS()
-    SET_SCOPE_DIM()
   end,
 })
 

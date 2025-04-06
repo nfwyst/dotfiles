@@ -553,18 +553,6 @@ function UPDATE_HLS(new_hls)
   SET_HLS(hls)
 end
 
-function SET_SCOPE_DIM()
-  if not Snacks then
-    return
-  end
-
-  if IS_SYNTAX_OFF then
-    return Snacks.dim.disable()
-  end
-
-  Snacks.dim.enable()
-end
-
 function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)
   for _, mode in ipairs(modes) do
     for _, lhs in ipairs(lhses) do

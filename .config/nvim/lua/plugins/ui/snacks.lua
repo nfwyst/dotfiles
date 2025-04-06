@@ -79,7 +79,6 @@ local function init()
   local dashboard = Snacks.dashboard.Dashboard
   dashboard.on("UpdatePost", scroll_to_top)
   dashboard.on("Opened", scroll_to_top)
-  SET_SCOPE_DIM()
 end
 
 local function get_image_enabled()

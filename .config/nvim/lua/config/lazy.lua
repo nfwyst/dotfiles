@@ -60,15 +60,13 @@ local function get_disabled_plugins()
   }
 end
 
-o.background = BACKGROUND
-
 require("lazy").setup({
   install = { colorscheme = { "tokyonight", "NeoSolarized" } },
   spec = {
     {
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
-      opts = { colorscheme = o.background == "dark" and "tokyonight" or "NeoSolarized" },
+      opts = { colorscheme = o.background == "dark" and "molokai" or "NeoSolarized" },
     },
     { import = "plugins" },
     { import = "plugins.colorscheme" },
