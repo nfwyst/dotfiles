@@ -54,7 +54,7 @@ GROUP = function(name, opts)
 end
 IS_LINUX = jit.os == "Linux"
 PERFORMANCE_MODE = IS_LINUX
-o.background = IS_LINUX and "light" or "dark"
+o.background = "dark"
 MAX_OPEND_FILES = IS_LINUX and 5 or 10
 TOGGLE_DIAGNOSTIC_MANUL = false
 if PERFORMANCE_MODE then
