@@ -206,8 +206,14 @@ local function sync_ts_hl()
   end
 end
 
-local function sync_syntax_off()
-  if g.syntax_on then
+local function sync_syntax_off(bufnr)
+  local filetype = OPT("filetype", { buf = bufnr })
+  local is_on = g.syntax_on
+  if filetype == "ghostty" then
+    if not is_on then
+      cmd.syntax("on")
+    end
+  elseif is_on then
     cmd.syntax("off")
   end
 
