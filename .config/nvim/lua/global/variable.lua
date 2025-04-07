@@ -62,6 +62,7 @@ if PERFORMANCE_MODE then
   diagnostic.enable(false)
 end
 IS_SYNTAX_OFF = false
+IS_DIM_ENABLED = not IS_SYNTAX_OFF and not PERFORMANCE_MODE
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 ESLINT_BIN_NAME = "eslint_d"

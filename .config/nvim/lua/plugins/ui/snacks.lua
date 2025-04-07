@@ -168,7 +168,7 @@ return {
           on_zen(false, statuscolumn)
         end,
       },
-      dim = { enabled = not IS_SYNTAX_OFF, animate = { enabled = not PERFORMANCE_MODE } },
+      dim = { enabled = IS_DIM_ENABLED, animate = { enabled = not PERFORMANCE_MODE } },
       image = { enabled = get_image_enabled() },
       words = { debounce = PERFORMANCE_MODE and 300 or 200 },
     }
