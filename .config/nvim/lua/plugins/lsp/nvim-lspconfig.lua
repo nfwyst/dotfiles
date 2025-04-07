@@ -12,13 +12,13 @@ local lsp_servers = {
   "nushell",
   "gopls",
   "pylyzer",
+  "ts_ls",
 }
 local disabled_lsp_servers = {
   "vtsls",
   "pyright",
   "basedpyright",
   "tsserver",
-  "ts_ls",
 }
 
 local function override(servers)
