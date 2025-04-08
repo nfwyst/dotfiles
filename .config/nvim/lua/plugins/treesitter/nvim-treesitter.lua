@@ -51,6 +51,9 @@ local language_map = {
   zsh = "bash",
   checkhealth = "markdown",
 }
+for from, to in pairs(language_map) do
+  language.register(to, from)
+end
 
 return {
   "nvim-treesitter/nvim-treesitter",
@@ -61,9 +64,6 @@ return {
   opts = function(_, opts)
     -- wait for setup finish
     defer(set_keymaps, 0)
-    for from, to in pairs(language_map) do
-      language.register(to, from)
-    end
 
     local opt = {
       highlight = { enable = not IS_SYNTAX_OFF },

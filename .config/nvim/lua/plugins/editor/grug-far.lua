@@ -1,6 +1,7 @@
 return {
   "MagicDuck/grug-far.nvim",
   opts = function(_, opts)
+    language.register("markdown", "grug-far-help")
     -- only show fold signs in searched view
     if not FILETYPE_TASK_MAP["grug-far"] then
       FILETYPE_TASK_MAP["grug-far"] = function(_, win)
@@ -29,7 +30,6 @@ return {
       },
     }
 
-    language.register("markdown", "grug-far-help")
     return merge(opts, opt)
   end,
 }

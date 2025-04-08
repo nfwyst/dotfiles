@@ -3,6 +3,7 @@ return {
   dependencies = { "Kaiser-Yang/blink-cmp-git" },
   cond = IS_LAUNCH_FROM_GIT_REPO,
   opts = function(_, opts)
+    language.register("markdown", "octo")
     ADD_BLINK_SOURCE({
       id = "git",
       filetypes = { "octo", "gitcommit", "markdown" },
@@ -12,7 +13,6 @@ return {
       },
     })
 
-    language.register("markdown", "octo")
     assign(opts, {
       picker = "fzf-lua",
     })

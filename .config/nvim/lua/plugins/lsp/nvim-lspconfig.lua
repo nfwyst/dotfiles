@@ -113,7 +113,10 @@ return {
 
     if PERFORMANCE_MODE then
       LazyVim.lsp.on_attach(function(client)
-        client.server_capabilities.semanticTokensProvider.full = false
+        local provider = client.server_capabilities.semanticTokensProvider
+        if provider then
+          provider.full = false
+        end
       end)
     end
 
