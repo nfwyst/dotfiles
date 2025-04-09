@@ -993,6 +993,13 @@ def run_qwen_agent [] {
     uv run run_server.py --llm deepseek-ai/DeepSeek-R1 --model_server https://api.hyperbolic.xyz/v1 --workstation_port 7864 --api_key $env.HYPERBOLIC_API_KEY --max_ref_token 89429
 }
 
+def free_memory [] {
+  if $env.UNAME != "Linux" {
+    return
+  }
+  sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+}
+
 let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
 if not ($custom_env_path | path exists) {
   touch $custom_env_path
