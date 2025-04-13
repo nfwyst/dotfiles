@@ -327,14 +327,14 @@ function PUSH_WHEN_NOT_EXIST(dest, from, predicate)
   end
 end
 
-function COLUMN_OPTS(enable, statuscolumn)
-  local signcolumn = enable and "yes" or "no"
+function COLUMN_OPTS(enable)
+  local number_enabled = ENABLE_NUMBER and enable
+
   return {
-    number = enable,
-    relativenumber = enable,
-    foldcolumn = enable and "1" or "0",
-    statuscolumn = statuscolumn or "",
-    signcolumn = signcolumn,
+    number = number_enabled,
+    relativenumber = number_enabled,
+    statuscolumn = enable and g.statuscolumn or "",
+    signcolumn = enable and "yes" or "no",
   }
 end
 

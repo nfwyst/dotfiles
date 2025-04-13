@@ -48,15 +48,10 @@ if handle then
   header = table.concat(lines, "\n")
 end
 
-local function on_zen(is_open, statuscolumn)
+local function on_zen(is_open)
   IS_ZEN_MODE = is_open
-  local opts = COLUMN_OPTS(not is_open, statuscolumn)
-  -- dont show fold signs for files buffer, use snacks fold
-  opts.foldcolumn = "0"
-  SET_OPTS(opts)
+  SET_OPTS(COLUMN_OPTS(not is_open))
 end
-
-local statuscolumn = ""
 
 -- show cursor line for specific filetypes
 assign(FILETYPE_TASK_MAP, {
@@ -160,12 +155,11 @@ return {
       zen = {
         toggles = { diagnostics = false, inlay_hints = false },
         on_open = function()
-          statuscolumn = o.statuscolumn
           on_zen(true)
           vim.opt_local.winbar = nil
         end,
         on_close = function()
-          on_zen(false, statuscolumn)
+          on_zen(false)
         end,
       },
       dim = { enabled = IS_DIM_ENABLED, animate = { enabled = not PERFORMANCE_MODE } },

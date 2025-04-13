@@ -78,6 +78,7 @@ FT_HIDE_CURSOR = {}
 MARKDOWN_FILETYPES = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" }
 AUTO_CLOSE_BUF_ENABLED = true
 OPENAI_PATHNAME = "/v1/chat/completions"
+ENABLE_NUMBER = false
 
 local function get_js_pkg_manager()
   local pkgs = { "bun", "pnpm", "yarn" }

@@ -6,13 +6,12 @@ SET_OPTS({
   lazyvim_picker = "fzf",
   transparent_enabled = true,
   autoformat = not PERFORMANCE_MODE,
+  statuscolumn = o.statuscolumn,
 }, "g")
 
-local enable_number = false
-
 SET_OPTS({
-  number = enable_number,
-  relativenumber = enable_number,
+  number = ENABLE_NUMBER,
+  relativenumber = ENABLE_NUMBER,
   showtabline = 0,
   swapfile = false,
   timeoutlen = 350,

@@ -71,22 +71,27 @@ local keymaps = {
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
     {
+      from = "<leader>ue",
+      to = function()
+        local opt = { win = CUR_WIN() }
+        local should_show = OPT("signcolumn", opt) ~= "yes"
+        SET_OPTS(COLUMN_OPTS(should_show), opt)
+      end,
+      opt = { desc = "Toggle Left Sign Columns" },
+    },
+    {
       from = "<leader>xc",
       to = function()
         fn.setqflist({}, "r")
       end,
-      opt = {
-        desc = "Clear Quickfix List",
-      },
+      opt = { desc = "Clear Quickfix List" },
     },
     {
       from = "<leader>uH",
       to = function()
         IS_SYNTAX_OFF = not IS_SYNTAX_OFF
       end,
-      opt = {
-        desc = "Toggle Syntax Highlight",
-      },
+      opt = { desc = "Toggle Syntax Highlight" },
     },
     { from = "<leader>Q", to = "<cmd>quit<cr>", opt = {
       desc = "Quit",
