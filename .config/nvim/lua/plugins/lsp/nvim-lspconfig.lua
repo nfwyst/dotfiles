@@ -31,7 +31,11 @@ local function override(servers)
       settings = {}
     end
 
-    servers[name] = merge(servers[name] or {}, settings)
+    servers[name] = merge(servers[name] or {}, settings, {
+      on_init = function(client)
+        client.offset_encoding = "utf-8"
+      end,
+    })
   end
 
   for _, name in ipairs(disabled_lsp_servers) do
