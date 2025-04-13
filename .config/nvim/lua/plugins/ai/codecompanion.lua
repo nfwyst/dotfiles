@@ -143,14 +143,16 @@ return {
     end
 
     local system_prompt = require("codecompanion.config").config.opts.system_prompt
-
+    local pick_provider = { opts = { provider = "fzf_lua" } }
     require("codecompanion").setup({
       strategies = {
         chat = {
           adapter = "hyperbolic",
           slash_commands = {
-            file = { opts = { provider = "fzf_lua" } },
-            help = { opts = { provider = "fzf_lua" } },
+            file = pick_provider,
+            help = pick_provider,
+            symbols = pick_provider,
+            buffer = pick_provider,
           },
           keymaps = {
             clear = { modes = { n = "gX" } },
