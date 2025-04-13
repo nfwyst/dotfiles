@@ -10,7 +10,7 @@
 #ifdef LIGHT_SNOW
 	#define LAYERS 50
 	#define DEPTH .5
-	#define WIDTH .3
+	#define WIDTH .1
 	#define SPEED 0.03
 #else // BLIZZARD
 	#define LAYERS 200
@@ -36,7 +36,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 		vec3 r = fract(mp);
 		vec2 s = abs(mod(q, 1.0) - 0.5 + 0.9 * r.xy - 0.45);
 		s += 0.01 * abs(2.0 * fract(10.0 * q.yx) - 1.0); 
-		float d = 0.6 * max(s.x - s.y, s.x + s.y) + max(s.x, s.y) - 0.01;
+		float d = 1.5 * max(s.x - s.y, s.x + s.y) + max(s.x, s.y) - 0.01;
 		float edge = 0.005 + 0.05 * min(0.5 * abs(fi - 5.0 - dof), 1.0);
 		acc += vec3(smoothstep(edge, -edge, d) * (r.x / (1.0 + 0.02 * fi * DEPTH)));
 	}

@@ -53,6 +53,10 @@ return {
   opts = function(_, opts)
     ADD_CURSOR_MOVE_CALLBACK("tscontext", get_on_cursor_move())
 
+    if not PERFORMANCE_MODE then
+      UPDATE_HLS({ TreesitterContext = { bg = "#1b1b1b" } })
+    end
+
     local opt = {
       max_lines = PERFORMANCE_MODE and 3 or 10,
       zindex = 25,

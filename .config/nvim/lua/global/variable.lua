@@ -234,6 +234,8 @@ local fg2 = "#586e75"
 HIGHLIGHTS = {
   Conceal = { light = { fg = "#c7b375", bold = true } },
   Normal = { dark = { fg = fg0 } },
+  FloatBorder = { dark = { fg = "#547998" } },
+  WinSeparator = { link = "FloatBorder" },
   ["@variable"] = { dark = { fg = fg0 } },
   Comment = { dark = { fg = fg2 } },
   LineNrAbove = { dark = { fg = fg1 } },

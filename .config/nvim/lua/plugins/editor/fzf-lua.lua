@@ -37,6 +37,8 @@ return {
     },
   },
   opts = function(_, opts)
+    UPDATE_HLS({ FzfLuaBorder = { link = "FloatBorder" } })
+
     local acts = require("fzf-lua").actions
     local actions = {
       ["ctrl-g"] = { acts.toggle_ignore },
@@ -87,6 +89,7 @@ return {
         async_or_timeout = PERFORMANCE_MODE and 30000 or 5000,
       },
     }
+
     return merge(opts, opt)
   end,
 }
