@@ -104,6 +104,7 @@ return {
   },
   dependencies = { "nvim-lua/plenary.nvim" },
   config = function()
+    local timeout = 5
     ADD_LUALINE_COMPONENT("lualine_x", lualine_minuet)
     ADD_BLINK_SOURCE({
       id = "minuet",
@@ -116,12 +117,14 @@ return {
         name = "minuet",
         module = "minuet.blink",
         score_offset = 100,
+        async = true,
+        timeout_ms = timeout * 1000,
       },
     })
 
     require("minuet").setup({
       notify = "error",
-      request_timeout = 5,
+      request_timeout = timeout,
       throttle = 3000,
       debounce = 1000,
       provider = "openai_fim_compatible",
