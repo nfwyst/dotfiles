@@ -35,8 +35,13 @@ AUCMD("BufWinEnter", {
     end
 
     cmd.loadview({ mods = mods })
-    defer(function ()
+    local win = fn.bufwinid(bufnr)
+    defer(function()
+      local pos = WIN_CURSOR(win)
       cmd.loadview({ mods = mods })
+      if pos[1] ~= WIN_CURSOR(win)[1] then
+        WIN_CURSOR(win, pos)
+      end
     end, 500)
     BUF_VAR(bufnr, key, true)
   end,
