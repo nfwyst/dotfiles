@@ -22,6 +22,9 @@ return {
         width = "full",
         render_modes = true,
       },
+      document = {
+        render_modes = true,
+      },
       checkbox = {
         enabled = true,
         render_modes = true,
