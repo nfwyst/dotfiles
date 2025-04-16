@@ -35,6 +35,9 @@ AUCMD("BufWinEnter", {
     end
 
     cmd.loadview({ mods = mods })
+    defer(function ()
+      cmd.loadview({ mods = mods })
+    end, 500)
     BUF_VAR(bufnr, key, true)
   end,
 })
