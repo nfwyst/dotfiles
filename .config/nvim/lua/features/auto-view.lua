@@ -34,14 +34,17 @@ AUCMD("BufWinEnter", {
       return
     end
 
-    cmd.loadview({ mods = mods })
     local win = fn.bufwinid(bufnr)
+    cmd.loadview({ mods = mods })
     defer(function()
-      local pos = WIN_CURSOR(win)
+      local old_row, old_col = unpack(WIN_CURSOR(win))
       cmd.loadview({ mods = mods })
-      if pos[1] ~= WIN_CURSOR(win)[1] then
-        WIN_CURSOR(win, pos)
-      end
+      schedule(function()
+        local new_row, new_col = unpack(WIN_CURSOR(win))
+        if old_row ~= new_row or old_col ~= new_col then
+          WIN_CURSOR(win, { old_row, old_col })
+        end
+      end)
     end, 500)
     BUF_VAR(bufnr, key, true)
   end,
