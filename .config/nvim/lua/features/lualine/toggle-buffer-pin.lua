@@ -78,6 +78,17 @@ local keys = {
     end,
     desc = "Delete All Buffers",
   },
+  {
+    "<leader>bmo",
+    function()
+      for _, bufnr in ipairs(bufnrs()) do
+        if bufnr ~= CUR_BUF() then
+          DEL_BUF(bufnr)
+        end
+      end
+    end,
+    desc = "Delete Other Buffers",
+  },
 }
 
 return { keys = keys }
