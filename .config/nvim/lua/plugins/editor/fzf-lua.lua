@@ -35,6 +35,11 @@ return {
       end,
       desc = "Goto Symbol",
     },
+    {
+      "<leader>fh",
+      LazyVim.pick("files", { cwd = HOME_PATH }),
+      desc = "Find Files (from home)",
+    },
   },
   opts = function(_, opts)
     UPDATE_HLS({ FzfLuaBorder = { link = "FloatBorder" } })

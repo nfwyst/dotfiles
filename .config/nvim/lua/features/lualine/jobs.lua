@@ -214,7 +214,7 @@ local function sync_syntax_off(bufnr)
       cmd.syntax("on")
     end
   elseif is_on then
-    cmd.syntax("off")
+    pcall(cmd.syntax, "off")
   end
 
   sync_ts_hl()
