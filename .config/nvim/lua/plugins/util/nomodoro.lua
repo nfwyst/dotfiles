@@ -1,6 +1,6 @@
 local lualine_nomodoro = {
   function()
-    if not package.loaded["nomodoro"] then
+    if not package.loaded.nomodoro then
       return "🍅"
     end
 

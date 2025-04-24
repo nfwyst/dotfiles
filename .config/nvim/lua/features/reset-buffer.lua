@@ -54,7 +54,7 @@ local function disable_diagnostic_on_open(bufnr)
 end
 
 local function dim_buf(bufnr)
-  if not package.loaded["vimade"] then
+  if not package.loaded.vimade then
     return
   end
 

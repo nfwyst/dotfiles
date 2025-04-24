@@ -105,6 +105,7 @@ return {
         "norg",
         "solidity",
         "kdl",
+        "csv",
       },
       ignore_install = nil,
       textobjects = {

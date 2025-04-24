@@ -94,7 +94,7 @@ end
 
 local function scope_filter(bufnr)
   local buftype = OPT("buftype", { buf = bufnr })
-  if not EMPTY(buftype) or not package.loaded["lualine"] then
+  if not EMPTY(buftype) or not package.loaded.lualine then
     return false
   end
 
