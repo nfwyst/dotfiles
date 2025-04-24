@@ -67,6 +67,7 @@ return {
 
     local opt = {
       highlight = { enable = not IS_SYNTAX_OFF },
+      auto_install = executable("tree-sitter"),
       ensure_installed = {
         "css",
         "scss",

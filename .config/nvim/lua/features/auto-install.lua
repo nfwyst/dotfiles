@@ -28,6 +28,13 @@ local ensure_installed = {
     installer = { linux = "cargo", mac = "brew" },
     params = "install websocat",
   },
+  ["tree-sitter"] = {
+    installer = { linux = "cargo", mac = "brew" },
+    params = {
+      linux = "install --locked tree-sitter-cli",
+      mac = "install tree-sitter",
+    },
+  },
   ["chrome-headless-shell"] = {
     installer = "bun",
     params = "x puppeteer browsers install chrome-headless-shell",

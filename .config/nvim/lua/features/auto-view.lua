@@ -37,6 +37,10 @@ AUCMD("BufWinEnter", {
     local win = fn.bufwinid(bufnr)
     cmd.loadview({ mods = mods })
     defer(function()
+      if not api.nvim_win_is_valid(win) then
+        return
+      end
+
       local old_row, old_col = unpack(WIN_CURSOR(win))
       cmd.loadview({ mods = mods })
       schedule(function()
