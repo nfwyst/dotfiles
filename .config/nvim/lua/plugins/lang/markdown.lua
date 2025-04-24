@@ -5,7 +5,6 @@ return {
     SET_OPTS({
       mkdp_refresh_slow = 1,
       mkdp_auto_close = 0,
-      mkdp_combine_preview = 1,
       mkdp_preview_options = { disable_sync_scroll = 1, disable_filename = 1 },
     }, "g")
 
