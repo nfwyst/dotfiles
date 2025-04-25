@@ -14,7 +14,7 @@ end
 
 return {
   "hat0uma/csvview.nvim",
-  ft = "csv",
+  ft = { "csv", "tsv" },
   cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
   opts = function(_, opts)
     if not FILETYPE_TASK_MAP.csv then
