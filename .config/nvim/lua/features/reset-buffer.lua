@@ -72,10 +72,16 @@ local function dim_buf(bufnr)
   end)
 end
 
-local function show_indent_guide(event)
-  if event.event == "BufNewFile" then
+local function reinitialize_buf(bufnr, event)
+  if event == "BufNewFile" then
     defer(function()
-      Snacks.indent.enable()
+      local var_key = CONSTS.BUF_REINITED
+      if BUF_VAR(bufnr, var_key) then
+        return
+      end
+
+      cmd.edit()
+      BUF_VAR(bufnr, var_key, true)
     end, 0)
   end
 end
@@ -87,6 +93,6 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
     sync_tab(bufnr)
     disable_diagnostic_on_open(bufnr)
     dim_buf(bufnr)
-    show_indent_guide(event)
+    reinitialize_buf(bufnr, event.event)
   end,
 })
