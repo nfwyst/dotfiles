@@ -52,7 +52,7 @@ return {
   },
   opts = function(_, opts)
     ADD_CURSOR_MOVE_CALLBACK("tscontext", get_on_cursor_move())
-    UPDATE_HLS({ TreesitterContext = { bg = IS_LINUX and "#494949" or "#1b1b1b" } })
+    UPDATE_HLS({ TreesitterContext = { bg = "#1b1b1b" } })
 
     local opt = {
       max_lines = PERFORMANCE_MODE and 3 or 10,

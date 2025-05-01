@@ -1,4 +1,4 @@
-local is_italic_enabled = not IS_LINUX
+local is_italic_enabled = true
 local style = { italic = is_italic_enabled }
 
 return {

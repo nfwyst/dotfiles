@@ -29,18 +29,6 @@ local function run_command(cmd, args, callback)
   end)
 end
 
-local function get_linux_memory_usage(callback)
-  run_command("free", { "-b" }, function(output)
-    local total, available = output:match("Mem:%s+(%d+)%s+%d+%s+%d+%s+%d+%s+%d+%s+(%d+)")
-    total = tonumber(total)
-    available = tonumber(available)
-
-    if total and available then
-      callback(math.ceil(((total - available) / total) * 100))
-    end
-  end)
-end
-
 local function get_mac_memory_usage(callback)
   run_command("sysctl", { "-n", "hw.memsize" }, function(total)
     total = tonumber(total)
@@ -71,10 +59,6 @@ local function get_mac_memory_usage(callback)
 end
 
 local function get_memory_usage(callback)
-  if IS_LINUX then
-    get_linux_memory_usage(callback)
-  end
-
   if jit.os == "OSX" then
     get_mac_memory_usage(callback)
   end
