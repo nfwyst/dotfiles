@@ -1,33 +1,45 @@
 local ensure_installed = {
   latex2text = {
     installer = "uv",
-    params = "pip install pylatexenc --system --break-system-packages",
+    params = {
+      linux = "pip install pylatexenc",
+      mac = "pip install pylatexenc --system --break-system-packages",
+    },
   },
   grpcurl = {
-    installer = "brew",
-    params = "install grpcurl",
+    installer = { linux = "go", mac = "brew" },
+    params = {
+      linux = "install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest",
+      mac = "install grpcurl",
+    },
   },
   bun = {
-    installer = "brew",
-    params = "install oven-sh/bun/bun",
+    installer = { linux = "curl", mac = "brew" },
+    params = {
+      linux = "-fsSL https://bun.sh/install | bash",
+      mac = "install oven-sh/bun/bun",
+    },
   },
   mmdc = {
     installer = "bun",
     params = "install -g @mermaid-js/mermaid-cli",
   },
   websocat = {
-    installer = "brew",
+    installer = { linux = "cargo", mac = "brew" },
     params = "install websocat",
   },
   ["tree-sitter"] = {
-    installer = "brew",
-    params = "install tree-sitter",
+    installer = { linux = "cargo", mac = "brew" },
+    params = {
+      linux = "install --locked tree-sitter-cli",
+      mac = "install tree-sitter",
+    },
   },
   ["chrome-headless-shell"] = {
     installer = "bun",
     params = "x puppeteer browsers install chrome-headless-shell",
     when = function()
-      return not IS_DIRPATH(HOME_PATH .. "/.cache/puppeteer/chrome-headless-shell")
+      return not IS_LINUX and not IS_DIRPATH(HOME_PATH .. "/.cache/puppeteer/chrome-headless-shell")
     end,
   },
 }
@@ -44,6 +56,11 @@ local function install(cmd, opt)
   end
 
   local installer = opt.installer
+  local type_key = IS_LINUX and "linux" or "mac"
+  if type(installer) == "table" then
+    installer = installer[type_key]
+  end
+
   if not executable(installer) then
     return
   end
@@ -51,7 +68,15 @@ local function install(cmd, opt)
   NOTIFY("installing " .. cmd .. "...", levels.INFO)
 
   local stderr_buffer = {}
-  fn.jobstart(installer .. " " .. opt.params, {
+  local params = opt.params
+  if type(params) == "table" then
+    params = params[type_key]
+    if not params then
+      return
+    end
+  end
+
+  fn.jobstart(installer .. " " .. params, {
     on_stderr = function(_, data)
       for _, line in ipairs(data) do
         if not EMPTY(line) then

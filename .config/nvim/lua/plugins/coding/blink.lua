@@ -288,6 +288,7 @@ return {
         ["<c-k>"] = cancel,
       },
       snippets = { preset = "default" },
+      fuzzy = { prebuilt_binaries = { ignore_version_mismatch = IS_LINUX } },
     }
 
     return merge(opts, opt)
