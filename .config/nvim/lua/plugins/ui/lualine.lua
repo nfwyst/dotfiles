@@ -1,13 +1,5 @@
 local toggle_buffer_pin = require("features.lualine.toggle-buffer-pin")
 local formatters = require("features.lualine.formatters")
-local refresh_time = 100
-local extensions
-
-if PERFORMANCE_MODE then
-  extensions = {}
-  refresh_time = 300
-end
-
 local buffers_title_map = formatters.buffers_title_map
 
 local function clean_buffers_title_map(bufnr)
@@ -69,11 +61,6 @@ return {
     end, sections.lualine_c)
 
     local lualine_x = sections.lualine_x
-    if PERFORMANCE_MODE then
-      lualine_x = filter(function(item)
-        return item[1] ~= require("lazy.status").updates
-      end, lualine_x)
-    end
 
     local lualine_y = filter(function(item)
       return item[1] ~= "progress"
@@ -96,10 +83,6 @@ return {
         ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion", "snacks_terminal" },
         disabled_filetypes = { statusline = {} },
         globalstatus = true,
-        refresh = {
-          statusline = refresh_time,
-          tabline = refresh_time,
-        },
       },
       sections = {
         lualine_c = lualine_c,
@@ -135,7 +118,6 @@ return {
         },
         lualine_x = { components.root_path_guide },
       },
-      extensions = extensions,
     }
 
     return merge(opts, opt)

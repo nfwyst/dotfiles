@@ -1,11 +1,11 @@
 SET_OPTS({
   lazyvim_blink_main = true,
-  snacks_animate = not PERFORMANCE_MODE,
+  snacks_animate = true,
   ai_cmp = false,
   editorconfig = true,
   lazyvim_picker = "fzf",
   transparent_enabled = true,
-  autoformat = not PERFORMANCE_MODE,
+  autoformat = true,
   statuscolumn = o.statuscolumn,
 }, "g")
 
@@ -25,7 +25,6 @@ SET_OPTS({
   spelllang = "en,cjk",
   foldnestmax = 10,
   listchars = "tab:▓░,trail:•,extends:»,precedes:«,nbsp:░",
-  undolevels = PERFORMANCE_MODE and 1000 or 10000,
   showcmd = false,
   breakindent = true,
   modeline = false,

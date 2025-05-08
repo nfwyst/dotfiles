@@ -91,7 +91,7 @@ require("lazy").setup({
   },
   ui = { border = "rounded", backdrop = 100, wrap = true },
   checker = {
-    enabled = not PERFORMANCE_MODE,
+    enabled = true,
     notify = false,
   },
   change_detection = { notify = false },

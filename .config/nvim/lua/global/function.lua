@@ -553,50 +553,6 @@ function UPDATE_HLS(new_hls)
   SET_HLS(hls)
 end
 
-function SET_KEYMAP_PRE_HOOK(modes, lhses, pre_hook)
-  for _, mode in ipairs(modes) do
-    for _, lhs in ipairs(lhses) do
-      local function hook()
-        local conf = fn.maparg(lhs, mode, false, true)
-        if not EMPTY(conf, true) then
-          local callback = conf.callback
-          if not callback then
-            callback = function()
-              PRESS_KEYS(conf.rhs, mode:lower())
-            end
-          end
-
-          local opt = {
-            noremap = conf.noremap == 1,
-            silent = conf.silent == 1,
-            nowait = conf.nowait == 1,
-            script = conf.script == 1,
-            expr = conf.expr == 1,
-            desc = conf.desc,
-          }
-          local function rhs()
-            if pre_hook() ~= false then
-              callback()
-            end
-          end
-
-          if conf.buffer ~= 0 then
-            opt.buffer = conf.buffer
-          end
-
-          MAP(mode, lhs, rhs, opt)
-        end
-      end
-
-      if LAZYVIM_KEYMAP_INITED then
-        hook()
-      else
-        KEYMAP_PRE_HOOKS[mode .. lhs] = hook
-      end
-    end
-  end
-end
-
 function ADD_LUALINE_COMPONENT(section_name, component, index)
   local lualine = require("lualine")
 

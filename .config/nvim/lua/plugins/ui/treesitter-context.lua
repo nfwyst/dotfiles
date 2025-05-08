@@ -55,7 +55,7 @@ return {
     UPDATE_HLS({ TreesitterContext = { bg = "#1b1b1b" } })
 
     local opt = {
-      max_lines = PERFORMANCE_MODE and 3 or 10,
+      max_lines = 10,
       zindex = 25,
       min_window_height = 10,
       on_attach = function(bufnr)

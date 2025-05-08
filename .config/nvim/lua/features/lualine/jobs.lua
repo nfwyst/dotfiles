@@ -133,6 +133,7 @@ local function is_buf_referenced(bufnr)
   end
 end
 
+local max_files_number = 8
 local function auto_close_buf(bufnr, context, bufnrs)
   local is_memory_ok = MEMORY_USAGE and MEMORY_USAGE < MEMORY_LIMIT
   local no_current = not context.current
@@ -142,7 +143,7 @@ local function auto_close_buf(bufnr, context, bufnrs)
     return
   end
 
-  if #bufnrs <= MAX_OPEND_FILES then
+  if #bufnrs <= max_files_number then
     return
   end
 
@@ -218,9 +219,7 @@ local function sync_syntax_off(bufnr)
   end
 
   sync_ts_hl()
-  if not PERFORMANCE_MODE then
-    sync_lsp_hl()
-  end
+  sync_lsp_hl()
 end
 
 return {

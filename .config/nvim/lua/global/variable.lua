@@ -53,16 +53,8 @@ GROUP = function(name, opts)
   return api.nvim_create_augroup(GROUP_PREFIX .. name, opts)
 end
 IS_LINUX = jit.os == "Linux"
-PERFORMANCE_MODE = IS_LINUX
 o.background = "dark"
-MAX_OPEND_FILES = IS_LINUX and 5 or 10
-TOGGLE_DIAGNOSTIC_MANUL = false
-if PERFORMANCE_MODE then
-  TOGGLE_DIAGNOSTIC_MANUL = true
-  diagnostic.enable(false)
-end
 IS_SYNTAX_OFF = false
-IS_DIM_ENABLED = not IS_SYNTAX_OFF and not PERFORMANCE_MODE
 DATA_PATH = fn.stdpath("data")
 MAX_FILE_LENGTH = 5000
 ESLINT_BIN_NAME = "eslint_d"

@@ -23,13 +23,57 @@ local function setup_prettier()
   prettierd.command = DATA_PATH .. "/mason/bin/prettierd"
 end
 
+local function set_keymap_pre_hook(modes, lhses, pre_hook)
+  for _, mode in ipairs(modes) do
+    for _, lhs in ipairs(lhses) do
+      local function hook()
+        local conf = fn.maparg(lhs, mode, false, true)
+        if not EMPTY(conf, true) then
+          local callback = conf.callback
+          if not callback then
+            callback = function()
+              PRESS_KEYS(conf.rhs, mode:lower())
+            end
+          end
+
+          local opt = {
+            noremap = conf.noremap == 1,
+            silent = conf.silent == 1,
+            nowait = conf.nowait == 1,
+            script = conf.script == 1,
+            expr = conf.expr == 1,
+            desc = conf.desc,
+          }
+          local function rhs()
+            if pre_hook() ~= false then
+              callback()
+            end
+          end
+
+          if conf.buffer ~= 0 then
+            opt.buffer = conf.buffer
+          end
+
+          MAP(mode, lhs, rhs, opt)
+        end
+      end
+
+      if LAZYVIM_KEYMAP_INITED then
+        hook()
+      else
+        KEYMAP_PRE_HOOKS[mode .. lhs] = hook
+      end
+    end
+  end
+end
+
 return {
   "stevearc/conform.nvim",
   opts = function(_, opts)
     setup_eslint()
     setup_prettier()
 
-    SET_KEYMAP_PRE_HOOK({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
+    set_keymap_pre_hook({ "n", "v" }, { "<leader>cf", "<leader>cF" }, function()
       NEED_ESLINT_FIX = false
 
       local name = ".prettierrc.json"

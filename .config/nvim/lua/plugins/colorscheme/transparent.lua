@@ -1,6 +1,5 @@
 return {
   "xiyaowong/transparent.nvim",
-  cond = not PERFORMANCE_MODE,
   opts = {
     groups = {
       "Normal",

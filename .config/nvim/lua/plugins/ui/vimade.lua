@@ -1,6 +1,5 @@
 return {
   "tadaa/vimade",
-  cond = IS_DIM_ENABLED,
   event = "VeryLazy",
   config = function()
     for _, filetype in ipairs(FT_DISABLE_DIM) do

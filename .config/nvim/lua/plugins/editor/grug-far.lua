@@ -19,9 +19,9 @@ return {
 
     local opt = {
       minSearchChars = 3,
-      maxWorkers = PERFORMANCE_MODE and 2 or 4,
+      maxWorkers = 4,
       reportDuration = false,
-      maxSearchMatches = PERFORMANCE_MODE and 1000 or 2000,
+      maxSearchMatches = 2000,
       normalModeSearch = true,
       engines = {
         ripgrep = {

@@ -41,18 +41,6 @@ local function sync_tab(bufnr)
   })
 end
 
-local function disable_diagnostic_on_open(bufnr)
-  if IS_ZEN_MODE or TOGGLE_DIAGNOSTIC_MANUL then
-    return
-  end
-
-  local opt = { bufnr = bufnr }
-  local enabled = diagnostic.is_enabled(opt)
-  if enabled then
-    diagnostic.enable(false, opt)
-  end
-end
-
 local function dim_buf(bufnr)
   if not package.loaded.vimade then
     return
@@ -91,7 +79,6 @@ AUCMD({ "BufReadPost", "BufNewFile" }, {
   callback = function(event)
     local bufnr = event.buf
     sync_tab(bufnr)
-    disable_diagnostic_on_open(bufnr)
     dim_buf(bufnr)
     reinitialize_buf(bufnr, event.event)
   end,

@@ -91,7 +91,7 @@ return {
         actions = actions,
       },
       lsp = {
-        async_or_timeout = PERFORMANCE_MODE and 30000 or 5000,
+        async_or_timeout = 5000,
       },
     }
 

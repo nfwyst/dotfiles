@@ -1,5 +1,4 @@
 local trigger_text = ";"
-local emoji_enabled = not PERFORMANCE_MODE
 
 local function should_show_snip(ctx)
   if ctx.mode == "cmdline" then
@@ -39,11 +38,7 @@ end
 local function shouldnt_show_snippets_emoji(ctx)
   local isnt_snip_mode = not should_show_snip(ctx)
 
-  if emoji_enabled then
-    return isnt_snip_mode and shouldnt_show_emoji(ctx)
-  end
-
-  return isnt_snip_mode
+  return isnt_snip_mode and shouldnt_show_emoji(ctx)
 end
 
 local function get_snip_range(ctx)
@@ -134,16 +129,14 @@ end
 local cancel = { "cancel", "fallback" }
 
 local function add_emoji()
-  if emoji_enabled then
-    ADD_BLINK_SOURCE({
-      id = "emoji",
-      config = {
-        name = "Emoji",
-        module = "blink-emoji",
-        opts = { insert = true },
-      },
-    })
-  end
+  ADD_BLINK_SOURCE({
+    id = "emoji",
+    config = {
+      name = "Emoji",
+      module = "blink-emoji",
+      opts = { insert = true },
+    },
+  })
 end
 
 local function add_dictionary()
@@ -153,8 +146,8 @@ local function add_dictionary()
       should_show_items = shouldnt_show_snippets_emoji,
       module = "blink-cmp-dictionary",
       name = "Dict",
-      max_items = PERFORMANCE_MODE and 1 or 2,
-      min_keyword_length = PERFORMANCE_MODE and 4 or 3,
+      max_items = 2,
+      min_keyword_length = 3,
       score_offset = -10,
       opts = {
         dictionary_directories = { HOME_PATH .. "/.config/dictionaries" },
@@ -177,7 +170,7 @@ return {
   build = "cargo build --release",
   dependencies = {
     "saghen/blink.compat",
-    { "moyiz/blink-emoji.nvim", cond = emoji_enabled },
+    "moyiz/blink-emoji.nvim",
     "Kaiser-Yang/blink-cmp-dictionary",
   },
   keys = {
@@ -281,11 +274,7 @@ return {
           list = { selection = { preselect = false } },
           menu = {
             auto_show = function()
-              if not PERFORMANCE_MODE then
-                return true
-              end
-
-              return get_by_cmdtype(false, false, true)
+              return true
             end,
           },
           ghost_text = { enabled = false },

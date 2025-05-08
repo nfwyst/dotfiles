@@ -119,11 +119,7 @@ return {
     defer(init, 0)
     PUSH_WHEN_NOT_EXIST(FT_DISABLE_DIM, "snacks_terminal")
     PUSH_WHEN_NOT_EXIST(FT_HIDE_CURSOR, "snacks_dashboard")
-
     UPDATE_HLS(hls)
-    SET_KEYMAP_PRE_HOOK({ "n" }, { "<leader>ud" }, function()
-      TOGGLE_DIAGNOSTIC_MANUL = true
-    end)
 
     get_new_file_key(opts).action = NewFile
     local opt = {
@@ -136,11 +132,10 @@ return {
             and OPT("buftype", { buf = bufnr }) ~= "terminal"
         end,
       },
-      indent = { scope = { enabled = not PERFORMANCE_MODE, filter = scope_filter } },
+      indent = { scope = { enabled = true, filter = scope_filter } },
       bigfile = { size = 524288 }, -- 0.5 * 1024 * 1024
       statuscolumn = {
-        left = PERFORMANCE_MODE and { "sign" } or { "mark", "sign" },
-        refresh = PERFORMANCE_MODE and 100 or 50,
+        left = { "mark", "sign" },
       },
       dashboard = {
         preset = { header = header },
@@ -161,9 +156,9 @@ return {
           on_zen(false)
         end,
       },
-      dim = { enabled = IS_DIM_ENABLED, animate = { enabled = not PERFORMANCE_MODE } },
+      dim = { enabled = true, animate = { enabled = true } },
       image = { enabled = get_image_enabled() },
-      words = { debounce = PERFORMANCE_MODE and 300 or 200 },
+      words = { debounce = 200 },
     }
 
     return merge(opts, opt)
