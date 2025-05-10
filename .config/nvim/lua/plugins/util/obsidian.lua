@@ -63,7 +63,7 @@ return {
     "saghen/blink.cmp",
   },
   keys = {
-    { "<leader>cuo", "", desc = "obsidian" },
+    { "<leader>cuo", "", desc = "obsidian", mode = { "n", "v" } },
     {
       "<leader>cuox",
       input("open", "The query used to resolve the note to open in app"),
@@ -92,17 +92,20 @@ return {
       "<leader>cuol",
       input("link", "The query used to resolve the note to link to selection"),
       desc = "Obsidian: Link Selection To Note",
+      mode = { "n", "v" },
     },
     {
       "<leader>cuoc",
       input("linknew", "The title of the new note to link selection"),
       desc = "Obsidian: Link Selection To New Note",
+      mode = { "n", "v" },
     },
     { "<leader>cuoL", "<cmd>Obsidian links<cr>", desc = "Obsidian: Show Buffer Links" },
     {
       "<leader>cuoa",
       input("extract_note", "The title of the new note to extract"),
       desc = "Obsidian: Extract Selection To New Note",
+      mode = { "n", "v" },
     },
     {
       "<leader>cuow",

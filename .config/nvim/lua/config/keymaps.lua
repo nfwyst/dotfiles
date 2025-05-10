@@ -66,7 +66,6 @@ local keymaps = {
     { from = "<c-u>", to = "<c-u>zz" },
     { from = "<c-f>", to = "<c-f>zz" },
     { from = "<c-b>", to = "<c-b>zz" },
-    { from = "<leader>cu", to = "", opt = { desc = "utils" } },
     { from = "<leader>fn", to = NewFile, opt = { desc = "New File" } },
     { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
     { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
@@ -108,6 +107,7 @@ local keymaps = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
     { from = "<leader>I", to = "<cmd>wall<cr>", opt = { desc = "Save All" } },
     { from = "<leader>X", to = "<cmd>xall<cr>", opt = { desc = "Save And Quit" } },
+    { from = "<leader>cu", to = "", opt = { desc = "utils" } },
     { from = "m", to = toggle_mark },
   },
   [{ "v", "x" }] = {
