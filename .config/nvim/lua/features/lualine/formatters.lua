@@ -81,6 +81,8 @@ local function buffers(name, context)
       if not is_win_float then
         jobs.update_winbar(win, bufpath, bufnrs)
       end
+    elseif bufpath == "health://" then
+      name = "checkhealth"
     elseif not name and IS_BUF_LISTED(bufnr) then
       if not BUF_VAR(bufnr, CONSTS.NEW_FILE) then
         name = jobs.open_dashboard(win, bufnr)

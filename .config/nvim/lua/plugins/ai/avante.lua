@@ -66,17 +66,19 @@ local function vendor_factory(name, extra)
     model = config.model,
     api_key_name = config.api_key,
     endpoint = endpoint,
-    temperature = LLM.temperature,
     max_tokens = config.max_tokens,
     num_ctx = config.num_ctx,
     proxy = LLM.proxy,
     allow_insecure = false,
     timeout = LLM.timeout,
     disable_tools = disable_tools,
+    extra_request_body = {
+      temperature = LLM.temperature,
+    },
   }, extra or {})
 end
 
-local vendors = {
+local providers = {
   hyperbolic = vendor_factory("hyperbolic"),
   deepseek = vendor_factory("deepseek"),
   gemini = vendor_factory("gemini"),
@@ -84,7 +86,7 @@ local vendors = {
   fastapply = vendor_factory("ollama", { model = "hf.co/Kortix/FastApply-7B-v1.0_GGUF:Q4_K_M" }),
   applyer = vendor_factory("hyperbolic", { model = "Qwen/Qwen2.5-Coder-32B-Instruct" }),
 }
-local vendor_names = keys(vendors)
+local providers_names = keys(providers)
 
 return {
   "yetone/avante.nvim",
@@ -120,7 +122,7 @@ return {
     {
       "<leader>aap",
       function()
-        REQUEST_USER_SELECT(vendor_names, "select provider: ", function(name)
+        REQUEST_USER_SELECT(providers_names, "select provider: ", function(name)
           cmd("AvanteSwitchProvider " .. name)
         end)
       end,
@@ -182,7 +184,7 @@ return {
 
     require("avante").setup({
       provider = "hyperbolic",
-      vendors = vendors,
+      providers = providers,
       web_search_engine = {
         provider = "google",
         providers = {
