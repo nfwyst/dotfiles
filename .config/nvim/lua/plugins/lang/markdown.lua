@@ -37,7 +37,7 @@ return {
       },
       overrides = {
         buflisted = {
-          [false] = { anti_conceal = anti_conceal },
+          [0] = { anti_conceal = anti_conceal },
         },
         buftype = {
           nofile = { anti_conceal = anti_conceal },
