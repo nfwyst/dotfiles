@@ -1,5 +1,6 @@
 [core]
-incremental_references = true
+incremental_references = false
+title_from_heading = true
 
 [completion]
 candidates = 50
