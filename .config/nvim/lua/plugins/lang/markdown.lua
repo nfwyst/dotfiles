@@ -2,18 +2,12 @@ return {
   "MeanderingProgrammer/render-markdown.nvim",
   lazy = false,
   opts = function(_, opts)
-    SET_OPTS({
-      mkdp_refresh_slow = 1,
-      mkdp_auto_close = 0,
-      mkdp_preview_options = { disable_sync_scroll = 1, disable_filename = 1 },
-    }, "g")
-
     local state = require("render-markdown.state")
     local anti_conceal = { enabled = false }
     local opt = {
       render_modes = { "n", "i", "no", "c", "t", "v", "V", "" },
-      file_types = MARKDOWN_FILETYPES,
-      completions = { blink = { enabled = true } },
+      file_types = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
+      completions = { blink = { enabled = false } },
       heading = {
         sign = true,
         render_modes = true,
@@ -37,7 +31,7 @@ return {
       },
       overrides = {
         buflisted = {
-          [0] = { anti_conceal = anti_conceal },
+          [false] = { anti_conceal = anti_conceal },
         },
         buftype = {
           nofile = { anti_conceal = anti_conceal },
@@ -53,7 +47,7 @@ return {
         icon = "▎",
       },
       latex = {
-        enabled = executable("latex2text"),
+        enabled = vim.fn.executable("latex2text") == 1,
         render_modes = true,
       },
       html = {
@@ -69,14 +63,14 @@ return {
       on = {
         render = function(context)
           local bufnr = context.buf
-          local win = fn.bufwinid(bufnr)
-          if not api.nvim_win_is_valid(win) then
+          local win = vim.fn.bufwinid(bufnr)
+          if not vim.api.nvim_win_is_valid(win) then
             return
           end
 
-          local modifiable = OPT("modifiable", { buf = bufnr })
+          local modifiable = vim.api.nvim_get_option_value("modifiable", { buf = bufnr })
           if not modifiable then
-            return OPT("concealcursor", { win = win }, "nvic")
+            return vim.api.nvim_set_option_value("concealcursor", "nvic", { win = win })
           end
 
           state.get(bufnr).anti_conceal.enabled = true
@@ -84,6 +78,6 @@ return {
       },
     }
 
-    return merge(opts, opt)
+    return vim.tbl_deep_extend("force", opts, opt)
   end,
 }

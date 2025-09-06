@@ -1,125 +1,122 @@
-local toggle_buffer_pin = require("features.lualine.toggle-buffer-pin")
-local formatters = require("features.lualine.formatters")
-local buffers_title_map = formatters.buffers_title_map
-
-local function clean_buffers_title_map(bufnr)
-  local bufpath = BUF_PATH(bufnr)
-  if not IS_FILEPATH(bufpath, true) then
-    return
+local function lsp_info()
+  local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
+  local names = {}
+  for _, client in pairs(clients) do
+    names[#names + 1] = client.name
   end
-
-  local bufname = fs.basename(bufpath)
-  local showed_map = buffers_title_map[bufname]
-
-  if not showed_map then
-    return
+  local result = table.concat(names, "•")
+  if result == "" then
+    return ""
   end
-
-  buffers_title_map[bufname] = filter(function(buf)
-    return buf ~= bufnr
-  end, showed_map)
-
-  if #buffers_title_map[bufname] < 1 then
-    buffers_title_map[bufname] = nil
-  end
+  return "󱓞 " .. result
 end
 
 return {
   "nvim-lualine/lualine.nvim",
-  keys = toggle_buffer_pin.keys,
   opts = function(_, opts)
-    local components = require("features.lualine.components")
-    local sections = opts.sections
-
-    ADD_BUF_DEL_CALLBACK("lualine", function(bufnr)
-      clean_buffers_title_map(bufnr)
-    end)
-
-    local tabs_name = "tabs"
-    PUSH_WHEN_NOT_EXIST(sections.lualine_a, {
-      tabs_name,
-      show_modified_status = false,
-      cond = function()
-        return fn.tabpagenr("$") > 1
-      end,
-    }, function(v)
-      return v[1] == tabs_name
-    end)
-
-    local lualine_c = filter(function(item)
-      local name = item[1]
-      local is_diag = name == "diagnostics"
-      if is_diag then
-        assign(item, {
-          update_in_insert = false,
-          cond = function()
-            return diagnostic.is_enabled({ bufnr = CUR_BUF() })
-          end,
-        })
-      end
-      return is_diag or name == "filetype"
-    end, sections.lualine_c)
-
-    local lualine_x = sections.lualine_x
-
-    local lualine_y = filter(function(item)
-      return item[1] ~= "progress"
-    end, sections.lualine_y)
-    push_list(lualine_y, {
-      {
-        function()
-          return "󱁐:" .. OPT("shiftwidth", { buf = CUR_BUF() })
-        end,
-        padding = { left = 0, right = 1 },
-      },
-      { "encoding", padding = { left = 0, right = 1 } },
-      components.memory,
-    })
+    local icons = LazyVim.config.icons
 
     local opt = {
       options = {
-        component_separators = { left = "", right = "" },
-        section_separators = { left = "", right = "" },
-        ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion", "snacks_terminal" },
-        disabled_filetypes = { statusline = {} },
+        ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion" },
         globalstatus = true,
+        component_separators = { left = " ▎", right = " ▎" },
       },
       sections = {
-        lualine_c = lualine_c,
-        lualine_x = lualine_x,
-        lualine_y = lualine_y,
-        lualine_z = { components.progress },
-      },
-      tabline = {
         lualine_a = {
+          "mode",
+        },
+        lualine_b = {
+          "branch",
           {
-            "buffers",
-            show_modified_status = true,
-            max_length = o.columns,
-            filetype_names = {
-              snacks_dashboard = "dashboard",
-              ["neo-tree"] = "file tree",
-              AvanteInput = "avante input",
-              Avante = "avante chat",
-              lazy = "plugin manager",
-              mason = "package manager",
-            },
-            component_separators = { left = " ▎", right = " ▎" },
-            symbols = {
-              alternate_file = "󰁯 ",
-            },
-            fmt = formatters.buffers,
-            icons_enabled = false,
-            buffers_color = {
-              active = { fg = "#ffffff", bg = "#6f95ff" },
-            },
-            use_mode_colors = false,
+            "tabs",
+            cond = function()
+              return vim.fn.tabpagenr("$") > 1
+            end,
           },
         },
-        lualine_x = { components.root_path_guide },
+        lualine_c = {
+          LazyVim.lualine.root_dir(),
+          lsp_info,
+          {
+            "diagnostics",
+            update_in_insert = false,
+            cond = function()
+              return vim.diagnostic.is_enabled({ bufnr = vim.api.nvim_get_current_buf() })
+            end,
+            symbols = {
+              error = icons.diagnostics.Error,
+              warn = icons.diagnostics.Warn,
+              info = icons.diagnostics.Info,
+              hint = icons.diagnostics.Hint,
+            },
+          },
+          { "filetype", icon_only = false, padding = { left = 1, right = 1 } },
+          {
+            function()
+              if not package.loaded.nomodoro then
+                return " 🍅"
+              end
+
+              return require("nomodoro").status()
+            end,
+            color = function()
+              local color = {}
+              if vim.o.background == "dark" then
+                color.fg = "#04d1f9"
+              end
+
+              return color
+            end,
+            padding = { left = 0, right = 1 },
+          },
+        },
+        lualine_y = {
+          {
+            function()
+              return "󱁐:" .. vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
+            end,
+            padding = { left = 0, right = 0 },
+          },
+          { "encoding", padding = { left = 0, right = 1 } },
+        },
+        lualine_z = {
+          { "progress", separator = " ", padding = { left = 1, right = 0 } },
+          { "location", padding = { left = 0, right = 1 } },
+        },
+      },
+      winbar = {
+        lualine_c = {
+          {
+            "filename",
+            file_status = false,
+            newfile_status = true,
+            path = 3,
+            shorting_target = 0,
+            symbols = {
+              modified = "",
+              readonly = "󰌾",
+              unnamed = "[No Name]",
+              newfile = "[New]",
+            },
+            color = {
+              bg = "#1c1f30",
+              fg = "#5975C5",
+            },
+            cond = function()
+              local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+              local matched = string.match(bufname, "^/.*%.[%a]+$")
+              if not matched then
+                return false
+              end
+
+              return true
+            end,
+          },
+        },
       },
     }
 
-    return merge(opts, opt)
+    return vim.tbl_deep_extend("force", opts, opt)
   end,
 }

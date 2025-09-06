@@ -4,25 +4,30 @@ return {
     {
       "<leader>ce",
       function()
-        local bufnr = CUR_BUF()
-        if OPT("modified", { buf = bufnr }) then
-          cmd.write()
+        local bufnr = vim.api.nvim_get_current_buf()
+        if vim.api.nvim_get_option_value("modified", { buf = bufnr }) then
+          vim.cmd.write()
         end
 
         local opt = { bufnr = bufnr }
-        if not diagnostic.is_enabled(opt) then
-          diagnostic.enable(true, opt)
+        if not vim.diagnostic.is_enabled(opt) then
+          vim.diagnostic.enable(true, opt)
         end
 
         -- //? only show specified line output
         -- //ts-worksheet auto run when save file
-        cmd.Tsw("rt=bun show_order=true")
+        vim.cmd.Tsw("rt=bun show_order=true")
       end,
-      ft = FE_FILETYPES,
+      ft = {
+        "javascript",
+        "typescript",
+        "javascriptreact",
+        "typescriptreact",
+      },
       desc = "Run this js/ts file",
     },
   },
   opts = {
-    severity = severity.INFO,
+    severity = vim.diagnostic.severity.INFO,
   },
 }

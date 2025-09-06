@@ -1,61 +1,27 @@
-local to_install = {
-  "prettierd",
-  "vale",
-  "beautysh",
-  "js-debug-adapter",
-  "ast-grep",
-  "eslint_d",
-  "tectonic",
-  "tree-sitter-cli",
-  "delve",
-}
-
-local function get_ensure_installed(packages)
-  local visited = {}
-  local ensure_installed = {}
-
-  for _, name in ipairs(packages) do
-    if not visited[name] and not executable(name) then
-      PUSH(ensure_installed, name)
-    end
-
-    visited[name] = true
-  end
-
-  for _, name in ipairs(to_install) do
-    if not visited[name] and not executable(name) then
-      PUSH(ensure_installed, name)
-    end
-
-    visited[name] = true
-  end
-
-  return ensure_installed
-end
-
-local function get_gitui_theme()
-  if o.background == "light" then
-    return "latte.ron"
-  end
-
-  return "frappe.ron"
-end
-
-local function open_gitui(is_root)
-  local opt
-  if is_root then
-    opt = { cwd = LazyVim.root.get() }
-  end
-
-  Snacks.terminal({ "gitui", "-t", get_gitui_theme() }, opt)
-end
-
 return {
-  "williamboman/mason.nvim",
+  "mason-org/mason.nvim",
   opts = function(_, opts)
+    local ensure_installed = {
+      "ast-grep",
+      "tectonic",
+      "tree-sitter-cli",
+      "eslint_d",
+      "beautysh",
+      "prettierd",
+      "vale",
+      "kulala-fmt",
+      -- "delve",
+    }
+
+    for _, name in ipairs(opts.ensure_installed) do
+      if name ~= "hadolint" and not vim.tbl_contains(ensure_installed, name) then
+        ensure_installed[#ensure_installed + 1] = name
+      end
+    end
+
     local opt = {
-      log_level = levels.OFF,
-      ensure_installed = get_ensure_installed(opts.ensure_installed),
+      log_level = vim.log.levels.OFF,
+      ensure_installed = ensure_installed,
       ui = {
         border = "rounded",
         height = 0.7,
@@ -67,16 +33,6 @@ return {
       },
     }
 
-    return merge(opts, opt)
+    return vim.tbl_deep_extend("force", opts, opt)
   end,
-  keys = {
-    { "<leader>gG", open_gitui, desc = "GitUi (cwd)" },
-    {
-      "<leader>gg",
-      function()
-        open_gitui(true)
-      end,
-      desc = "GitUi (Root Dir)",
-    },
-  },
 }

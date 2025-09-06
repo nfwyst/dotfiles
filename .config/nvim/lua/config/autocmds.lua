@@ -1,120 +1,148 @@
-local function del_aucmds(group_names)
-  for _, group_name in ipairs(group_names) do
-    api.nvim_del_augroup_by_name("lazyvim_" .. group_name)
+-- Autocmds are automatically loaded on the VeryLazy event
+-- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+--
+-- Add any additional autocmds here
+-- with `vim.api.nvim_create_autocmd`
+--
+-- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
+-- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
+local function get_resizer(is_increase, is_vertical)
+  return function()
+    local delta = is_increase and "+2" or "-2"
+    local command = "resize " .. delta
+    if is_vertical then
+      command = "vertical " .. command
+    end
+
+    vim.cmd(command)
   end
 end
 
-del_aucmds({ "wrap_spell", "last_loc", "resize_splits" })
+local function toggle_mark()
+  local char_code = vim.fn.getchar()
+  if char_code == 0 then
+    return
+  end
 
-local keys_to_delete = {
+  if type(char_code) ~= "number" then
+    return
+  end
+
+  local char = vim.fn.nr2char(char_code)
+  if not char:match("^[a-zA-Z]$") then
+    return vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("m" .. char, true, true, true), "n", false)
+  end
+
+  local mark = vim.fn.getpos("'" .. char)
+  local buf = mark[1]
+  local bufnr = vim.api.nvim_get_current_buf()
+  if buf == 0 then
+    buf = bufnr
+  end
+
+  local mark_row = mark[2]
+  local row = vim.api.nvim_win_get_cursor(vim.api.nvim_get_current_win())[1]
+  if buf == bufnr and mark_row == row then
+    return vim.cmd.delmarks(char)
+  end
+
+  vim.cmd.normal({ "m" .. char, bang = true })
+end
+
+local keymaps = {
   n = {
-    "<leader>gL",
-    "<c-up>",
-    "<c-down>",
-    "<c-left>",
-    "<c-right>",
-    "<leader>fn",
+    { from = "<s-j>", to = "<cmd>execute 'move .+' . v:count1<cr>==" },
+    { from = "<s-k>", to = "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==" },
+    { from = "<leader>Q", to = "<cmd>quit<cr>", opt = {
+      desc = "Quit",
+    } },
+    { from = "<leader>qf", to = "<cmd>ccl<cr>", opt = {
+      desc = "Quit Quickfix List",
+    } },
+    { from = "<s-up>", to = get_resizer(true), opt = { desc = "Increase Window Height" } },
+    { from = "<s-down>", to = get_resizer(false), opt = { desc = "Decrease Window Height" } },
+    { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
+    { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
+    { from = "<leader>o", to = ":update<cr> :source<cr>" },
+  },
+  [{ "n", "x", "s" }] = {
+    { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
+    { from = "<leader>I", to = "<cmd>wall<cr>", opt = { desc = "Save All" } },
+    { from = "<leader>X", to = "<cmd>xall<cr>", opt = { desc = "Save And Quit" } },
+    { from = "m", to = toggle_mark },
+  },
+  [{ "v", "x" }] = {
+    { from = "<s-j>", to = ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv" },
+    { from = "<s-k>", to = ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv" },
+  },
+  [{ "n", "v" }] = {
+    {
+      from = "<leader>cf",
+      to = function()
+        local name = ".prettierrc.json"
+        if vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() }) == 4 then
+          name = ".prettierrc_tab.json"
+        end
+        vim.env.PRETTIERD_DEFAULT_CONFIG = vim.fn.expand("~") .. "/.config/" .. name
+
+        LazyVim.format({ force = true })
+      end,
+      opt = { desc = "Format" },
+    },
+  },
+  [{ "i" }] = {
+    {
+      from = "jk",
+      to = function()
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, true, true), "n", false)
+      end,
+    },
   },
 }
 
--- remove default keymap
-AUCMD("User", {
+local keys_to_delete = {
+  [{ "n", "v" }] = { "<leader>cf" },
+  n = { "gc", "grn", "grr", "gri", "gra", "grt" },
+}
+
+vim.api.nvim_create_autocmd("User", {
   pattern = "LazyVimKeymaps",
   once = true,
   callback = function()
-    LAZYVIM_KEYMAP_INITED = true
     for mode, keys in pairs(keys_to_delete) do
       for _, key in ipairs(keys) do
-        pcall(keymap.del, mode, key)
+        pcall(vim.keymap.del, mode, key)
       end
     end
 
-    SET_KEYMAPS()
-    for _, hook in pairs(KEYMAP_PRE_HOOKS) do
-      hook()
+    for mode, maps in pairs(keymaps) do
+      for _, map in ipairs(maps) do
+        map.opt = map.opt or {}
+        map.opt.silent = true
+        map.opt.noremap = true
+        vim.keymap.set(mode, map.from, map.to, map.opt)
+      end
     end
   end,
 })
 
-AUCMD("BufDelete", {
-  group = GROUP("buffer_delete", { clear = true }),
+local bufread_group = vim.api.nvim_create_augroup("vimade_active", { clear = true })
+vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+  group = bufread_group,
   callback = function(event)
-    ON_BUF_DEL(event.buf)
-  end,
-})
-
-local function reset_win_size(win, target, totals, totals_offset)
-  if not target then
-    return
-  end
-
-  if target < 1 then
-    target = math.floor(totals * target)
-  end
-
-  local func = totals_offset and WIN_HEIGHT or WIN_WIDTH
-  local size = func(win)
-  local is_full_size = totals + (totals_offset or 0) == size
-  if not is_full_size and size > target then
-    func(win, target)
-  end
-end
-
-local function resize_normal_win()
-  cmd.tabdo("wincmd =")
-  cmd.tabnext(fn.tabpagenr())
-end
-
-local function get_filetype_by_subft(filetype)
-  for _, sub_ft in ipairs(FILETYPE_SIZE_MAP._sub_fts) do
-    if STR_CONTAINS(filetype, sub_ft) then
-      return sub_ft
-    end
-  end
-
-  return filetype
-end
-
-local function resize_special_win(event)
-  local bufnr = event.buf
-  local win = fn.bufwinid(bufnr)
-  if WIN_VAR(win, CONSTS.RESIZE_MANUL) then
-    return
-  end
-
-  local filetype = get_filetype_by_subft(OPT("filetype", { buf = bufnr }))
-  local conf = FILETYPE_SIZE_MAP[filetype]
-  if not conf or conf.ignore_event then
-    return
-  end
-
-  reset_win_size(win, conf.width, o.columns)
-  reset_win_size(win, conf.height, o.lines, -2)
-
-  return true
-end
-
-AUCMD({ "VimResized", "WinResized" }, {
-  group = GROUP("resize_watcher", { clear = true }),
-  callback = function(event)
-    if resize_special_win(event) then
+    if not package.loaded.vimade then
       return
     end
 
-    if event.event == "VimResized" then
-      resize_normal_win()
+    local bufnr = event.buf
+    local win = vim.fn.bufwinid(bufnr)
+    if not vim.api.nvim_win_is_valid(win) then
+      return
     end
-  end,
-})
 
-AUCMD("ColorScheme", {
-  group = GROUP("scheme_changed", { clear = true }),
-  callback = function()
-    UPDATE_HLS()
+    vim.api.nvim_win_call(win, function()
+      pcall(vim.cmd.VimadeFadeActive)
+    end)
   end,
-})
-
-AUCMD({ "CursorMoved", "CursorMovedI" }, {
-  group = GROUP("cursor_moved", { clear = true }),
-  callback = ON_CURSOR_MOVE,
 })

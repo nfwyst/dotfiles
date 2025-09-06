@@ -950,7 +950,6 @@ def --env proxy [] {
     npm config set proxy $address --global
   }
 }
-proxy
 
 # unset proxy
 def --env unproxy [] {

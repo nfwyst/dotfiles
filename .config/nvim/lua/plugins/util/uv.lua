@@ -1,10 +1,10 @@
 return {
   "benomahony/uv.nvim",
-  cond = executable("uv") and executable("python3"),
+  cond = vim.fn.executable("uv") == 1 and vim.fn.executable("python3") == 1,
   ft = "python",
   opts = {
     keymaps = {
-      prefix = "<leader>cuu",
+      prefix = "<leader>cUu",
     },
     execution = {
       run_command = "uv run python3",

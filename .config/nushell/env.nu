@@ -159,3 +159,5 @@ $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
 
 # settings for go
 $env.CGO_ENABLED = '1'
+
+$env.NODE_OPTIONS = '--openssl-legacy-provider'

@@ -1,12 +1,17 @@
 {
   "name": "custom-snippets",
   "engines": {
-    "vscode": "^1.82.2"
+    "vscode": "^1.103"
   },
   "contributes": {
     "snippets": [
       {
-        "language": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+        "language": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
         "path": "./antd.json"
       }
     ]

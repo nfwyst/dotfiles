@@ -1,18 +1,3 @@
-local function get_size(offset)
-  local max_width = MAX_WIDTH(offset)
-
-  local min_width = 15
-  if min_width >= max_width then
-    min_width = max_width - 2
-  end
-
-  return {
-    max_width = max_width,
-    min_width = min_width < 0 and 0 or min_width,
-    width = "auto",
-  }
-end
-
 local filters = {
   msg_show = {
     "; after #%d+",
@@ -21,73 +6,41 @@ local filters = {
     "%d more lines",
     "%d+L, %d+B",
     "%d+ lines ",
-    "No lines in buffer",
-    "No information available",
-    "not found:",
-    "hit BOTTOM",
-    "hit TOP",
-    "No fold found",
-    "filetype unknown",
-    "DiagnosticChanged",
-    "Invalid lnum",
-  },
-  notify = {
-    "method textDocument",
-    "Invalid commentstring",
-    "Client %d quit with",
-    "Failed to parse snippet",
-    "This command may require a client extension",
-    "file to the chat",
-    "Done running with ts",
   },
 }
 
-local routes = {}
-for name, msgs in pairs(filters) do
-  local finds = {}
-  for _, msg in ipairs(msgs) do
-    PUSH(finds, { find = msg })
-  end
+local function append_route(routes)
+  for name, msgs in pairs(filters) do
+    local finds = {}
+    for _, msg in ipairs(msgs) do
+      finds[#finds + 1] = { find = msg }
+    end
 
-  PUSH(routes, { filter = { event = name, any = finds } })
+    routes[#routes + 1] = { filter = { event = name, any = finds } }
+  end
 end
 
 return {
   "folke/noice.nvim",
   opts = function(_, opts)
-    local M = require("noice.util.call")
-    function M:log() end
-
     local opt = {
-      routes = routes,
-      lsp = {
-        hover = {
-          silent = false,
-        },
-        progress = {
-          enabled = true,
-        },
-        signature = {
-          auto_open = {
-            enabled = false,
-          },
-        },
-      },
+      routes = append_route(opts.routes or {}),
       views = {
         hover = {
-          scrollbar = false,
+          scrollbar = true,
           border = {
             style = "rounded",
             padding = { 0, 1 },
           },
-          size = get_size(),
+          size = { width = "auto" },
           position = { row = 2, col = 2 },
         },
         cmdline_popup = {
-          size = get_size(4),
+          size = { width = "auto" },
         },
       },
     }
-    return merge(opts, opt)
+
+    return vim.tbl_deep_extend("force", opts, opt)
   end,
 }

@@ -22,13 +22,13 @@ window-padding-balance = true
 window-save-state = always
 background-blur-radius = 10
 background-opacity = 0.95
-custom-shader = shaders/just-snow.glsl
+# custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
-quit-after-last-window-closed = true
-fullscreen = true
+quit-after-last-window-closed = false
+fullscreen = false
 
 # Open float quick terminal on top
-keybind = super+s=toggle_quick_terminal
+keybind = global:super+nine=toggle_quick_terminal
 
 # TMUX integration
 # Go to the N window in tmux in tmux it is Alt+p+number
@@ -40,7 +40,6 @@ keybind = super+five=text:\x1B\x70\x35
 keybind = super+six=text:\x1B\x70\x36
 keybind = super+seven=text:\x1B\x70\x37
 keybind = super+eight=text:\x1B\x70\x38
-keybind = super+nine=text:\x1B\x70\x39
 
 # New tmux window on Cmd+t in tmux it is Alt+p+c
 keybind = super+t=text:\x1B\x70\x63

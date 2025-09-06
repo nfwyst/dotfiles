@@ -12,6 +12,7 @@ history.txt
 todo.md
 .gp.md
 cache
+configstore
 zjframes.rs
 **/zjstatus/target/
 env.lua
@@ -20,3 +21,13 @@ custom-env.zsh
 .gitconfig
 **/zed/conversations/
 **/zed/prompts/
+tmux-power
+tmux-which-key
+tt.*
+.tests
+doc/tags
+debug
+.repro
+foo.*
+*.log
+data

@@ -8,7 +8,7 @@ local config_files = {
 return {
   on_attach = function(client, bufnr)
     -- only git repo go here
-    local config_root = fs.root(bufnr, config_files)
+    local config_root = vim.fs.root(bufnr, config_files)
     if config_root then
       return
     end
