@@ -10,6 +10,15 @@
           "typescriptreact"
         ],
         "path": "./antd.json"
+      },
+      {
+        "language": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "path": "./arco.json"
       }
     ]
   }

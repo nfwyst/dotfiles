@@ -64,7 +64,7 @@ return {
             },
           },
           dictionary = {
-            score_offset = 10,
+            score_offset = 1,
             module = "blink-cmp-dictionary",
             name = "Dict",
             max_items = 2,
@@ -74,22 +74,22 @@ return {
             },
           },
           buffer = {
-            score_offset = 30,
+            score_offset = 5,
             min_keyword_length = 3,
           },
           path = {
-            score_offset = 50,
+            score_offset = 25,
             min_keyword_length = 2,
           },
+          lsp = {
+            score_offset = 125,
+          },
           snippets = {
-            score_offset = 70,
+            score_offset = 625,
             min_keyword_length = 2,
             opts = {
               search_paths = { vim.fn.stdpath("config") .. "/snippets" },
             },
-          },
-          lsp = {
-            score_offset = 70,
           },
         },
       },
