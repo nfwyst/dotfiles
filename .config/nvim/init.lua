@@ -23,6 +23,16 @@ vim.api.nvim_win_set_cursor = function(win, pos)
     return win_set_cursor(win, pos)
   end
 
+  -- not in normal mode
+  if string.sub(vim.api.nvim_get_mode().mode, 1, 1) ~= "n" then
+    return win_set_cursor(win, pos)
+  end
+
+  -- in flash jump mode
+  if flash_active(cur_buf) then
+    return win_set_cursor(win, pos)
+  end
+
   -- buffer not listed
   local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = cur_buf })
   if not buflisted then
@@ -33,11 +43,6 @@ vim.api.nvim_win_set_cursor = function(win, pos)
   local bufname = vim.api.nvim_buf_get_name(cur_buf)
   local matched = string.match(bufname, "^/.*%.[%a]+$")
   if not matched then
-    return win_set_cursor(win, pos)
-  end
-
-  -- in flash jump mode
-  if flash_active(cur_buf) then
     return win_set_cursor(win, pos)
   end
 

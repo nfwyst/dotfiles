@@ -1,6 +1,7 @@
 local lsp_servers = {
   "html",
   "nushell",
+  "emmet_language_server",
   -- "pylyzer",
   -- "ts_ls",
 }
