@@ -55,7 +55,7 @@ return {
       preset = { header = header },
       formats = { header = { align = align } },
     },
-    scroll = { enabled = false },
+    scroll = { enabled = vim.g.snacks_animate },
     lazygit = { enabled = false },
     styles = {
       notification = { wo = { wrap = true } },
