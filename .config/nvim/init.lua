@@ -48,7 +48,7 @@ vim.api.nvim_win_set_cursor = function(win, pos)
 
   vim.defer_fn(function()
     win_set_cursor(win, pos)
-  end, 100)
+  end, 25)
 end
 
 -- bootstrap lazy.nvim, LazyVim and your plugins

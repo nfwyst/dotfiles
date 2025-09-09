@@ -67,9 +67,8 @@ return {
       layout = {
         preset = "vertical",
         layout = {
-          width = 0.98,
-          height = 0.98,
-          position = "top",
+          width = 0.88,
+          height = 0.88,
         },
       },
       formatters = {

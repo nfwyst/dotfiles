@@ -65,6 +65,13 @@ local keymaps = {
     { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
     { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
     { from = "<leader>o", to = ":update<cr> :source<cr>" },
+    {
+      from = "zz",
+      to = function()
+        return "zt" .. math.floor(vim.fn.winheight(0) / 4) .. "<c-y>"
+      end,
+      opt = { expr = true },
+    },
   },
   [{ "n", "x", "s" }] = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
@@ -145,4 +152,61 @@ vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
       pcall(vim.cmd.VimadeFadeActive)
     end)
   end,
+})
+
+local function center_buf(event)
+  local buf = event.buf
+  local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })
+  if not buflisted then
+    return
+  end
+
+  local readable = vim.fn.filereadable(vim.api.nvim_buf_get_name(buf))
+  if not readable then
+    return
+  end
+
+  local win = vim.fn.bufwinid(buf)
+  if not vim.api.nvim_win_is_valid(win) then
+    return
+  end
+
+  local pos = vim.api.nvim_win_get_cursor(win)
+  local row = pos[1]
+  local col = pos[2]
+
+  if vim.b.last_line == nil then
+    vim.b.last_line = row
+  end
+
+  if row ~= vim.b.last_line then
+    local mode = vim.api.nvim_get_mode().mode
+
+    local view = vim.fn.winsaveview()
+
+    local winheight = vim.fn.winheight(win)
+    local scroll_offset = math.floor(winheight / 3)
+    local new_topline = math.max(1, row - scroll_offset)
+
+    view.topline = new_topline
+    vim.fn.winrestview(view)
+
+    if mode:match("^i") then
+      vim.api.nvim_win_set_cursor(win, { row, col })
+    end
+
+    vim.b.last_line = row
+  end
+end
+
+local cursor_moved_group = vim.api.nvim_create_augroup("cursor_is_moved", { clear = true })
+vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+  group = cursor_moved_group,
+  callback = center_buf,
+})
+
+local buffer_entered_group = vim.api.nvim_create_augroup("buffer_entered", { clear = true })
+vim.api.nvim_create_autocmd("BufEnter", {
+  group = buffer_entered_group,
+  callback = center_buf,
 })

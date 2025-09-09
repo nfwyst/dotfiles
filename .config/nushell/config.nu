@@ -1004,3 +1004,9 @@ if not ($custom_env_path | path exists) {
   touch $custom_env_path
   exit
 }
+
+# set delta as diff view
+git config --global core.pager delta
+git config --global interactive.diffFilter 'delta --color-only'
+git config --global delta.navigate true
+git config --global merge.conflictStyle zdiff3

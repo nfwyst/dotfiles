@@ -3,7 +3,7 @@ return {
   event = "VeryLazy",
   opts = {
     fadelevel = 0.7,
-    recipe = { "duo", { animate = true } },
+    recipe = { "duo", { animate = false } },
     tint = {
       bg = { rgb = { 255, 255, 255 }, intensity = 0.2 },
       fg = { rgb = { 255, 255, 255 }, intensity = 0.2 },
