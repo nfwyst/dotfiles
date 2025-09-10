@@ -22,7 +22,8 @@ local function should_show(ctx, prefix)
   end
 
   -- fix trigger state loss
-  local is_prefix_match = ctx.line:match(prefix .. "%w*$") ~= nil
+  local line = ctx.line:sub(1, ctx.cursor[2])
+  local is_prefix_match = line:match(prefix .. "%w*$") ~= nil
   if is_prefix_match then
     return true
   end
