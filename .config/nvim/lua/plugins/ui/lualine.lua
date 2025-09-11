@@ -13,6 +13,7 @@ end
 
 return {
   "nvim-lualine/lualine.nvim",
+  dependencies = { "folke/noice.nvim" },
   opts = function(_, opts)
     local icons = LazyVim.config.icons
 
@@ -112,6 +113,19 @@ return {
 
               return true
             end,
+            padding = { left = 0, right = 0 },
+          },
+          {
+            function()
+              ---@diagnostic disable-next-line: undefined-field
+              local searchcount = require("noice").api.status.search.get()
+              local current, total = searchcount:match("%[(%d+)/(%d+)%]")
+              return " " .. current .. "󰿟" .. total
+            end,
+            ---@diagnostic disable-next-line: undefined-field
+            cond = require("noice").api.status.search.has,
+            color = { fg = "#ff9e64" },
+            padding = { left = 1, right = 0 },
           },
         },
       },

@@ -42,5 +42,8 @@ return {
         size = { width = "auto" },
       },
     },
+    messages = {
+      view_search = false,
+    },
   },
 }
