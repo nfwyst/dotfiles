@@ -54,6 +54,21 @@ local function emoji_trigger()
   return { emoji_prefix }
 end
 
+local SNIPPET = vim.lsp.protocol.CompletionItemKind.Snippet
+local function process_snippet_item(ctx, item)
+  local prev_line = ctx.cursor[1] - 1
+  if not item.trigger_text_modified then
+    item.trigger_text_modified = true
+    item.textEdit = {
+      newText = item.insertText or item.label,
+      range = {
+        start = { line = prev_line, character = ctx.bounds.start_col - 2 },
+        ["end"] = { line = prev_line, character = ctx.cursor[2] },
+      },
+    }
+  end
+end
+
 return {
   "saghen/blink.cmp",
   event = "CmdlineEnter",
@@ -130,7 +145,29 @@ return {
           },
           lsp = {
             score_offset = 125,
-            should_show_items = should_show_items,
+            should_show_items = function(ctx)
+              return not should_show_emoji(ctx)
+            end,
+            override = {
+              get_trigger_characters = function(self)
+                local trigger_characters = self:get_trigger_characters()
+                vim.list_extend(trigger_characters, { snippet_prefix })
+                return trigger_characters
+              end,
+            },
+            transform_items = function(ctx, items)
+              local show_snip = should_show_snippets(ctx)
+              return vim.tbl_filter(function(item)
+                local is_snip = item.kind == SNIPPET
+                if show_snip then
+                  if is_snip then
+                    process_snippet_item(ctx, item)
+                  end
+                  return is_snip
+                end
+                return not is_snip
+              end, items)
+            end,
           },
           snippets = {
             score_offset = 625,
@@ -142,18 +179,8 @@ return {
               end,
             },
             transform_items = function(ctx, items)
-              local prev_line = ctx.cursor[1] - 1
               for _, item in ipairs(items) do
-                if not item.trigger_text_modified then
-                  item.trigger_text_modified = true
-                  item.textEdit = {
-                    newText = item.insertText or item.label,
-                    range = {
-                      start = { line = prev_line, character = ctx.bounds.start_col - 2 },
-                      ["end"] = { line = prev_line, character = ctx.cursor[2] },
-                    },
-                  }
-                end
+                process_snippet_item(ctx, item)
               end
               return items
             end,
