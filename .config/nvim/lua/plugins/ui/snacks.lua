@@ -55,6 +55,9 @@ return {
       preset = { header = header },
       formats = { header = { align = align } },
     },
+    scope = {
+      debounce = 200,
+    },
     scroll = { enabled = vim.g.snacks_animate },
     lazygit = { enabled = false },
     styles = {
