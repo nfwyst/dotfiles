@@ -119,6 +119,24 @@ return {
               trigger = emoji_trigger,
             },
           },
+          snippets = {
+            min_keyword_length = 1,
+            should_show_items = should_show_snippets,
+            override = {
+              get_trigger_characters = function()
+                return { snippet_prefix }
+              end,
+            },
+            transform_items = function(ctx, items)
+              for _, item in ipairs(items) do
+                process_snippet_item(ctx, item)
+              end
+              return items
+            end,
+            opts = {
+              search_paths = { vim.fn.stdpath("config") .. "/snippets" },
+            },
+          },
           dictionary = {
             score_offset = 1,
             module = "blink-cmp-dictionary",
@@ -168,25 +186,6 @@ return {
                 return not is_snip
               end, items)
             end,
-          },
-          snippets = {
-            score_offset = 625,
-            min_keyword_length = 2,
-            should_show_items = should_show_snippets,
-            override = {
-              get_trigger_characters = function()
-                return { snippet_prefix }
-              end,
-            },
-            transform_items = function(ctx, items)
-              for _, item in ipairs(items) do
-                process_snippet_item(ctx, item)
-              end
-              return items
-            end,
-            opts = {
-              search_paths = { vim.fn.stdpath("config") .. "/snippets" },
-            },
           },
         },
       },

@@ -14,6 +14,7 @@ return {
         diagnostics = false,
         truncate_names = false,
         max_prefix_length = 30,
+        always_show_bufferline = true,
         name_formatter = function(buf)
           local name = buf.name or ""
           local path = buf.path or ""

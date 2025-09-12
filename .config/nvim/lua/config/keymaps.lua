@@ -62,7 +62,7 @@ local keymaps = {
     {
       from = "zz",
       to = function()
-        return "zt" .. math.floor(vim.fn.winheight(0) / 4) .. "<c-y>"
+        return "zt" .. math.floor(vim.fn.winheight(0) / 3) .. "<c-y>"
       end,
       opt = { expr = true },
     },
@@ -123,6 +123,96 @@ vim.api.nvim_create_autocmd("User", {
         map.opt.silent = true
         map.opt.noremap = true
         vim.keymap.set(mode, map.from, map.to, map.opt)
+      end
+    end
+  end,
+})
+
+local function remove_qf_normal(row)
+  local start_index = row
+  local count = vim.v.count > 0 and vim.v.count or 1
+  return start_index, count
+end
+
+local function remove_qf_visual(row)
+  local v_start_idx = vim.fn.line("v")
+  local v_end_idx = row
+
+  local start_index = math.min(v_start_idx, v_end_idx)
+  local count = math.abs(v_end_idx - v_start_idx) + 1
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, true, true), "x", false)
+  return start_index, count
+end
+
+local function remove_qf_item(is_normal)
+  return function(qflist, qfwin, pos)
+    local start_index
+    local count
+    if is_normal then
+      start_index, count = remove_qf_normal(pos[1])
+    else
+      start_index, count = remove_qf_visual(pos[1])
+    end
+
+    for _ = 1, count, 1 do
+      table.remove(qflist, start_index)
+    end
+
+    vim.fn.setqflist(qflist, "r")
+    if vim.tbl_isempty(qflist) then
+      return vim.cmd.ccl()
+    end
+
+    vim.api.nvim_win_set_cursor(qfwin, { start_index, pos[2] })
+  end
+end
+
+local qfkeymaps = {
+  n = {
+    {
+      from = "<cr>",
+      to = function(qflist, qfwin, pos)
+        local entry = qflist[pos[1]]
+        if not entry or entry.valid ~= 1 then
+          return
+        end
+        -- open file
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<cr>", true, true, true), "n", false)
+        -- ensure file and quickfix window in correct location
+        vim.schedule(function()
+          local win = vim.fn.bufwinid(entry.bufnr)
+          if vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_win_set_cursor(win, { entry.lnum, entry.col - 1 })
+            vim.api.nvim_win_set_cursor(qfwin, pos)
+          end
+        end)
+      end,
+    },
+    {
+      from = "dd",
+      to = remove_qf_item(true),
+    },
+  },
+  [{ "n", "v" }] = {
+    {
+      from = "d",
+      to = remove_qf_item(),
+    },
+  },
+}
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  callback = function(event)
+    local bufnr = event.buf
+    local qfwin = vim.fn.bufwinid(bufnr)
+    for mode, maps in pairs(qfkeymaps) do
+      for _, map in ipairs(maps) do
+        vim.keymap.set(mode, map.from, function()
+          local qflist = vim.fn.getqflist()
+          local pos = vim.api.nvim_win_get_cursor(qfwin)
+          map.to(qflist, qfwin, pos)
+        end, { silent = true, noremap = true, buffer = bufnr })
       end
     end
   end,
