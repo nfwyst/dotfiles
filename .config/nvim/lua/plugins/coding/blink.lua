@@ -55,7 +55,7 @@ local function emoji_trigger()
 end
 
 local SNIPPET = vim.lsp.protocol.CompletionItemKind.Snippet
-local function process_snippet_item(ctx, item)
+local function set_snippet_item_range(ctx, item)
   local prev_line = ctx.cursor[1] - 1
   if not item.trigger_text_modified then
     item.trigger_text_modified = true
@@ -66,6 +66,12 @@ local function process_snippet_item(ctx, item)
         ["end"] = { line = prev_line, character = ctx.cursor[2] },
       },
     }
+  end
+end
+
+local function update_lsp_item_score_offset(item)
+  if item.client_name == "emmet_language_server" then
+    item.score_offset = item.score_offset + 235
   end
 end
 
@@ -129,7 +135,7 @@ return {
             },
             transform_items = function(ctx, items)
               for _, item in ipairs(items) do
-                process_snippet_item(ctx, item)
+                set_snippet_item_range(ctx, item)
               end
               return items
             end,
@@ -179,10 +185,11 @@ return {
                 local is_snip = item.kind == SNIPPET
                 if show_snip then
                   if is_snip then
-                    process_snippet_item(ctx, item)
+                    set_snippet_item_range(ctx, item)
                   end
                   return is_snip
                 end
+                update_lsp_item_score_offset(item)
                 return not is_snip
               end, items)
             end,
