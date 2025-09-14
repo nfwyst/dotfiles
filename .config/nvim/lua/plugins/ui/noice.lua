@@ -27,6 +27,16 @@ return {
           },
         },
       },
+      {
+        filter = {
+          event = "notify",
+          any = {
+            {
+              find = "No information available",
+            },
+          },
+        },
+      },
     },
     views = {
       hover = {
