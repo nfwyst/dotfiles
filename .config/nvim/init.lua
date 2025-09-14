@@ -41,8 +41,8 @@ vim.api.nvim_win_set_cursor = function(win, pos)
 
   -- buffer is not file
   local bufname = vim.api.nvim_buf_get_name(cur_buf)
-  local matched = string.match(bufname, "^/.*%.[%a]+$")
-  if not matched then
+  local readable = vim.fn.filereadable(bufname)
+  if not readable then
     return win_set_cursor(win, pos)
   end
 

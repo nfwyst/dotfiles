@@ -107,6 +107,12 @@ local keys_to_delete = {
   n = { "gc", "grn", "grr", "gri", "gra", "grt" },
 }
 
+local function set(mode, lhs, rhs, opts)
+  opts = opts or {}
+  vim.list_extend(opts, { silent = true, noremap = true })
+  vim.keymap.set(mode, lhs, rhs, opts)
+end
+
 vim.api.nvim_create_autocmd("User", {
   pattern = "LazyVimKeymaps",
   once = true,
@@ -119,10 +125,7 @@ vim.api.nvim_create_autocmd("User", {
 
     for mode, maps in pairs(keymaps) do
       for _, map in ipairs(maps) do
-        map.opt = map.opt or {}
-        map.opt.silent = true
-        map.opt.noremap = true
-        vim.keymap.set(mode, map.from, map.to, map.opt)
+        set(mode, map.from, map.to, map.opt)
       end
     end
   end,
@@ -208,12 +211,48 @@ vim.api.nvim_create_autocmd("FileType", {
     local qfwin = vim.fn.bufwinid(bufnr)
     for mode, maps in pairs(qfkeymaps) do
       for _, map in ipairs(maps) do
-        vim.keymap.set(mode, map.from, function()
+        set(mode, map.from, function()
           local qflist = vim.fn.getqflist()
           local pos = vim.api.nvim_win_get_cursor(qfwin)
           map.to(qflist, qfwin, pos)
-        end, { silent = true, noremap = true, buffer = bufnr })
+        end, { buffer = bufnr })
       end
     end
+  end,
+})
+
+-- command for creating code snippets in json
+vim.api.nvim_create_user_command("AddQuotes", function(args)
+  local start_line = args.line1
+  local end_line = args.line2
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false)
+  local min_start = math.huge
+  for _, line in ipairs(lines) do
+    local first_non_blank = line:find("%S")
+    if first_non_blank and first_non_blank < min_start then
+      min_start = first_non_blank
+    end
+  end
+
+  for i, line in ipairs(lines) do
+    line = line:gsub('"', "'")
+    local quoted_line = line:sub(1, min_start - 1) .. '"' .. line:sub(min_start)
+    quoted_line = quoted_line .. '"'
+    if i < #lines then
+      quoted_line = quoted_line .. ","
+    end
+
+    lines[i] = quoted_line
+  end
+
+  vim.api.nvim_buf_set_lines(bufnr, start_line - 1, end_line, false, lines)
+end, { range = true })
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "json",
+  callback = function(event)
+    local bufnr = event.buf
+    set("v", '<leader>"', ":AddQuotes<cr>", { buffer = bufnr, desc = "Add Multiple Line Quotes" })
   end,
 })

@@ -6,26 +6,6 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
-local bufread_group = vim.api.nvim_create_augroup("vimade_active", { clear = true })
-vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
-  group = bufread_group,
-  callback = function(event)
-    if not package.loaded.vimade then
-      return
-    end
-
-    local bufnr = event.buf
-    local win = vim.fn.bufwinid(bufnr)
-    if not vim.api.nvim_win_is_valid(win) then
-      return
-    end
-
-    vim.api.nvim_win_call(win, function()
-      pcall(vim.cmd.VimadeFadeActive)
-    end)
-  end,
-})
-
 local function center_buf(event)
   local buf = event.buf
   local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })

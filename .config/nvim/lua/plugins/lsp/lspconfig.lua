@@ -2,8 +2,10 @@ local lsp_servers = {
   "html",
   "nushell",
   "emmet_language_server",
+  "cssmodules_ls",
+  "css_variables",
+  "ts_ls",
   -- "pylyzer",
-  -- "ts_ls",
 }
 
 -- local disabled_lsp_servers = {
@@ -60,6 +62,7 @@ return {
       diagnostics = {
         underline = false,
         virtual_lines = false,
+        virtual_text = { spacing = 0 },
         float = {
           focusable = true,
           style = "minimal",
