@@ -90,6 +90,7 @@ return {
         lua = { "stylua" },
         toml = { "taplo" },
         http = { "kulala-fmt" },
+        nginx = { "nginxfmt" },
         ["_"] = { "trim_whitespace" },
       },
       formatters = {

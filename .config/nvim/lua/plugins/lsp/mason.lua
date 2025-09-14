@@ -10,6 +10,9 @@ return {
       "prettierd",
       "vale",
       "kulala-fmt",
+      "mmdc",
+      "nginx-config-formatter",
+      "uv",
       -- "delve",
     }
 

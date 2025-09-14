@@ -4,6 +4,9 @@ local lsp_servers = {
   "cssmodules_ls",
   "css_variables",
   "ts_ls",
+  "cssls",
+  "nginx_language_server",
+  "solc",
   -- "pylyzer",
 }
 

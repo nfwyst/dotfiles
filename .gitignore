@@ -32,3 +32,4 @@ foo.*
 *.log
 data
 AGENTS.md
+!.config/opencode/AGENTS.md

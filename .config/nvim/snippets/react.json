@@ -1,0 +1,14 @@
+{
+  "react:hoc": {
+    "prefix": "react-hoc",
+    "description": "high order component with additional logic",
+    "body": [
+      "function ${1:with}(Element) {",
+      "  return function ${2:With}(props) {",
+      "    ${3:// additional logic}",
+      "    return <Element {...props} />;",
+      "  };",
+      "}"
+    ]
+  }
+}

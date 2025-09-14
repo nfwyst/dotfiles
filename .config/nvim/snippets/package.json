@@ -28,6 +28,15 @@
           "typescriptreact"
         ],
         "path": "./arco-business.json"
+      },
+      {
+        "language": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "path": "./react.json"
       }
     ]
   }
