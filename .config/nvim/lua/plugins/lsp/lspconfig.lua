@@ -1,6 +1,5 @@
 local lsp_servers = {
   "html",
-  "nushell",
   "emmet_language_server",
   "cssmodules_ls",
   "css_variables",
