@@ -52,7 +52,7 @@ return {
               hint = icons.diagnostics.Hint,
             },
           },
-          { "filetype", icon_only = false, padding = { left = 1, right = 1 } },
+          { "filetype", colored = false, icon_only = false, padding = { left = 1, right = 1 } },
           {
             function()
               if not package.loaded.nomodoro then

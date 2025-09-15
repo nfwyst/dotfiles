@@ -62,7 +62,7 @@ local keymaps = {
     {
       from = "zz",
       to = function()
-        return "zt" .. math.floor(vim.fn.winheight(0) / 3) .. "<c-y>"
+        return "zt" .. (math.floor(vim.fn.winheight(0) / 3) + 2) .. "<c-y>"
       end,
       opt = { expr = true },
     },

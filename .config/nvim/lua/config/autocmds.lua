@@ -37,7 +37,7 @@ local function center_buf(event)
     local view = vim.fn.winsaveview()
 
     local winheight = vim.fn.winheight(win)
-    local scroll_offset = math.floor(winheight / 3) + 4
+    local scroll_offset = math.floor(winheight / 3) + 6
     local new_topline = math.max(1, row - scroll_offset)
 
     view.topline = new_topline

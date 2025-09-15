@@ -60,14 +60,21 @@ return {
       diagnostics = {
         underline = false,
         virtual_lines = false,
-        virtual_text = { spacing = 0 },
+        virtual_text = { spacing = 0, current_line = true },
         float = {
           focusable = true,
           style = "minimal",
           border = "rounded",
           source = "always",
         },
-        signs = false,
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = "",
+            [vim.diagnostic.severity.WARN] = "",
+            [vim.diagnostic.severity.INFO] = "",
+            [vim.diagnostic.severity.HINT] = "󰌶",
+          },
+        },
       },
       capabilities = {
         offset_encoding = "utf-16",
