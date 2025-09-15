@@ -55,5 +55,6 @@ return {
     messages = {
       view_search = false,
     },
+    throttle = 1000 / 120,
   },
 }

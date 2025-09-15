@@ -55,6 +55,7 @@ return {
       preset = { header = header },
       formats = { header = { align = align } },
     },
+    animate = { fps = 120 },
     scope = {
       debounce = 60,
     },

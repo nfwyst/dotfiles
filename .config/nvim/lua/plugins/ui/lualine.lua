@@ -2,7 +2,7 @@ local function lsp_info()
   local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
   local names = {}
   for _, client in pairs(clients) do
-    names[#names + 1] = client.name
+    names[#names + 1] = client.name:match("([^_]+)")
   end
   local result = table.concat(names, "•")
   if result == "" then
