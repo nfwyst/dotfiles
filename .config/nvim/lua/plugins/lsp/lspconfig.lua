@@ -30,11 +30,7 @@ local function override(servers)
       settings = {}
     end
 
-    servers[name] = vim.tbl_deep_extend("force", servers[name] or {}, settings, {
-      on_init = function(client)
-        client.offset_encoding = "utf-8"
-      end,
-    })
+    servers[name] = vim.tbl_deep_extend("force", servers[name] or {}, settings)
   end
 
   -- for _, name in ipairs(disabled_lsp_servers) do
@@ -72,6 +68,9 @@ return {
           source = "always",
         },
         signs = false,
+      },
+      capabilities = {
+        offset_encoding = "utf-16",
       },
     }
 
