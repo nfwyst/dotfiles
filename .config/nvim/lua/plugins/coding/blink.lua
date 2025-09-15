@@ -12,15 +12,8 @@ local function get_by_cmdtype(search_val, cmd_val, default)
 end
 
 local cancel = { "cancel", "fallback" }
-
 local snippet_prefix = ";"
 local emoji_prefix = ":"
-
-local function prefix_with(prefix, ctx)
-  local line = ctx.line:sub(1, ctx.cursor[2])
-  return line:match(prefix .. "%w*$") ~= nil
-end
-
 local function should_show(ctx, prefix)
   -- dont show in command line mode
   if ctx.mode == "cmdline" then
@@ -28,7 +21,8 @@ local function should_show(ctx, prefix)
   end
 
   -- fix trigger state loss
-  if prefix_with(prefix, ctx) then
+  local line = ctx.line:sub(1, ctx.cursor[2])
+  if line:match(prefix .. "%w*$") ~= nil then
     return true
   end
 
@@ -174,7 +168,16 @@ return {
           lsp = {
             score_offset = 125,
             should_show_items = function(ctx)
-              return not should_show_emoji(ctx) and not prefix_with("{", ctx) and not prefix_with("}", ctx)
+              local filetype = vim.bo[ctx.bufnr].filetype
+              -- dont show when only left bracket before cursor in styles file
+              if vim.tbl_contains({ "css", "less", "scss" }, filetype) then
+                local col = ctx.cursor[2]
+                if "{" == ctx.line:sub(col, col) then
+                  return false
+                end
+              end
+
+              return not should_show_emoji(ctx)
             end,
             override = {
               get_trigger_characters = function(self)
