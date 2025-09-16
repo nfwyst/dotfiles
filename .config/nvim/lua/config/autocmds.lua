@@ -51,14 +51,12 @@ local function center_buf(event)
   end
 end
 
-local cursor_moved_group = vim.api.nvim_create_augroup("cursor_is_moved", { clear = true })
 vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-  group = cursor_moved_group,
+  group = vim.api.nvim_create_augroup("cursor_is_moved", { clear = true }),
   callback = center_buf,
 })
 
-local buffer_entered_group = vim.api.nvim_create_augroup("buffer_entered", { clear = true })
 vim.api.nvim_create_autocmd("BufEnter", {
-  group = buffer_entered_group,
+  group = vim.api.nvim_create_augroup("buffer_entered", { clear = true }),
   callback = center_buf,
 })

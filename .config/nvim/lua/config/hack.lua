@@ -64,3 +64,15 @@ vim.diagnostic.goto_prev = function(opt)
   opt.float = false
   prev(opt)
 end
+
+-- fix indent guide not work for creating new file
+vim.api.nvim_create_autocmd("BufNewFile", {
+  group = vim.api.nvim_create_augroup("is_new_file", { clear = true }),
+  callback = function(event)
+    local bufnr = event.buf
+    if not vim.b[bufnr].is_new_file_fixed then
+      Snacks.indent.enable()
+    end
+    vim.b[bufnr].is_new_file_fixed = true
+  end,
+})

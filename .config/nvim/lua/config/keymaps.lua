@@ -115,6 +115,7 @@ end
 
 vim.api.nvim_create_autocmd("User", {
   pattern = "LazyVimKeymaps",
+  group = vim.api.nvim_create_augroup("is_lazyvim_keymap_done", { clear = true }),
   once = true,
   callback = function()
     for mode, keys in pairs(keys_to_delete) do
@@ -206,6 +207,7 @@ local qfkeymaps = {
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "qf",
+  group = vim.api.nvim_create_augroup("is_filetype_qf", { clear = true }),
   callback = function(event)
     local bufnr = event.buf
     local qfwin = vim.fn.bufwinid(bufnr)
@@ -251,6 +253,7 @@ end, { range = true })
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "json",
+  group = vim.api.nvim_create_augroup("is_filetype_json", { clear = true }),
   callback = function(event)
     local bufnr = event.buf
     set("v", '<leader>"', ":AddQuotes<cr>", { buffer = bufnr, desc = "Add Multiple Line Quotes" })
