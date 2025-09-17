@@ -80,14 +80,15 @@ return {
   dependencies = {
     "moyiz/blink-emoji.nvim",
     "Kaiser-Yang/blink-cmp-dictionary",
+    "disrupted/blink-cmp-conventional-commits",
+    "ph1losof/ecolog.nvim",
+    "alexandre-abrioux/blink-cmp-npm.nvim",
   },
   keys = {
     { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
   },
   opts = function(_, opts)
-    local default_sources = opts.sources.default or {}
-    default_sources[#default_sources + 1] = "emoji"
-    default_sources[#default_sources + 1] = "dictionary"
+    vim.list_extend(opts.sources.default, { "conventional_commits", "npm", "ecolog", "emoji", "dictionary" })
 
     local opt = {
       completion = {
@@ -111,7 +112,6 @@ return {
       },
       signature = { window = { border = "rounded" } },
       sources = {
-        default = default_sources,
         providers = {
           emoji = {
             module = "blink-emoji",
@@ -164,6 +164,29 @@ return {
               label_trailing_slash = true,
               show_hidden_files_by_default = true,
             },
+          },
+          conventional_commits = {
+            name = "Commits",
+            score_offset = 25,
+            module = "blink-cmp-conventional-commits",
+            enabled = function()
+              return vim.bo.filetype == "gitcommit"
+            end,
+          },
+          npm = {
+            name = "npm",
+            module = "blink-cmp-npm",
+            async = true,
+            score_offset = 25,
+            enabled = function()
+              return vim.bo.filetype == "json"
+            end,
+          },
+          ecolog = {
+            name = "ecolog",
+            score_offset = 125,
+            module = "ecolog.integrations.cmp.blink_cmp",
+            should_show_items = should_show_items,
           },
           lsp = {
             score_offset = 125,

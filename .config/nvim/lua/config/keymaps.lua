@@ -109,8 +109,7 @@ local keys_to_delete = {
 
 local function set(mode, lhs, rhs, opts)
   opts = opts or {}
-  vim.list_extend(opts, { silent = true, noremap = true })
-  vim.keymap.set(mode, lhs, rhs, opts)
+  vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", opts, { silent = true, noremap = true }))
 end
 
 vim.api.nvim_create_autocmd("User", {

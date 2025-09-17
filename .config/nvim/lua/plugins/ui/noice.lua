@@ -24,6 +24,9 @@ return {
             {
               find = "%d+ lines ",
             },
+            {
+              find = "Installed %d+/%d+ languages",
+            },
           },
         },
       },
