@@ -1,15 +1,33 @@
-theme = tokyonight-storm
-
-adjust-cell-height = 10%
+# init command
 initial-command = /opt/homebrew/bin/tmux new -A -s work
 command = env SNACKS_KITTY="1" TERMINAL="ghostty" XDG_CONFIG_HOME="$HOME/.config" XDG_BIN_HOME="$HOME/.local/bin" XDG_DATA_HOME="$HOME/.local/share" GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig" /opt/homebrew/bin/nu
+# font
+font-family = "0xProto Nerd Font Mono"
+font-size = 18
+font-thicken = true
+window-inherit-font-size = true
+adjust-cell-height = 20%
+# looks and feel
+theme = TokyoNight
+adjust-cursor-thickness = 3
+adjust-underline-position = 3
+bold-is-bright = true
+cursor-invert-fg-bg = true
+cursor-opacity = 0.95
+cursor-style = bar
+link-url = true
+window-vsync = true
+background-blur = true
+background-blur-radius = 20
+background-opacity = 0.95
+custom-shader-animation = always
+custom-shader = shaders/cursor_blaze.glsl
+# other
+clipboard-paste-protection = true
+clipboard-trim-trailing-spaces = true
 copy-on-select = true
-font-family = "0xProto Nerd Font"
-font-size = 16
-font-style = Italic SemiBold
-font-style-bold = Italic ExtraBold
-font-style-italic = Italic SemiBold
-font-style-bold-italic = Italic ExtraBold
+macos-auto-secure-input = true
+macos-secure-input-indication = true
 mouse-hide-while-typing = true
 macos-non-native-fullscreen=visible-menu
 macos-option-as-alt = true
@@ -20,9 +38,6 @@ window-padding-x = 0
 window-padding-color = extend
 window-padding-balance = true
 window-save-state = always
-background-blur-radius = 20
-background-opacity = 0.95
-# custom-shader = shaders/just-snow.glsl
 confirm-close-surface = false
 quit-after-last-window-closed = false
 fullscreen = false
