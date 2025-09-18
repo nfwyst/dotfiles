@@ -1,5 +1,9 @@
 return {
   "folke/which-key.nvim",
+  keys = {
+    { "<leader>cU", "", desc = "utils" },
+    { "gc", "", desc = "Toggle comment" },
+  },
   opts = {
     preset = "classic",
     keys = {
@@ -27,12 +31,4 @@ return {
       },
     },
   },
-  config = function(_, opts)
-    local wk = require("which-key")
-    wk.add({
-      { "<leader>cU", group = "utils" },
-      { "gc", group = "Toggle comment" },
-    })
-    wk.setup(opts)
-  end,
 }

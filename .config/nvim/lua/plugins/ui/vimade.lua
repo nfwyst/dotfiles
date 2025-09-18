@@ -4,7 +4,7 @@ return {
   config = function()
     require("vimade").setup({
       fadelevel = 0.7,
-      recipe = { "duo", { animate = false } },
+      recipe = { "duo", { animate = vim.g.snacks_animate } },
       tint = {
         bg = { rgb = { 255, 255, 255 }, intensity = 0.2 },
         fg = { rgb = { 255, 255, 255 }, intensity = 0.2 },

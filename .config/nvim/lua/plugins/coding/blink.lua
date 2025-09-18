@@ -75,7 +75,6 @@ end
 
 return {
   "saghen/blink.cmp",
-  event = "CmdlineEnter",
   build = "cargo build --release",
   dependencies = {
     "moyiz/blink-emoji.nvim",

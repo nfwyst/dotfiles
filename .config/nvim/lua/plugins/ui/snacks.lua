@@ -55,17 +55,15 @@ return {
       preset = { header = header },
       formats = { header = { align = align } },
     },
-    animate = { fps = 120 },
-    scope = {
-      debounce = 60,
-    },
-    scroll = { enabled = vim.g.snacks_animate },
+    animate = { enabled = vim.g.snacks_animate, fps = 120 },
+    scope = { debounce = 45 },
+    scroll = { enabled = false },
     lazygit = { enabled = false },
     styles = {
       notification = { wo = { wrap = true } },
       terminal = { wo = { winbar = "" } },
     },
-    dim = { enabled = true, animate = { enabled = vim.g.snacks_animate } },
+    dim = { enabled = true },
     image = { enabled = true },
     picker = {
       layout = {
@@ -81,5 +79,6 @@ return {
         },
       },
     },
+    quickfile = { enabled = false },
   },
 }
