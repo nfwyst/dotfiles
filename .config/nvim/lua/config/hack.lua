@@ -1,3 +1,4 @@
+-- detect flash in progress
 local function flash_active(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local nss = vim.api.nvim_get_namespaces()
@@ -9,7 +10,24 @@ local function flash_active(bufnr)
   return #marks > 0
 end
 
--- fix cursor set failed
+-- filter some diagnostics
+local set = vim.diagnostic.set
+local black_list = {
+  { source = "eslint_d", message = "Definition for rule" },
+}
+vim.diagnostic.set = function(ns, bufnr, diagnostics, opts)
+  local results = vim.tbl_filter(function(diagnostic)
+    for _, black_item in ipairs(black_list) do
+      if string.match(diagnostic.message, black_item.message) and diagnostic.source == black_item.source then
+        return false
+      end
+    end
+    return true
+  end, diagnostics)
+  set(ns, bufnr, results, opts)
+end
+
+-- FIXME: fix cursor set failed
 local win_set_cursor = vim.api.nvim_win_set_cursor
 vim.api.nvim_win_set_cursor = function(win, pos)
   local cur_win = vim.api.nvim_get_current_win()
@@ -51,7 +69,7 @@ vim.api.nvim_win_set_cursor = function(win, pos)
   end, 25)
 end
 
--- fix goto next/prev diagnostic window flashed by
+-- FIXME: fix goto next/prev diagnostic window flashed by
 local next = vim.diagnostic.goto_next
 local prev = vim.diagnostic.goto_prev
 vim.diagnostic.goto_next = function(opt)
@@ -65,7 +83,7 @@ vim.diagnostic.goto_prev = function(opt)
   prev(opt)
 end
 
--- fix indent guide not work for creating new file
+-- FIXME: fix indent guide not work for creating new file
 vim.api.nvim_create_autocmd("BufNewFile", {
   group = vim.api.nvim_create_augroup("is_new_file", { clear = true }),
   callback = function(event)
