@@ -101,8 +101,7 @@ return {
               newfile = "[New]",
             },
             color = {
-              bg = "#1c1f30",
-              fg = "#5975C5",
+              fg = "#04d1f9",
             },
             cond = function()
               local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
