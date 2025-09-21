@@ -61,12 +61,6 @@ local keymaps = {
     { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
     { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
     { from = "<leader>o", to = ":update<cr> :source<cr>" },
-    {
-      from = "zz",
-      to = function()
-        util.center_buf(vim.api.nvim_get_current_buf(), true)
-      end,
-    },
   },
   [{ "n", "x", "s" }] = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },

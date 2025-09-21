@@ -6,14 +6,11 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
-local util = require("config.util")
-local delay_center_events = { "BufEnter" }
-local event_duration = { BufEnter = 0 }
-
 vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "BufEnter" }, {
   group = vim.api.nvim_create_augroup("cursor_is_moved", { clear = true }),
-  callback = function(event)
-    local event_name = event.event
-    util.center_buf(event.buf, vim.list_contains(delay_center_events, event_name), event_duration[event_name])
+  callback = function()
+    if string.sub(vim.api.nvim_get_mode().mode, 1, 1) == "n" then
+      vim.cmd("normal! zz")
+    end
   end,
 })

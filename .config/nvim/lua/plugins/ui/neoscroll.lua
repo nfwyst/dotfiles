@@ -1,4 +1,3 @@
-local util = require("config.util")
 local scrolloff = vim.o.scrolloff
 
 return {
@@ -9,7 +8,7 @@ return {
     end,
     post_hook = function()
       vim.o.scrolloff = scrolloff
-      util.center_buf(vim.api.nvim_get_current_buf(), true)
+      vim.cmd("normal! zz")
     end,
   },
 }
