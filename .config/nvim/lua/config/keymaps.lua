@@ -176,11 +176,10 @@ local qfkeymaps = {
         end
         -- open file
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<cr>", true, true, true), "n", false)
-        -- ensure file and quickfix window in correct location
+        -- ensure quickfix window in right location
         vim.schedule(function()
           local win = vim.fn.bufwinid(entry.bufnr)
           if vim.api.nvim_win_is_valid(win) then
-            vim.api.nvim_win_set_cursor(win, { entry.lnum, entry.col - 1 })
             vim.api.nvim_win_set_cursor(qfwin, pos)
           end
         end)
