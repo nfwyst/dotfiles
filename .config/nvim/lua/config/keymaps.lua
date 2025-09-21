@@ -1,6 +1,8 @@
 -- Keymaps are automatically loaded on the VeryLazy event
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
+local util = require("config.util")
+
 local function get_resizer(is_increase, is_vertical)
   return function()
     local delta = is_increase and "+2" or "-2"
@@ -62,9 +64,8 @@ local keymaps = {
     {
       from = "zz",
       to = function()
-        return "zt" .. (math.floor(vim.fn.winheight(0) / 3) + 2) .. "<c-y>"
+        util.center_buf(vim.api.nvim_get_current_buf(), true)
       end,
-      opt = { expr = true },
     },
   },
   [{ "n", "x", "s" }] = {
@@ -223,33 +224,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- command for creating code snippets in json
-vim.api.nvim_create_user_command("AddQuotes", function(args)
-  local start_line = args.line1
-  local end_line = args.line2
-  local bufnr = vim.api.nvim_get_current_buf()
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false)
-  local min_start = math.huge
-  for _, line in ipairs(lines) do
-    local first_non_blank = line:find("%S")
-    if first_non_blank and first_non_blank < min_start then
-      min_start = first_non_blank
-    end
-  end
-
-  for i, line in ipairs(lines) do
-    line = line:gsub('"', "'")
-    local quoted_line = line:sub(1, min_start - 1) .. '"' .. line:sub(min_start)
-    quoted_line = quoted_line .. '"'
-    if i < #lines then
-      quoted_line = quoted_line .. ","
-    end
-
-    lines[i] = quoted_line
-  end
-
-  vim.api.nvim_buf_set_lines(bufnr, start_line - 1, end_line, false, lines)
-end, { range = true })
-
+vim.api.nvim_create_user_command("AddQuotes", util.format_snippet_json, { range = true })
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "json",
   group = vim.api.nvim_create_augroup("is_filetype_json", { clear = true }),

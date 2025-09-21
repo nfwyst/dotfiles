@@ -17,7 +17,7 @@ return {
     }
 
     for _, name in ipairs(opts.ensure_installed) do
-      if name ~= "hadolint" and not vim.tbl_contains(ensure_installed, name) then
+      if name ~= "hadolint" and not vim.list_contains(ensure_installed, name) then
         ensure_installed[#ensure_installed + 1] = name
       end
     end

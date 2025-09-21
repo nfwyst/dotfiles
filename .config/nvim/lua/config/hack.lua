@@ -14,6 +14,9 @@ end
 local set = vim.diagnostic.set
 local black_list = {
   { source = "eslint_d", message = "Definition for rule" },
+  { source = "eslint_d", message = "Could not find config file" },
+  { source = "eslint_d", message = "File ignored" },
+  { source = "ts", message = "File is a CommonJS module" },
 }
 vim.diagnostic.set = function(ns, bufnr, diagnostics, opts)
   local results = vim.tbl_filter(function(diagnostic)

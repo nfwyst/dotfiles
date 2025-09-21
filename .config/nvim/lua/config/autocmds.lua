@@ -6,57 +6,14 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
-local function center_buf(event)
-  local buf = event.buf
-  local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })
-  if not buflisted then
-    return
-  end
+local util = require("config.util")
+local delay_center_events = { "BufEnter" }
+local event_duration = { BufEnter = 0 }
 
-  local readable = vim.fn.filereadable(vim.api.nvim_buf_get_name(buf))
-  if not readable then
-    return
-  end
-
-  local win = vim.fn.bufwinid(buf)
-  if not vim.api.nvim_win_is_valid(win) then
-    return
-  end
-
-  local pos = vim.api.nvim_win_get_cursor(win)
-  local row = pos[1]
-  local col = pos[2]
-
-  if vim.b.last_line == nil then
-    vim.b.last_line = row
-  end
-
-  if row ~= vim.b.last_line then
-    local mode = vim.api.nvim_get_mode().mode
-
-    local view = vim.fn.winsaveview()
-
-    local winheight = vim.fn.winheight(win)
-    local scroll_offset = math.floor(winheight / 3) + 6
-    local new_topline = math.max(1, row - scroll_offset)
-
-    view.topline = new_topline
-    vim.fn.winrestview(view)
-
-    if mode:match("^i") then
-      vim.api.nvim_win_set_cursor(win, { row, col })
-    end
-
-    vim.b.last_line = row
-  end
-end
-
-vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "BufEnter" }, {
   group = vim.api.nvim_create_augroup("cursor_is_moved", { clear = true }),
-  callback = center_buf,
-})
-
-vim.api.nvim_create_autocmd("BufEnter", {
-  group = vim.api.nvim_create_augroup("buffer_entered", { clear = true }),
-  callback = center_buf,
+  callback = function(event)
+    local event_name = event.event
+    util.center_buf(event.buf, vim.list_contains(delay_center_events, event_name), event_duration[event_name])
+  end,
 })

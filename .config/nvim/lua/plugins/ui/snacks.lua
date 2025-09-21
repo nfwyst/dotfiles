@@ -48,6 +48,14 @@ if handle then
   header = table.concat(lines, "\n")
 end
 
+local exclude = {
+  "**/.git/*",
+  "node_modules",
+  "dist",
+  "log",
+  ".vscode",
+}
+
 return {
   "folke/snacks.nvim",
   opts = {
@@ -66,6 +74,9 @@ return {
     dim = { enabled = true },
     image = { enabled = true },
     picker = {
+      hidden = true,
+      ignored = true,
+      exclude = exclude,
       layout = {
         preset = "vertical",
         layout = {
@@ -76,6 +87,27 @@ return {
       formatters = {
         file = {
           truncate = 160,
+        },
+      },
+      sources = {
+        files = {
+          hidden = true,
+          ignored = true,
+          exclude = exclude,
+        },
+      },
+      win = {
+        input = {
+          keys = {
+            ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+            ["<c-l>"] = { "toggle_ignored", mode = { "i", "n" } },
+          },
+        },
+        list = {
+          keys = {
+            ["<c-h>"] = "toggle_hidden",
+            ["<c-l>"] = "toggle_ignored",
+          },
         },
       },
     },

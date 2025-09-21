@@ -1,27 +1,8 @@
-local function get_jest_config_path(from)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local bufinfo = vim.fn.getbufinfo(bufnr)[0]
-  if not from and bufinfo.listed then
-    from = bufinfo.name
-  end
-  local path_wraper = vim.fs.find({
-    "jest.config.js",
-    "jest.config.ts",
-    "jest.config.mjs",
-    "jest.config.cjs",
-    "jest.config.json",
-    "package.json",
-  }, {
-    upward = true,
-    path = from,
-    stop = vim.fn.expand("~"),
-    limit = 1,
-  })
-  return path_wraper[1]
-end
-
+local util = require("config.util")
+local constant = require("config.constant")
 local pkg_name = "npm"
 local pkgs = { "bun", "pnpm", "yarn" }
+
 for _, pkg in ipairs(pkgs) do
   if vim.fn.executable(pkg) == 1 then
     pkg_name = pkg
@@ -50,9 +31,11 @@ return {
     adapters[#adapters + 1] = require("neotest-jest")({
       env = { CI = true },
       jestCommand = pkg_name .. " run test --no-watch --no-watchAll",
-      jestConfigFile = get_jest_config_path,
+      jestConfigFile = function(filepath)
+        return util.get_file_path(constant.JEST, filepath)
+      end,
       cwd = function(filepath)
-        local confpath = get_jest_config_path(filepath)
+        local confpath = util.get_file_path(constant.JEST, filepath)
         if confpath then
           return vim.fs.dirname(confpath)
         end

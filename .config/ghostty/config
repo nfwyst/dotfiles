@@ -3,7 +3,7 @@ initial-command = /opt/homebrew/bin/tmux new -A -s work
 command = env SNACKS_KITTY="1" TERMINAL="ghostty" XDG_CONFIG_HOME="$HOME/.config" XDG_BIN_HOME="$HOME/.local/bin" XDG_DATA_HOME="$HOME/.local/share" GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig" /opt/homebrew/bin/nu
 # font
 font-family = "0xProto Nerd Font"
-font-size = 15
+font-size = 17
 font-thicken = true
 window-inherit-font-size = true
 adjust-cell-height = 20%
@@ -97,11 +97,3 @@ keybind = super+m=text:\x1B\x70\x20
 
 # Enter tmux copy mode. in tmux it is Alt+p+[
 keybind = super+[=text:\x1B\x70\x5B
-
-# set env TODO: wait for v1.2 release
-# env = SNACKS_KITTY="1"
-# env = TERMINAL="ghostty"
-# env = XDG_CONFIG_HOME="$HOME/.config"
-# env = XDG_BIN_HOME="$HOME/.local/bin"
-# env = XDG_DATA_HOME="$HOME/.local/share"
-# env = GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig"

@@ -1,10 +1,10 @@
 local function get_by_cmdtype(search_val, cmd_val, default)
   local cmdtype = vim.fn.getcmdtype()
-  if vim.tbl_contains({ "/", "?" }, cmdtype) then
+  if vim.list_contains({ "/", "?" }, cmdtype) then
     return search_val
   end
 
-  if vim.tbl_contains({ ":", "@" }, cmdtype) then
+  if vim.list_contains({ ":", "@" }, cmdtype) then
     return cmd_val
   end
 
@@ -192,7 +192,7 @@ return {
             should_show_items = function(ctx)
               local filetype = vim.bo[ctx.bufnr].filetype
               -- dont show when only left bracket before cursor in styles file
-              if vim.tbl_contains({ "css", "less", "scss" }, filetype) then
+              if vim.list_contains({ "css", "less", "scss" }, filetype) then
                 local col = ctx.cursor[2]
                 if "{" == ctx.line:sub(col, col) then
                   return false
