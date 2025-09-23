@@ -1,6 +1,10 @@
+local util = require("config.util")
+
 return {
   "nvim-neo-tree/neo-tree.nvim",
   opts = function(_, opts)
+    util.set_hl("NeoTreeMessage gui=italic")
+
     local opt = {
       hide_root_node = true,
       log_level = "fatal",
@@ -38,8 +42,6 @@ return {
         },
       },
     }
-
-    vim.cmd.hi("NeoTreeMessage gui=italic guifg=#4a4d68")
 
     return vim.tbl_deep_extend("force", opts, opt)
   end,

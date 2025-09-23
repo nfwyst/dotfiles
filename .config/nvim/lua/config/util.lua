@@ -1,20 +1,44 @@
 local M = {}
 
+function M.has_eslint_config(package_json_path)
+  local _, content = pcall(vim.fn.readfile, package_json_path)
+  if not content then
+    return false
+  end
+
+  local package_json = table.concat(content, "\n")
+  local _, parsed = pcall(vim.fn.json_decode, package_json)
+  if not parsed then
+    return false
+  end
+
+  return parsed.eslintConfig ~= nil
+end
+
 function M.get_file_path(fienames, start_path)
   local bufnr = vim.api.nvim_get_current_buf()
+  local stop_home = vim.fn.expand("~")
   local buflisted = vim.bo[bufnr].buflisted
   if not start_path and buflisted then
     start_path = vim.api.nvim_buf_get_name(bufnr)
   end
 
-  local path_wraper = vim.fs.find(fienames, {
+  local target_path = vim.fs.find(fienames, {
     upward = true,
     path = start_path,
-    stop = vim.fn.expand("~"),
+    stop = stop_home,
     limit = 1,
-  })
+  })[1]
 
-  return path_wraper[1]
+  if target_path and target_path:match("package%.json$") then
+    local has_eslint_config = M.has_eslint_config(target_path)
+    local parent_dir = vim.fs.dirname(vim.fs.dirname(target_path))
+    if not has_eslint_config and parent_dir ~= stop_home then
+      return M.get_file_path(fienames, parent_dir)
+    end
+  end
+
+  return target_path
 end
 
 function M.format_snippet_json(args)
@@ -42,6 +66,16 @@ function M.format_snippet_json(args)
   end
 
   vim.api.nvim_buf_set_lines(bufnr, start_line - 1, end_line, false, lines)
+end
+
+function M.set_hl(hl, delay)
+  if not delay then
+    return vim.cmd.hi(hl)
+  end
+
+  vim.schedule(function()
+    vim.cmd.hi(hl)
+  end)
 end
 
 return M

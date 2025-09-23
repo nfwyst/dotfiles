@@ -194,7 +194,7 @@ return {
               -- dont show when only left bracket before cursor in styles file
               if vim.list_contains({ "css", "less", "scss" }, filetype) then
                 local col = ctx.cursor[2]
-                if "{" == ctx.line:sub(col, col) then
+                if vim.list_contains({ "{", "}" }, ctx.line:sub(col, col)) then
                   return false
                 end
               end

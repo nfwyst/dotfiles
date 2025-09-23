@@ -1,3 +1,4 @@
+local util = require("config.util")
 local lsp_servers = {
   "html",
   "emmet_language_server",
@@ -7,15 +8,15 @@ local lsp_servers = {
   "cssls",
   "nginx_language_server",
   "solc",
+  "vtsls",
   -- "pylyzer",
 }
 
--- local disabled_lsp_servers = {
---   "vtsls",
---   "pyright",
---   "basedpyright",
---   "tsserver",
--- }
+local disabled_lsp_servers = {
+  "tsserver",
+  --   "pyright",
+  --   "basedpyright",
+}
 
 local function override(servers)
   local windows = require("lspconfig.ui.windows")
@@ -33,9 +34,9 @@ local function override(servers)
     servers[name] = vim.tbl_deep_extend("force", servers[name] or {}, settings)
   end
 
-  -- for _, name in ipairs(disabled_lsp_servers) do
-  --   servers[name] = nil
-  -- end
+  for _, name in ipairs(disabled_lsp_servers) do
+    servers[name] = nil
+  end
 
   vim.list_extend(keys, {
     { "K", false },
@@ -56,6 +57,8 @@ return {
   "neovim/nvim-lspconfig",
   opts = function(_, opts)
     override(opts.servers)
+    util.set_hl("LspInlayHint gui=italic")
+
     local opt = {
       diagnostics = {
         underline = false,
@@ -76,6 +79,7 @@ return {
           },
         },
       },
+      inlay_hints = { enabled = true },
       capabilities = {
         offset_encoding = "utf-16",
       },

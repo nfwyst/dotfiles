@@ -1,6 +1,10 @@
+local util = require("config.util")
+
 return {
   "akinsho/bufferline.nvim",
   opts = function(_, opts)
+    util.set_hl("BufferLineBufferSelected cterm=italic gui=italic")
+
     local offsets = opts.options.offsets or {}
     for _, offset in ipairs(offsets) do
       if offset.filetype == "neo-tree" then

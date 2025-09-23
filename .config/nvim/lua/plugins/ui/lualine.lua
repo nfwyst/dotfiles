@@ -38,7 +38,7 @@ return {
         },
         lualine_c = {
           LazyVim.lualine.root_dir(),
-          lsp_info,
+          { lsp_info, padding = { left = 0, right = 0 } },
           {
             "diagnostics",
             update_in_insert = false,
@@ -51,8 +51,8 @@ return {
               info = icons.diagnostics.Info,
               hint = icons.diagnostics.Hint,
             },
+            padding = { left = 0, right = 0 },
           },
-          { "filetype", colored = false, icon_only = false, padding = { left = 1, right = 1 } },
           {
             function()
               if not package.loaded.nomodoro then
@@ -69,10 +69,11 @@ return {
 
               return color
             end,
-            padding = { left = 0, right = 1 },
+            padding = { left = 0, right = 0 },
           },
         },
         lualine_y = {
+          { "filetype", colored = false, icon_only = false, padding = { left = 0, right = 0 } },
           {
             function()
               return "󱁐:" .. vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
@@ -102,6 +103,7 @@ return {
             },
             color = {
               fg = "#04d1f9",
+              gui = "italic",
             },
             cond = function()
               local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())

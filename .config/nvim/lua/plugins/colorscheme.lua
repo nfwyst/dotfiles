@@ -1,3 +1,5 @@
+local util = require("config.util")
+
 return {
   {
     "loctvl842/monokai-pro.nvim",
@@ -26,6 +28,9 @@ return {
         hl.TabLineFill = {
           bg = c.none,
         }
+
+        util.set_hl("NeoTreeMessage guifg=#585b7b", true)
+        util.set_hl("LspInlayHint guibg=#0e1018", true)
       end,
       styles = {
         sidebars = "transparent",
