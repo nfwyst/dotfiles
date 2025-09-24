@@ -139,6 +139,15 @@ starship init nu | save -f ~/.config/nushell/cache/starship/init.nu
 mkdir ~/.config/nushell/cache/zoxide
 zoxide init nushell | save -f ~/.config/nushell/cache/zoxide/init.nu
 
+# prepare for carapace
+$env.CARAPACE_BRIDGES = 'zsh,bash,inshellisense'
+mkdir ~/.config/nushell/cache/carapace
+carapace _carapace nushell | save -f ~/.config/nushell/cache/carapace/init.nu
+
+# prepare for atuin
+mkdir ~/.config/nushell/cache/atuin
+atuin init nu | save -f ~/.config/nushell/cache/atuin/init.nu
+
 # load fnm env
 if (which fnm | is-not-empty) {
   fnm env --json | from json | load-env

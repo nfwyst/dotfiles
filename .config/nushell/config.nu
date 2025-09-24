@@ -196,7 +196,7 @@ $env.config = {
     }
 
     history: {
-        max_size: 512 # Session has to be reloaded for this to take effect
+        max_size: 100000 # Session has to be reloaded for this to take effect
         sync_on_enter: true # Enable to share history between multiple sessions, else you have to close the session to write history to file
         file_format: "plaintext" # "sqlite" or "plaintext"
         isolation: false # only available with sqlite file_format. true enables history isolation, false disables it. true will allow the history to be isolated to the current session using up/down arrows. false will allow the history to be shared across all sessions.
@@ -209,7 +209,7 @@ $env.config = {
         algorithm: "prefix"    # prefix or fuzzy
         external: {
             enable: true # set to false to prevent nushell looking into $env.PATH to find more suggestions, `false` recommended for WSL users as this look up may be very slow
-            max_results: 25 # setting it lower can improve completion performance at the cost of omitting some options
+            max_results: 100 # setting it lower can improve completion performance at the cost of omitting some options
             completer: null # check 'carapace_completer' above as an example
         }
         use_ls_colors: true # set this to true to enable file/path/directory completions using LS_COLORS
@@ -908,6 +908,12 @@ source ~/.config/nushell/cache/zoxide/init.nu
 
 # load git alias
 source ~/.config/nushell/aliases/git.nu
+
+# integration with carapace
+source ~/.config/nushell/cache/carapace/init.nu
+
+# integration with atuin
+source ~/.config/nushell/cache/atuin/init.nu
 
 # alias
 alias e = nvim
