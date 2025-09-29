@@ -11,7 +11,7 @@ return {
     vim.list_extend(eslinter.args, {
       "--config",
       function()
-        return util.get_file_path(constant.ESLINT)
+        return util.get_file_path(constant.ESLINT, { for_eslint = true, ensure_package = true })
       end,
     })
 

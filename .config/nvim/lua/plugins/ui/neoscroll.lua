@@ -8,7 +8,6 @@ return {
     end,
     post_hook = function()
       vim.o.scrolloff = scrolloff
-      vim.cmd("normal! zz")
     end,
   },
 }

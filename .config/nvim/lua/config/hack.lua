@@ -1,16 +1,22 @@
 -- filter some diagnostics
 local set = vim.diagnostic.set
 local black_list = {
-  { source = "eslint_d", message = "Definition for rule" },
-  { source = "eslint_d", message = "Could not find config file" },
-  { source = "eslint_d", message = "File ignored" },
+  -- { source = "eslint_d", message = "Definition for rule" },
+  -- { source = "eslint_d", message = "Could not find config file" },
+  -- { source = "eslint_d", message = "File ignored" },
   { source = "ts", message = "File is a CommonJS module" },
+  { source = "ts", codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 } },
 }
 vim.diagnostic.set = function(ns, bufnr, diagnostics, opts)
   local results = vim.tbl_filter(function(diagnostic)
     for _, black_item in ipairs(black_list) do
-      if string.match(diagnostic.message, black_item.message) and diagnostic.source == black_item.source then
-        return false
+      if diagnostic.source == black_item.source then
+        if black_item.message and string.match(diagnostic.message, black_item.message) then
+          return false
+        end
+        if black_item.codes and vim.list_contains(black_item.codes, diagnostic.code) then
+          return false
+        end
       end
     end
     return true
@@ -24,12 +30,12 @@ local prev = vim.diagnostic.goto_prev
 vim.diagnostic.goto_next = function(opt)
   ---@diagnostic disable-next-line: inject-field
   opt.float = false
-  next(opt)
+  pcall(next, opt)
 end
 vim.diagnostic.goto_prev = function(opt)
   ---@diagnostic disable-next-line: inject-field
   opt.float = false
-  prev(opt)
+  pcall(prev, opt)
 end
 
 -- FIXME: fix indent guide not work for creating new file

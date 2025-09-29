@@ -32,10 +32,10 @@ return {
       env = { CI = true },
       jestCommand = pkg_name .. " run test --no-watch --no-watchAll",
       jestConfigFile = function(filepath)
-        return util.get_file_path(constant.JEST, filepath)
+        return util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
       end,
       cwd = function(filepath)
-        local confpath = util.get_file_path(constant.JEST, filepath)
+        local confpath = util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
         if confpath then
           return vim.fs.dirname(confpath)
         end

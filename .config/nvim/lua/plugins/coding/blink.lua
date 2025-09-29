@@ -93,7 +93,7 @@ return {
       completion = {
         menu = {
           border = "rounded",
-          scrollbar = true,
+          scrollbar = false,
           cmdline_position = function()
             local pos = vim.g.ui_cmdline_pos
             if pos then
@@ -108,6 +108,10 @@ return {
           },
         },
         documentation = { window = { border = "rounded" } },
+        trigger = {
+          show_on_blocked_trigger_characters = { " ", "\n", "\t", "-" },
+          show_on_x_blocked_trigger_characters = { "'", '"', "(", "{", "[", "-" },
+        },
       },
       signature = { window = { border = "rounded" } },
       sources = {
@@ -255,6 +259,7 @@ return {
         ["<c-j>"] = cancel,
         ["<c-k>"] = cancel,
       },
+      fuzzy = { implementation = "rust" },
     }
 
     return vim.tbl_deep_extend("force", opts, opt)

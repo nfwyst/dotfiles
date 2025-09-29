@@ -19,19 +19,10 @@ return {
         truncate_names = false,
         max_prefix_length = 30,
         always_show_bufferline = true,
-        name_formatter = function(buf)
-          local name = buf.name or ""
-          local path = buf.path or ""
-          if name == "" or path == "" then
-            return name
-          end
-
-          local bufnr = vim.api.nvim_get_current_buf()
-          if bufnr ~= buf.bufnr and name == "[No Name]" then
-            return Snacks.bufdelete({ buf = buf.bufnr, force = true })
-          end
-
+        name_formatter = function(bufinfo)
+          local name = bufinfo.name or ""
           if name:match("^index$") or name:match("^index%..+") then
+            local path = bufinfo.path or ""
             local parent = vim.fn.fnamemodify(path, ":h:t")
             if parent == "" or parent == "." then
               return name

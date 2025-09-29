@@ -15,10 +15,11 @@ function M.has_eslint_config(package_json_path)
   return parsed.eslintConfig ~= nil
 end
 
-function M.get_file_path(fienames, start_path)
+function M.get_file_path(fienames, opts)
   local bufnr = vim.api.nvim_get_current_buf()
   local stop_home = vim.fn.expand("~")
   local buflisted = vim.bo[bufnr].buflisted
+  local start_path = opts.start_path
   if not start_path and buflisted then
     start_path = vim.api.nvim_buf_get_name(bufnr)
   end
@@ -30,11 +31,25 @@ function M.get_file_path(fienames, start_path)
     limit = 1,
   })[1]
 
-  if target_path and target_path:match("package%.json$") then
+  -- ensure eslintConfig field in package.json file
+  if opts.for_eslint and target_path and target_path:match("package%.json$") then
     local has_eslint_config = M.has_eslint_config(target_path)
     local parent_dir = vim.fs.dirname(vim.fs.dirname(target_path))
     if not has_eslint_config and parent_dir ~= stop_home then
-      return M.get_file_path(fienames, parent_dir)
+      return M.get_file_path(fienames, vim.tbl_deep_extend(opts, { start_path = parent_dir }))
+    end
+  end
+
+  if not target_path then
+    return target_path
+  end
+
+  -- ensure package.json file exists in same directory
+  if opts.ensure_package then
+    local dirname = vim.fs.dirname(target_path)
+    local parent_dir = vim.fs.dirname(dirname)
+    if vim.fn.filereadable(dirname .. "/package.json") == 0 and parent_dir ~= stop_home then
+      return M.get_file_path(fienames, vim.tbl_deep_extend(opts, { start_path = parent_dir }))
     end
   end
 
@@ -76,6 +91,31 @@ function M.set_hl(hl, delay)
   vim.schedule(function()
     vim.cmd.hi(hl)
   end)
+end
+
+local function set_topline(new_topline)
+  local view = vim.fn.winsaveview()
+  view.topline = new_topline
+  vim.fn.winrestview(view)
+end
+
+local function get_new_topline(win, bufnr, row)
+  local winheight = vim.api.nvim_win_get_height(win)
+  local scroll_offset = math.floor(winheight / 2)
+  local new_topline = math.max(1, row - scroll_offset)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local max_topline = math.max(1, line_count - winheight + 2)
+  return math.min(new_topline, max_topline)
+end
+
+function M.center_buf_win(bufnr)
+  local win = vim.api.nvim_get_current_win()
+  local row = vim.api.nvim_win_get_cursor(win)[1]
+  if row == vim.b.last_line then
+    return
+  end
+  vim.b.last_line = row
+  set_topline(get_new_topline(win, bufnr, row))
 end
 
 return M

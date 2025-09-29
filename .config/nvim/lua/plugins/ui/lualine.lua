@@ -126,7 +126,7 @@ return {
             ---@diagnostic disable-next-line: undefined-field
             cond = require("noice").api.status.search.has,
             color = { fg = "#ff9e64" },
-            padding = { left = 1, right = 0 },
+            padding = { left = 0, right = 0 },
           },
         },
       },
