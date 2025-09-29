@@ -65,7 +65,7 @@ return {
     },
     animate = { enabled = vim.g.snacks_animate, fps = 120 },
     scope = { debounce = 45 },
-    scroll = { enabled = false },
+    scroll = { enabled = true },
     lazygit = { enabled = false },
     styles = {
       notification = { wo = { wrap = true } },

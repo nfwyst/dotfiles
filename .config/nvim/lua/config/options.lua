@@ -16,6 +16,7 @@ local opts = {
   showcmd = false,
   modeline = false,
   swapfile = false,
+  scrolloff = 1000,
 }
 
 for name, value in pairs(opts) do
