@@ -1,3 +1,7 @@
+// Shader Contribution by PremModhaOfficial
+// For inquiries or modifications, please reach him
+// GitHub: https://github.com/PremModhaOfficial
+
 float getSdfRectangle(in vec2 p, in vec2 xy, in vec2 b)
 {
     vec2 d = abs(p - xy) - b;
@@ -64,8 +68,21 @@ vec4 saturate(vec4 color, float factor) {
     return mix(vec4(gray), color, factor);
 }
 
-const float OPACITY = 0.6;
-const float DURATION = 0.1; //IN SECONDS
+vec3 gradientColor(float factor) {
+    /// ADD your custom colors here make sure to chage the numColors variable
+    vec3 colors[3] = vec3[3]( //                           |
+            vec3(1.0, 0.843, 0.0), //                           |
+            vec3(0.216, 1.0, 0.58), //                           |
+            vec3(0.0, 0.663, 1.0) //                           |
+        ); //                                                      |
+    int numColors = 3; // <------------------------------------
+    float segment = 1.0 / float(numColors);
+    int index = int(mod(factor, 1.0) / segment);
+    float localFactor = fract(factor / segment);
+    return mix(colors[index % numColors], colors[(index + 1) % numColors], localFactor);
+}
+
+const float DURATION = 0.25; //IN SECONDS
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -102,7 +119,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     vec4 newColor = vec4(fragColor);
 
-    vec4 trail = iCurrentCursorColor;
+    float gradientFactor = (vu.y + 1.0) * 0.5; // Gradient across vertical position
+    // float timeComponent = sin(iTime) * 0.95 + 0.05; // Oscillates between 0 and 1
+    float timeComponent = sin(iTime); // Oscillates between 0 and 1
+    vec3 trailColorVec3 = gradientColor(gradientFactor * timeComponent);
+    vec4 trail = vec4(trailColorVec3, 0.8); // Set alpha for gradient trail
+
     trail = saturate(trail, 2.5);
     // Draw trail
     newColor = mix(newColor, trail, antialising(sdfTrail));

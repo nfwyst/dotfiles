@@ -65,7 +65,13 @@ return {
     },
     animate = { enabled = vim.g.snacks_animate, fps = 120 },
     scope = { debounce = 45 },
-    scroll = { enabled = true },
+    scroll = {
+      enabled = true,
+      filter = function()
+        local mode = vim.api.nvim_get_mode().mode
+        return not vim.list_contains({ "v", "V", "\22" }, mode)
+      end,
+    },
     lazygit = { enabled = false },
     styles = {
       notification = { wo = { wrap = true } },

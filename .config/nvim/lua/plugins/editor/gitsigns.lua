@@ -9,6 +9,15 @@ local signs = {
 
 return {
   "lewis6991/gitsigns.nvim",
+  keys = {
+    {
+      "<leader>ghP",
+      function()
+        package.loaded.gitsigns.preview_hunk()
+      end,
+      desc = "Preview Hunk",
+    },
+  },
   opts = {
     signs = signs,
     signs_staged = signs,

@@ -59,13 +59,9 @@ vec2 getRectangleCenter(vec4 rectangle) {
 float ease(float x) {
     return pow(1.0 - x, 3.0);
 }
-vec4 saturate(vec4 color, float factor) {
-    float gray = dot(color, vec4(0.299, 0.587, 0.114, 0.)); // luminance
-    return mix(vec4(gray), color, factor);
-}
 
-const float OPACITY = 0.6;
-const float DURATION = 0.1; //IN SECONDS
+const vec4 TRAIL_COLOR = vec4(1., 1., 0., 1.0);
+const float DURATION = 0.5; //IN SECONDS
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
@@ -101,14 +97,16 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     float lineLength = distance(centerCC, centerCP);
 
     vec4 newColor = vec4(fragColor);
+    // Compute fade factor based on distance along the trail
+    float fadeFactor = 1.0 - smoothstep(lineLength, sdfCurrentCursor, easedProgress * lineLength);
 
-    vec4 trail = iCurrentCursorColor;
-    trail = saturate(trail, 2.5);
-    // Draw trail
-    newColor = mix(newColor, trail, antialising(sdfTrail));
+    // Apply fading effect to trail color
+    vec4 fadedTrailColor = TRAIL_COLOR * fadeFactor;
+
+    // Blend trail with fade effect
+    newColor = mix(newColor, fadedTrailColor, antialising(sdfTrail));
     // Draw current cursor
-    newColor = mix(newColor, trail, antialising(sdfCurrentCursor));
+    newColor = mix(newColor, TRAIL_COLOR, antialising(sdfCurrentCursor));
     newColor = mix(newColor, fragColor, step(sdfCurrentCursor, 0.));
-    // newColor = mix(fragColor, newColor, OPACITY);
     fragColor = mix(fragColor, newColor, step(sdfCurrentCursor, easedProgress * lineLength));
 }

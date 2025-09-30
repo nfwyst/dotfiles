@@ -16,7 +16,7 @@ local opts = {
   showcmd = false,
   modeline = false,
   swapfile = false,
-  scrolloff = 1000,
+  scrolloff = math.floor(vim.api.nvim_win_get_height(vim.api.nvim_get_current_win()) / 2),
 }
 
 for name, value in pairs(opts) do
