@@ -4,6 +4,7 @@ local black_list = {
   -- { source = "eslint_d", message = "Definition for rule" },
   -- { source = "eslint_d", message = "Could not find config file" },
   -- { source = "eslint_d", message = "File ignored" },
+  { source = "eslint_d", message = "path::String" },
   { source = "ts", message = "File is a CommonJS module" },
   { source = "ts", codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 } },
 }
