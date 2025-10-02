@@ -67,6 +67,8 @@ return {
     scope = { debounce = 45 },
     scroll = {
       enabled = true,
+      animate = { duration = { total = 125 } },
+      animate_repeat = { delay = 50, duration = { total = 25 } },
       filter = function()
         local mode = vim.api.nvim_get_mode().mode
         return not vim.list_contains({ "v", "V", "\22" }, mode)

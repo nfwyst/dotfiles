@@ -52,6 +52,7 @@ return {
       svelte = fix_or_format,
       css = formatter,
       scss = formatter,
+      less = formatter,
       html = formatter,
       json = formatter,
       jsonc = formatter,

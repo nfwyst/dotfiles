@@ -75,6 +75,17 @@ return {
         lualine_y = {
           { "filetype", colored = false, icon_only = false, padding = { left = 0, right = 0 } },
           {
+            "selectioncount",
+            fmt = function(val)
+              return "󰆐 " .. val .. " selected"
+            end,
+            cond = function()
+              local mode = vim.api.nvim_get_mode().mode
+              return vim.list_contains({ "v", "V", "\x16" }, mode)
+            end,
+            padding = { left = 0, right = 0 },
+          },
+          {
             function()
               return "󱁐:" .. vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
             end,
