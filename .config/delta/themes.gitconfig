@@ -127,7 +127,7 @@
     plus-emph-style = syntax "#03a4ff"
     plus-style = syntax "#450eff"
     side-by-side = true
-    syntax-theme = Vibrant Sunburst
+    syntax-theme = OneHalfDark
 
 [delta "villsau"]
     # author: https://github.com/torarnv
@@ -176,7 +176,7 @@
     minus-style = syntax "#400000"
     plus-emph-style = syntax bold "#007800"
     plus-style = syntax "#004000"
-    syntax-theme = Vibrant Sunburst
+    syntax-theme = OneHalfDark
     whitespace-error-style = "#280050" reverse
     zero-style = syntax
     blame-format = "{author:<18} ({commit:>7}) ┊{timestamp:^16}┊ "
