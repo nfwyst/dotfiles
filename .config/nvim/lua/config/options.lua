@@ -7,6 +7,7 @@ vim.g.ai_cmp = false
 vim.g.editorconfig = true
 vim.g.transparent_enabled = true
 vim.g.autoformat = true
+vim.g.todopath = vim.fn.stdpath("data") .. "/snacks/todo/todo.md"
 
 local opts = {
   softtabstop = 2,

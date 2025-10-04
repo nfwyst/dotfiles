@@ -58,6 +58,23 @@ local exclude = {
 
 return {
   "folke/snacks.nvim",
+  keys = {
+    {
+      "<leader>T.",
+      function()
+        local todopath = vim.g.todopath
+        local root = vim.fs.dirname(todopath)
+        if vim.fn.filereadable(todopath) == 0 then
+          vim.fn.mkdir(root, "p")
+        end
+        Snacks.scratch.open({
+          ft = "markdown",
+          file = todopath,
+        })
+      end,
+      desc = "Toggle Scratch Todo",
+    },
+  },
   opts = {
     dashboard = {
       preset = { header = header },

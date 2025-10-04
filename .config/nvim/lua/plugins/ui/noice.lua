@@ -27,6 +27,9 @@ return {
             {
               find = "Installed %d+/%d+ languages",
             },
+            {
+              find = "Parser not available for language",
+            },
           },
         },
       },
