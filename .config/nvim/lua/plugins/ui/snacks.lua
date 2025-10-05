@@ -59,6 +59,7 @@ local exclude = {
 return {
   "folke/snacks.nvim",
   keys = {
+    { "<leader>T", "", desc = "Checkmate [T]odos" },
     {
       "<leader>T.",
       function()

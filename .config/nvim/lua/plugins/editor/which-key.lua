@@ -28,6 +28,7 @@ return {
     icons = {
       rules = {
         { pattern = "harpoon", icon = "󱓞 ", color = "orange" },
+        { pattern = "checkmate", icon = "⊡" },
       },
     },
   },
