@@ -36,11 +36,13 @@ return {
       },
       filesystem = {
         filtered_items = {
-          never_show = {
-            ".DS_Store",
-          },
+          never_show = { ".DS_Store", "thumbs.db" },
+          always_show = { ".config" },
+          always_show_by_pattern = { ".env*" },
         },
+        follow_current_file = { enabled = true },
       },
+      buffers = { follow_current_file = { enabled = true } },
     }
 
     return vim.tbl_deep_extend("force", opts, opt)

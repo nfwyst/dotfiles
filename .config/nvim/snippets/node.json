@@ -1,0 +1,13 @@
+{
+  "sign": {
+    "prefix": "node-sign",
+    "body": [
+      "function sign(value, secret) {",
+      "  return require('crypto')",
+      "    .createHmac('sha1', secret)",
+      "    .update(value)",
+      "    .digest('base64url');",
+      "}"
+    ]
+  }
+}

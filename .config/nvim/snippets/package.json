@@ -46,6 +46,15 @@
           "typescriptreact"
         ],
         "path": "./hook.json"
+      },
+      {
+        "language": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "path": "./node.json"
       }
     ]
   }
