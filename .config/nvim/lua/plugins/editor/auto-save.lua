@@ -1,4 +1,4 @@
-local black_list = { "todo.md", "test.js" }
+local black_list = { "todo.md", "test.js", "test.md" }
 
 return {
   "okuuva/auto-save.nvim",
