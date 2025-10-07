@@ -1,4 +1,4 @@
-local black_list = { "todo.md", "test.js", "test.md" }
+local black_list = { "todo.md", "test.*" }
 
 return {
   "okuuva/auto-save.nvim",
@@ -9,8 +9,8 @@ return {
   opts = {
     condition = function(bufnr)
       local filepath = vim.api.nvim_buf_get_name(bufnr)
-      for _, filename in ipairs(black_list) do
-        if filepath:match(filename .. "$") then
+      for _, pattern in ipairs(black_list) do
+        if filepath:match("/" .. pattern .. "$") then
           return false
         end
       end
