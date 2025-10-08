@@ -51,11 +51,11 @@ return {
           style = "rounded",
           padding = { 0, 1 },
         },
-        size = { width = "auto" },
+        size = { width = "auto", max_width = vim.o.columns - 4 },
         position = { row = 2, col = 2 },
       },
       cmdline_popup = {
-        size = { width = "auto" },
+        size = { width = "auto", max_width = vim.o.columns - 4 },
       },
     },
     messages = {
