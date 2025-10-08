@@ -8,6 +8,8 @@ vim.g.editorconfig = true
 vim.g.transparent_enabled = true
 vim.g.autoformat = true
 vim.g.todopath = vim.fn.stdpath("data") .. "/snacks/todo/todo.md"
+vim.g.loaded_perl_provider = true
+vim.g.loaded_ruby_provider = true
 
 local opts = {
   softtabstop = 2,

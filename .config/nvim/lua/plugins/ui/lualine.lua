@@ -24,21 +24,11 @@ return {
         component_separators = { left = " ▎", right = " ▎" },
       },
       sections = {
-        lualine_a = {
-          "mode",
-        },
-        lualine_b = {
-          "branch",
-          {
-            "tabs",
-            cond = function()
-              return vim.fn.tabpagenr("$") > 1
-            end,
-          },
-        },
+        lualine_a = { "mode" },
+        lualine_b = { "branch" },
         lualine_c = {
           LazyVim.lualine.root_dir(),
-          { lsp_info, padding = { left = 0, right = 0 } },
+          { lsp_info, padding = 0 },
           {
             "diagnostics",
             update_in_insert = false,
@@ -51,7 +41,7 @@ return {
               info = icons.diagnostics.Info,
               hint = icons.diagnostics.Hint,
             },
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
           {
             function()
@@ -69,11 +59,11 @@ return {
 
               return color
             end,
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
         },
         lualine_y = {
-          { "filetype", colored = false, icon_only = false, padding = { left = 0, right = 0 } },
+          { "filetype", colored = false, icon_only = false, padding = 0 },
           {
             "selectioncount",
             fmt = function(val)
@@ -83,13 +73,13 @@ return {
               local mode = vim.api.nvim_get_mode().mode
               return vim.list_contains({ "v", "V", "\x16" }, mode)
             end,
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
           {
             function()
               return "󱁐:" .. vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
             end,
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
           { "encoding", padding = { left = 0, right = 1 } },
         },
@@ -125,7 +115,7 @@ return {
 
               return true
             end,
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
           {
             function()
@@ -137,7 +127,7 @@ return {
             ---@diagnostic disable-next-line: undefined-field
             cond = require("noice").api.status.search.has,
             color = { fg = "#ff9e64" },
-            padding = { left = 0, right = 0 },
+            padding = 0,
           },
         },
       },

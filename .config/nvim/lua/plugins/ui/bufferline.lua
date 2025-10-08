@@ -19,6 +19,9 @@ return {
         truncate_names = false,
         max_prefix_length = 30,
         always_show_bufferline = true,
+        custom_filter = function(bufnr)
+          return vim.api.nvim_buf_get_name(bufnr) ~= "health://"
+        end,
         name_formatter = function(bufinfo)
           local name = bufinfo.name or ""
           if name:match("^index$") or name:match("^index%..+") then
