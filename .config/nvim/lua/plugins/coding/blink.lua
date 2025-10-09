@@ -11,7 +11,6 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
-local cancel = { "cancel", "fallback" }
 local snippet_prefix = ";"
 local emoji_prefix = ":"
 local function should_show(ctx, prefix)
@@ -108,10 +107,6 @@ return {
           },
         },
         documentation = { window = { border = "rounded" } },
-        trigger = {
-          show_on_blocked_trigger_characters = { " ", "\n", "\t", "-" },
-          show_on_x_blocked_trigger_characters = { "'", '"', "(", "{", "[", "-" },
-        },
       },
       signature = { window = { border = "rounded" } },
       sources = {
@@ -194,15 +189,6 @@ return {
           lsp = {
             score_offset = 125,
             should_show_items = function(ctx)
-              local filetype = vim.bo[ctx.bufnr].filetype
-              -- dont show when only left bracket before cursor in styles file
-              if vim.list_contains({ "css", "less", "scss" }, filetype) then
-                local col = ctx.cursor[2]
-                if vim.list_contains({ "{", "}" }, ctx.line:sub(col, col)) then
-                  return false
-                end
-              end
-
               return not should_show_emoji(ctx)
             end,
             override = {
@@ -231,14 +217,7 @@ return {
       },
       cmdline = {
         enabled = true,
-        keymap = {
-          ["<c-l>"] = { "show", "fallback" },
-          ["<c-e>"] = cancel,
-          ["<c-j>"] = { "select_next", "fallback" },
-          ["<c-k>"] = { "select_prev", "fallback" },
-          ["<right>"] = cancel,
-          ["<left>"] = cancel,
-        },
+        keymap = { ["<c-l>"] = { "show", "fallback" } },
         sources = function()
           return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
         end,
@@ -252,13 +231,7 @@ return {
           ghost_text = { enabled = true },
         },
       },
-      keymap = {
-        ["<c-a>"] = cancel,
-        ["<c-l>"] = cancel,
-        ["<c-z>"] = cancel,
-        ["<c-j>"] = cancel,
-        ["<c-k>"] = cancel,
-      },
+      keymap = { ["<c-l>"] = { "show", "fallback" } },
       fuzzy = { implementation = "rust" },
     }
 

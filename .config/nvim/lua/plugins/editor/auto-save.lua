@@ -15,10 +15,21 @@ return {
         end
       end
 
-      local no_error = not vim.diagnostic.count(bufnr, { severity = vim.diagnostic.severity.ERROR })[1]
-      local no_snippet = not vim.snippet.active()
+      if vim.snippet.active() then
+        return false
+      end
 
-      return no_error and no_snippet
+      local blink = package.loaded["blink.cmp"]
+      if blink and blink.is_visible() then
+        return false
+      end
+
+      local error_number = vim.diagnostic.count(bufnr, { severity = vim.diagnostic.severity.ERROR })[1] or 0
+      if error_number > 10 then
+        return false
+      end
+
+      return true
     end,
   },
 }

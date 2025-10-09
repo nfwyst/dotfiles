@@ -83,6 +83,7 @@ return {
     },
     animate = { enabled = vim.g.snacks_animate, fps = 120 },
     scope = { debounce = 45 },
+    quickfile = { enabled = true },
     scroll = {
       enabled = true,
       animate = { duration = { total = 125 } },
@@ -137,6 +138,5 @@ return {
         },
       },
     },
-    quickfile = { enabled = false },
   },
 }
