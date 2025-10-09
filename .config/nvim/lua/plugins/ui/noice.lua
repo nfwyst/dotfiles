@@ -40,6 +40,9 @@ return {
             {
               find = "No information available",
             },
+            {
+              find = "This command may require a client extension",
+            },
           },
         },
       },

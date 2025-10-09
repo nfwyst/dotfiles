@@ -16,7 +16,6 @@ return {
     })
 
     local opt = {
-      events = { "BufWritePost" },
       linters_by_ft = {
         javascript = eslintd,
         typescript = eslintd,
