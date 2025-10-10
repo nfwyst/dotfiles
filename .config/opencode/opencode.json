@@ -5,5 +5,10 @@
     "prettier": {
       "disabled": true
     }
+  },
+  "permission": {
+    "edit": "allow",
+    "bash": "allow",
+    "webfetch": "allow"
   }
 }
