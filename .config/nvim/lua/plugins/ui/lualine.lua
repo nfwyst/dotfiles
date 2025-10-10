@@ -28,6 +28,10 @@ local filename = {
     gui = "italic",
   },
   cond = function()
+    if vim.bo.buftype == "nofile" then
+      return false
+    end
+
     local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
     local matched = string.match(bufname, "^/.*[%a]+$")
     if not matched then
