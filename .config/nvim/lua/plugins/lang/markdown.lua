@@ -41,5 +41,16 @@ return {
       tag = { think = { icon = "󰛨 ", highlight = "Normal" } },
       render_modes = true,
     },
+    on = {
+      render = function(context)
+        local bufnr = context.buf
+        local is_todo = vim.api.nvim_buf_get_name(bufnr) == vim.g.todopath
+        if not is_todo then
+          return
+        end
+
+        require("render-markdown.state").get(bufnr).anti_conceal.enabled = true
+      end,
+    },
   },
 }
