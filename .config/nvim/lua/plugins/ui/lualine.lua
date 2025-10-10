@@ -11,6 +11,34 @@ local function lsp_info()
   return "󱓞 " .. result
 end
 
+local filename = {
+  "filename",
+  file_status = false,
+  newfile_status = true,
+  path = 3,
+  shorting_target = 0,
+  symbols = {
+    modified = "",
+    readonly = "󰌾",
+    unnamed = "[No Name]",
+    newfile = "[New]",
+  },
+  color = {
+    fg = "#04d1f9",
+    gui = "italic",
+  },
+  cond = function()
+    local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+    local matched = string.match(bufname, "^/.*[%a]+$")
+    if not matched then
+      return false
+    end
+
+    return true
+  end,
+  padding = 0,
+}
+
 return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "folke/noice.nvim" },
@@ -90,33 +118,7 @@ return {
       },
       winbar = {
         lualine_c = {
-          {
-            "filename",
-            file_status = false,
-            newfile_status = true,
-            path = 3,
-            shorting_target = 0,
-            symbols = {
-              modified = "",
-              readonly = "󰌾",
-              unnamed = "[No Name]",
-              newfile = "[New]",
-            },
-            color = {
-              fg = "#04d1f9",
-              gui = "italic",
-            },
-            cond = function()
-              local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-              local matched = string.match(bufname, "^/.*[%a]+$")
-              if not matched then
-                return false
-              end
-
-              return true
-            end,
-            padding = 0,
-          },
+          filename,
           {
             function()
               ---@diagnostic disable-next-line: undefined-field
@@ -130,6 +132,9 @@ return {
             padding = 0,
           },
         },
+      },
+      inactive_winbar = {
+        lualine_c = { filename },
       },
     }
 
