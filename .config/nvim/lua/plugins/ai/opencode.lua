@@ -3,29 +3,29 @@ return {
   dependencies = { "folke/snacks.nvim" },
   keys = {
     { "<leader>a", "", desc = "ai", mode = { "n", "v" } },
-    { "<leader>ao", "", desc = "OpenCode", mode = { "n", "v" } },
+    { "<leader>ao", "", desc = "opencode", mode = { "n", "v" } },
     {
       "<leader>aoa",
       function()
-        require("opencode").ask()
+        require("opencode").ask("@this: ", { submit = true })
       end,
-      desc = "Ask Opencode",
-      mode = "n",
+      desc = "Opencode: Ask About This",
+      mode = { "n", "v" },
     },
     {
-      "<leader>aoa",
+      "<leader>ao+",
       function()
-        require("opencode").ask("@selection: ")
+        require("opencode").prompt("@this")
       end,
-      desc = "Ask Opencode About Selection",
-      mode = "v",
+      desc = "Opencode: Add This",
+      mode = { "n", "v" },
     },
     {
       "<leader>aop",
       function()
-        require("opencode").select_prompt()
+        require("opencode").select()
       end,
-      desc = "Select Prompt",
+      desc = "Opencode: Select Prompt",
       mode = { "n", "v" },
     },
     {
@@ -33,21 +33,56 @@ return {
       function()
         require("opencode").toggle()
       end,
-      desc = "Toggle Opencode",
-      mode = "n",
+      desc = "Opencode: Toggle Embedded",
+    },
+    {
+      "<leader>aon",
+      function()
+        require("opencode").command("session_new")
+      end,
+      desc = "Opencode: New Session",
+    },
+    {
+      "<leader>aoi",
+      function()
+        require("opencode").command("session_interrupt")
+      end,
+      desc = "Opencode: Interrupt Session",
+    },
+    {
+      "<leader>aoA",
+      function()
+        require("opencode").command("agent_cycle")
+      end,
+      desc = "Opencode: Cycle Selected Agent",
+    },
+    {
+      "<S-C-u>",
+      function()
+        require("opencode").command("messages_half_page_up")
+      end,
+      desc = "Opencode: Messages Half Page Up",
+    },
+    {
+      "<S-C-d>",
+      function()
+        require("opencode").command("messages_half_page_down")
+      end,
+      desc = "Opencode: Messages Half Page Down",
+    },
+    {
+      "<leader>aoI",
+      function()
+        require("opencode").command("project_init")
+      end,
+      desc = "Opencode: Init Project",
     },
     {
       "<leader>aoc",
       function()
         require("opencode").command("messages_copy")
       end,
-      desc = "Copy Last Opencode Response",
-      mode = "n",
+      desc = "Opencode: Copy Last Response",
     },
   },
-  config = function()
-    vim.g.opencode_opts = {
-      auto_fallback_to_embedded = false,
-    }
-  end,
 }

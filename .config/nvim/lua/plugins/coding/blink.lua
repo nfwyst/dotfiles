@@ -217,7 +217,7 @@ return {
       },
       cmdline = {
         enabled = true,
-        keymap = { ["<c-l>"] = { "show", "fallback" } },
+        keymap = { ["<c-l>"] = { "show", "fallback" }, ["<right>"] = { "cancel", "fallback" } },
         sources = function()
           return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
         end,

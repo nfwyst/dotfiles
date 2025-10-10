@@ -9,6 +9,7 @@ local lsp_servers = {
   "nginx_language_server",
   "solc",
   "vtsls",
+  "protols",
   -- "pylyzer",
 }
 
