@@ -1,5 +1,7 @@
 local util = require("config.util")
 
+local config = { show_path = "relative" } -- "none", "relative", "absolute"
+
 return {
   "nvim-neo-tree/neo-tree.nvim",
   opts = function(_, opts)
@@ -33,6 +35,12 @@ return {
       window = {
         width = 10,
         auto_expand_width = true,
+        mappings = {
+          ["a"] = { "add", config = config },
+          ["A"] = { "add_directory", config = config },
+          ["c"] = { "copy", config = config },
+          ["m"] = { "move", config = config },
+        },
       },
       filesystem = {
         filtered_items = {

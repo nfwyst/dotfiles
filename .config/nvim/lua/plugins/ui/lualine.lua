@@ -121,13 +121,16 @@ return {
           filename,
           {
             function()
-              ---@diagnostic disable-next-line: undefined-field
-              local searchcount = require("noice").api.status.search.get()
-              local current, total = searchcount:match("%[(%d+)/(%d+)%]")
-              return " " .. current .. "󰿟" .. total
+              local search_info = vim.fn.searchcount()
+              local content = vim.fn.getreg("/")
+              if search_info.total == 0 then
+                return " " .. content .. ": no result"
+              end
+              return " " .. content .. ": " .. search_info.current .. "󰿟" .. search_info.total
             end,
-            ---@diagnostic disable-next-line: undefined-field
-            cond = require("noice").api.status.search.has,
+            cond = function()
+              return vim.v.hlsearch > 0
+            end,
             color = { fg = "#ff9e64" },
             padding = 0,
           },

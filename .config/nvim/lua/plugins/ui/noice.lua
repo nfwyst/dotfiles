@@ -30,6 +30,9 @@ return {
             {
               find = "Parser not available for language",
             },
+            {
+              find = "Pattern not found:",
+            },
           },
         },
       },

@@ -68,7 +68,7 @@ end
 
 local function update_lsp_item_score_offset(item)
   if item.client_name == "emmet_language_server" then
-    item.score_offset = item.score_offset + 235
+    item.score_offset = item.score_offset + 118
   end
 end
 
