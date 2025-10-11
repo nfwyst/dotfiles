@@ -44,8 +44,14 @@ return {
     on = {
       render = function(context)
         local bufnr = context.buf
-        local is_todo = vim.api.nvim_buf_get_name(bufnr) == vim.g.todopath
-        if not is_todo then
+        local buflisted = vim.bo[bufnr].buflisted
+        local buftype = vim.bo[bufnr].buftype
+        if buflisted and buftype ~= "nofile" then
+          return
+        end
+
+        local modifiable = vim.bo[bufnr].modifiable
+        if not modifiable then
           return
         end
 
