@@ -33,6 +33,7 @@ return {
         },
       },
       window = {
+        position = "right",
         width = 10,
         auto_expand_width = true,
         mappings = {
