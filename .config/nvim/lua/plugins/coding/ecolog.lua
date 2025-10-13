@@ -15,7 +15,8 @@ return {
     { "<leader>cET", "<cmd>EcologShelterToggle<cr>", desc = "Shelter Toggle" },
   },
   opts = {
-    preferred_environment = "local",
+    preferred_environment = "development",
+    load_shell = true,
     types = true,
     monorepo = {
       enabled = true,
