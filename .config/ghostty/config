@@ -11,7 +11,7 @@ font-style = bold
 # looks and feel
 theme = TokyoNight Moon
 adjust-cursor-thickness = 3
-adjust-underline-position = 3
+adjust-underline-position = 6
 bold-is-bright = true
 cursor-invert-fg-bg = false
 cursor-opacity = 1

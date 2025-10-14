@@ -7,6 +7,7 @@ return {
     { "<leader>uu", "<cmd>ASToggle<CR>", desc = "Toggle Auto Save" },
   },
   opts = {
+    noautocmd = true,
     condition = function(bufnr)
       local filepath = vim.api.nvim_buf_get_name(bufnr)
       for _, pattern in ipairs(black_list) do
