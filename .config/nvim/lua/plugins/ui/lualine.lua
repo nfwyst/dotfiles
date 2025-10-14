@@ -11,6 +11,20 @@ local function lsp_info()
   return "󱓞 " .. result
 end
 
+local function file_cond()
+  if vim.bo.buftype == "nofile" then
+    return false
+  end
+
+  local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+  local matched = string.match(bufname, "^/.*[%a]+$")
+  if not matched then
+    return false
+  end
+
+  return true
+end
+
 local filename = {
   "filename",
   file_status = false,
@@ -27,19 +41,7 @@ local filename = {
     fg = "#04d1f9",
     gui = "italic",
   },
-  cond = function()
-    if vim.bo.buftype == "nofile" then
-      return false
-    end
-
-    local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-    local matched = string.match(bufname, "^/.*[%a]+$")
-    if not matched then
-      return false
-    end
-
-    return true
-  end,
+  cond = file_cond,
   padding = 0,
 }
 
@@ -127,13 +129,14 @@ return {
             function()
               local search_info = vim.fn.searchcount()
               local content = vim.fn.getreg("/")
+              content = content:gsub("\\[<>V]", "")
               if search_info.total == 0 then
                 return " " .. content .. ": no result"
               end
               return " " .. content .. ": " .. search_info.current .. "󰿟" .. search_info.total
             end,
             cond = function()
-              return vim.v.hlsearch > 0
+              return vim.v.hlsearch > 0 and file_cond()
             end,
             color = { fg = "#ff9e64" },
             padding = 0,

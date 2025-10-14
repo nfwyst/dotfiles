@@ -161,7 +161,7 @@ local function remove_qf_item(is_normal)
       return vim.cmd.ccl()
     end
 
-    vim.api.nvim_win_set_cursor(qfwin, { start_index, pos[2] })
+    vim.api.nvim_win_set_cursor(qfwin, { math.min(start_index, #qflist), pos[2] })
   end
 end
 
