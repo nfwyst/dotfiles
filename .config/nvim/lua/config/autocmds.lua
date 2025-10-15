@@ -39,8 +39,17 @@ vim.api.nvim_create_autocmd("User", {
 })
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
+  pattern = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
   callback = function()
-    vim.o.linebreak = false
+    vim.schedule(function()
+      vim.o.linebreak = false
+    end)
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "csv",
+  callback = function()
+    vim.cmd.CsvViewEnable()
   end,
 })
