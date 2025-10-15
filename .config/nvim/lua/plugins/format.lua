@@ -67,6 +67,7 @@ return {
       toml = { "taplo" },
       http = { "kulala-fmt" },
       nginx = { "nginxfmt" },
+      sql = { "sqruff" },
       ["_"] = { "trim_whitespace" },
     },
     formatters = {

@@ -13,6 +13,7 @@ return {
       "mmdc",
       "nginx-config-formatter",
       "uv",
+      "sqruff",
       -- "delve",
     }
 
