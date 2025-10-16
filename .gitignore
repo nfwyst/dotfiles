@@ -33,3 +33,4 @@ foo.*
 data
 AGENTS.md
 !.config/opencode/AGENTS.md
+.todo.md

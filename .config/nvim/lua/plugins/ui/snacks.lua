@@ -56,24 +56,37 @@ local exclude = {
   ".vscode",
 }
 
+local function gen_get_todo(global)
+  return function()
+    local todopath = vim.g.todopath
+    if not global then
+      todopath = LazyVim.root.git() .. "/.todo.md"
+    end
+
+    local root = vim.fs.dirname(todopath)
+    if vim.fn.filereadable(todopath) == 0 then
+      vim.fn.mkdir(root, "p")
+    end
+    Snacks.scratch.open({
+      ft = "markdown",
+      file = todopath,
+    })
+  end
+end
+
 return {
   "folke/snacks.nvim",
   keys = {
     { "<leader>T", "", desc = "Checkmate [T]odos" },
     {
       "<leader>T.",
-      function()
-        local todopath = vim.g.todopath
-        local root = vim.fs.dirname(todopath)
-        if vim.fn.filereadable(todopath) == 0 then
-          vim.fn.mkdir(root, "p")
-        end
-        Snacks.scratch.open({
-          ft = "markdown",
-          file = todopath,
-        })
-      end,
+      gen_get_todo(true),
       desc = "Toggle Scratch Todo",
+    },
+    {
+      "<leader>Tl",
+      gen_get_todo(false),
+      desc = "Toggle Local Scratch Todo",
     },
   },
   opts = {
