@@ -12,6 +12,7 @@ local g_opts = {
   loaded_perl_provider = 0,
   loaded_ruby_provider = 0,
   python3_host_prog = "/opt/homebrew/bin/python3",
+  markdowns = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
 }
 
 for name, value in pairs(g_opts) do

@@ -5,7 +5,7 @@ return {
   lazy = false,
   opts = {
     render_modes = { "n", "c", "t", "i" },
-    file_types = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
+    file_types = vim.g.markdowns,
     completions = { blink = { enabled = false } },
     paragraph = { render_modes = true },
     document = { render_modes = true },

@@ -39,7 +39,7 @@ vim.api.nvim_create_autocmd("User", {
 })
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
+  pattern = vim.g.markdowns,
   callback = function()
     vim.schedule(function()
       vim.o.linebreak = false
