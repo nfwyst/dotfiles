@@ -19,5 +19,7 @@ return {
 
       return open(pair, neigh_pattern)
     end
+
+    return opts
   end,
 }
