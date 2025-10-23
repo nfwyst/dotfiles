@@ -106,7 +106,7 @@ return {
         return not vim.list_contains({ "v", "V", "\22" }, mode)
       end,
     },
-    lazygit = { enabled = false },
+    lazygit = { enabled = true },
     styles = {
       notification = { wo = { wrap = true } },
       terminal = { wo = { winbar = "" } },
