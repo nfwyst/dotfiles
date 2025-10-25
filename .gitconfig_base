@@ -1,0 +1,9 @@
+[filter "lfs"]
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+  clean = git-lfs clean -- %f
+[include]
+  path = ~/.config/delta/themes.gitconfig
+[delta]
+  features = woolly-mammoth
