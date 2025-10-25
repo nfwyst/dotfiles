@@ -21,7 +21,6 @@ local disabled_lsp_servers = {
 
 local function override(servers)
   local windows = require("lspconfig.ui.windows")
-  local keys = require("lazyvim.plugins.lsp.keymaps").get()
 
   windows.default_options.border = "rounded"
 
@@ -38,21 +37,9 @@ local function override(servers)
   for _, name in ipairs(disabled_lsp_servers) do
     servers[name] = nil
   end
-
-  vim.list_extend(keys, {
-    { "K", false },
-    { "<c-k>", false, mode = "i" },
-    {
-      "gk",
-      function()
-        return vim.lsp.buf.hover()
-      end,
-      desc = "Hover",
-    },
-  })
 end
 
-vim.lsp.set_log_level(vim.log.levels.OFF)
+vim.lsp.log.set_level(vim.log.levels.OFF)
 
 return {
   "neovim/nvim-lspconfig",
@@ -81,8 +68,23 @@ return {
         },
       },
       inlay_hints = { enabled = true },
-      capabilities = {
-        offset_encoding = "utf-16",
+      servers = {
+        ["*"] = {
+          capabilities = {
+            offset_encoding = "utf-16",
+          },
+          keys = {
+            { "K", false },
+            { "<c-k>", false, mode = "i" },
+            {
+              "gk",
+              function()
+                return vim.lsp.buf.hover()
+              end,
+              desc = "Hover",
+            },
+          },
+        },
       },
     }
 
