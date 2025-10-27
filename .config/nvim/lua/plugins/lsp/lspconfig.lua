@@ -37,6 +37,18 @@ local function override(servers)
   for _, name in ipairs(disabled_lsp_servers) do
     servers[name] = nil
   end
+
+  vim.list_extend(servers["*"].keys, {
+    { "K", false },
+    { "<c-k>", false, mode = "i" },
+    {
+      "gk",
+      function()
+        return vim.lsp.buf.hover()
+      end,
+      desc = "Hover",
+    },
+  })
 end
 
 vim.lsp.log.set_level(vim.log.levels.OFF)
@@ -70,20 +82,7 @@ return {
       inlay_hints = { enabled = true },
       servers = {
         ["*"] = {
-          capabilities = {
-            offset_encoding = "utf-16",
-          },
-          keys = {
-            { "K", false },
-            { "<c-k>", false, mode = "i" },
-            {
-              "gk",
-              function()
-                return vim.lsp.buf.hover()
-              end,
-              desc = "Hover",
-            },
-          },
+          capabilities = { offset_encoding = "utf-16" },
         },
       },
     }
