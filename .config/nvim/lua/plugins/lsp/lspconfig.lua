@@ -84,6 +84,17 @@ return {
       servers = {
         ["*"] = {
           capabilities = { offset_encoding = "utf-16" },
+          on_exit = function(code, _, client_id)
+            if code == 0 then
+              return
+            end
+            local client = vim.lsp.get_client_by_id(client_id)
+            local server_name = client and client.name or "unknow"
+            vim.schedule(function()
+              vim.cmd.LspRestart({ bang = true })
+              vim.notify("lsp server " .. server_name .. " restarted")
+            end)
+          end,
         },
       },
     }

@@ -72,7 +72,9 @@ return {
                 vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch
                 or vim.g.prev_git_root and vim.g.prev_git_root ~= git_root
               then
-                vim.cmd.LspRestart({ bang = true })
+                vim.schedule(function()
+                  vim.cmd.LspRestart({ bang = true })
+                end)
               end
               vim.g.prev_git_branch = branch
               vim.g.prev_git_root = git_root
