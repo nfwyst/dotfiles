@@ -20,27 +20,29 @@ return {
   },
   opts = function(_, opts)
     local adapters = opts.adapters or {}
-    adapters[#adapters + 1] = require("neotest-vitest")({
-      is_test_file = function(file_path)
-        return string.match(file_path, "__tests__")
-      end,
-      filter_dir = function(name)
-        return name ~= "node_modules"
-      end,
-    })
-    adapters[#adapters + 1] = require("neotest-jest")({
-      env = { CI = true },
-      jestCommand = pkg_name .. " run test --no-watch --no-watchAll",
-      jestConfigFile = function(filepath)
-        return util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
-      end,
-      cwd = function(filepath)
-        local confpath = util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
-        if confpath then
-          return vim.fs.dirname(confpath)
-        end
-        return LazyVim.root.get()
-      end,
+    vim.list_extend(adapters, {
+      require("neotest-vitest")({
+        is_test_file = function(file_path)
+          return string.match(file_path, "__tests__")
+        end,
+        filter_dir = function(name)
+          return name ~= "node_modules"
+        end,
+      }),
+      require("neotest-jest")({
+        env = { CI = true },
+        jestCommand = pkg_name .. " run test --no-watch --no-watchAll",
+        jestConfigFile = function(filepath)
+          return util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
+        end,
+        cwd = function(filepath)
+          local confpath = util.get_file_path(constant.JEST, { start_path = filepath, ensure_package = true })
+          if confpath then
+            return vim.fs.dirname(confpath)
+          end
+          return LazyVim.root.get()
+        end,
+      }),
     })
 
     local opt = {

@@ -1,9 +1,6 @@
 return {
   "folke/which-key.nvim",
-  keys = {
-    { "<leader>cU", "", desc = "utils" },
-    { "gc", "", desc = "Toggle comment" },
-  },
+  keys = { { "<leader>cU", "", desc = "utils" } },
   opts = {
     preset = "classic",
     keys = {

@@ -59,7 +59,28 @@ return {
       },
       sections = {
         lualine_a = { "mode" },
-        lualine_b = { "branch" },
+        lualine_b = {
+          {
+            "branch",
+            fmt = function(branch)
+              local git_root = LazyVim.root.git()
+              if branch == "" or git_root == "" then
+                return ""
+              end
+
+              if
+                vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch
+                or vim.g.prev_git_root and vim.g.prev_git_root ~= git_root
+              then
+                vim.cmd.LspRestart({ bang = true })
+              end
+              vim.g.prev_git_branch = branch
+              vim.g.prev_git_root = git_root
+
+              return branch
+            end,
+          },
+        },
         lualine_c = {
           LazyVim.lualine.root_dir(),
           { lsp_info, padding = 0 },

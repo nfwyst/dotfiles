@@ -99,7 +99,7 @@ local keymaps = {
 
 local keys_to_delete = {
   [{ "n", "v" }] = { "<leader>cf" },
-  n = { "gc", "grn", "grr", "gri", "gra", "grt" },
+  n = { "grn", "grr", "gri", "gra", "grt" },
 }
 
 local function set(mode, lhs, rhs, opts)

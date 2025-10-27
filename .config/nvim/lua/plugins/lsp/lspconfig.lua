@@ -39,6 +39,7 @@ local function override(servers)
   end
 
   vim.list_extend(servers["*"].keys, {
+    { "ga", "", desc = "callHierarchy" },
     { "K", false },
     { "<c-k>", false, mode = "i" },
     {
