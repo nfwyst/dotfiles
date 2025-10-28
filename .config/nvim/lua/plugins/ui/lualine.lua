@@ -74,6 +74,7 @@ return {
               then
                 vim.schedule(function()
                   vim.cmd.LspRestart({ bang = true })
+                  vim.notify("all lsp server" .. " restarted")
                 end)
               end
               vim.g.prev_git_branch = branch
