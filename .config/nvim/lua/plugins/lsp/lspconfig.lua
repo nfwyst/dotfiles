@@ -82,6 +82,8 @@ return {
       },
       inlay_hints = { enabled = true },
       servers = {
+        tsgo = { enabled = false },
+        ts_ls = { enabled = true },
         ["*"] = {
           capabilities = { offset_encoding = "utf-16" },
           on_exit = function(code, _, client_id)

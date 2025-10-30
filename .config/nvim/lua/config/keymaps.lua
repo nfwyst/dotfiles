@@ -61,6 +61,22 @@ local keymaps = {
     { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
     { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
     { from = "<leader>o", to = ":update<cr> :source<cr>" },
+    {
+      from = "<leader>ft",
+      to = function()
+        Snacks.terminal(vim.o.shell)
+      end,
+      opt = { desc = "Float Terminal (cwd)" },
+    },
+  },
+  [{ "n", "t" }] = {
+    {
+      from = "<c-_>",
+      to = function()
+        Snacks.terminal(vim.o.shell, { cwd = LazyVim.root() })
+      end,
+      opt = { desc = "Float Terminal (root)" },
+    },
   },
   [{ "n", "x", "s" }] = {
     { from = "<leader>i", to = "<cmd>w<cr>", opt = { desc = "Save File" } },
@@ -99,7 +115,8 @@ local keymaps = {
 
 local keys_to_delete = {
   [{ "n", "v" }] = { "<leader>cf" },
-  n = { "grn", "grr", "gri", "gra", "grt" },
+  n = { "grn", "grr", "gri", "gra", "grt", "<leader>ft" },
+  [{ "n", "t" }] = { "<c-_>" },
 }
 
 local function set(mode, lhs, rhs, opts)
