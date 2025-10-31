@@ -63,22 +63,18 @@ return {
           {
             "branch",
             fmt = function(branch)
-              local git_root = LazyVim.root.git()
-              if branch == "" or git_root == "" then
+              if not branch or branch == "" then
                 return ""
               end
 
-              if
-                vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch
-                or vim.g.prev_git_root and vim.g.prev_git_root ~= git_root
-              then
+              if vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch then
                 vim.schedule(function()
                   vim.cmd.LspRestart({ bang = true })
-                  vim.notify("all lsp server" .. " restarted")
+                  vim.notify("Lsp server" .. " restarted")
                 end)
               end
+
               vim.g.prev_git_branch = branch
-              vim.g.prev_git_root = git_root
 
               return branch
             end,
