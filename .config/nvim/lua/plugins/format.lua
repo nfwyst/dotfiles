@@ -1,6 +1,6 @@
-local fixer = { "eslint_d" }
-local formatter = { "prettierd" }
-local md_formatter = { "prettierd", "markdownlint-cli2", "markdown-toc" }
+local fixer = { "eslint_d", "retab" }
+local formatter = { "prettierd", "retab" }
+local md_formatter = { "prettierd", "markdownlint-cli2", "markdown-toc", "retab" }
 local is_fix_mode = false
 
 local function fix_or_format()
@@ -61,14 +61,14 @@ return {
       graphql = formatter,
       ["markdown"] = md_formatter,
       ["markdown.mdx"] = md_formatter,
-      nu = { "nufmt" },
-      sh = { "shfmt" },
-      zsh = { "beautysh" },
-      lua = { "stylua" },
-      toml = { "taplo" },
-      http = { "kulala-fmt" },
-      nginx = { "nginxfmt" },
-      sql = { "sqruff" },
+      nu = { "nufmt", "retab" },
+      sh = { "shfmt", "retab" },
+      zsh = { "beautysh", "retab" },
+      lua = { "stylua", "retab" },
+      toml = { "taplo", "retab" },
+      http = { "kulala-fmt", "retab" },
+      nginx = { "nginxfmt", "retab" },
+      sql = { "sqruff", "retab" },
       ["_"] = { "trim_whitespace", "retab" },
     },
     formatters = {
