@@ -4,7 +4,6 @@ local lsp_servers = {
   "emmet_language_server",
   "cssmodules_ls",
   "css_variables",
-  "ts_ls",
   "cssls",
   "nginx_language_server",
   "solc",
@@ -15,9 +14,50 @@ local lsp_servers = {
 
 local disabled_lsp_servers = {
   "tsserver",
-  --   "pyright",
-  --   "basedpyright",
+  "ts_ls",
+  "tsgo",
+  "solidity_ls",
 }
+
+local servers_use_bun = {
+  "ast_grep",
+  "bashls",
+  "cssls",
+  "css_variables",
+  "cssmodules_ls",
+  "docker_compose_language_service",
+  "dockerls",
+  "emmet_language_server",
+  "html",
+  "jsonls",
+  "svelte",
+  "tailwindcss",
+  "ts_ls",
+  "vtsls",
+  "yamlls",
+}
+
+local servers_use_uv = {
+  "nginx_language_server",
+}
+
+local function prefix_bun(cmd)
+  if vim.list_contains(cmd, "--bun") then
+    return cmd
+  end
+  return vim.list_extend({ "bun", "run", "--bun" }, cmd)
+end
+
+local function prefix_uv(cmd)
+  if cmd[1] == "uv" then
+    return cmd
+  end
+  return vim.list_extend({ "uv", "run" }, cmd)
+end
+
+local function get_default_cmd(name)
+  return require("lspconfig.configs." .. name).default_config.cmd
+end
 
 local function override(servers)
   local windows = require("lspconfig.ui.windows")
@@ -35,7 +75,17 @@ local function override(servers)
   end
 
   for _, name in ipairs(disabled_lsp_servers) do
-    servers[name] = nil
+    servers[name] = { enabled = false }
+  end
+
+  for name, server_config in pairs(servers) do
+    if vim.list_contains(servers_use_bun, name) then
+      local cmd = server_config.cmd or get_default_cmd(name)
+      server_config.cmd = prefix_bun(cmd)
+    elseif vim.list_contains(servers_use_uv, name) then
+      local cmd = server_config.cmd or get_default_cmd(name)
+      server_config.cmd = prefix_uv(cmd)
+    end
   end
 
   local keys = servers["*"].keys
@@ -88,8 +138,8 @@ return {
       },
       inlay_hints = { enabled = true },
       servers = {
-        tsgo = { enabled = false },
-        ts_ls = { enabled = true },
+        --   "pyright",
+        --   "basedpyright",
         ["*"] = {
           capabilities = { offset_encoding = "utf-16" },
           on_exit = function(code, _, client_id)

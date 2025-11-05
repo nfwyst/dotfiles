@@ -46,6 +46,9 @@ return {
             {
               find = "This command may require a client extension",
             },
+            {
+              find = "vim/shared.lua:0: invalid",
+            },
           },
         },
       },
