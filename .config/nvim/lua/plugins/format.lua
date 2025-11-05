@@ -44,6 +44,7 @@ return {
   },
   opts = {
     log_level = vim.log.levels.OFF,
+    default_format_opts = { stop_after_first = false },
     formatters_by_ft = {
       javascript = fix_or_format,
       typescript = fix_or_format,
@@ -68,7 +69,7 @@ return {
       http = { "kulala-fmt" },
       nginx = { "nginxfmt" },
       sql = { "sqruff" },
-      ["_"] = { "trim_whitespace" },
+      ["_"] = { "trim_whitespace", "retab" },
     },
     formatters = {
       beautysh = function()
@@ -79,6 +80,9 @@ return {
           args = { "-i", tostring(shiftwidth), "$FILENAME" },
           stdin = false,
         }
+      end,
+      retab = function()
+        vim.cmd.retab()
       end,
     },
   },
