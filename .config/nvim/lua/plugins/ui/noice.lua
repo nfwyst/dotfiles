@@ -49,6 +49,9 @@ return {
             {
               find = "vim/shared.lua:0: invalid",
             },
+            {
+              find = "watch.watch: ENOENT: no such file or directory",
+            },
           },
         },
       },
