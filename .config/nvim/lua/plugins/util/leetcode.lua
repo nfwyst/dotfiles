@@ -26,5 +26,8 @@ return {
     cn = {
       enabled = true,
     },
+    plugins = {
+      non_standalone = true,
+    },
   },
 }

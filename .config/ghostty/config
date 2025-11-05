@@ -9,7 +9,7 @@ window-inherit-font-size = true
 adjust-cell-height = 20%
 font-style = bold
 # looks and feel
-theme = TokyoNight Moon
+theme = dark:TokyoNight Moon,light:TokyoNight Night
 adjust-cursor-thickness = 3
 adjust-underline-position = 6
 bold-is-bright = true
