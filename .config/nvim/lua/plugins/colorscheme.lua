@@ -29,7 +29,7 @@ return {
           bg = c.none,
         }
 
-        util.set_hl("CursorLine guibg=#4c537d", true)
+        util.set_hl("CursorLine guibg=#3e4365", true)
         util.set_hl("NeoTreeMessage guifg=#585b7b", true)
         util.set_hl("LspInlayHint guibg=#0e1018", true)
       end,
