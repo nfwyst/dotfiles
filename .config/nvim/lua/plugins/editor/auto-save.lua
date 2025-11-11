@@ -26,7 +26,7 @@ return {
       end
 
       local error_number = vim.diagnostic.count(bufnr, { severity = vim.diagnostic.severity.ERROR })[1] or 0
-      if error_number > 10 then
+      if error_number > 100 then
         return false
       end
 

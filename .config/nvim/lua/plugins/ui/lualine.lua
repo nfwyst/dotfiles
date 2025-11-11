@@ -38,7 +38,7 @@ local filename = {
     newfile = "[New]",
   },
   color = {
-    fg = "#04d1f9",
+    fg = "#4ee0fc",
     gui = "italic",
   },
   cond = file_cond,

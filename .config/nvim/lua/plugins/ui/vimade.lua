@@ -1,6 +1,7 @@
 return {
   "tadaa/vimade",
   event = "VeryLazy",
+  keys = { { "<leader>uv", "<cmd>VimadeToggle<cr>", desc = "Vimade: Toggle" } },
   config = function()
     require("vimade").setup({
       fadelevel = 0.7,

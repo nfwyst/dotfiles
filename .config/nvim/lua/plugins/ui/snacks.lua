@@ -89,67 +89,72 @@ return {
       desc = "Toggle Local Scratch Todo",
     },
   },
-  opts = {
-    dashboard = {
-      preset = { header = header },
-      formats = { header = { align = align } },
-    },
-    animate = { enabled = vim.g.snacks_animate, fps = 120 },
-    scope = { debounce = 45 },
-    quickfile = { enabled = true },
-    scroll = {
-      enabled = true,
-      animate = { duration = { total = 125 } },
-      animate_repeat = { delay = 50, duration = { total = 25 } },
-      filter = function()
-        local mode = vim.api.nvim_get_mode().mode
-        return not vim.list_contains({ "v", "V", "\22" }, mode)
-      end,
-    },
-    lazygit = { enabled = true },
-    styles = {
-      notification = { wo = { wrap = true } },
-      terminal = { wo = { winbar = "" } },
-    },
-    dim = { enabled = true },
-    image = { enabled = true },
-    picker = {
-      hidden = true,
-      ignored = true,
-      exclude = exclude,
-      layout = {
-        preset = "vertical",
+  opts = function(_, opts)
+    local verticalLayout = require("snacks.picker.config.layouts").vertical.layout
+    for _, config in ipairs(verticalLayout) do
+      if config.win == "preview" then
+        config.height = 0.6
+      end
+    end
+
+    local opt = {
+      dashboard = {
+        preset = { header = header },
+        formats = { header = { align = align } },
+      },
+      animate = { enabled = vim.g.snacks_animate, fps = 120 },
+      scope = { debounce = 45 },
+      quickfile = { enabled = true },
+      scroll = {
+        enabled = true,
+        animate = { duration = { total = 125 } },
+        animate_repeat = { delay = 50, duration = { total = 25 } },
+        filter = function()
+          local mode = vim.api.nvim_get_mode().mode
+          return not vim.list_contains({ "v", "V", "\22" }, mode)
+        end,
+      },
+      lazygit = { enabled = true },
+      styles = {
+        notification = { wo = { wrap = true } },
+        terminal = { wo = { winbar = "" } },
+        scratch = { width = 0.88, height = 0.88 },
+      },
+      dim = { enabled = true },
+      image = { enabled = true },
+      picker = {
+        hidden = true,
+        ignored = true,
+        exclude = exclude,
         layout = {
-          width = 0.88,
-          height = 0.88,
+          preset = "vertical",
+          layout = { width = 0.88, height = 0.88 },
         },
-      },
-      formatters = {
-        file = {
-          truncate = 160,
-        },
-      },
-      sources = {
-        files = {
-          hidden = true,
-          ignored = true,
-          exclude = exclude,
-        },
-      },
-      win = {
-        input = {
-          keys = {
-            ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
-            ["<c-l>"] = { "toggle_ignored", mode = { "i", "n" } },
+        formatters = { file = { truncate = 160 } },
+        sources = {
+          files = {
+            hidden = true,
+            ignored = true,
+            exclude = exclude,
           },
         },
-        list = {
-          keys = {
-            ["<c-h>"] = "toggle_hidden",
-            ["<c-l>"] = "toggle_ignored",
+        win = {
+          input = {
+            keys = {
+              ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["<c-l>"] = { "toggle_ignored", mode = { "i", "n" } },
+            },
+          },
+          list = {
+            keys = {
+              ["<c-h>"] = "toggle_hidden",
+              ["<c-l>"] = "toggle_ignored",
+            },
           },
         },
       },
-    },
-  },
+    }
+
+    return vim.tbl_deep_extend("force", opts, opt)
+  end,
 }
