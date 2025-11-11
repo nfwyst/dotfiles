@@ -232,7 +232,10 @@ return {
         },
       },
       keymap = { ["<c-l>"] = { "show", "fallback" } },
-      fuzzy = { implementation = "rust" },
+      fuzzy = {
+        implementation = "rust",
+        prebuilt_binaries = { ignore_version_mismatch = true },
+      },
     }
 
     return vim.tbl_deep_extend("force", opts, opt)
