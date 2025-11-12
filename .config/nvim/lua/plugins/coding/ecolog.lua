@@ -14,26 +14,39 @@ return {
     { "<leader>cEt", "<Cmd>EcologShellToggle<cr>", desc = "Toggle Shell Variables" },
     { "<leader>cET", "<cmd>EcologShelterToggle<cr>", desc = "Shelter Toggle" },
   },
-  opts = {
-    preferred_environment = "development",
-    load_shell = true,
-    types = true,
-    monorepo = {
-      enabled = true,
-      auto_switch = true,
-    },
-    interpolation = {
-      enabled = true,
-    },
-    integrations = {
-      blink_cmp = true,
-      snacks = true,
-    },
-    shelter = {
-      modules = {
-        snacks_previewer = true,
+  opts = function(_, opts)
+    local providers = require("ecolog.providers")
+    local get_providers = providers.get_providers
+    providers.get_providers = function(filetype)
+      if vim.list_contains({ "yaml.docker-compose" }, filetype) then
+        return {}
+      end
+      return get_providers(filetype)
+    end
+
+    local opt = {
+      preferred_environment = "development",
+      load_shell = true,
+      types = true,
+      monorepo = {
+        enabled = true,
+        auto_switch = true,
+      },
+      interpolation = {
+        enabled = true,
+      },
+      integrations = {
+        blink_cmp = true,
         snacks = true,
       },
-    },
-  },
+      shelter = {
+        modules = {
+          snacks_previewer = true,
+          snacks = true,
+        },
+      },
+    }
+
+    return vim.tbl_deep_extend("force", opts, opt)
+  end,
 }

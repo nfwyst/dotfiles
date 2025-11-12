@@ -34,3 +34,11 @@ local opts = {
 for name, value in pairs(opts) do
   vim.o[name] = value
 end
+
+-- make filetype pattern
+vim.filetype.add({
+  pattern = {
+    ["compose.*%.ya?ml"] = "yaml.docker-compose",
+    ["docker%-compose.*%.ya?ml"] = "yaml.docker-compose",
+  },
+})
