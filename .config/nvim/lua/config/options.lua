@@ -19,7 +19,15 @@ for name, value in pairs(g_opts) do
   vim.g[name] = value
 end
 
-local scrolloff = math.floor(vim.api.nvim_win_get_height(vim.api.nvim_get_current_win()) / 2)
+-- calculate scrolloff size
+local scrolloff = math.floor(vim.api.nvim_win_get_height(vim.api.nvim_get_current_win()) / 4)
+if scrolloff > 1 then
+  scrolloff = scrolloff - 1
+end
+if scrolloff < 4 then
+  scrolloff = 4
+end
+
 local opts = {
   softtabstop = 2,
   numberwidth = 2,
@@ -28,7 +36,7 @@ local opts = {
   showcmd = false,
   modeline = false,
   swapfile = false,
-  scrolloff = scrolloff > 1 and scrolloff - 1 or scrolloff,
+  scrolloff = scrolloff,
 }
 
 for name, value in pairs(opts) do
