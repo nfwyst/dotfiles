@@ -16,13 +16,4 @@ M.ESLINT = {
   "package.json",
 }
 
-M.JEST = {
-  "jest.config.js",
-  "jest.config.ts",
-  "jest.config.mjs",
-  "jest.config.cjs",
-  "jest.config.json",
-  "package.json",
-}
-
 return M

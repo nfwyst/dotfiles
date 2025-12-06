@@ -1,9 +1,6 @@
 -- filter some diagnostics
 local set = vim.diagnostic.set
 local black_list = {
-  -- { source = "eslint_d", message = "Definition for rule" },
-  -- { source = "eslint_d", message = "Could not find config file" },
-  -- { source = "eslint_d", message = "File ignored" },
   { source = "eslint_d", message = "path::String" },
   { source = "ts", message = "File is a CommonJS module" },
   { source = "ts", codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 } },
@@ -23,20 +20,6 @@ vim.diagnostic.set = function(ns, bufnr, diagnostics, opts)
     return true
   end, diagnostics)
   set(ns, bufnr, results, opts)
-end
-
--- FIXME: fix goto next/prev diagnostic window flashed by
-local next = vim.diagnostic.goto_next
-local prev = vim.diagnostic.goto_prev
-vim.diagnostic.goto_next = function(opt)
-  ---@diagnostic disable-next-line: inject-field
-  opt.float = false
-  pcall(next, opt)
-end
-vim.diagnostic.goto_prev = function(opt)
-  ---@diagnostic disable-next-line: inject-field
-  opt.float = false
-  pcall(prev, opt)
 end
 
 -- FIXME: fix indent guide not work for creating new file

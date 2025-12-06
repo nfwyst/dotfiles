@@ -6,50 +6,11 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
-vim.api.nvim_create_autocmd("BufEnter", {
-  group = vim.api.nvim_create_augroup("buf_is_entered", { clear = true }),
-  callback = function(event)
-    local bufnr = event.buf
-    -- should be readable file
-    if vim.fn.filereadable(vim.api.nvim_buf_get_name(bufnr)) == 0 then
-      return
-    end
-
-    -- delete listed buffer which empty name
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if buf ~= bufnr and vim.bo[buf].buflisted and vim.api.nvim_buf_get_name(buf) == "" then
-        Snacks.bufdelete({ buf = buf, force = true })
-      end
-    end
-  end,
-})
-
--- TSInstall lua_patterns
-vim.api.nvim_create_autocmd("User", {
-  pattern = "TSUpdate",
-  callback = function()
-    require("nvim-treesitter.parsers").lua_patterns = {
-      install_info = {
-        url = "https://github.com/OXY2DEV/tree-sitter-lua_patterns",
-        files = { "src/parser.c" },
-        branch = "main",
-      },
-    }
-  end,
-})
-
 vim.api.nvim_create_autocmd("FileType", {
   pattern = vim.g.markdowns,
   callback = function()
     vim.schedule(function()
       vim.o.linebreak = false
     end)
-  end,
-})
-
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "csv",
-  callback = function()
-    vim.cmd.CsvViewEnable()
   end,
 })
