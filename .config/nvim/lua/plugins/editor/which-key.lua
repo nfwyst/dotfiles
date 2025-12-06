@@ -26,6 +26,10 @@ return {
       rules = {
         { pattern = "harpoon", icon = "󱓞 ", color = "orange" },
         { pattern = "checkmate", icon = "⊡" },
+        { pattern = "rest", icon = "󱂛" },
+        { pattern = "save all", icon = "" },
+        { pattern = "keywordprg", icon = "" },
+        { pattern = "update source", icon = "󰚰" },
       },
     },
   },

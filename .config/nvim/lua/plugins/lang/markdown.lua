@@ -2,9 +2,10 @@ local anti_conceal = { enabled = false }
 
 return {
   "MeanderingProgrammer/render-markdown.nvim",
-  lazy = false,
+  ft = vim.g.markdowns,
   opts = {
     render_modes = { "n", "c", "t", "i" },
+    preset = "lazy",
     file_types = vim.g.markdowns,
     completions = { blink = { enabled = false } },
     paragraph = { render_modes = true },

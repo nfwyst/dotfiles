@@ -60,7 +60,7 @@ local keymaps = {
     { from = "<s-down>", to = get_resizer(false), opt = { desc = "Decrease Window Height" } },
     { from = "<s-left>", to = get_resizer(true, true), opt = { desc = "Increase Window Width" } },
     { from = "<s-right>", to = get_resizer(false, true), opt = { desc = "Decrease Window Width" } },
-    { from = "<leader>o", to = ":update<cr> :source<cr>" },
+    { from = "<leader>o", to = ":update<cr> :source<cr>", opt = { desc = "Update Source" } },
     {
       from = "<leader>ft",
       to = function()

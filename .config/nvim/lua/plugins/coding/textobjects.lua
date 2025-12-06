@@ -1,3 +1,3 @@
 return {
-  { "nvim-mini/mini.ai", enabled = false },
+  { "nvim-mini/mini.ai", enabled = true },
 }

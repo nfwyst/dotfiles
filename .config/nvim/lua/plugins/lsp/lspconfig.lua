@@ -1,4 +1,3 @@
-local util = require("config.util")
 local lsp_servers = {
   "html",
   "emmet_language_server",
@@ -66,8 +65,6 @@ return {
   "neovim/nvim-lspconfig",
   opts = function(_, opts)
     override(opts.servers)
-    util.set_hl("LspInlayHint gui=italic")
-
     local opt = {
       diagnostics = {
         underline = false,
@@ -104,6 +101,9 @@ return {
               vim.cmd.LspRestart({ bang = true })
               vim.notify(server_name .. " exited abnormal. Lsp server" .. " restarted")
             end)
+          end,
+          on_attach = function(client)
+            client.server_capabilities.semanticTokensProvider = nil
           end,
         },
       },

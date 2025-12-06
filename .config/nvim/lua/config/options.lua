@@ -4,7 +4,7 @@
 local g_opts = {
   lazyvim_blink_main = true,
   snacks_animate = true,
-  ai_cmp = false,
+  ai_cmp = true,
   editorconfig = true,
   transparent_enabled = true,
   autoformat = true,

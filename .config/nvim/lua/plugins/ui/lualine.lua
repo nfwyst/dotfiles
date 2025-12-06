@@ -97,24 +97,6 @@ return {
             },
             padding = 0,
           },
-          {
-            function()
-              if not package.loaded.nomodoro then
-                return " 🍅"
-              end
-
-              return require("nomodoro").status()
-            end,
-            color = function()
-              local color = {}
-              if vim.o.background == "dark" then
-                color.fg = "#04d1f9"
-              end
-
-              return color
-            end,
-            padding = 0,
-          },
         },
         lualine_y = {
           { "filetype", colored = false, icon_only = false, padding = 0 },

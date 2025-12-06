@@ -1,10 +1,6 @@
-local util = require("config.util")
-
 return {
   "akinsho/bufferline.nvim",
   opts = function(_, opts)
-    util.set_hl("BufferLineBufferSelected cterm=italic gui=italic")
-
     local offsets = opts.options.offsets or {}
     for _, offset in ipairs(offsets) do
       if offset.filetype == "neo-tree" then
@@ -18,7 +14,7 @@ return {
         diagnostics = false,
         truncate_names = false,
         max_prefix_length = 30,
-        always_show_bufferline = true,
+        always_show_bufferline = false,
         custom_filter = function(bufnr)
           return vim.api.nvim_buf_get_name(bufnr) ~= "health://"
         end,

@@ -1,6 +1,6 @@
 return {
   "ghostty",
-  lazy = false,
+  ft = "ghostty",
   cond = vim.env.TERMINAL == "ghostty",
   dir = "/Applications/Ghostty.app/Contents/Resources/vim/vimfiles",
 }
