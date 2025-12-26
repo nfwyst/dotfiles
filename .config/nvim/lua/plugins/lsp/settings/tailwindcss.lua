@@ -6,6 +6,7 @@ local config_files = {
 }
 
 return {
+  cmd = { "bun", "run", "--bun", "tailwindcss-language-server", "--stdio" },
   on_attach = function(client, bufnr)
     -- only git repo go here
     local config_root = vim.fs.root(bufnr, config_files)

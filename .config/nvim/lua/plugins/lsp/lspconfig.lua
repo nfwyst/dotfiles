@@ -27,17 +27,22 @@ local function override(servers)
   windows.default_options.border = "rounded"
 
   for _, name in ipairs(lsp_servers) do
-    local path = "plugins.lsp.settings." .. name
-    local ok, settings = pcall(require, path)
-    if not ok or not settings then
-      settings = {}
+    if not servers[name] then
+      servers[name] = {}
     end
-
-    servers[name] = vim.tbl_deep_extend("force", servers[name] or {}, settings)
   end
 
   for _, name in ipairs(disabled_lsp_servers) do
     servers[name] = { enabled = false }
+  end
+
+  for key, value in pairs(servers) do
+    local path = "plugins.lsp.settings." .. key
+    local ok, settings = pcall(require, path)
+    if not ok or not settings then
+      settings = {}
+    end
+    servers[key] = vim.tbl_deep_extend("force", value, settings)
   end
 
   local keys = servers["*"].keys
@@ -85,7 +90,7 @@ return {
           },
         },
       },
-      inlay_hints = { enabled = true },
+      inlay_hints = { enabled = false },
       servers = {
         --   "pyright",
         --   "basedpyright",
