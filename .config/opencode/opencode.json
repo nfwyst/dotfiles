@@ -11,5 +11,8 @@
     "edit": "allow",
     "bash": "allow",
     "webfetch": "allow"
-  }
+  },
+  "plugin": [
+    "oh-my-opencode"
+  ]
 }
