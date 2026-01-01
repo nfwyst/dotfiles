@@ -1,12 +1,13 @@
 local util = require("config.util")
 
 local custom_highlights = {
-  "NeoTreeMessage cterm=italic gui=italic guifg=#585b7b",
   "BufferLineBufferSelected cterm=italic gui=italic",
   "LspInlayHint cterm=italic gui=italic guibg=#0e1018",
   "CursorLine guibg=#3e4365",
   "TabLineFill guibg=none",
   "BlinkCmpGhostText guibg=#222539",
+  "SnacksPickerInputBorder guifg=#3e4365",
+  "SnacksPickerInputTitle guifg=#589ed7",
 }
 
 for _, config in ipairs(custom_highlights) do

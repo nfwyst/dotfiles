@@ -103,7 +103,7 @@ return {
             local client = vim.lsp.get_client_by_id(client_id)
             local server_name = client and client.name or "unknow"
             vim.schedule(function()
-              vim.cmd.LspRestart({ bang = true })
+              vim.cmd("lsp restart")
               vim.notify(server_name .. " exited abnormal. Lsp server" .. " restarted")
             end)
           end,

@@ -33,6 +33,9 @@ return {
             {
               find = "Pattern not found:",
             },
+            {
+              find = "E211: File",
+            },
           },
         },
       },

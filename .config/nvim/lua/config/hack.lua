@@ -2,6 +2,7 @@
 local set = vim.diagnostic.set
 local black_list = {
   { source = "eslint_d", message = "path::String" },
+  { source = "eslint_d", message = "projectService" },
   { source = "ts", message = "File is a CommonJS module" },
   { source = "ts", codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 } },
 }

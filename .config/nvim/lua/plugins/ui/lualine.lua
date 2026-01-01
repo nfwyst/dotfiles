@@ -1,9 +1,14 @@
-local function lsp_info()
+local function lsp_names()
   local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
   local names = {}
   for _, client in pairs(clients) do
     names[#names + 1] = client.name:match("([^_]+)")
   end
+  return names
+end
+
+local function lsp_info()
+  local names = lsp_names()
   local result = table.concat(names, "•")
   if result == "" then
     return ""
@@ -69,8 +74,10 @@ return {
 
               if vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch then
                 vim.schedule(function()
-                  vim.cmd.LspRestart({ bang = true })
-                  vim.notify("Lsp server" .. " restarted")
+                  if #lsp_names() > 0 then
+                    vim.cmd("lsp restart")
+                    vim.notify("Lsp server" .. " restarted")
+                  end
                 end)
               end
 

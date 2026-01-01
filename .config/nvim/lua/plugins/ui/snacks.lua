@@ -54,6 +54,8 @@ local exclude = {
   "dist",
   "log",
   ".vscode",
+  ".DS_Store",
+  "thumbs.db",
 }
 
 local function gen_get_todo(global)
@@ -126,6 +128,18 @@ return {
         hidden = true,
         ignored = true,
         exclude = exclude,
+        icons = {
+          git = {
+            added = " + ",
+            modified = "  ",
+            deleted = " 󰗨 ",
+            renamed = " 󰹳 ",
+            untracked = "  ",
+            ignored = "  ",
+            staged = " 󰆺 ",
+            unmerged = " 󰆑 ",
+          },
+        },
         layout = {
           preset = "vertical",
           layout = { width = 0.88, height = 0.88 },
@@ -137,18 +151,28 @@ return {
             ignored = true,
             exclude = exclude,
           },
+          explorer = {
+            diagnostics = false,
+            title = "",
+            layout = {
+              layout = {
+                width = 50,
+                position = "right",
+              },
+            },
+          },
         },
         win = {
           input = {
             keys = {
-              ["<c-h>"] = { "toggle_hidden", mode = { "i", "n" } },
-              ["<c-l>"] = { "toggle_ignored", mode = { "i", "n" } },
+              ["<c-e>"] = { "toggle_hidden", mode = { "i", "n" } },
+              ["<c-r>"] = { "toggle_ignored", mode = { "i", "n" } },
             },
           },
           list = {
             keys = {
-              ["<c-h>"] = "toggle_hidden",
-              ["<c-l>"] = "toggle_ignored",
+              ["<c-e>"] = "toggle_hidden",
+              ["<c-r>"] = "toggle_ignored",
             },
           },
         },
