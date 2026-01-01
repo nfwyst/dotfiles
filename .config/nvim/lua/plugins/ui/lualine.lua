@@ -106,6 +106,11 @@ return {
           },
         },
         lualine_y = {
+          {
+            require("config.price"),
+            color = { fg = "#f6d365" },
+            padding = 0,
+          },
           { "filetype", colored = false, icon_only = false, padding = 0 },
           {
             "selectioncount",
