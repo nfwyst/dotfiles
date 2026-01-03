@@ -14,8 +14,6 @@
     "webfetch": "allow",
     "doom_loop": "allow",
     "external_directory": "allow"
-  }
-  // "plugin": [
-  //   "oh-my-opencode"
-  // ]
+  },
+  "plugin": ["oh-my-opencode"]
 }
