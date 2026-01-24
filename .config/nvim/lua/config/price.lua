@@ -4,6 +4,7 @@ local cache = {
   price = nil,
   timestamp = 0,
   last_api_index = 0,
+  enabled = true,
 }
 
 local config = {
@@ -113,6 +114,9 @@ function M.refresh_price(callback)
 end
 
 function M.get_display_text()
+  if not cache.enabled then
+    return ""
+  end
   return format_price(cache.price)
 end
 
@@ -122,6 +126,11 @@ function M.set_refresh_interval(interval)
     M.stop()
     M.setup()
   end
+end
+
+function M.toggle()
+  cache.enabled = not cache.enabled
+  vim.notify("Price display " .. (cache.enabled and "enabled" or "disabled"))
 end
 
 function M.stop()
@@ -143,4 +152,4 @@ end
 
 M.setup()
 
-return M.get_display_text
+return M

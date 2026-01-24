@@ -1,6 +1,15 @@
 return {
   "folke/which-key.nvim",
-  keys = { { "<leader>cU", "", desc = "utils" } },
+  keys = {
+    { "<leader>cU", "", desc = "utils" },
+    {
+      "<leader>cUp",
+      function()
+        require("config.price").toggle()
+      end,
+      desc = "Toggle price display",
+    },
+  },
   opts = {
     preset = "classic",
     keys = {

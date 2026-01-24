@@ -107,7 +107,7 @@ return {
         },
         lualine_y = {
           {
-            require("config.price"),
+            require("config.price").get_display_text,
             color = { fg = "#f6d365" },
             padding = 0,
           },

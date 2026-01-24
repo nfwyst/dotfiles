@@ -1,6 +1,7 @@
 return {
   "milanglacier/minuet-ai.nvim",
   dependencies = { "nvim-lua/plenary.nvim" },
+  enabled = false,
   keys = {
     { "<leader>a", "", desc = "ai", mode = { "n", "v" } },
     { "<leader>am", "", desc = "Minuet" },

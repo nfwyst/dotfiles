@@ -55,6 +55,9 @@ return {
             {
               find = "watch.watch: ENOENT: no such file or directory",
             },
+            {
+              find = "shared.lua:0",
+            },
           },
         },
       },

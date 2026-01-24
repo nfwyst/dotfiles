@@ -18,7 +18,7 @@ return {
     { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
   },
   opts = function(_, opts)
-    vim.list_extend(opts.sources.default, { "minuet" })
+    -- vim.list_extend(opts.sources.default, { "minuet" })
 
     local opt = {
       completion = {
@@ -44,13 +44,13 @@ return {
       signature = { window = { border = "rounded" } },
       sources = {
         providers = {
-          minuet = {
-            name = "minuet",
-            module = "minuet.blink",
-            async = true,
-            timeout_ms = 3000,
-            score_offset = 100,
-          },
+          -- minuet = {
+          --   name = "minuet",
+          --   module = "minuet.blink",
+          --   async = true,
+          --   timeout_ms = 3000,
+          --   score_offset = 100,
+          -- },
           snippets = {
             min_keyword_length = 1,
             opts = {
