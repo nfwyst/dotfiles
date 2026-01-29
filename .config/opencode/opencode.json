@@ -20,7 +20,7 @@
     "doom_loop": "allow"
   },
   "plugin": [
-    "oh-my-opencode@3.0.1"
+    "oh-my-opencode@3.1.6"
   ],
   "mcp": {
     "zai-mcp-server": {
