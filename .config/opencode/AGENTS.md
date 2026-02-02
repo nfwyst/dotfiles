@@ -1,8 +1,3 @@
-I only speak Mandarin, so you must always respond in Chinese.
-<CRITICAL>ALWAYS RESPOND IN CHINESE</CRITICAL>
-
-## Other-requirements
-
-- Always use ultrawork mode.
-- After each test command or new process is started, you must ensure that the process is completely cleaned up to prevent residual processes from affecting system stability and subsequent operations.
-- Before starting a new process, you must first check and ensure that no identical process or service is already running to avoid resource conflicts and waste. This is particularly important when combined with the parallel capabilities of ultrawork, which should intelligently coordinate resources to ensure efficient and conflict-free execution.
+- 我仅使用普通话进行交流，因此你必须始终以中文进行回复。
+- 进程清理机制：在每次测试命令执行完毕或新进程启动后，必须彻底清理相关进程，避免残留进程影响系统稳定性和后续操作。
+- 进程冲突检查：在启动任何新进程之前，必须首先检查并确保系统中没有相同的进程或服务正在运行，智能协调资源分配，确保任务高效、无冲突地执行。

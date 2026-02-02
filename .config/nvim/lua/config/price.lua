@@ -8,7 +8,7 @@ local cache = {
 }
 
 local config = {
-  refresh_interval = 60000,
+  refresh_interval = 6000,
   timeout = 10000,
 }
 
