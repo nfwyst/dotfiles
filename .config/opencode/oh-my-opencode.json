@@ -3,54 +3,54 @@
   "disabled_hooks": ["directory-agents-injector"],
   "agents": {
     "sisyphus": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/kimi-k2.5-free"
     },
     "oracle": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "librarian": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "explore": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "multimodal-looker": {
-      "model": "zhipuai-coding-plan/glm-4.6v"
+      "model": "opencode/glm-4.7-free"
     },
     "prometheus": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/kimi-k2.5-free"
     },
     "metis": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/kimi-k2.5-free"
     },
     "momus": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "atlas": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/kimi-k2.5-free"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "ultrabrain": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "artistry": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "quick": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "unspecified-low": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "unspecified-high": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     },
     "writing": {
-      "model": "zhipuai-coding-plan/glm-4.7"
+      "model": "opencode/glm-4.7-free"
     }
   }
 }

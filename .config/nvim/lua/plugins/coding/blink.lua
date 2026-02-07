@@ -13,7 +13,7 @@ end
 
 return {
   "saghen/blink.cmp",
-  build = "cargo build --release",
+  -- build = "cargo build --release",
   keys = {
     { "<leader>c/", "<cmd>%s/\\r//g<cr>", desc = "Remove All Enter Character" },
   },
@@ -86,7 +86,7 @@ return {
       },
       keymap = { ["<c-l>"] = { "show", "fallback" } },
       fuzzy = {
-        implementation = "rust",
+        implementation = "lua",
         prebuilt_binaries = { ignore_version_mismatch = false },
       },
     }

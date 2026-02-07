@@ -4,7 +4,6 @@ local lsp_servers = {
   "cssmodules_ls",
   "css_variables",
   "cssls",
-  "nginx_language_server",
   "solc",
   "vtsls",
   "protols",
