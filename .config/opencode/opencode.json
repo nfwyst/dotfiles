@@ -21,34 +21,16 @@
   },
   "plugin": ["oh-my-opencode@latest"],
   "mcp": {
-    "zai-mcp-server": {
+    "codin-d2c-mcp": {
       "type": "local",
-      "command": ["bunx", "-y", "@z_ai/mcp-server"],
+      "command": ["bunx", "-y", "@byted/codin-d2c-mcp@latest"],
       "environment": {
-        "Z_AI_API_KEY": "{env:Z_AI_API_KEY}",
-        "Z_AI_MODE": "ZHIPU"
-      }
-    },
-    "web-search-prime": {
-      "type": "remote",
-      "url": "https://open.bigmodel.cn/api/mcp/web_search_prime/mcp",
-      "headers": {
-        "Authorization": "Bearer {env:Z_AI_API_KEY}"
-      }
-    },
-    "web-reader": {
-      "type": "remote",
-      "url": "https://open.bigmodel.cn/api/mcp/web_reader/mcp",
-      "headers": {
-        "Authorization": "Bearer {env:Z_AI_API_KEY}"
-      }
-    },
-    "zread": {
-      "type": "remote",
-      "url": "https://open.bigmodel.cn/api/mcp/zread/mcp",
-      "headers": {
-        "Authorization": "Bearer {env:Z_AI_API_KEY}"
-      }
+        "CODIN_D2C_TOKEN": "{env:CODIN_D2C_TOKEN}",
+        "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
+        "BUN_CONFIG_REGISTRY": "{env:BUN_CONFIG_REGISTRY}"
+      },
+      "timeout": 1800000,
+      "enabled": false
     }
   }
 }

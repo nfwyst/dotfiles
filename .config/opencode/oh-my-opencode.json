@@ -3,54 +3,60 @@
   "disabled_hooks": ["directory-agents-injector"],
   "agents": {
     "sisyphus": {
-      "model": "opencode/kimi-k2.5-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "oracle": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "librarian": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "explore": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "multimodal-looker": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "prometheus": {
-      "model": "opencode/kimi-k2.5-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "metis": {
-      "model": "opencode/kimi-k2.5-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "momus": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "atlas": {
-      "model": "opencode/kimi-k2.5-free"
+      "model": "kimi-for-coding/k2p5"
+    },
+    "hephaestus": {
+      "model": "kimi-for-coding/k2p5"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "ultrabrain": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "artistry": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "quick": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "unspecified-low": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "unspecified-high": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
     },
     "writing": {
-      "model": "opencode/glm-4.7-free"
+      "model": "kimi-for-coding/k2p5"
+    },
+    "deep": {
+      "model": "kimi-for-coding/k2p5"
     }
   }
 }
