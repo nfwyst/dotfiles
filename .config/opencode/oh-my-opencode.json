@@ -1,6 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "disabled_hooks": ["directory-agents-injector"],
   "agents": {
     "sisyphus": {
       "model": "kimi-for-coding/k2p5"
@@ -40,9 +39,6 @@
     "ultrabrain": {
       "model": "kimi-for-coding/k2p5"
     },
-    "artistry": {
-      "model": "kimi-for-coding/k2p5"
-    },
     "quick": {
       "model": "kimi-for-coding/k2p5"
     },
@@ -55,8 +51,12 @@
     "writing": {
       "model": "kimi-for-coding/k2p5"
     },
+    "artistry": {
+      "model": "kimi-for-coding/k2p5"
+    },
     "deep": {
       "model": "kimi-for-coding/k2p5"
     }
-  }
+  },
+  "disabled_hooks": ["directory-agents-injector"]
 }
