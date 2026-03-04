@@ -18,7 +18,7 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
-  "plugin": ["oh-my-opencode@3.9.0"],
+  "plugin": ["oh-my-opencode@latest"],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
@@ -30,6 +30,25 @@
       },
       "timeout": 1800000,
       "enabled": false
+    }
+  },
+  "provider": {
+    "baiduqianfancodingplan": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qianfan Coding Plan",
+      "options": {
+        "baseURL": "https://qianfan.baidubce.com/v2/coding",
+        "apiKey": "{env:BAIDU_QIANFAN_API_KEY}"
+      },
+      "models": {
+        "qianfan-code-latest": {
+          "name": "Qianfan Code Latest",
+          "limit": {
+            "context": 202752,
+            "output": 131072
+          }
+        }
+      }
     }
   }
 }

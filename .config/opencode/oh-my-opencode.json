@@ -1,62 +1,68 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "new_task_system_enabled": true,
   "agents": {
     "sisyphus": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "主执行者，利用GLM-5强大的编码能力完成核心开发任务。"
     },
     "oracle": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "战略顾问，利用Kimi-k2.5的超长上下文和集群思维提供架构建议。"
     },
     "librarian": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "文档专家，利用GLM-5作为系统架构师的深度信息合成能力，在搜索文档时进行系统性知识整合，从海量信息中提取关键洞见并生成结构化输出。"
     },
     "explore": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "代码探索者，利用Kimi K2.5的Agent Swarm集群能力快速扫描代码库——可并行调度最多100个子智能体同时分析不同模块，将探索时间压缩至原来的1/4.5，高效发现模式和分析架构。"
     },
     "multimodal-looker": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "多模态观察者，利用Kimi-k2.5的原生多模态能力处理图像、截图和视频输入。"
     },
     "prometheus": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "计划构建者，利用GLM-5的逻辑推理能力生成详细计划。"
     },
     "metis": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "预规划分析师，利用Kimi-k2.5的Agent Swarm能力分析用户请求，识别隐藏需求、歧义和潜在风险。"
     },
     "momus": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "计划审阅者，利用GLM-5在复杂系统工程和长程Agent任务上的精确逻辑验证能力，严格审查计划的依赖关系、可行性和逻辑一致性，确保可执行性。"
     },
     "atlas": {
-      "model": "kimi-for-coding/k2p5"
-    },
-    "hephaestus": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "计划执行者，利用Kimi-k2.5的Agent Swarm集群能力协调多智能体并行工作。"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "视觉工程任务，利用Kimi K2.5的原生多模态能力，从截图、视频中高保真还原前端代码。"
     },
     "ultrabrain": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "深度推理任务，利用GLM-5的逻辑推理能力，进行深层次逻辑分析和问题求解。"
     },
     "quick": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "快速琐碎任务，利用Kimi K2.5的即时模式，高效处理单文件修改、拼写修复等简单工作。"
     },
     "unspecified-low": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "低投入的通用任务，利用Kimi K2.5的即时模式，以最低成本、最快速度处理中等复杂度的实现工作。"
     },
     "unspecified-high": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "高投入的通用任务，利用GLM-5作为系统架构师的深度工程能力，处理需要复杂思考的高难度实现。"
     },
     "writing": {
-      "model": "kimi-for-coding/k2p5"
-    },
-    "artistry": {
-      "model": "kimi-for-coding/k2p5"
-    },
-    "deep": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "description": "文档、散文、技术写作任务，利用Kimi K2.5强大的自然语言生成能力，产出高质量、流畅的技术文档和内容。"
     }
-  },
-  "disabled_hooks": ["directory-agents-injector"]
+  }
 }
