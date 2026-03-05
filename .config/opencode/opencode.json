@@ -18,7 +18,7 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
-  "plugin": ["oh-my-opencode@latest"],
+  "plugin": ["oh-my-opencode@latest", "opencode-agent-memory@latest"],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
