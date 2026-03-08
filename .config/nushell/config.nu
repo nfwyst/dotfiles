@@ -928,6 +928,7 @@ alias python = python3
 alias pip = python3 -m pip
 alias cat = bat
 alias find = fd
+alias openclaw = bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)
 
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {

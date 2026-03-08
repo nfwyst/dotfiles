@@ -1,10 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
-  "new_task_system_enabled": true,
   "agents": {
     "sisyphus": {
       "model": "baiduqianfancodingplan/qianfan-code-latest",
       "description": "主执行者，利用GLM-5强大的编码能力完成核心开发任务。"
+    },
+    "hephaestus": {
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "深度工作者，利用GLM-5在复杂系统工程与长程Agent任务上的卓越能力，先探索后行动，端到端完成复杂编码模块。"
     },
     "oracle": {
       "model": "kimi-for-coding/k2p5",
@@ -47,6 +50,14 @@
     "ultrabrain": {
       "model": "baiduqianfancodingplan/qianfan-code-latest",
       "description": "深度推理任务，利用GLM-5的逻辑推理能力，进行深层次逻辑分析和问题求解。"
+    },
+    "deep": {
+      "model": "baiduqianfancodingplan/qianfan-code-latest",
+      "description": "深度复杂任务，利用GLM-5的深度推理与系统工程能力进行系统级设计、复杂算法实现。"
+    },
+    "artistry": {
+      "model": "kimi-for-coding/k2p5",
+      "description": "创意生成任务，利用Kimi K2.5的Agent集群架构并行调度最多100个子智能体进行多角度头脑风暴，产出多样创意。"
     },
     "quick": {
       "model": "kimi-for-coding/k2p5",

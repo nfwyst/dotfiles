@@ -18,7 +18,7 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
-  "plugin": ["@tarquinen/opencode-dcp@latest", "oh-my-opencode@latest"],
+  "plugin": ["@tarquinen/opencode-dcp@latest", "oh-my-opencode"],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
@@ -33,6 +33,16 @@
     }
   },
   "provider": {
+    "kimi-for-coding": {
+      "models": {
+        "k2p5": {
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          }
+        }
+      }
+    },
     "baiduqianfancodingplan": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Qianfan Coding Plan",
@@ -50,5 +60,8 @@
         }
       }
     }
+  },
+  "compaction": {
+    "reserved": 8000
   }
 }
