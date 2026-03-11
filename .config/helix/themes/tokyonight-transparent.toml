@@ -1,0 +1,174 @@
+# Helix Custom Theme - Tokyo Night Transparent
+# 基于 Neovim 的 tokyonight.nvim 配色
+# 文件: ~/.config/helix/themes/tokyonight-transparent.toml
+
+# 继承内置 tokyonight 主题作为基础
+inherits = "tokyonight"
+
+# 透明背景设置
+"ui.background" = {}
+"ui.statusline" = { fg = "#a9b1d6" }
+"ui.statusline.inactive" = { fg = "#565f89" }
+"ui.bufferline" = { fg = "#565f89" }
+"ui.bufferline.active" = { fg = "#c0caf5", modifiers = ["bold"] }
+"ui.popup" = {}
+"ui.window" = {}
+"ui.help" = {}
+
+# 高亮当前行
+"ui.cursorline.primary" = { bg = "#3e4365" }
+
+# 选中文本
+"ui.selection" = { bg = "#364a82" }
+"ui.selection.primary" = { bg = "#3e4365" }
+
+# 菜单和补全
+"ui.menu" = {}
+"ui.menu.selected" = { bg = "#3e4365", modifiers = ["bold"] }
+
+# 光标
+"ui.cursor" = { fg = "#1a1b26", bg = "#c0caf5" }
+"ui.cursor.insert" = { fg = "#c0caf5", bg = "#c0caf5" }
+"ui.cursor.select" = { fg = "#c0caf5", bg = "#737aa2" }
+
+# 行号
+"ui.linenr" = { fg = "#565f89" }
+"ui.linenr.selected" = { fg = "#737aa2" }
+
+# 诊断
+"diagnostic.error" = { fg = "#db4b4b", underline = { color = "#db4b4b", style = "curl" } }
+"diagnostic.warning" = { fg = "#e0af68", underline = { color = "#e0af68", style = "curl" } }
+"diagnostic.info" = { fg = "#0db9d7", underline = { color = "#0db9d7", style = "curl" } }
+"diagnostic.hint" = { fg = "#1abc9c", underline = { color = "#1abc9c", style = "curl" } }
+
+# 语法高亮 (Tokyo Night 配色)
+"keyword" = { fg = "#bb9af7", modifiers = ["italic"] }
+"keyword.control" = { fg = "#bb9af7" }
+"keyword.function" = { fg = "#bb9af7" }
+"keyword.operator" = { fg = "#bb9af7" }
+"keyword.storage" = { fg = "#bb9af7" }
+"keyword.type" = { fg = "#bb9af7" }
+
+"function" = { fg = "#7aa2f7" }
+"function.builtin" = { fg = "#7dcfff" }
+"function.macro" = { fg = "#7aa2f7" }
+"function.special" = { fg = "#7dcfff" }
+
+"type" = { fg = "#7dcfff" }
+"type.builtin" = { fg = "#7dcfff" }
+"type.enum" = { fg = "#7dcfff" }
+"type.enum.variant" = { fg = "#ff9e64" }
+
+"constructor" = { fg = "#7dcfff" }
+
+"constant" = { fg = "#ff9e64" }
+"constant.builtin" = { fg = "#ff9e64" }
+"constant.character" = { fg = "#9ece6a" }
+"constant.character.escape" = { fg = "#bb9af7" }
+"constant.numeric" = { fg = "#ff9e64" }
+
+"string" = { fg = "#9ece6a" }
+"string.regexp" = { fg = "#bb9af7" }
+"string.special" = { fg = "#9ece6a" }
+"string.special.path" = { fg = "#7aa2f7" }
+"string.special.url" = { fg = "#7dcfff" }
+
+"comment" = { fg = "#565f89", modifiers = ["italic"] }
+"comment.line" = { fg = "#565f89", modifiers = ["italic"] }
+"comment.block" = { fg = "#565f89", modifiers = ["italic"] }
+"comment.block.documentation" = { fg = "#565f89" }
+
+"variable" = { fg = "#c0caf5" }
+"variable.builtin" = { fg = "#7dcfff" }
+"variable.parameter" = { fg = "#e0af68" }
+"variable.other" = { fg = "#c0caf5" }
+"variable.other.member" = { fg = "#7aa2f7" }
+
+"label" = { fg = "#7aa2f7" }
+"namespace" = { fg = "#7dcfff" }
+
+"operator" = { fg = "#89ddff" }
+"punctuation" = { fg = "#9aa5ce" }
+"punctuation.bracket" = { fg = "#9aa5ce" }
+"punctuation.delimiter" = { fg = "#89ddff" }
+"punctuation.special" = { fg = "#bb9af7" }
+
+"tag" = { fg = "#bb9af7" }
+"tag.attribute" = { fg = "#7aa2f7" }
+"tag.delimiter" = { fg = "#9aa5ce" }
+
+"attribute" = { fg = "#7aa2f7" }
+"property" = { fg = "#7aa2f7" }
+
+# Markdown
+"markup.heading" = { fg = "#bb9af7", modifiers = ["bold"] }
+"markup.heading.1" = { fg = "#bb9af7", modifiers = ["bold"] }
+"markup.heading.2" = { fg = "#7aa2f7", modifiers = ["bold"] }
+"markup.heading.3" = { fg = "#7dcfff", modifiers = ["bold"] }
+"markup.heading.4" = { fg = "#e0af68", modifiers = ["bold"] }
+"markup.heading.5" = { fg = "#ff9e64", modifiers = ["bold"] }
+"markup.heading.6" = { fg = "#9ece6a", modifiers = ["bold"] }
+
+"markup.list" = { fg = "#bb9af7" }
+"markup.list.unnumbered" = { fg = "#bb9af7" }
+"markup.list.numbered" = { fg = "#ff9e64" }
+
+"markup.bold" = { modifiers = ["bold"] }
+"markup.italic" = { modifiers = ["italic"] }
+"markup.strikethrough" = { modifiers = ["crossed_out"] }
+
+"markup.link" = { fg = "#7dcfff" }
+"markup.link.url" = { fg = "#7dcfff", modifiers = ["underlined"] }
+"markup.link.label" = { fg = "#7aa2f7" }
+"markup.link.text" = { fg = "#9ece6a" }
+
+"markup.quote" = { fg = "#565f89", modifiers = ["italic"] }
+"markup.raw" = { fg = "#9ece6a" }
+"markup.raw.inline" = { fg = "#9ece6a" }
+"markup.raw.block" = { fg = "#9ece6a" }
+
+# Diff
+"diff.plus" = { fg = "#9ece6a" }
+"diff.minus" = { fg = "#db4b4b" }
+"diff.delta" = { fg = "#7dcfff" }
+"diff.delta.moved" = { fg = "#e0af68" }
+
+# Git gutter
+"info" = { fg = "#7dcfff" }
+"hint" = { fg = "#1abc9c" }
+"warning" = { fg = "#e0af68" }
+"error" = { fg = "#db4b4b" }
+
+# UI 元素
+"ui.text" = { fg = "#c0caf5" }
+"ui.text.focus" = { fg = "#c0caf5", modifiers = ["bold"] }
+"ui.text.inactive" = { fg = "#565f89" }
+"ui.text.info" = { fg = "#c0caf5" }
+
+"ui.virtual" = { fg = "#565f89" }
+"ui.virtual.ruler" = { bg = "#3e4365" }
+"ui.virtual.whitespace" = { fg = "#565f89" }
+"ui.virtual.indent-guide" = { fg = "#565f89" }
+"ui.virtual.inlay-hint" = { fg = "#565f89", modifiers = ["italic"], bg = "#0e1018" }
+"ui.virtual.jump-label" = { fg = "#bb9af7", modifiers = ["bold"] }
+"ui.virtual.wrap" = { fg = "#565f89" }
+
+# Speller
+"speller" = { fg = "#db4b4b", underline = { style = "curl" } }
+
+[palette]
+# Tokyo Night 配色板
+black = "#1a1b26"
+white = "#c0caf5"
+red = "#f7768e"
+orange = "#ff9e64"
+yellow = "#e0af68"
+green = "#9ece6a"
+cyan = "#7dcfff"
+purple = "#bb9af7"
+magenta = "#bb9af7"
+pink = "#ff007c"
+gray = "#565f89"
+light-gray = "#9aa5ce"
+dark-gray = "#3e4365"
+blue = "#7aa2f7"

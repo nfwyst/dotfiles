@@ -909,6 +909,9 @@ source ~/.config/nushell/cache/zoxide/init.nu
 # load git alias
 source ~/.config/nushell/aliases/git.nu
 
+# load opencode alias
+source ~/.config/nushell/aliases/opencode.nu
+
 # integration with carapace
 source ~/.config/nushell/cache/carapace/init.nu
 

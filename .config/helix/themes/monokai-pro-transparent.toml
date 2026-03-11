@@ -1,0 +1,173 @@
+# Helix Custom Theme - Monokai Pro Transparent
+# 基于 Neovim 的 monokai-pro.nvim (classic filter) 配色
+# 文件: ~/.config/helix/themes/monokai-pro-transparent.toml
+
+# 继承内置 monokai 主题作为基础
+inherits = "monokai"
+
+# 透明背景设置
+"ui.background" = {}
+"ui.statusline" = { fg = "white" }
+"ui.statusline.inactive" = { fg = "gray" }
+"ui.bufferline" = { fg = "gray" }
+"ui.bufferline.active" = { fg = "white", modifiers = ["bold"] }
+"ui.popup" = {}
+"ui.window" = {}
+"ui.help" = {}
+
+# 高亮当前行
+"ui.cursorline.primary" = { bg = "#3e4365" }
+
+# 选中文本
+"ui.selection" = { bg = "#3e4451" }
+"ui.selection.primary" = { bg = "#4e5579" }
+
+# 菜单和补全
+"ui.menu" = {}
+"ui.menu.selected" = { bg = "#3e4365", modifiers = ["bold"] }
+
+# 光标
+"ui.cursor" = { fg = "#272822", bg = "#fcfcfa" }
+"ui.cursor.insert" = { fg = "#fcfcfa", bg = "#fcfcfa" }
+"ui.cursor.select" = { fg = "#fcfcfa", bg = "#727072" }
+
+# 行号
+"ui.linenr" = { fg = "#727072" }
+"ui.linenr.selected" = { fg = "#c1c0c0" }
+
+# 诊断
+"diagnostic.error" = { fg = "#f92672", underline = { color = "#f92672", style = "curl" } }
+"diagnostic.warning" = { fg = "#e6db74", underline = { color = "#e6db74", style = "curl" } }
+"diagnostic.info" = { fg = "#66d9ef", underline = { color = "#66d9ef", style = "curl" } }
+"diagnostic.hint" = { fg = "#a6e22e", underline = { color = "#a6e22e", style = "curl" } }
+
+# 语法高亮 (Monokai Pro Classic 配色)
+"keyword" = { fg = "#f92672", modifiers = ["bold"] }
+"keyword.control" = { fg = "#f92672" }
+"keyword.function" = { fg = "#f92672" }
+"keyword.operator" = { fg = "#f92672" }
+"keyword.storage" = { fg = "#f92672" }
+"keyword.type" = { fg = "#f92672" }
+
+"function" = { fg = "#a6e22e" }
+"function.builtin" = { fg = "#66d9ef" }
+"function.macro" = { fg = "#a6e22e" }
+"function.special" = { fg = "#66d9ef" }
+
+"type" = { fg = "#66d9ef" }
+"type.builtin" = { fg = "#66d9ef" }
+"type.enum" = { fg = "#66d9ef" }
+"type.enum.variant" = { fg = "#ae81ff" }
+
+"constructor" = { fg = "#66d9ef" }
+
+"constant" = { fg = "#ae81ff" }
+"constant.builtin" = { fg = "#ae81ff" }
+"constant.character" = { fg = "#e6db74" }
+"constant.character.escape" = { fg = "#ae81ff" }
+"constant.numeric" = { fg = "#ae81ff" }
+
+"string" = { fg = "#e6db74" }
+"string.regexp" = { fg = "#f92672" }
+"string.special" = { fg = "#e6db74" }
+"string.special.path" = { fg = "#a6e22e" }
+"string.special.url" = { fg = "#66d9ef" }
+
+"comment" = { fg = "#727072", modifiers = ["italic"] }
+"comment.line" = { fg = "#727072", modifiers = ["italic"] }
+"comment.block" = { fg = "#727072", modifiers = ["italic"] }
+"comment.block.documentation" = { fg = "#727072" }
+
+"variable" = { fg = "#f8f8f2" }
+"variable.builtin" = { fg = "#66d9ef" }
+"variable.parameter" = { fg = "#fd971f" }
+"variable.other" = { fg = "#f8f8f2" }
+"variable.other.member" = { fg = "#a6e22e" }
+
+"label" = { fg = "#a6e22e" }
+"namespace" = { fg = "#66d9ef" }
+
+"operator" = { fg = "#f92672" }
+"punctuation" = { fg = "#f8f8f2" }
+"punctuation.bracket" = { fg = "#f8f8f2" }
+"punctuation.delimiter" = { fg = "#f8f8f2" }
+"punctuation.special" = { fg = "#f92672" }
+
+"tag" = { fg = "#f92672" }
+"tag.attribute" = { fg = "#a6e22e" }
+"tag.delimiter" = { fg = "#f8f8f2" }
+
+"attribute" = { fg = "#a6e22e" }
+"property" = { fg = "#a6e22e" }
+
+# Markdown
+"markup.heading" = { fg = "#f92672", modifiers = ["bold"] }
+"markup.heading.1" = { fg = "#f92672", modifiers = ["bold"] }
+"markup.heading.2" = { fg = "#a6e22e", modifiers = ["bold"] }
+"markup.heading.3" = { fg = "#66d9ef", modifiers = ["bold"] }
+"markup.heading.4" = { fg = "#fd971f", modifiers = ["bold"] }
+"markup.heading.5" = { fg = "#ae81ff", modifiers = ["bold"] }
+"markup.heading.6" = { fg = "#e6db74", modifiers = ["bold"] }
+
+"markup.list" = { fg = "#f92672" }
+"markup.list.unnumbered" = { fg = "#f92672" }
+"markup.list.numbered" = { fg = "#ae81ff" }
+
+"markup.bold" = { modifiers = ["bold"] }
+"markup.italic" = { modifiers = ["italic"] }
+"markup.strikethrough" = { modifiers = ["crossed_out"] }
+
+"markup.link" = { fg = "#66d9ef" }
+"markup.link.url" = { fg = "#66d9ef", modifiers = ["underlined"] }
+"markup.link.label" = { fg = "#a6e22e" }
+"markup.link.text" = { fg = "#e6db74" }
+
+"markup.quote" = { fg = "#727072", modifiers = ["italic"] }
+"markup.raw" = { fg = "#e6db74" }
+"markup.raw.inline" = { fg = "#e6db74" }
+"markup.raw.block" = { fg = "#e6db74" }
+
+# Diff
+"diff.plus" = { fg = "#a6e22e" }
+"diff.minus" = { fg = "#f92672" }
+"diff.delta" = { fg = "#66d9ef" }
+"diff.delta.moved" = { fg = "#fd971f" }
+
+# Git gutter
+"info" = { fg = "#66d9ef" }
+"hint" = { fg = "#a6e22e" }
+"warning" = { fg = "#e6db74" }
+"error" = { fg = "#f92672" }
+
+# UI 元素
+"ui.text" = { fg = "#f8f8f2" }
+"ui.text.focus" = { fg = "#f8f8f2", modifiers = ["bold"] }
+"ui.text.inactive" = { fg = "#727072" }
+"ui.text.info" = { fg = "#f8f8f2" }
+
+"ui.virtual" = { fg = "#727072" }
+"ui.virtual.ruler" = { bg = "#3e4365" }
+"ui.virtual.whitespace" = { fg = "#727072" }
+"ui.virtual.indent-guide" = { fg = "#727072" }
+"ui.virtual.inlay-hint" = { fg = "#727072", modifiers = ["italic"], bg = "#0e1018" }
+"ui.virtual.jump-label" = { fg = "#f92672", modifiers = ["bold"] }
+"ui.virtual.wrap" = { fg = "#727072" }
+
+# Speller
+"speller" = { fg = "#f92672", underline = { style = "curl" } }
+
+[palette]
+# Monokai Pro Classic 配色板
+black = "#272822"
+white = "#fcfcfa"
+red = "#f92672"
+orange = "#fd971f"
+yellow = "#e6db74"
+green = "#a6e22e"
+cyan = "#66d9ef"
+purple = "#ae81ff"
+magenta = "#f92672"
+pink = "#f92672"
+gray = "#727072"
+light-gray = "#c1c0c0"
+dark-gray = "#3e4365"

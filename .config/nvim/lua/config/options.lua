@@ -37,6 +37,7 @@ local opts = {
   modeline = false,
   swapfile = false,
   scrolloff = scrolloff,
+  relativenumber = false,
 }
 
 for name, value in pairs(opts) do
