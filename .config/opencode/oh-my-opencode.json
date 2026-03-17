@@ -2,8 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "baiduqianfancodingplan/qianfan-code-latest",
-      "description": "主执行者，利用GLM-5强大的编码能力完成核心开发任务。"
+      "model": "opencode/gemini-3.1-pro",
+      "variant": "max",
+      "description": "主执行者，利用gemini强大的编码能力完成核心开发任务。"
     },
     "hephaestus": {
       "model": "baiduqianfancodingplan/qianfan-code-latest",

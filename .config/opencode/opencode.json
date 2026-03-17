@@ -18,7 +18,11 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
-  "plugin": ["@tarquinen/opencode-dcp@latest", "oh-my-opencode", "opencode-mem"],
+  "plugin": [
+    "@tarquinen/opencode-dcp@latest",
+    "oh-my-opencode",
+    "opencode-mem"
+  ],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
@@ -60,8 +64,5 @@
         }
       }
     }
-  },
-  "compaction": {
-    "reserved": 8000
   }
 }
