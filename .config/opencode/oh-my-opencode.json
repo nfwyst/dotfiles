@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/dev/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
       "model": "opencode/gemini-3.1-pro",
@@ -41,6 +41,10 @@
     "atlas": {
       "model": "kimi-for-coding/k2p5",
       "description": "计划执行者，利用Kimi-k2.5的Agent Swarm集群能力协调多智能体并行工作。"
+    },
+    "sisyphus-junior": {
+      "model": "kimi-for-coding/k2p5",
+      "description": "辅助执行者，利用Kimi K2.5的Agent集群能力，在执行具体编码任务时可自主并行调度explore/librarian等智能体探索信息，高效完成被委派的工作。"
     }
   },
   "categories": {
