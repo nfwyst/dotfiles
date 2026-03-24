@@ -282,6 +282,7 @@ local filename = {
   padding = 0,
 }
 
+vim.o.laststatus = 3
 require("lualine").setup({
   options = {
     theme = "auto",
