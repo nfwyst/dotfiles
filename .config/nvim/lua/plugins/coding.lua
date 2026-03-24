@@ -8,12 +8,9 @@ for from, to in pairs(language_map) do
   vim.treesitter.language.register(to, from)
 end
 
-require("nvim-treesitter.configs").setup({
-  ensure_installed = "all",
-  ignore_install = { "ipkg" },
-  highlight = { enable = true },
-  indent = { enable = true },
-})
+-- Neovim 0.12+ enables treesitter highlight/indent natively.
+-- nvim-treesitter (main branch) only provides parser management.
+-- Parsers are kept up-to-date via :TSUpdate in the PackChanged hook.
 
 -- ===================================================================
 -- Treesitter Context
