@@ -51,6 +51,11 @@ require("which-key").setup({
     { "<leader><tab>", group = "tabs" },
     { "<leader>T", group = "Checkmate [T]odos" },
     { "<leader>ac", group = "codeCompanion" },
+    { "[", group = "prev" },
+    { "]", group = "next" },
+    { "g", group = "goto" },
+    { "gs", group = "surround" },
+    { "z", group = "fold" },
   },
 })
 
@@ -101,6 +106,8 @@ require("gitsigns").setup({
     gmap("n", "<leader>ghD", function() gs.diffthis("~") end, { desc = "Diff This ~" })
     -- Toggles
     gmap("n", "<leader>ub", gs.toggle_current_line_blame, { desc = "Toggle Git Blame" })
+    -- Text object
+    gmap({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", { desc = "GitSigns Select Hunk" })
   end,
 })
 

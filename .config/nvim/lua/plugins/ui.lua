@@ -67,6 +67,7 @@ require("snacks").setup({
   },
   animate = { enabled = vim.g.snacks_animate, fps = 120 },
   scope = { debounce = 45 },
+  bigfile = { enabled = true },
   quickfile = { enabled = true },
   scroll = {
     enabled = true,
@@ -146,6 +147,11 @@ require("noice").setup({
       ["cmp.entry.get_documentation"] = true,
     },
   },
+  presets = {
+    bottom_search = true,
+    command_palette = true,
+    long_message_to_split = true,
+  },
   routes = {
     {
       filter = {
@@ -187,6 +193,40 @@ require("noice").setup({
   messages = { view_search = false },
   throttle = 1000 / 120,
 })
+
+-- Noice keymaps
+vim.keymap.set("c", "<S-Enter>", function()
+  require("noice").redirect(vim.fn.getcmdline())
+end, { desc = "Redirect Cmdline" })
+vim.keymap.set("n", "<leader>snl", function()
+  require("noice").cmd("last")
+end, { desc = "Noice Last Message" })
+vim.keymap.set("n", "<leader>snh", function()
+  require("noice").cmd("history")
+end, { desc = "Noice History" })
+vim.keymap.set("n", "<leader>sna", function()
+  require("noice").cmd("all")
+end, { desc = "Noice All" })
+vim.keymap.set("n", "<leader>snd", function()
+  require("noice").cmd("dismiss")
+end, { desc = "Dismiss All" })
+vim.keymap.set("n", "<leader>snt", function()
+  if Snacks and Snacks.picker then
+    Snacks.picker.notifications()
+  else
+    require("noice").cmd("history")
+  end
+end, { desc = "Noice Picker" })
+vim.keymap.set({ "i", "n", "s" }, "<c-f>", function()
+  if not require("noice.lsp").scroll(4) then
+    return "<c-f>"
+  end
+end, { silent = true, expr = true, desc = "Scroll Forward" })
+vim.keymap.set({ "i", "n", "s" }, "<c-b>", function()
+  if not require("noice.lsp").scroll(-4) then
+    return "<c-b>"
+  end
+end, { silent = true, expr = true, desc = "Scroll Backward" })
 
 -- ===================================================================
 -- Lualine
@@ -334,6 +374,15 @@ require("lualine").setup({
 -- ===================================================================
 -- Bufferline
 -- ===================================================================
+-- Bufferline keymaps
+vim.keymap.set("n", "<leader>bp", "<cmd>BufferLineTogglePin<cr>", { desc = "Toggle Pin" })
+vim.keymap.set("n", "<leader>bP", "<cmd>BufferLineGroupClose ungrouped<cr>", { desc = "Delete Non-Pinned Buffers" })
+vim.keymap.set("n", "<leader>br", "<cmd>BufferLineCloseRight<cr>", { desc = "Delete Buffers to the Right" })
+vim.keymap.set("n", "<leader>bl", "<cmd>BufferLineCloseLeft<cr>", { desc = "Delete Buffers to the Left" })
+vim.keymap.set("n", "<leader>bj", "<cmd>BufferLinePick<cr>", { desc = "Pick Buffer" })
+vim.keymap.set("n", "[B", "<cmd>BufferLineMovePrev<cr>", { desc = "Move buffer prev" })
+vim.keymap.set("n", "]B", "<cmd>BufferLineMoveNext<cr>", { desc = "Move buffer next" })
+
 require("bufferline").setup({
   options = {
     diagnostics = false,
