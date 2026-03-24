@@ -74,15 +74,7 @@ require("snacks").setup({
   scope = { debounce = 45 },
   bigfile = { enabled = true },
   quickfile = { enabled = true },
-  scroll = {
-    enabled = true,
-    animate = { duration = { total = 125 } },
-    animate_repeat = { delay = 50, duration = { total = 25 } },
-    filter = function()
-      local mode = vim.api.nvim_get_mode().mode
-      return not vim.list_contains({ "v", "V", "\22" }, mode)
-    end,
-  },
+  scroll = { enabled = false },
   indent = { enabled = true },
   input = { enabled = true },
   notifier = { enabled = true },
