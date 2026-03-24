@@ -1,8 +1,5 @@
--- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
--- Add any additional options here
+-- Options (LazyVim defaults + custom overrides)
 local g_opts = {
-  lazyvim_blink_main = true,
   snacks_animate = true,
   ai_cmp = true,
   editorconfig = true,
@@ -19,7 +16,7 @@ for name, value in pairs(g_opts) do
   vim.g[name] = value
 end
 
--- calculate scrolloff size
+-- Calculate scrolloff
 local scrolloff = math.floor(vim.api.nvim_win_get_height(vim.api.nvim_get_current_win()) / 4)
 if scrolloff > 1 then
   scrolloff = scrolloff - 1
@@ -28,23 +25,68 @@ if scrolloff < 4 then
   scrolloff = 4
 end
 
-local opts = {
-  softtabstop = 2,
-  numberwidth = 2,
-  spelllang = "en,cjk",
-  listchars = "tab:▓░,trail:•,extends:»,precedes:«,nbsp:░",
-  showcmd = false,
-  modeline = false,
-  swapfile = false,
-  scrolloff = scrolloff,
-  relativenumber = false,
-}
+local opt = vim.opt
 
-for name, value in pairs(opts) do
-  vim.o[name] = value
-end
+-- From LazyVim defaults
+opt.autowrite = true
+opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
+opt.completeopt = "menu,menuone,noselect"
+opt.conceallevel = 3
+opt.confirm = true
+opt.cursorline = true
+opt.expandtab = true
+opt.fillchars = { foldopen = "", foldclose = "", fold = " ", foldsep = " ", diff = "╱", eob = " " }
+opt.foldlevel = 99
+opt.formatexpr = "v:lua.require'conform'.formatexpr()"
+opt.grepformat = "%f:%l:%c:%m"
+opt.grepprg = "rg --vimgrep"
+opt.ignorecase = true
+opt.inccommand = "nosplit"
+opt.jumpoptions = "view"
+opt.laststatus = 3
+opt.linebreak = true
+opt.list = true
+opt.mouse = "a"
+opt.number = true
+opt.pumblend = 10
+opt.pumheight = 10
+opt.scrolloff = scrolloff
+opt.sessionoptions = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp", "folds" }
+opt.shiftround = true
+opt.shiftwidth = 2
+opt.shortmess:append({ W = true, I = true, c = true, C = true })
+opt.showmode = false
+opt.sidescrolloff = 8
+opt.signcolumn = "yes"
+opt.smartcase = true
+opt.smartindent = true
+opt.smoothscroll = true
+opt.spelllang = { "en", "cjk" }
+opt.splitbelow = true
+opt.splitkeep = "screen"
+opt.splitright = true
+opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
+opt.tabstop = 2
+opt.termguicolors = true
+opt.timeoutlen = vim.g.vscode and 1000 or 300
+opt.undofile = true
+opt.undolevels = 10000
+opt.updatetime = 200
+opt.virtualedit = "block"
+opt.wildmode = "longest:full,full"
+opt.winminwidth = 5
+opt.wrap = false
 
--- make filetype pattern
+-- Custom overrides
+opt.softtabstop = 2
+opt.numberwidth = 2
+opt.listchars = "tab:▓░,trail:•,extends:»,precedes:«,nbsp:░"
+opt.showcmd = false
+opt.modeline = false
+opt.swapfile = false
+opt.relativenumber = false
+
+-- Filetype additions
 vim.filetype.add({
   pattern = {
     ["compose.*%.ya?ml"] = "yaml.docker-compose",

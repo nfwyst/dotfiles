@@ -1,3 +1,4 @@
+--- @type vim.lsp.Config
 local config_files = {
   "tailwind.config.js",
   "tailwind.config.ts",
@@ -7,12 +8,12 @@ local config_files = {
 
 return {
   cmd = { "bun", "run", "--bun", "tailwindcss-language-server", "--stdio" },
+  filetypes = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact", "svelte", "vue" },
+  root_markers = config_files,
   on_attach = function(client, bufnr)
-    -- only git repo go here
     local config_root = vim.fs.root(bufnr, config_files)
-    if config_root then
-      return
+    if not config_root then
+      client:stop()
     end
-    client.stop()
   end,
 }

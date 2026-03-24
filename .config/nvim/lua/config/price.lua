@@ -86,12 +86,8 @@ local function fetch_price(callback)
   end
 
   local args = {
-    "-s",
-    "-L",
-    "-m",
-    tostring(config.timeout / 1000),
-    "-H",
-    string.format("User-Agent: %s", user_agent),
+    "-s", "-L", "-m", tostring(config.timeout / 1000),
+    "-H", string.format("User-Agent: %s", user_agent),
     api.url,
   }
 
@@ -100,12 +96,10 @@ end
 
 function M.get_price(callback)
   local now = vim.loop.hrtime() / 1e6
-
   if cache.price and (now - cache.timestamp) < config.refresh_interval then
     callback(cache.price)
     return
   end
-
   fetch_price(callback)
 end
 
@@ -142,11 +136,9 @@ end
 
 function M.setup()
   fetch_price(update_cache)
-
   local refresh = function()
     fetch_price(update_cache)
   end
-
   timer_id = vim.fn.timer_start(config.refresh_interval, refresh, { ["repeat"] = -1 })
 end
 
