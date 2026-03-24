@@ -55,7 +55,6 @@ require("blink.cmp").setup({
   },
   signature = { window = { border = "rounded" } },
   sources = {
-    default = { "lsp", "path", "snippets", "buffer" },
     providers = {
       snippets = {
         min_keyword_length = 1,
@@ -101,9 +100,7 @@ vim.keymap.set("n", "<leader>c/", "<cmd>%s/\\r//g<cr>", { desc = "Remove All Ent
 -- Mini.pairs
 -- ===================================================================
 local pairs_config = { markdown = true }
-require("mini.pairs").setup({
-  modes = { insert = true, command = false, terminal = false },
-})
+require("mini.pairs").setup({})
 
 -- Override mini.pairs open for markdown triple backtick
 local mp = require("mini.pairs")

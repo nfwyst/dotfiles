@@ -277,7 +277,6 @@ require("lualine").setup({
   options = {
     theme = "auto",
     ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion" },
-    globalstatus = true,
     component_separators = { left = " ▎", right = " ▎" },
   },
   sections = {
@@ -388,7 +387,6 @@ require("bufferline").setup({
     diagnostics = false,
     truncate_names = false,
     max_prefix_length = 30,
-    always_show_bufferline = false,
     name_formatter = function(bufinfo)
       local name = bufinfo.name or ""
       if name:match("^index$") or name:match("^index%..+") then

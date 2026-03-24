@@ -20,7 +20,6 @@ require("which-key").setup({
   },
   layout = {
     width = { max = 100 },
-    spacing = 1,
   },
   icons = {
     rules = {
@@ -79,7 +78,6 @@ local signs = {
 require("gitsigns").setup({
   signs = signs,
   signs_staged = signs,
-  preview_config = { border = "rounded" },
   on_attach = function(bufnr)
     local gs = package.loaded.gitsigns
     local function gmap(mode, l, r, opts)

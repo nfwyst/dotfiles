@@ -38,13 +38,12 @@ opt.conceallevel = 3
 opt.confirm = true
 opt.cursorline = true
 opt.expandtab = true
-opt.fillchars = { foldopen = "", foldclose = "", fold = " ", foldsep = " ", diff = "╱", eob = " " }
+opt.fillchars = { foldopen = "▾", foldclose = "▸", fold = " ", foldsep = " ", diff = "╱", eob = " " }
 opt.foldlevel = 99
 opt.formatexpr = "v:lua.require'conform'.formatexpr()"
 opt.grepformat = "%f:%l:%c:%m"
 opt.grepprg = "rg --vimgrep"
 opt.ignorecase = true
-opt.inccommand = "nosplit"
 opt.jumpoptions = "view"
 opt.laststatus = 3
 opt.linebreak = true
@@ -70,7 +69,6 @@ opt.splitkeep = "screen"
 opt.splitright = true
 opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 opt.tabstop = 2
-opt.termguicolors = true
 opt.timeoutlen = vim.g.vscode and 1000 or 300
 opt.undofile = true
 opt.undolevels = 10000
@@ -90,7 +88,6 @@ opt.listchars = "tab:▓░,trail:•,extends:»,precedes:«,nbsp:░"
 opt.showcmd = false
 opt.modeline = false
 opt.swapfile = false
-opt.relativenumber = false
 
 -- Filetype additions
 vim.filetype.add({
