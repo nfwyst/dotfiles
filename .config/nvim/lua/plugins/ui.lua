@@ -428,6 +428,6 @@ require("vimade").setup({
     },
   },
 })
-vim.cmd.VimadeFadeActive()
+vim.schedule(function() pcall(vim.cmd.VimadeFadeActive) end)
 
 vim.keymap.set("n", "<leader>uv", "<cmd>VimadeToggle<cr>", { desc = "Vimade: Toggle" })
