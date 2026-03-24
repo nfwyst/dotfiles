@@ -1,6 +1,12 @@
 -- Plugin management using Neovim 0.12+ native vim.pack
 -- Replaces lazy.nvim + LazyVim
 
+-- Suppress messages during plugin loading to prevent hit-enter prompt.
+-- vim.pack's progress reporting and lock_read can produce output that
+-- overflows cmdheight before noice.nvim is loaded to handle messages.
+local saved_shortmess = vim.o.shortmess
+vim.o.shortmess = "aAFOTIcC"
+
 vim.pack.add({
   -- Dependencies
   "https://github.com/MunifTanjim/nui.nvim",
@@ -54,6 +60,10 @@ vim.pack.add({
   "https://github.com/typed-rocks/ts-worksheet-neovim",
   "https://github.com/benomahony/uv.nvim",
 }, { confirm = false })
+
+-- Restore shortmess and clear any pending messages
+vim.o.shortmess = saved_shortmess
+vim.cmd("silent! redraw")
 
 -- Build blink.cmp after install/update
 vim.api.nvim_create_autocmd("User", {
