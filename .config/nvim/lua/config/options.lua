@@ -46,6 +46,7 @@ opt.grepprg = "rg --vimgrep"
 opt.ignorecase = true
 opt.jumpoptions = "view"
 opt.laststatus = 3
+opt.statusline = " "
 opt.linebreak = true
 opt.list = true
 opt.mouse = "a"

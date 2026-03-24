@@ -394,6 +394,7 @@ vim.keymap.set("n", "]B", "<cmd>BufferLineMoveNext<cr>", { desc = "Move buffer n
 require("bufferline").setup({
   options = {
     diagnostics = false,
+    always_show_bufferline = false,
     truncate_names = false,
     max_prefix_length = 30,
     name_formatter = function(bufinfo)
