@@ -19,6 +19,15 @@ for name, value in pairs(g_opts) do
   vim.g[name] = value
 end
 
+-- Suppress white flash: make UI chrome transparent before colorscheme loads
+for _, hl in ipairs({
+  "Normal", "NormalNC", "StatusLine", "StatusLineNC",
+  "TabLine", "TabLineFill", "TabLineSel",
+  "WinBar", "WinBarNC", "MsgArea",
+}) do
+  vim.api.nvim_set_hl(0, hl, { bg = "NONE", fg = "NONE" })
+end
+
 -- Calculate scrolloff
 local scrolloff = math.floor(vim.api.nvim_win_get_height(vim.api.nvim_get_current_win()) / 4)
 if scrolloff > 1 then
