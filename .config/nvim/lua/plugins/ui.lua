@@ -131,6 +131,10 @@ require("snacks").setup({
   },
 })
 
+-- Set statuscolumn after snacks is loaded (must not be in options.lua,
+-- otherwise first-launch vim.pack install triggers redraw before snacks exists)
+vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
+
 -- Snacks keymaps for todos
 vim.keymap.set("n", "<leader>T", "", { desc = "Checkmate [T]odos" })
 vim.keymap.set("n", "<leader>T.", gen_get_todo(true), { desc = "Toggle Scratch Todo" })

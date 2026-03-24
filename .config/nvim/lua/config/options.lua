@@ -67,7 +67,6 @@ opt.spelllang = { "en", "cjk" }
 opt.splitbelow = true
 opt.splitkeep = "screen"
 opt.splitright = true
-opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 opt.tabstop = 2
 opt.timeoutlen = vim.g.vscode and 1000 or 300
 opt.undofile = true
