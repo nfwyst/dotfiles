@@ -64,6 +64,11 @@ require("snacks").setup({
   dashboard = {
     preset = { header = header },
     formats = { header = { align = align } },
+    sections = {
+      { section = "header" },
+      { section = "keys", gap = 1, padding = 1 },
+      -- startup section removed: requires lazy.nvim (we use vim.pack)
+    },
   },
   animate = { enabled = vim.g.snacks_animate, fps = 120 },
   scope = { debounce = 45 },

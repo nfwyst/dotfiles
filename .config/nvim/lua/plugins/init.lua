@@ -53,7 +53,7 @@ vim.pack.add({
   "https://github.com/bngarren/checkmate.nvim",
   "https://github.com/typed-rocks/ts-worksheet-neovim",
   "https://github.com/benomahony/uv.nvim",
-})
+}, { confirm = false })
 
 -- Build blink.cmp after install/update
 vim.api.nvim_create_autocmd("User", {
