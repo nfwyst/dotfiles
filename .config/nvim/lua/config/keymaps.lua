@@ -375,9 +375,7 @@ set({ "n", "v" }, "<leader>cf", function()
 end, { desc = "Format" })
 
 -- Escape from insert mode
-set("i", "jk", function()
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<esc>", true, true, true), "n", false)
-end)
+set("i", "jk", "<Esc>", { desc = "Exit insert mode" })
 
 -- ===================================================================
 -- Quickfix keymaps
