@@ -302,7 +302,7 @@ require("lualine").setup({
       },
     },
     lualine_c = {
-      { root_dir_component, padding = { left = 1, right = 0 } },
+      { root_dir_component, padding = { left = 0, right = 0 } },
       { lsp_info, padding = 0 },
       {
         "diagnostics",
@@ -319,6 +319,7 @@ require("lualine").setup({
         padding = 0,
       },
     },
+    lualine_x = {},
     lualine_y = {
       {
         require("config.price").get_display_text,
