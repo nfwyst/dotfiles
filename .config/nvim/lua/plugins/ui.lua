@@ -410,9 +410,7 @@ vim.keymap.set("n", "]B", "<cmd>BufferLineMoveNext<cr>", { desc = "Move buffer n
 
 require("bufferline").setup({
   options = {
-    close_command = function(n) Snacks.bufdelete(n) end,
-    right_mouse_command = function(n) Snacks.bufdelete(n) end,
-    diagnostics = "nvim_lsp",
+    diagnostics = false,
     always_show_bufferline = false,
     truncate_names = false,
     max_prefix_length = 30,

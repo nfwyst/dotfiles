@@ -45,7 +45,6 @@ vim.pack.add({
   -- Coding
   "https://github.com/nvim-mini/mini.pairs",
   "https://github.com/nvim-mini/mini.ai",
-  "https://github.com/folke/ts-comments.nvim",
   "https://github.com/folke/lazydev.nvim",
 
   -- Lang

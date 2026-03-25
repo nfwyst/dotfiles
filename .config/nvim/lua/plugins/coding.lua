@@ -208,11 +208,6 @@ require("render-markdown").setup({
 })
 
 -- ===================================================================
--- TS Comments (improved multi-language comment handling)
--- ===================================================================
-require("ts-comments").setup({})
-
--- ===================================================================
 -- Lazydev (Lua/Neovim config development support)
 -- ===================================================================
 pcall(function()
