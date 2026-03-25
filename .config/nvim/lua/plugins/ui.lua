@@ -164,6 +164,7 @@ require("noice").setup({
           { find = "Installed %d+/%d+ languages" },
           { find = "Parser not available for language" },
           { find = "Pattern not found:" }, { find = "E211: File" },
+          { find = "Check log for errors:" },
         },
       },
     },
@@ -290,9 +291,13 @@ require("lualine").setup({
           if not branch or branch == "" then return "" end
           if vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch then
             vim.schedule(function()
-              if #lsp_names() > 0 then
-                vim.cmd("LspRestart")
-                vim.notify("Lsp server restarted")
+              local clients = vim.lsp.get_clients()
+              if #clients > 0 then
+                for _, client in ipairs(clients) do
+                  client:stop()
+                end
+                vim.cmd("doautocmd FileType")
+                vim.notify("LSP servers restarted")
               end
             end)
           end
