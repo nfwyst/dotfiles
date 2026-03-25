@@ -324,13 +324,25 @@ require("lualine").setup({
         padding = 0,
       },
     },
-    lualine_x = {},
-    lualine_y = {
+    lualine_x = {
       {
         require("config.price").get_display_text,
-        color = { fg = "#f6d365" },
-        padding = 0,
+        color = function()
+          local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
+          local bg = normal.bg
+          if not bg then
+            bg = vim.o.background == "dark" and 0x24283b or 0xe1e2e7
+          end
+          local contrast = vim.o.background == "dark" and 0xFFFFFF or 0x000000
+          local r = math.floor(math.floor(bg / 65536) * 0.8 + math.floor(contrast / 65536) * 0.2)
+          local g = math.floor(math.floor(bg / 256) % 256 * 0.8 + math.floor(contrast / 256) % 256 * 0.2)
+          local b = math.floor(bg % 256 * 0.8 + contrast % 256 * 0.2)
+          return { fg = string.format("#%02x%02x%02x", r, g, b) }
+        end,
+        padding = { left = 0, right = 1 },
       },
+    },
+    lualine_y = {
       { "filetype", colored = false, icon_only = false, padding = 0 },
       {
         "selectioncount",
