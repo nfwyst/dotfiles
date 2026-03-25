@@ -1,21 +1,6 @@
 -- Colorscheme configuration
 local util = require("config.util")
 
--- Tokyonight setup (both dark and light styles)
-require("tokyonight").setup({
-  style = "storm",
-  light_style = "day",
-  transparent = false,
-  lualine_bold = true,
-  on_colors = function(c)
-    c.bg_statusline = c.none
-  end,
-  styles = {
-    sidebars = "normal",
-    floats = "normal",
-  },
-})
-
 -- Monokai-pro (lazy loaded)
 pcall(function()
   require("monokai-pro").setup({
@@ -33,14 +18,49 @@ pcall(function()
   })
 end)
 
+-- Apply tokyonight with mode-specific settings
+local function apply_theme(mode)
+  local is_dark = mode == "dark"
+
+  require("tokyonight").setup({
+    style = "storm",
+    light_style = "day",
+    transparent = is_dark,
+    lualine_bold = true,
+    on_colors = function(c)
+      c.bg_statusline = c.none
+    end,
+    styles = {
+      sidebars = is_dark and "transparent" or "normal",
+      floats = is_dark and "transparent" or "normal",
+    },
+  })
+
+  vim.o.background = mode
+  vim.cmd.colorscheme("tokyonight")
+end
+
 -- Custom highlights (re-applied on every colorscheme change)
 vim.api.nvim_create_autocmd("ColorScheme", {
   callback = function()
+    local is_dark = vim.o.background == "dark"
+
     local highlights = {
       "BufferLineBufferSelected cterm=italic gui=italic",
       "LspInlayHint cterm=italic gui=italic",
       "TabLineFill guibg=none",
     }
+
+    if is_dark then
+      vim.list_extend(highlights, {
+        "LspInlayHint guibg=#0e1018",
+        "CursorLine guibg=#3e4365",
+        "BlinkCmpGhostText guibg=#222539",
+        "SnacksPickerInputBorder guifg=#3e4365",
+        "SnacksPickerInputTitle guifg=#589ed7",
+      })
+    end
+
     for _, config in ipairs(highlights) do
       util.set_hl(config, true)
     end
@@ -56,8 +76,7 @@ end
 if vim.fn.has("mac") == 1 then
   -- Synchronous initial detection (before first paint)
   local appearance = get_macos_bg()
-  vim.o.background = appearance
-  vim.cmd.colorscheme("tokyonight")
+  apply_theme(appearance)
 
   -- Poll for system appearance changes every 5 seconds
   -- Tracks last *system* appearance so manual <leader>ub toggles
@@ -68,10 +87,9 @@ if vim.fn.has("mac") == 1 then
     local current = get_macos_bg()
     if current ~= last_system_appearance then
       last_system_appearance = current
-      vim.o.background = current
-      vim.cmd.colorscheme("tokyonight")
+      apply_theme(current)
     end
   end))
 else
-  vim.cmd.colorscheme("tokyonight")
+  apply_theme("dark")
 end
