@@ -33,6 +33,9 @@ end
 
 require("blink.cmp").setup({
   completion = {
+    accept = {
+      auto_brackets = { enabled = true },
+    },
     menu = {
       border = "rounded",
       scrollbar = false,
@@ -45,13 +48,20 @@ require("blink.cmp").setup({
         return { vim.o.lines - height, 0 }
       end,
       draw = {
+        treesitter = { "lsp" },
         columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" }, { "source_name" } },
       },
     },
-    documentation = { window = { border = "rounded" } },
+    documentation = {
+      auto_show = true,
+      auto_show_delay_ms = 200,
+      window = { border = "rounded" },
+    },
+    ghost_text = { enabled = vim.g.ai_cmp },
   },
   signature = { window = { border = "rounded" } },
   sources = {
+    default = { "lsp", "path", "snippets", "buffer" },
     providers = {
       snippets = {
         min_keyword_length = 1,
@@ -85,7 +95,8 @@ require("blink.cmp").setup({
     },
   },
   keymap = {
-    preset = "default",
+    preset = "enter",
+    ["<C-y>"] = { "select_and_accept" },
     ["<c-l>"] = { "show", "fallback" },
   },
   fuzzy = {
