@@ -40,7 +40,6 @@ window-padding-y = 0
 window-padding-x = 0
 window-padding-color = extend
 window-padding-balance = true
-window-step-resize = true
 window-save-state = always
 confirm-close-surface = false
 quit-after-last-window-closed = false
