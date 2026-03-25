@@ -10,7 +10,7 @@ adjust-cell-height = 25%
 font-style = bold
 font-synthetic-style = true
 # looks and feel
-theme = dark:TokyoNight Moon,light:TokyoNight Night
+theme = dark:TokyoNight Storm,light:TokyoNight Day
 adjust-cursor-thickness = 3
 adjust-underline-position = 6
 bold-is-bright = true
