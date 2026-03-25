@@ -643,13 +643,13 @@
     hunk-header-line-number-style = orange
     hunk-header-style = file line-number darkviolet
 [core]
-    pager = delta
+    pager = ~/.config/delta/delta-auto
 
 [interactive]
-    diffFilter = delta --color-only
+    diffFilter = ~/.config/delta/delta-auto --color-only
 
 [delta]
-    features = woolly-mammoth
+    # theme auto-detected by delta-auto wrapper
 
 [merge]
     conflictStyle = zdiff3

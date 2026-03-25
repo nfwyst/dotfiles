@@ -1,0 +1,9 @@
+#!/bin/bash
+# Auto-switch delta theme based on macOS system appearance
+# Dark: woolly-mammoth | Light: hoopoe
+if defaults read -g AppleInterfaceStyle &>/dev/null 2>&1; then
+  theme="woolly-mammoth"
+else
+  theme="hoopoe"
+fi
+exec delta --features "$theme" "$@"
