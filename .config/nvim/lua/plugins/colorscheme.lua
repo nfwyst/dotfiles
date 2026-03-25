@@ -3,14 +3,16 @@ local util = require("config.util")
 
 -- Tokyonight setup
 require("tokyonight").setup({
-  transparent = true,
+  style = "day",
+  light_style = "day",
+  transparent = false,
   lualine_bold = true,
   on_colors = function(c)
     c.bg_statusline = c.none
   end,
   styles = {
-    sidebars = "transparent",
-    floats = "transparent",
+    sidebars = "normal",
+    floats = "normal",
   },
 })
 
@@ -32,17 +34,14 @@ pcall(function()
 end)
 
 -- Set colorscheme
-vim.cmd.colorscheme("tokyonight")
+vim.cmd.colorscheme("tokyonight-day")
 
--- Custom highlights
+-- Custom highlights (adapted for light theme)
 local custom_highlights = {
   "BufferLineBufferSelected cterm=italic gui=italic",
-  "LspInlayHint cterm=italic gui=italic guibg=#0e1018",
-  "CursorLine guibg=#3e4365",
+  "LspInlayHint cterm=italic gui=italic",
   "TabLineFill guibg=none",
-  "BlinkCmpGhostText guibg=#222539",
-  "SnacksPickerInputBorder guifg=#3e4365",
-  "SnacksPickerInputTitle guifg=#589ed7",
+  "SnacksPickerInputTitle guifg=#2e7de9",
 }
 
 for _, config in ipairs(custom_highlights) do
