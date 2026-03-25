@@ -89,7 +89,7 @@ if vim.fn.has("mac") == 1 then
   local appearance = get_macos_bg()
   apply_theme(appearance)
 
-  local state_file = vim.fn.expand("~/.local/state/tmux/tmux-dark-notify-theme.conf")
+  local state_file = vim.fn.expand("~/.local/state/nvim/theme-mode")
 
   if vim.env.TMUX and vim.uv.fs_stat(state_file) then
     -- Event-driven: watch dark-notify state file (kqueue, zero polling)
