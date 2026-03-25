@@ -73,23 +73,58 @@ local function get_macos_bg()
   return (obj.code == 0 and obj.stdout:match("Dark")) and "dark" or "light"
 end
 
+-- Parse dark-notify state file to determine mode
+local function parse_dark_notify_mode(path)
+  local ok, lines = pcall(vim.fn.readfile, path)
+  if not ok then return nil end
+  for _, line in ipairs(lines) do
+    if line:match("light") then return "light" end
+    if line:match("dark") then return "dark" end
+  end
+  return nil
+end
+
 if vim.fn.has("mac") == 1 then
   -- Synchronous initial detection (before first paint)
   local appearance = get_macos_bg()
   apply_theme(appearance)
 
-  -- Poll for system appearance changes every 5 seconds
-  -- Tracks last *system* appearance so manual <leader>ub toggles
-  -- are preserved until the next actual macOS appearance change.
-  local last_system_appearance = appearance
-  local timer = vim.uv.new_timer()
-  timer:start(5000, 5000, vim.schedule_wrap(function()
-    local current = get_macos_bg()
-    if current ~= last_system_appearance then
-      last_system_appearance = current
-      apply_theme(current)
+  local state_file = vim.fn.expand("~/.local/state/tmux/tmux-dark-notify-theme.conf")
+
+  if vim.env.TMUX and vim.uv.fs_stat(state_file) then
+    -- Event-driven: watch dark-notify state file (kqueue, zero polling)
+    local function watch()
+      if not vim.uv.fs_stat(state_file) then
+        vim.defer_fn(watch, 1000)
+        return
+      end
+      local handle = vim.uv.new_fs_event()
+      handle:start(state_file, {}, vim.schedule_wrap(function(err)
+        handle:stop()
+        handle:close()
+        if not err then
+          local mode = parse_dark_notify_mode(state_file)
+          if mode then
+            apply_theme(mode)
+          end
+        end
+        -- Brief delay before re-watching to handle atomic file replacement
+        vim.defer_fn(watch, 100)
+      end))
     end
-  end))
+    watch()
+  else
+    -- Fallback: poll every 5s (outside tmux or dark-notify not installed)
+    local last_system_appearance = appearance
+    local timer = vim.uv.new_timer()
+    timer:start(5000, 5000, vim.schedule_wrap(function()
+      local current = get_macos_bg()
+      if current ~= last_system_appearance then
+        last_system_appearance = current
+        apply_theme(current)
+      end
+    end))
+  end
 else
   apply_theme("dark")
 end
