@@ -270,7 +270,10 @@ local filename = {
   path = 3,
   shorting_target = 0,
   symbols = { modified = "", readonly = "󰌾", unnamed = "[No Name]", newfile = "[New]" },
-  color = { fg = "#4ee0fc", gui = "italic" },
+  color = function()
+    local hl = vim.api.nvim_get_hl(0, { name = "Special" })
+    return { fg = hl.fg and string.format("#%06x", hl.fg), italic = true }
+  end,
   cond = file_cond,
   padding = 0,
 }
@@ -380,7 +383,10 @@ require("lualine").setup({
           return " " .. content .. ": " .. search_info.current .. "󰿟" .. search_info.total
         end,
         cond = function() return vim.v.hlsearch > 0 and file_cond() end,
-        color = { fg = "#ff9e64" },
+        color = function()
+          local hl = vim.api.nvim_get_hl(0, { name = "Constant" })
+          return { fg = hl.fg and string.format("#%06x", hl.fg) }
+        end,
         padding = 0,
       },
     },
@@ -427,10 +433,14 @@ require("bufferline").setup({
 require("vimade").setup({
   fadelevel = 0.7,
   recipe = { "duo", { animate = false } },
-  tint = {
-    bg = { rgb = { 255, 255, 255 }, intensity = 0.2 },
-    fg = { rgb = { 255, 255, 255 }, intensity = 0.2 },
-  },
+  tint = function()
+    local is_dark = vim.o.background == "dark"
+    local rgb = is_dark and { 255, 255, 255 } or { 0, 0, 0 }
+    return {
+      bg = { rgb = rgb, intensity = 0.2 },
+      fg = { rgb = rgb, intensity = 0.2 },
+    }
+  end,
   blocklist = {
     custom = {
       buf_opts = {
