@@ -74,8 +74,6 @@ opt.signcolumn = "yes"
 opt.smartcase = true
 opt.smartindent = true
 opt.smoothscroll = true
-opt.lazyredraw = true
-opt.termsync = true
 opt.spelllang = { "en", "cjk" }
 opt.splitbelow = true
 opt.splitkeep = "screen"
@@ -92,6 +90,13 @@ opt.wrap = false
 opt.formatoptions = "jcroqlnt"
 opt.foldtext = ""
 opt.ruler = false
+
+-- Disable termsync inside tmux: let tmux manage synchronized output boundaries
+-- instead of Neovim, avoiding double-sync cursor ghosting artifacts.
+-- See: https://github.com/zellij-org/zellij/issues/3208
+if vim.env.TMUX then
+  opt.termsync = false
+end
 
 -- Custom overrides
 opt.softtabstop = 2
