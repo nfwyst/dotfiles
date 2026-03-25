@@ -46,6 +46,7 @@ opt.completeopt = "menu,menuone,noselect"
 opt.conceallevel = 3
 opt.confirm = true
 opt.cursorline = true
+opt.cursorlineopt = "number"
 opt.expandtab = true
 opt.fillchars = { foldopen = "▾", foldclose = "▸", fold = " ", foldsep = " ", diff = "╱", eob = " " }
 opt.foldlevel = 99
