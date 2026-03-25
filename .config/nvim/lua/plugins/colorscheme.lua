@@ -36,10 +36,8 @@ local function apply_theme(mode)
     },
   })
 
-  -- Use explicit variant name so tokyonight sets vim.o.background correctly.
-  -- Using the generic "tokyonight" name relies on vim.o.background being read
-  -- mid-load, which races with tokyonight's own OptionSet handling.
-  vim.cmd.colorscheme(is_dark and "tokyonight-storm" or "tokyonight-day")
+  vim.o.background = mode
+  vim.cmd.colorscheme("tokyonight")
 end
 
 -- Custom highlights (re-applied on every colorscheme change)
