@@ -61,9 +61,9 @@ vim.api.nvim_create_autocmd("User", {
 -- ===================================================================
 -- Conform (formatting)
 -- ===================================================================
-local fixer = { "eslint_d", "retab" }
-local formatter = { "prettierd", "retab" }
-local md_formatter = { "prettierd", "markdownlint-cli2", "markdown-toc", "retab" }
+local fixer = { "eslint_d" }
+local formatter = { "prettierd" }
+local md_formatter = { "prettierd", "markdownlint-cli2", "markdown-toc" }
 local is_fix_mode = false
 
 local function fix_or_format()
@@ -90,15 +90,15 @@ require("conform").setup({
     graphql = formatter,
     ["markdown"] = md_formatter,
     ["markdown.mdx"] = md_formatter,
-    nu = { "nufmt", "retab" },
-    sh = { "shfmt", "retab" },
-    zsh = { "beautysh", "retab" },
-    lua = { "stylua", "retab" },
-    toml = { "taplo", "retab" },
-    http = { "kulala-fmt", "retab" },
-    nginx = { "nginxfmt", "retab" },
-    sql = { "sqruff", "retab" },
-    ["_"] = { "trim_whitespace", "retab" },
+    nu = { "nufmt" },
+    sh = { "shfmt" },
+    zsh = { "beautysh" },
+    lua = { "stylua" },
+    toml = { "taplo" },
+    http = { "kulala-fmt" },
+    nginx = { "nginxfmt" },
+    sql = { "sqruff" },
+    ["_"] = { "trim_whitespace" },
   },
   formatters = {
     beautysh = function()
@@ -109,14 +109,18 @@ require("conform").setup({
         stdin = false,
       }
     end,
-    retab = function()
-      vim.cmd.retab()
-    end,
+
   },
-  format_on_save = function()
-    if vim.g.autoformat then
-      return { timeout_ms = 3000, lsp_fallback = true }
-    end
+  format_on_save = function(bufnr)
+    if not vim.g.autoformat then return end
+    return { timeout_ms = 3000, lsp_fallback = true }
+  end,
+  format_after_save = function(bufnr)
+    if not vim.g.autoformat then return end
+    -- retab: convert tabs to spaces according to buffer settings
+    vim.api.nvim_buf_call(bufnr, function()
+      vim.cmd.retab()
+    end)
   end,
 })
 

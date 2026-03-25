@@ -29,9 +29,6 @@ vim.diagnostic.config({
   },
 })
 
--- Track client names for clean exit notifications
-local client_names = {}
-
 -- Global LSP settings for all servers
 vim.lsp.config("*", {
   capabilities = {
@@ -45,18 +42,7 @@ vim.lsp.config("*", {
   },
   on_attach = function(client)
     client.server_capabilities.semanticTokensProvider = nil
-    client_names[client.id] = client.name
   end,
-  on_exit = vim.schedule_wrap(function(code, signal, client_id)
-    local name = client_names[client_id] or "unknown"
-    client_names[client_id] = nil
-    if code ~= 0 and signal ~= 15 then
-      vim.notify(
-        string.format("LSP [%s] crashed (exit code %d, signal %d)", name, code, signal),
-        vim.log.levels.WARN
-      )
-    end
-  end),
 })
 
 vim.lsp.log.set_level(vim.log.levels.OFF)
