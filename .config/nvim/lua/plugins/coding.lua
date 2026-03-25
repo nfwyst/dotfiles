@@ -84,7 +84,10 @@ require("blink.cmp").setup({
       },
     },
   },
-  keymap = { ["<c-l>"] = { "show", "fallback" } },
+  keymap = {
+    preset = "default",
+    ["<c-l>"] = { "show", "fallback" },
+  },
   fuzzy = {
     implementation = "rust",
     prebuilt_binaries = { ignore_version_mismatch = false },

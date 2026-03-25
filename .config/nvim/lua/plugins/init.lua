@@ -25,6 +25,7 @@ vim.pack.add({
 
   -- Completion
   "https://github.com/saghen/blink.cmp",
+  "https://github.com/rafamadriz/friendly-snippets",
 
   -- Editor
   "https://github.com/folke/which-key.nvim",
