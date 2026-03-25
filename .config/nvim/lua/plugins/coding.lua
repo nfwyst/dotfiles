@@ -110,7 +110,13 @@ vim.keymap.set("n", "<leader>c/", "<cmd>%s/\\r//g<cr>", { desc = "Remove All Ent
 -- Mini.pairs
 -- ===================================================================
 local pairs_config = { markdown = true }
-require("mini.pairs").setup({})
+require("mini.pairs").setup({
+  modes = { insert = true, command = true, terminal = false },
+  skip_next = [=[[%w%%%'%[%"%.%`%$]]=],
+  skip_ts = { "string" },
+  skip_unbalanced = true,
+  markdown = true,
+})
 
 -- Override mini.pairs open for markdown triple backtick
 local mp = require("mini.pairs")
@@ -129,7 +135,26 @@ end
 -- ===================================================================
 -- Mini.ai
 -- ===================================================================
-require("mini.ai").setup({})
+local ai = require("mini.ai")
+require("mini.ai").setup({
+  n_lines = 500,
+  custom_textobjects = {
+    o = ai.gen_spec.treesitter({ -- code block
+      a = { "@block.outer", "@conditional.outer", "@loop.outer" },
+      i = { "@block.inner", "@conditional.inner", "@loop.inner" },
+    }),
+    f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }),
+    c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }),
+    t = { "<([%p%w]-)%f[^<%w][^<>]->.-</%1>", "^<.->().*()</[^/]->$" },
+    d = { "%f[%d]%d+" },
+    e = {
+      { "%u[%l%d]+%f[^%l%d]", "%f[%S][%l%d]+%f[^%l%d]", "%f[%P][%l%d]+%f[^%l%d]", "^[%l%d]+%f[^%l%d]" },
+      "^().*()$",
+    },
+    u = ai.gen_spec.function_call(),
+    U = ai.gen_spec.function_call({ name_pattern = "[%w_]" }),
+  },
+})
 
 -- ===================================================================
 -- Render Markdown
@@ -181,6 +206,23 @@ require("render-markdown").setup({
     end,
   },
 })
+
+-- ===================================================================
+-- TS Comments (improved multi-language comment handling)
+-- ===================================================================
+require("ts-comments").setup({})
+
+-- ===================================================================
+-- Lazydev (Lua/Neovim config development support)
+-- ===================================================================
+pcall(function()
+  require("lazydev").setup({
+    library = {
+      { path = "${3rd}/luv/library", words = { "vim%.uv" } },
+      { path = "snacks.nvim", words = { "Snacks" } },
+    },
+  })
+end)
 
 -- ===================================================================
 -- TS Worksheet

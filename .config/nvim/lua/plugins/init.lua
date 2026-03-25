@@ -32,6 +32,8 @@ vim.pack.add({
   "https://github.com/lewis6991/gitsigns.nvim",
   "https://github.com/MagicDuck/grug-far.nvim",
   "https://github.com/folke/trouble.nvim",
+  "https://github.com/folke/flash.nvim",
+  "https://github.com/folke/todo-comments.nvim",
 
   -- UI
   "https://github.com/nvim-lualine/lualine.nvim",
@@ -43,6 +45,8 @@ vim.pack.add({
   -- Coding
   "https://github.com/nvim-mini/mini.pairs",
   "https://github.com/nvim-mini/mini.ai",
+  "https://github.com/folke/ts-comments.nvim",
+  "https://github.com/folke/lazydev.nvim",
 
   -- Lang
   "https://github.com/MeanderingProgrammer/render-markdown.nvim",

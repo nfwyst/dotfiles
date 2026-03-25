@@ -86,8 +86,20 @@ require("gitsigns").setup({
       vim.keymap.set(mode, l, r, opts)
     end
     -- Navigation
-    gmap("n", "]h", function() gs.nav_hunk("next") end, { desc = "Next Hunk" })
-    gmap("n", "[h", function() gs.nav_hunk("prev") end, { desc = "Prev Hunk" })
+    gmap("n", "]h", function()
+      if vim.wo.diff then
+        vim.cmd.normal({ "]c", bang = true })
+      else
+        gs.nav_hunk("next")
+      end
+    end, { desc = "Next Hunk" })
+    gmap("n", "[h", function()
+      if vim.wo.diff then
+        vim.cmd.normal({ "[c", bang = true })
+      else
+        gs.nav_hunk("prev")
+      end
+    end, { desc = "Prev Hunk" })
     gmap("n", "]H", function() gs.nav_hunk("last") end, { desc = "Last Hunk" })
     gmap("n", "[H", function() gs.nav_hunk("first") end, { desc = "First Hunk" })
     -- Actions
@@ -140,3 +152,27 @@ require("trouble").setup({
     },
   },
 })
+
+
+-- ===================================================================
+-- Flash (enhanced search/jump)
+-- ===================================================================
+require("flash").setup({})
+
+vim.keymap.set({ "n", "x", "o" }, "s", function() require("flash").jump() end, { desc = "Flash" })
+vim.keymap.set({ "n", "o", "x" }, "S", function() require("flash").treesitter() end, { desc = "Flash Treesitter" })
+vim.keymap.set("o", "r", function() require("flash").remote() end, { desc = "Remote Flash" })
+vim.keymap.set({ "o", "x" }, "R", function() require("flash").treesitter_search() end, { desc = "Treesitter Search" })
+vim.keymap.set("c", "<c-s>", function() require("flash").toggle() end, { desc = "Toggle Flash Search" })
+
+-- ===================================================================
+-- Todo Comments
+-- ===================================================================
+require("todo-comments").setup({})
+
+vim.keymap.set("n", "]t", function() require("todo-comments").jump_next() end, { desc = "Next Todo Comment" })
+vim.keymap.set("n", "[t", function() require("todo-comments").jump_prev() end, { desc = "Previous Todo Comment" })
+vim.keymap.set("n", "<leader>xt", "<cmd>Trouble todo toggle<cr>", { desc = "Todo (Trouble)" })
+vim.keymap.set("n", "<leader>xT", "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", { desc = "Todo/Fix/Fixme (Trouble)" })
+vim.keymap.set("n", "<leader>st", function() Snacks.picker.todo_comments() end, { desc = "Todo" })
+vim.keymap.set("n", "<leader>sT", function() Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, { desc = "Todo/Fix/Fixme" })

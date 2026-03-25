@@ -410,10 +410,15 @@ vim.keymap.set("n", "]B", "<cmd>BufferLineMoveNext<cr>", { desc = "Move buffer n
 
 require("bufferline").setup({
   options = {
-    diagnostics = false,
+    close_command = function(n) Snacks.bufdelete(n) end,
+    right_mouse_command = function(n) Snacks.bufdelete(n) end,
+    diagnostics = "nvim_lsp",
     always_show_bufferline = false,
     truncate_names = false,
     max_prefix_length = 30,
+    offsets = {
+      { filetype = "snacks_layout_box" },
+    },
     name_formatter = function(bufinfo)
       local name = bufinfo.name or ""
       if name:match("^index$") or name:match("^index%..+") then
