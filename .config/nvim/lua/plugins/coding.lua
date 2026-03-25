@@ -57,7 +57,6 @@ require("blink.cmp").setup({
       auto_show_delay_ms = 200,
       window = { border = "rounded" },
     },
-    ghost_text = { enabled = vim.g.ai_cmp },
   },
   signature = { window = { border = "rounded" } },
   sources = {

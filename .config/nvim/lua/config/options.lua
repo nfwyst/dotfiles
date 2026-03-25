@@ -1,7 +1,6 @@
 -- Options (LazyVim defaults + custom overrides)
 local g_opts = {
   snacks_animate = false,
-  ai_cmp = true,
   editorconfig = true,
   transparent_enabled = true,
   autoformat = true,
