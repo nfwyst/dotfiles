@@ -138,6 +138,7 @@ require("snacks").setup({
         title = "",
         layout = {
           hidden = { "input" },
+          auto_hide = { "input" },
           layout = { width = 50, position = "right" },
         },
         win = {
