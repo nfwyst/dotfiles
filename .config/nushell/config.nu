@@ -290,7 +290,7 @@ $env.config = {
                 $env.__THEME_MODE = $mode
                 $env.config.color_config = (if $mode == "light" { $light_theme } else { $dark_theme })
                 if (which vivid | is-not-empty) {
-                    let vivid_theme = (if $mode == "light" { "tokyonight-day" } else { "tokyonight-storm" })
+                    let vivid_theme = (if $mode == "light" { "one-light" } else { "molokai" })
                     $env.LS_COLORS = (vivid generate $vivid_theme)
                 }
             }
