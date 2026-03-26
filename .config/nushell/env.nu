@@ -175,7 +175,7 @@ $env.NODE_OPTIONS = '--openssl-legacy-provider'
 if (which vivid | is-not-empty) {
     let theme_file = ($env.HOME | path join ".local/state/theme/mode")
     let mode = (if ($theme_file | path exists) { (open $theme_file | str trim) } else { "dark" })
-    let vivid_theme = (if $mode == "light" { "one-light" } else { "molokai" })
+    let vivid_theme = (if $mode == "light" { "tokyonight-day" } else { "molokai" })
     $env.LS_COLORS = (vivid generate $vivid_theme)
     $env.__THEME_MODE = $mode
 }
