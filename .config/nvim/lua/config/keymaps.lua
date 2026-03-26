@@ -192,7 +192,7 @@ map("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find File
 map("n", "<leader>fF", function() Snacks.picker.files({ cwd = vim.uv.cwd() }) end, { desc = "Find Files (cwd)" })
 map("n", "<leader>fg", function() Snacks.picker.git_files() end, { desc = "Find Files (git-files)" })
 map("n", "<leader>fr", function() Snacks.picker.recent({ filter = { cwd = false } }) end, { desc = "Recent" })
-map("n", "<leader>fR", function() Snacks.picker.recent({ cwd = vim.uv.cwd() }) end, { desc = "Recent (cwd)" })
+map("n", "<leader>fR", function() Snacks.picker.recent({ filter = { cwd = true } }) end, { desc = "Recent (cwd)" })
 
 -- git
 map({ "n", "x" }, "<leader>gB", function() Snacks.gitbrowse() end, { desc = "Git Browse (open)" })
