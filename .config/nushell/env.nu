@@ -170,3 +170,12 @@ $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
 $env.CGO_ENABLED = '1'
 
 $env.NODE_OPTIONS = '--openssl-legacy-provider'
+
+# Set LS_COLORS based on system theme (requires vivid: brew install vivid)
+if (which vivid | is-not-empty) {
+    let theme_file = ($env.HOME | path join ".local/state/theme/mode")
+    let mode = (if ($theme_file | path exists) { (open $theme_file | str trim) } else { "dark" })
+    let vivid_theme = (if $mode == "light" { "tokyonight-day" } else { "tokyonight-storm" })
+    $env.LS_COLORS = (vivid generate $vivid_theme)
+    $env.__THEME_MODE = $mode
+}

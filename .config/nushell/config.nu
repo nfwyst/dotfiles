@@ -289,6 +289,10 @@ $env.config = {
             if ($env | get -o __THEME_MODE | default "") != $mode {
                 $env.__THEME_MODE = $mode
                 $env.config.color_config = (if $mode == "light" { $light_theme } else { $dark_theme })
+                if (which vivid | is-not-empty) {
+                    let vivid_theme = (if $mode == "light" { "tokyonight-day" } else { "tokyonight-storm" })
+                    $env.LS_COLORS = (vivid generate $vivid_theme)
+                }
             }
         }]
         pre_execution: [{ null }] # run before the repl input is run
