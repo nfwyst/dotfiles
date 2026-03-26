@@ -146,6 +146,11 @@ require("snacks").setup({
               ["/"] = { "toggle_input", mode = { "n" } },
             },
           },
+          input = {
+            keys = {
+              ["<Esc>"] = { "toggle_input", mode = { "n", "i" } },
+            },
+          },
         },
       },
     },
