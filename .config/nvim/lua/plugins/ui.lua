@@ -476,9 +476,7 @@ require("bufferline").setup({
     always_show_bufferline = false,
     truncate_names = false,
     max_prefix_length = 30,
-    offsets = {
-      { filetype = "snacks_layout_box" },
-    },
+    -- offsets = { { filetype = "snacks_layout_box" } },
     name_formatter = function(bufinfo)
       local name = bufinfo.name or ""
       if name:match("^index$") or name:match("^index%..+") then
