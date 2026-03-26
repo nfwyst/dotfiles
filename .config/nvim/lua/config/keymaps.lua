@@ -211,7 +211,7 @@ map("n", "<leader>gd", function() Snacks.picker.git_diff() end, { desc = "Git Di
 map("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
 map("n", "<leader>sB", function() Snacks.picker.grep_buffers() end, { desc = "Grep Open Buffers" })
 map("n", "<leader>sg", function() Snacks.picker.grep() end, { desc = "Grep (Root Dir)" })
-map("n", "<leader>sG", function() Snacks.picker.grep({ cwd = vim.uv.cwd() }) end, { desc = "Grep (cwd)" })
+map("n", "<leader>sG", function() Snacks.picker.grep({ cwd = util.git_root() }) end, { desc = "Grep (Git Root)" })
 map({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word() end, { desc = "Visual selection or word" })
 
 -- search
