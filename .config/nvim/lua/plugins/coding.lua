@@ -163,7 +163,7 @@ local anti_conceal = { enabled = false }
 
 require("render-markdown").setup({
   render_modes = { "n", "c", "t", "i" },
-  preset = "lazy",
+  preset = "none",
   file_types = vim.g.markdowns,
   completions = { blink = { enabled = false } },
   paragraph = { render_modes = true },
