@@ -1,6 +1,6 @@
 -- Options (LazyVim defaults + custom overrides)
 local g_opts = {
-  snacks_animate = false,
+  snacks_animate = true,
   editorconfig = true,
   transparent_enabled = true,
   autoformat = true,
@@ -20,9 +20,16 @@ end
 
 -- Suppress white flash: make UI chrome transparent before colorscheme loads
 for _, hl in ipairs({
-  "Normal", "NormalNC", "StatusLine", "StatusLineNC",
-  "TabLine", "TabLineFill", "TabLineSel",
-  "WinBar", "WinBarNC", "MsgArea",
+  "Normal",
+  "NormalNC",
+  "StatusLine",
+  "StatusLineNC",
+  "TabLine",
+  "TabLineFill",
+  "TabLineSel",
+  "WinBar",
+  "WinBarNC",
+  "MsgArea",
 }) do
   vim.api.nvim_set_hl(0, hl, { bg = "NONE", fg = "NONE" })
 end
@@ -45,7 +52,7 @@ opt.completeopt = "menu,menuone,noselect"
 opt.conceallevel = 3
 opt.confirm = true
 opt.cursorline = true
-opt.cursorlineopt = "number"
+opt.cursorlineopt = "both"
 opt.expandtab = true
 opt.fillchars = { foldopen = "▾", foldclose = "▸", fold = " ", foldsep = " ", diff = "╱", eob = " " }
 opt.foldlevel = 99

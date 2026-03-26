@@ -15,9 +15,13 @@ local header = [[
 
 local function pad_str(str, length, pad_char, is_to_start)
   local len = length - #str
-  if len <= 0 then return str end
+  if len <= 0 then
+    return str
+  end
   local rep_str = string.rep(pad_char, len)
-  if is_to_start then return rep_str .. str end
+  if is_to_start then
+    return rep_str .. str
+  end
   return str .. rep_str
 end
 
@@ -32,7 +36,9 @@ if handle then
   for index, line in ipairs(lines) do
     local new_line = line:gsub("\t", "")
     lines[index] = new_line
-    if #new_line > max_length then max_length = #new_line end
+    if #new_line > max_length then
+      max_length = #new_line
+    end
   end
   local total_rows = #lines
   for index, line in ipairs(lines) do
@@ -43,7 +49,13 @@ if handle then
 end
 
 local exclude = {
-  "**/.git/*", "node_modules", "dist", "log", ".vscode", ".DS_Store", "thumbs.db",
+  "**/.git/*",
+  "node_modules",
+  "dist",
+  "log",
+  ".vscode",
+  ".DS_Store",
+  "thumbs.db",
 }
 
 local function gen_get_todo(global)
@@ -74,7 +86,7 @@ require("snacks").setup({
   scope = { debounce = 45 },
   bigfile = { enabled = true },
   quickfile = { enabled = true },
-  scroll = { enabled = false },
+  scroll = { enabled = true },
   indent = { enabled = true },
   input = { enabled = true },
   notifier = { enabled = true },
@@ -94,8 +106,14 @@ require("snacks").setup({
     exclude = exclude,
     icons = {
       git = {
-        added = " + ", modified = "  ", deleted = " 󰗨 ", renamed = " 󰹳 ",
-        untracked = "  ", ignored = "  ", staged = " 󰆺 ", unmerged = " 󰆑 ",
+        added = " + ",
+        modified = "  ",
+        deleted = " 󰗨 ",
+        renamed = " 󰹳 ",
+        untracked = "  ",
+        ignored = "  ",
+        staged = " 󰆺 ",
+        unmerged = " 󰆑 ",
       },
     },
     layout = {
@@ -158,12 +176,16 @@ require("noice").setup({
       filter = {
         event = "msg_show",
         any = {
-          { find = "; after #%d+" }, { find = "; before #%d+" },
-          { find = "%d fewer lines" }, { find = "%d more lines" },
-          { find = "%d+L, %d+B" }, { find = "%d+ lines " },
+          { find = "; after #%d+" },
+          { find = "; before #%d+" },
+          { find = "%d fewer lines" },
+          { find = "%d more lines" },
+          { find = "%d+L, %d+B" },
+          { find = "%d+ lines " },
           { find = "Installed %d+/%d+ languages" },
           { find = "Parser not available for language" },
-          { find = "Pattern not found:" }, { find = "E211: File" },
+          { find = "Pattern not found:" },
+          { find = "E211: File" },
           { find = "Check log for errors:" },
         },
       },
@@ -247,19 +269,25 @@ end
 local function lsp_info()
   local names = lsp_names()
   local result = table.concat(names, "•")
-  if result == "" then return "" end
+  if result == "" then
+    return ""
+  end
   return "󱓞 " .. result
 end
 
 local function file_cond()
-  if vim.bo.buftype == "nofile" then return false end
+  if vim.bo.buftype == "nofile" then
+    return false
+  end
   local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
   return string.match(bufname, "^/.*[%a]+$") ~= nil
 end
 
 local function root_dir_component()
   local root = util.root()
-  if not root then return "" end
+  if not root then
+    return ""
+  end
   return " " .. vim.fn.fnamemodify(root, ":t")
 end
 
@@ -291,7 +319,9 @@ require("lualine").setup({
       {
         "branch",
         fmt = function(branch)
-          if not branch or branch == "" then return "" end
+          if not branch or branch == "" then
+            return ""
+          end
           if vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch then
             vim.schedule(function()
               local clients = vim.lsp.get_clients()
@@ -349,7 +379,9 @@ require("lualine").setup({
       { "filetype", colored = false, icon_only = false, padding = 0 },
       {
         "selectioncount",
-        fmt = function(val) return "󰆐 " .. val .. " selected" end,
+        fmt = function(val)
+          return "󰆐 " .. val .. " selected"
+        end,
         cond = function()
           local mode = vim.api.nvim_get_mode().mode
           return vim.list_contains({ "v", "V", "\x16" }, mode)
@@ -382,7 +414,9 @@ require("lualine").setup({
           end
           return " " .. content .. ": " .. search_info.current .. "󰿟" .. search_info.total
         end,
-        cond = function() return vim.v.hlsearch > 0 and file_cond() end,
+        cond = function()
+          return vim.v.hlsearch > 0 and file_cond()
+        end,
         color = function()
           local hl = vim.api.nvim_get_hl(0, { name = "Constant" })
           return { fg = hl.fg and string.format("#%06x", hl.fg) }
@@ -422,7 +456,9 @@ require("bufferline").setup({
       if name:match("^index$") or name:match("^index%..+") then
         local path = bufinfo.path or ""
         local parent = vim.fn.fnamemodify(path, ":h:t")
-        if parent == "" or parent == "." then return name end
+        if parent == "" or parent == "." then
+          return name
+        end
         return parent .. "/" .. name
       end
       return name
@@ -435,7 +471,7 @@ require("bufferline").setup({
 -- ===================================================================
 require("vimade").setup({
   fadelevel = 0.7,
-  recipe = { "duo", { animate = false } },
+  recipe = { "duo", { animate = true } },
   tint = function()
     local is_dark = vim.o.background == "dark"
     local rgb = is_dark and { 255, 255, 255 } or { 0, 0, 0 }
@@ -453,6 +489,8 @@ require("vimade").setup({
     },
   },
 })
-vim.defer_fn(function() pcall(vim.cmd.VimadeFadeActive) end, 300)
+vim.defer_fn(function()
+  pcall(vim.cmd.VimadeFadeActive)
+end, 500)
 
 vim.keymap.set("n", "<leader>uv", "<cmd>VimadeToggle<cr>", { desc = "Vimade: Toggle" })
