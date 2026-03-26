@@ -118,3 +118,12 @@ vim.filetype.add({
     ["docker%-compose.*%.ya?ml"] = "yaml.docker-compose",
   },
 })
+
+-- Guard paste handler: skip nvim_put in non-modifiable buffers (E21 fix)
+local original_paste = vim.paste
+vim.paste = function(lines, phase)
+  if not vim.bo.modifiable then
+    return false
+  end
+  return original_paste(lines, phase)
+end
