@@ -136,7 +136,17 @@ require("snacks").setup({
         follow_file = true,
         diagnostics = false,
         title = "",
-        layout = { layout = { width = 50, position = "right" } },
+        layout = {
+          hidden = { "input" },
+          layout = { width = 50, position = "right" },
+        },
+        win = {
+          list = {
+            keys = {
+              ["/"] = { "toggle_input", mode = { "n" } },
+            },
+          },
+        },
       },
     },
     win = {
