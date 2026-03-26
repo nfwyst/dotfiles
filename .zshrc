@@ -203,3 +203,6 @@ git config --global interactive.diffFilter 'delta --color-only'
 git config --global delta.navigate true
 git config --global merge.conflictStyle zdiff3
 git config --global merge.tool nvimdiff
+
+# 禁用 zsh 邮件检查功能
+unset MAILCHECK
