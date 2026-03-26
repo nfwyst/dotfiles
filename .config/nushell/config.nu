@@ -225,7 +225,7 @@ $env.config = {
         vi_normal: block # block, underscore, line, blink_block, blink_underscore, blink_line, inherit to skip setting cursor shape (underscore is the default)
     }
 
-    color_config: $dark_theme # if you want a more interesting theme, you can replace the empty record with `$dark_theme`, `$light_theme` or another custom record
+    color_config: (if ($env.HOME | path join ".local/state/theme/mode" | path exists) and ((open ($env.HOME | path join ".local/state/theme/mode") | str trim) == "light") { $light_theme } else { $dark_theme })
     footer_mode: 25 # always, never, number_of_rows, auto
     float_precision: 2 # the precision for displaying floats in tables
     buffer_editor: "" # command that will be used to edit the current line buffer with ctrl+o, if unset fallback to $env.EDITOR and $env.VISUAL
@@ -283,7 +283,14 @@ $env.config = {
     }
 
     hooks: {
-        pre_prompt: [{ null }] # run before the prompt is shown
+        pre_prompt: [{|| 
+            let theme_file = ($env.HOME | path join ".local/state/theme/mode")
+            let mode = (if ($theme_file | path exists) { (open $theme_file | str trim) } else { "dark" })
+            let target = (if $mode == "light" { $light_theme } else { $dark_theme })
+            if $env.config.color_config != $target {
+                $env.config.color_config = $target
+            }
+        }]
         pre_execution: [{ null }] # run before the repl input is run
         env_change: {
             PWD: [{|before, after| null }] # run if the PWD environment is different since the last repl input
