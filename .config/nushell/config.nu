@@ -286,7 +286,7 @@ $env.config = {
         pre_prompt: [{||
             let theme_file = ($env.HOME | path join ".local/state/theme/mode")
             let mode = (if ($theme_file | path exists) { (open $theme_file | str trim) } else { "dark" })
-            if ($env | get -i __THEME_MODE | default "") != $mode {
+            if ($env | get -o __THEME_MODE | default "") != $mode {
                 $env.__THEME_MODE = $mode
                 $env.config.color_config = (if $mode == "light" { $light_theme } else { $dark_theme })
             }
