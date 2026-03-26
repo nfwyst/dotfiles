@@ -1,4 +1,4 @@
--- Options (LazyVim defaults + custom overrides)
+-- Options
 local g_opts = {
   snacks_animate = true,
   editorconfig = true,
@@ -45,7 +45,6 @@ end
 
 local opt = vim.opt
 
--- From LazyVim defaults
 opt.autowrite = true
 opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
 opt.completeopt = "menu,menuone,noselect"

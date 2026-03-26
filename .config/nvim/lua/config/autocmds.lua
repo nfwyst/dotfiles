@@ -1,4 +1,4 @@
--- Autocmds (LazyVim defaults + custom)
+-- Autocmds
 local function augroup(name)
   return vim.api.nvim_create_augroup(name, { clear = true })
 end
@@ -37,10 +37,10 @@ vim.api.nvim_create_autocmd("BufReadPost", {
   callback = function(event)
     local exclude = { "gitcommit" }
     local buf = event.buf
-    if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].lazyvim_last_loc then
+    if vim.tbl_contains(exclude, vim.bo[buf].filetype) or vim.b[buf].vim_last_loc then
       return
     end
-    vim.b[buf].lazyvim_last_loc = true
+    vim.b[buf].vim_last_loc = true
     local mark = vim.api.nvim_buf_get_mark(buf, '"')
     local lcount = vim.api.nvim_buf_line_count(buf)
     if mark[1] > 0 and mark[1] <= lcount then
@@ -53,10 +53,22 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 vim.api.nvim_create_autocmd("FileType", {
   group = augroup("close_with_q"),
   pattern = {
-    "PlenaryTestPopup", "checkhealth", "dbout", "gitsigns.blame",
-    "grug-far", "help", "lspinfo", "neotest-output", "neotest-output-panel",
-    "neotest-summary", "notify", "qf", "snacks_win", "spectre_panel",
-    "startuptime", "tsplayground",
+    "PlenaryTestPopup",
+    "checkhealth",
+    "dbout",
+    "gitsigns.blame",
+    "grug-far",
+    "help",
+    "lspinfo",
+    "neotest-output",
+    "neotest-output-panel",
+    "neotest-summary",
+    "notify",
+    "qf",
+    "snacks_win",
+    "spectre_panel",
+    "startuptime",
+    "tsplayground",
   },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
@@ -136,7 +148,9 @@ vim.api.nvim_create_autocmd("BufNewFile", {
   callback = function(event)
     local bufnr = event.buf
     if not vim.b[bufnr].is_new_file_fixed then
-      pcall(function() Snacks.indent.enable() end)
+      pcall(function()
+        Snacks.indent.enable()
+      end)
     end
     vim.b[bufnr].is_new_file_fixed = true
   end,

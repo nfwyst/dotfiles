@@ -1,7 +1,7 @@
 -- Editor plugin configurations
 
 -- ===================================================================
--- Which-key (with all group registrations for LazyVim-compatible hints)
+-- Which-ke
 -- ===================================================================
 require("which-key").setup({
   preset = "classic",
@@ -100,8 +100,12 @@ require("gitsigns").setup({
         gs.nav_hunk("prev")
       end
     end, { desc = "Prev Hunk" })
-    gmap("n", "]H", function() gs.nav_hunk("last") end, { desc = "Last Hunk" })
-    gmap("n", "[H", function() gs.nav_hunk("first") end, { desc = "First Hunk" })
+    gmap("n", "]H", function()
+      gs.nav_hunk("last")
+    end, { desc = "Last Hunk" })
+    gmap("n", "[H", function()
+      gs.nav_hunk("first")
+    end, { desc = "First Hunk" })
     -- Actions
     gmap({ "n", "v" }, "<leader>ghs", ":Gitsigns stage_hunk<CR>", { desc = "Stage Hunk" })
     gmap({ "n", "v" }, "<leader>ghr", ":Gitsigns reset_hunk<CR>", { desc = "Reset Hunk" })
@@ -110,10 +114,16 @@ require("gitsigns").setup({
     gmap("n", "<leader>ghR", gs.reset_buffer, { desc = "Reset Buffer" })
     gmap("n", "<leader>ghp", gs.preview_hunk_inline, { desc = "Preview Hunk Inline" })
     gmap("n", "<leader>ghP", gs.preview_hunk, { desc = "Preview Hunk" })
-    gmap("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, { desc = "Blame Line" })
-    gmap("n", "<leader>ghB", function() gs.blame() end, { desc = "Blame Buffer" })
+    gmap("n", "<leader>ghb", function()
+      gs.blame_line({ full = true })
+    end, { desc = "Blame Line" })
+    gmap("n", "<leader>ghB", function()
+      gs.blame()
+    end, { desc = "Blame Buffer" })
     gmap("n", "<leader>ghd", gs.diffthis, { desc = "Diff This" })
-    gmap("n", "<leader>ghD", function() gs.diffthis("~") end, { desc = "Diff This ~" })
+    gmap("n", "<leader>ghD", function()
+      gs.diffthis("~")
+    end, { desc = "Diff This ~" })
     -- Toggles
     gmap("n", "<leader>uB", gs.toggle_current_line_blame, { desc = "Toggle Git Blame" })
     -- Text object
@@ -153,26 +163,48 @@ require("trouble").setup({
   },
 })
 
-
 -- ===================================================================
 -- Flash (enhanced search/jump)
 -- ===================================================================
 require("flash").setup({})
 
-vim.keymap.set({ "n", "x", "o" }, "s", function() require("flash").jump() end, { desc = "Flash" })
-vim.keymap.set({ "n", "o", "x" }, "S", function() require("flash").treesitter() end, { desc = "Flash Treesitter" })
-vim.keymap.set("o", "r", function() require("flash").remote() end, { desc = "Remote Flash" })
-vim.keymap.set({ "o", "x" }, "R", function() require("flash").treesitter_search() end, { desc = "Treesitter Search" })
-vim.keymap.set("c", "<c-s>", function() require("flash").toggle() end, { desc = "Toggle Flash Search" })
+vim.keymap.set({ "n", "x", "o" }, "s", function()
+  require("flash").jump()
+end, { desc = "Flash" })
+vim.keymap.set({ "n", "o", "x" }, "S", function()
+  require("flash").treesitter()
+end, { desc = "Flash Treesitter" })
+vim.keymap.set("o", "r", function()
+  require("flash").remote()
+end, { desc = "Remote Flash" })
+vim.keymap.set({ "o", "x" }, "R", function()
+  require("flash").treesitter_search()
+end, { desc = "Treesitter Search" })
+vim.keymap.set("c", "<c-s>", function()
+  require("flash").toggle()
+end, { desc = "Toggle Flash Search" })
 
 -- ===================================================================
 -- Todo Comments
 -- ===================================================================
 require("todo-comments").setup({})
 
-vim.keymap.set("n", "]t", function() require("todo-comments").jump_next() end, { desc = "Next Todo Comment" })
-vim.keymap.set("n", "[t", function() require("todo-comments").jump_prev() end, { desc = "Previous Todo Comment" })
+vim.keymap.set("n", "]t", function()
+  require("todo-comments").jump_next()
+end, { desc = "Next Todo Comment" })
+vim.keymap.set("n", "[t", function()
+  require("todo-comments").jump_prev()
+end, { desc = "Previous Todo Comment" })
 vim.keymap.set("n", "<leader>xt", "<cmd>Trouble todo toggle<cr>", { desc = "Todo (Trouble)" })
-vim.keymap.set("n", "<leader>xT", "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", { desc = "Todo/Fix/Fixme (Trouble)" })
-vim.keymap.set("n", "<leader>st", function() Snacks.picker.todo_comments() end, { desc = "Todo" })
-vim.keymap.set("n", "<leader>sT", function() Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, { desc = "Todo/Fix/Fixme" })
+vim.keymap.set(
+  "n",
+  "<leader>xT",
+  "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>",
+  { desc = "Todo/Fix/Fixme (Trouble)" }
+)
+vim.keymap.set("n", "<leader>st", function()
+  Snacks.picker.todo_comments()
+end, { desc = "Todo" })
+vim.keymap.set("n", "<leader>sT", function()
+  Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })
+end, { desc = "Todo/Fix/Fixme" })

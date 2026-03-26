@@ -1,4 +1,3 @@
--- Keymaps (LazyVim defaults + custom keymaps)
 local util = require("config.util")
 local map = vim.keymap.set
 
@@ -8,7 +7,7 @@ local function set(mode, lhs, rhs, opts)
 end
 
 -- ===================================================================
--- LazyVim default keymaps
+-- keymaps
 -- ===================================================================
 
 -- Better up/down
@@ -30,15 +29,24 @@ map("n", "[b", "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 map("n", "]b", "<cmd>bnext<cr>", { desc = "Next Buffer" })
 map("n", "<leader>bb", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
 map("n", "<leader>`", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
-map("n", "<leader>bd", function() Snacks.bufdelete() end, { desc = "Delete Buffer" })
-map("n", "<leader>bo", function() Snacks.bufdelete.other() end, { desc = "Delete Other Buffers" })
+map("n", "<leader>bd", function()
+  Snacks.bufdelete()
+end, { desc = "Delete Buffer" })
+map("n", "<leader>bo", function()
+  Snacks.bufdelete.other()
+end, { desc = "Delete Other Buffers" })
 map("n", "<leader>bD", "<cmd>:bd<cr>", { desc = "Delete Buffer and Window" })
 
 -- Clear search with <esc>
 map({ "i", "n", "s" }, "<esc>", "<cmd>noh<cr><esc>", { desc = "Escape and Clear hlsearch" })
 
 -- Clear search, diff update and redraw
-map("n", "<leader>ur", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>", { desc = "Redraw / Clear hlsearch / Diff Update" })
+map(
+  "n",
+  "<leader>ur",
+  "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
+  { desc = "Redraw / Clear hlsearch / Diff Update" }
+)
 
 -- Search
 map("n", "n", "'Nn'[v:searchforward].'zv'", { expr = true, desc = "Next Search Result" })
@@ -69,7 +77,9 @@ map("n", "[q", function()
     require("trouble").prev({ skip_groups = true, jump = true })
   else
     local ok, err = pcall(vim.cmd.cprev)
-    if not ok then vim.notify(err, vim.log.levels.ERROR) end
+    if not ok then
+      vim.notify(err, vim.log.levels.ERROR)
+    end
   end
 end, { desc = "Previous Trouble/Quickfix Item" })
 map("n", "]q", function()
@@ -77,7 +87,9 @@ map("n", "]q", function()
     require("trouble").next({ skip_groups = true, jump = true })
   else
     local ok, err = pcall(vim.cmd.cnext)
-    if not ok then vim.notify(err, vim.log.levels.ERROR) end
+    if not ok then
+      vim.notify(err, vim.log.levels.ERROR)
+    end
   end
 end, { desc = "Next Trouble/Quickfix Item" })
 
@@ -100,8 +112,12 @@ map("n", "<leader>uf", function()
   vim.g.autoformat = not vim.g.autoformat
   vim.notify("Autoformat " .. (vim.g.autoformat and "enabled" or "disabled"))
 end, { desc = "Toggle Auto Format (Global)" })
-map("n", "<leader>us", function() vim.wo.spell = not vim.wo.spell end, { desc = "Toggle Spelling" })
-map("n", "<leader>uw", function() vim.wo.wrap = not vim.wo.wrap end, { desc = "Toggle Word Wrap" })
+map("n", "<leader>us", function()
+  vim.wo.spell = not vim.wo.spell
+end, { desc = "Toggle Spelling" })
+map("n", "<leader>uw", function()
+  vim.wo.wrap = not vim.wo.wrap
+end, { desc = "Toggle Word Wrap" })
 map("n", "<leader>uL", function()
   vim.wo.relativenumber = not vim.wo.relativenumber
 end, { desc = "Toggle Relative Line Numbers" })
@@ -135,14 +151,30 @@ map("n", "<leader>uA", function()
   local v = vim.o.showtabline == 0 and 2 or 0
   vim.o.showtabline = v
 end, { desc = "Toggle Tabline" })
-map("n", "<leader>uD", function() Snacks.dim() end, { desc = "Toggle Dim" })
-map("n", "<leader>ua", function() Snacks.toggle.animate():toggle() end, { desc = "Toggle Animate" })
-map("n", "<leader>ug", function() Snacks.toggle.indent():toggle() end, { desc = "Toggle Indent Guides" })
-map("n", "<leader>uG", function() Snacks.toggle.option("gitsigns"):toggle() end, { desc = "Toggle Git Signs" })
-map("n", "<leader>uS", function() Snacks.toggle.scroll():toggle() end, { desc = "Toggle Smooth Scroll" })
-map("n", "<leader>uZ", function() Snacks.toggle.zoom():toggle() end, { desc = "Toggle Zoom" })
-map("n", "<leader>uz", function() Snacks.toggle.zen():toggle() end, { desc = "Toggle Zen Mode" })
-map("n", "<leader>uC", function() Snacks.picker.colorschemes() end, { desc = "Colorschemes" })
+map("n", "<leader>uD", function()
+  Snacks.dim()
+end, { desc = "Toggle Dim" })
+map("n", "<leader>ua", function()
+  Snacks.toggle.animate():toggle()
+end, { desc = "Toggle Animate" })
+map("n", "<leader>ug", function()
+  Snacks.toggle.indent():toggle()
+end, { desc = "Toggle Indent Guides" })
+map("n", "<leader>uG", function()
+  Snacks.toggle.option("gitsigns"):toggle()
+end, { desc = "Toggle Git Signs" })
+map("n", "<leader>uS", function()
+  Snacks.toggle.scroll():toggle()
+end, { desc = "Toggle Smooth Scroll" })
+map("n", "<leader>uZ", function()
+  Snacks.toggle.zoom():toggle()
+end, { desc = "Toggle Zoom" })
+map("n", "<leader>uz", function()
+  Snacks.toggle.zen():toggle()
+end, { desc = "Toggle Zen Mode" })
+map("n", "<leader>uC", function()
+  Snacks.picker.colorschemes()
+end, { desc = "Colorschemes" })
 map("n", "<leader>uh", function()
   vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 end, { desc = "Toggle Inlay Hints" })
@@ -159,14 +191,18 @@ map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Commen
 
 -- Highlights under cursor
 map("n", "<leader>ui", vim.show_pos, { desc = "Inspect Pos" })
-map("n", "<leader>uI", function() vim.treesitter.inspect_tree() end, { desc = "Inspect Tree" })
+map("n", "<leader>uI", function()
+  vim.treesitter.inspect_tree()
+end, { desc = "Inspect Tree" })
 
 -- Windows
 map("n", "<leader>w", "<c-w>", { desc = "Windows", remap = true })
 map("n", "<leader>-", "<C-W>s", { desc = "Split Window Below", remap = true })
 map("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
 map("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
-map("n", "<leader>wm", function() Snacks.toggle.zoom():toggle() end, { desc = "Toggle Zoom" })
+map("n", "<leader>wm", function()
+  Snacks.toggle.zoom():toggle()
+end, { desc = "Toggle Zoom" })
 
 -- Tabs
 map("n", "<leader><tab>l", "<cmd>tablast<cr>", { desc = "Last Tab" })
@@ -178,88 +214,215 @@ map("n", "<leader><tab>[", "<cmd>tabprev<cr>", { desc = "Previous Tab" })
 map("n", "<leader><tab>d", "<cmd>tabclose<cr>", { desc = "Close Tab" })
 
 -- ===================================================================
--- Snacks Picker keymaps (replaces LazyVim's snacks integration)
+-- Snacks Picker keymaps
 -- ===================================================================
-map("n", "<leader>,", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-map("n", "<leader>/", function() Snacks.picker.grep({ cwd = util.root() }) end, { desc = "Grep (Root Dir)" })
-map("n", "<leader>:", function() Snacks.picker.command_history() end, { desc = "Command History" })
-map("n", "<leader><space>", function() Snacks.picker.files({ cwd = util.root() }) end, { desc = "Find Files (Root Dir)" })
+map("n", "<leader>,", function()
+  Snacks.picker.buffers()
+end, { desc = "Buffers" })
+map("n", "<leader>/", function()
+  Snacks.picker.grep({ cwd = util.root() })
+end, { desc = "Grep (Root Dir)" })
+map("n", "<leader>:", function()
+  Snacks.picker.command_history()
+end, { desc = "Command History" })
+map("n", "<leader><space>", function()
+  Snacks.picker.files({ cwd = util.root() })
+end, { desc = "Find Files (Root Dir)" })
 
 -- find
-map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-map("n", "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, { desc = "Find Config File" })
-map("n", "<leader>ff", function() Snacks.picker.files({ cwd = util.root() }) end, { desc = "Find Files (Root Dir)" })
-map("n", "<leader>fF", function() Snacks.picker.files() end, { desc = "Find Files (cwd)" })
-map("n", "<leader>fg", function() Snacks.picker.git_files() end, { desc = "Find Files (git-files)" })
-map("n", "<leader>fr", function() Snacks.picker.recent({ filter = { cwd = false } }) end, { desc = "Recent" })
-map("n", "<leader>fR", function() Snacks.picker.recent({ filter = { cwd = true } }) end, { desc = "Recent (cwd)" })
+map("n", "<leader>fb", function()
+  Snacks.picker.buffers()
+end, { desc = "Buffers" })
+map("n", "<leader>fc", function()
+  Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
+end, { desc = "Find Config File" })
+map("n", "<leader>ff", function()
+  Snacks.picker.files({ cwd = util.root() })
+end, { desc = "Find Files (Root Dir)" })
+map("n", "<leader>fF", function()
+  Snacks.picker.files()
+end, { desc = "Find Files (cwd)" })
+map("n", "<leader>fg", function()
+  Snacks.picker.git_files()
+end, { desc = "Find Files (git-files)" })
+map("n", "<leader>fr", function()
+  Snacks.picker.recent({ filter = { cwd = false } })
+end, { desc = "Recent" })
+map("n", "<leader>fR", function()
+  Snacks.picker.recent({ filter = { cwd = true } })
+end, { desc = "Recent (cwd)" })
 
 -- git
-map({ "n", "x" }, "<leader>gB", function() Snacks.gitbrowse() end, { desc = "Git Browse (open)" })
+map({ "n", "x" }, "<leader>gB", function()
+  Snacks.gitbrowse()
+end, { desc = "Git Browse (open)" })
 map({ "n", "x" }, "<leader>gY", function()
-  Snacks.gitbrowse({ open = function(url) vim.fn.setreg("+", url) end, notify = false })
+  Snacks.gitbrowse({
+    open = function(url)
+      vim.fn.setreg("+", url)
+    end,
+    notify = false,
+  })
 end, { desc = "Git Browse (copy URL)" })
-map("n", "<leader>gb", function() Snacks.picker.git_log_line() end, { desc = "Git Blame Line" })
-map("n", "<leader>gl", function() Snacks.picker.git_log({ cwd = util.git_root() }) end, { desc = "Git Log" })
-map("n", "<leader>gL", function() Snacks.picker.git_log() end, { desc = "Git Log (cwd)" })
-map("n", "<leader>gf", function() Snacks.picker.git_log_file() end, { desc = "Git Current File History" })
-map("n", "<leader>gs", function() Snacks.picker.git_status() end, { desc = "Git Status" })
-map("n", "<leader>gS", function() Snacks.picker.git_stash() end, { desc = "Git Stash" })
-map("n", "<leader>gd", function() Snacks.picker.git_diff() end, { desc = "Git Diff (Hunks)" })
-map("n", "<leader>gD", function() Snacks.picker.git_diff({ base = "origin", group = true }) end, { desc = "Git Diff (origin)" })
+map("n", "<leader>gb", function()
+  Snacks.picker.git_log_line()
+end, { desc = "Git Blame Line" })
+map("n", "<leader>gl", function()
+  Snacks.picker.git_log({ cwd = util.git_root() })
+end, { desc = "Git Log" })
+map("n", "<leader>gL", function()
+  Snacks.picker.git_log()
+end, { desc = "Git Log (cwd)" })
+map("n", "<leader>gf", function()
+  Snacks.picker.git_log_file()
+end, { desc = "Git Current File History" })
+map("n", "<leader>gs", function()
+  Snacks.picker.git_status()
+end, { desc = "Git Status" })
+map("n", "<leader>gS", function()
+  Snacks.picker.git_stash()
+end, { desc = "Git Stash" })
+map("n", "<leader>gd", function()
+  Snacks.picker.git_diff()
+end, { desc = "Git Diff (Hunks)" })
+map("n", "<leader>gD", function()
+  Snacks.picker.git_diff({ base = "origin", group = true })
+end, { desc = "Git Diff (origin)" })
 
 -- Grep
-map("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
-map("n", "<leader>sB", function() Snacks.picker.grep_buffers() end, { desc = "Grep Open Buffers" })
-map("n", "<leader>sg", function() Snacks.picker.grep({ cwd = util.root() }) end, { desc = "Grep (Root Dir)" })
-map("n", "<leader>sG", function() Snacks.picker.grep({ cwd = util.git_root() }) end, { desc = "Grep (Git Root)" })
-map({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word({ cwd = util.root() }) end, { desc = "Visual selection or word (Root Dir)" })
+map("n", "<leader>sb", function()
+  Snacks.picker.lines()
+end, { desc = "Buffer Lines" })
+map("n", "<leader>sB", function()
+  Snacks.picker.grep_buffers()
+end, { desc = "Grep Open Buffers" })
+map("n", "<leader>sg", function()
+  Snacks.picker.grep({ cwd = util.root() })
+end, { desc = "Grep (Root Dir)" })
+map("n", "<leader>sG", function()
+  Snacks.picker.grep({ cwd = util.git_root() })
+end, { desc = "Grep (Git Root)" })
+map({ "n", "x" }, "<leader>sw", function()
+  Snacks.picker.grep_word({ cwd = util.root() })
+end, { desc = "Visual selection or word (Root Dir)" })
 
 -- search
-map("n", "<leader>s\"", function() Snacks.picker.registers() end, { desc = "Registers" })
-map("n", "<leader>sa", function() Snacks.picker.autocmds() end, { desc = "Autocmds" })
-map("n", "<leader>sc", function() Snacks.picker.command_history() end, { desc = "Command History" })
-map("n", "<leader>sC", function() Snacks.picker.commands() end, { desc = "Commands" })
-map("n", "<leader>sd", function() Snacks.picker.diagnostics() end, { desc = "Diagnostics" })
-map("n", "<leader>sD", function() Snacks.picker.diagnostics_buffer() end, { desc = "Buffer Diagnostics" })
-map("n", "<leader>sh", function() Snacks.picker.help() end, { desc = "Help Pages" })
-map("n", "<leader>sH", function() Snacks.picker.highlights() end, { desc = "Highlights" })
-map("n", "<leader>si", function() Snacks.picker.icons() end, { desc = "Icons" })
-map("n", "<leader>sj", function() Snacks.picker.jumps() end, { desc = "Jumps" })
-map("n", "<leader>sk", function() Snacks.picker.keymaps() end, { desc = "Keymaps" })
-map("n", "<leader>sl", function() Snacks.picker.loclist() end, { desc = "Location List" })
-map("n", "<leader>sM", function() Snacks.picker.man() end, { desc = "Man Pages" })
-map("n", "<leader>sm", function() Snacks.picker.marks() end, { desc = "Marks" })
-map("n", "<leader>sR", function() Snacks.picker.resume() end, { desc = "Resume" })
-map("n", "<leader>sq", function() Snacks.picker.qflist() end, { desc = "Quickfix List" })
-map("n", "<leader>s/", function() Snacks.picker.search_history() end, { desc = "Search History" })
-map("n", "<leader>su", function() Snacks.picker.undo() end, { desc = "Undotree" })
-map("n", "<leader>fB", function() Snacks.picker.buffers({ filter = false }) end, { desc = "Buffers (all)" })
-map("n", "<leader>fp", function() Snacks.picker.projects() end, { desc = "Projects" })
-map({ "n", "x" }, "<leader>sW", function() Snacks.picker.grep_word() end, { desc = "Visual selection or word (cwd)" })
+map("n", '<leader>s"', function()
+  Snacks.picker.registers()
+end, { desc = "Registers" })
+map("n", "<leader>sa", function()
+  Snacks.picker.autocmds()
+end, { desc = "Autocmds" })
+map("n", "<leader>sc", function()
+  Snacks.picker.command_history()
+end, { desc = "Command History" })
+map("n", "<leader>sC", function()
+  Snacks.picker.commands()
+end, { desc = "Commands" })
+map("n", "<leader>sd", function()
+  Snacks.picker.diagnostics()
+end, { desc = "Diagnostics" })
+map("n", "<leader>sD", function()
+  Snacks.picker.diagnostics_buffer()
+end, { desc = "Buffer Diagnostics" })
+map("n", "<leader>sh", function()
+  Snacks.picker.help()
+end, { desc = "Help Pages" })
+map("n", "<leader>sH", function()
+  Snacks.picker.highlights()
+end, { desc = "Highlights" })
+map("n", "<leader>si", function()
+  Snacks.picker.icons()
+end, { desc = "Icons" })
+map("n", "<leader>sj", function()
+  Snacks.picker.jumps()
+end, { desc = "Jumps" })
+map("n", "<leader>sk", function()
+  Snacks.picker.keymaps()
+end, { desc = "Keymaps" })
+map("n", "<leader>sl", function()
+  Snacks.picker.loclist()
+end, { desc = "Location List" })
+map("n", "<leader>sM", function()
+  Snacks.picker.man()
+end, { desc = "Man Pages" })
+map("n", "<leader>sm", function()
+  Snacks.picker.marks()
+end, { desc = "Marks" })
+map("n", "<leader>sR", function()
+  Snacks.picker.resume()
+end, { desc = "Resume" })
+map("n", "<leader>sq", function()
+  Snacks.picker.qflist()
+end, { desc = "Quickfix List" })
+map("n", "<leader>s/", function()
+  Snacks.picker.search_history()
+end, { desc = "Search History" })
+map("n", "<leader>su", function()
+  Snacks.picker.undo()
+end, { desc = "Undotree" })
+map("n", "<leader>fB", function()
+  Snacks.picker.buffers({ filter = false })
+end, { desc = "Buffers (all)" })
+map("n", "<leader>fp", function()
+  Snacks.picker.projects()
+end, { desc = "Projects" })
+map({ "n", "x" }, "<leader>sW", function()
+  Snacks.picker.grep_word()
+end, { desc = "Visual selection or word (cwd)" })
 
 -- LSP picker keymaps
-map("n", "gd", function() Snacks.picker.lsp_definitions() end, { desc = "Goto Definition" })
-map("n", "gD", function() Snacks.picker.lsp_declarations() end, { desc = "Goto Declaration" })
-map("n", "grr", function() Snacks.picker.lsp_references() end, { nowait = true, desc = "References" })
-map("n", "gri", function() Snacks.picker.lsp_implementations() end, { desc = "Goto Implementation" })
-map("n", "grt", function() Snacks.picker.lsp_type_definitions() end, { desc = "Goto Type Definition" })
-map("n", "<leader>ss", function() Snacks.picker.lsp_symbols() end, { desc = "LSP Symbols" })
-map("n", "<leader>sS", function() Snacks.picker.lsp_workspace_symbols() end, { desc = "LSP Workspace Symbols" })
+map("n", "gd", function()
+  Snacks.picker.lsp_definitions()
+end, { desc = "Goto Definition" })
+map("n", "gD", function()
+  Snacks.picker.lsp_declarations()
+end, { desc = "Goto Declaration" })
+map("n", "grr", function()
+  Snacks.picker.lsp_references()
+end, { nowait = true, desc = "References" })
+map("n", "gri", function()
+  Snacks.picker.lsp_implementations()
+end, { desc = "Goto Implementation" })
+map("n", "grt", function()
+  Snacks.picker.lsp_type_definitions()
+end, { desc = "Goto Type Definition" })
+map("n", "<leader>ss", function()
+  Snacks.picker.lsp_symbols()
+end, { desc = "LSP Symbols" })
+map("n", "<leader>sS", function()
+  Snacks.picker.lsp_workspace_symbols()
+end, { desc = "LSP Workspace Symbols" })
 
 -- Snacks features
-map("n", "<leader>e", function() Snacks.explorer({ cwd = util.root() }) end, { desc = "File Explorer (Root Dir)" })
-map("n", "<leader>E", function() Snacks.explorer() end, { desc = "File Explorer (cwd)" })
-map("n", "<leader>n", function() Snacks.notifier.show_history() end, { desc = "Notification History" })
-map("n", "<leader>un", function() Snacks.notifier.hide() end, { desc = "Dismiss All Notifications" })
+map("n", "<leader>e", function()
+  Snacks.explorer({ cwd = util.root() })
+end, { desc = "File Explorer (Root Dir)" })
+map("n", "<leader>E", function()
+  Snacks.explorer()
+end, { desc = "File Explorer (cwd)" })
+map("n", "<leader>n", function()
+  Snacks.notifier.show_history()
+end, { desc = "Notification History" })
+map("n", "<leader>un", function()
+  Snacks.notifier.hide()
+end, { desc = "Dismiss All Notifications" })
 
 -- Scratch buffers
-map("n", "<leader>.", function() Snacks.scratch() end, { desc = "Toggle Scratch Buffer" })
-map("n", "<leader>S", function() Snacks.scratch.select() end, { desc = "Select Scratch Buffer" })
+map("n", "<leader>.", function()
+  Snacks.scratch()
+end, { desc = "Toggle Scratch Buffer" })
+map("n", "<leader>S", function()
+  Snacks.scratch.select()
+end, { desc = "Select Scratch Buffer" })
 
 -- Lazygit
-map("n", "<leader>gg", function() Snacks.lazygit({ cwd = util.git_root() }) end, { desc = "Lazygit (Root Dir)" })
-map("n", "<leader>gG", function() Snacks.lazygit() end, { desc = "Lazygit (cwd)" })
+map("n", "<leader>gg", function()
+  Snacks.lazygit({ cwd = util.git_root() })
+end, { desc = "Lazygit (Root Dir)" })
+map("n", "<leader>gG", function()
+  Snacks.lazygit()
+end, { desc = "Lazygit (cwd)" })
 
 -- Terminal mode window navigation
 map("t", "<C-h>", "<cmd>wincmd h<cr>", { desc = "Go to Left Window" })
@@ -280,7 +443,7 @@ map("n", "<leader>xL", "<cmd>Trouble loclist toggle<cr>", { desc = "Location Lis
 map("n", "<leader>xQ", "<cmd>Trouble qflist toggle<cr>", { desc = "Quickfix List (Trouble)" })
 
 -- ===================================================================
--- LSP keymaps (replaces LazyVim LSP keymaps)
+-- LSP keymaps
 -- ===================================================================
 -- Delete default LSP keymaps we want to override
 pcall(vim.keymap.del, "n", "grn")
@@ -299,16 +462,30 @@ map("n", "<leader>cA", function()
 end, { desc = "Source Action" })
 map({ "n", "x" }, "<leader>cc", vim.lsp.codelens.run, { desc = "Run Codelens" })
 map("n", "<leader>cC", vim.lsp.codelens.refresh, { desc = "Refresh & Display Codelens" })
-map("n", "<leader>cR", function() Snacks.rename.rename_file() end, { desc = "Rename File" })
+map("n", "<leader>cR", function()
+  Snacks.rename.rename_file()
+end, { desc = "Rename File" })
 map("n", "ga", "", { desc = "callHierarchy" })
-map("n", "gai", function() Snacks.picker.lsp_incoming_calls() end, { desc = "Incoming Calls" })
-map("n", "gao", function() Snacks.picker.lsp_outgoing_calls() end, { desc = "Outgoing Calls" })
+map("n", "gai", function()
+  Snacks.picker.lsp_incoming_calls()
+end, { desc = "Incoming Calls" })
+map("n", "gao", function()
+  Snacks.picker.lsp_outgoing_calls()
+end, { desc = "Outgoing Calls" })
 
 -- Word/reference navigation (Snacks.words)
-map("n", "]]", function() Snacks.words.jump(vim.v.count1) end, { desc = "Next Reference" })
-map("n", "[[", function() Snacks.words.jump(-vim.v.count1) end, { desc = "Prev Reference" })
-map("n", "<a-n>", function() Snacks.words.jump(vim.v.count1, true) end, { desc = "Next Reference" })
-map("n", "<a-p>", function() Snacks.words.jump(-vim.v.count1, true) end, { desc = "Prev Reference" })
+map("n", "]]", function()
+  Snacks.words.jump(vim.v.count1)
+end, { desc = "Next Reference" })
+map("n", "[[", function()
+  Snacks.words.jump(-vim.v.count1)
+end, { desc = "Prev Reference" })
+map("n", "<a-n>", function()
+  Snacks.words.jump(vim.v.count1, true)
+end, { desc = "Next Reference" })
+map("n", "<a-p>", function()
+  Snacks.words.jump(-vim.v.count1, true)
+end, { desc = "Prev Reference" })
 
 -- ===================================================================
 -- Custom keymaps (from user config)
@@ -326,8 +503,12 @@ end
 
 local function toggle_mark()
   local char_code = vim.fn.getchar()
-  if char_code == 0 then return end
-  if type(char_code) ~= "number" then return end
+  if char_code == 0 then
+    return
+  end
+  if type(char_code) ~= "number" then
+    return
+  end
   local char = vim.fn.nr2char(char_code)
   if not char:match("^[a-zA-Z]$") then
     return vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("m" .. char, true, true, true), "n", false)
@@ -335,7 +516,9 @@ local function toggle_mark()
   local mark = vim.fn.getpos("'" .. char)
   local buf = mark[1]
   local bufnr = vim.api.nvim_get_current_buf()
-  if buf == 0 then buf = bufnr end
+  if buf == 0 then
+    buf = bufnr
+  end
   local mark_row = mark[2]
   local row = vim.api.nvim_win_get_cursor(vim.api.nvim_get_current_win())[1]
   if buf == bufnr and mark_row == row then
@@ -436,7 +619,9 @@ local qfkeymaps = {
       from = "<cr>",
       to = function(qflist, qfwin, pos)
         local entry = qflist[pos[1]]
-        if not entry or entry.valid ~= 1 then return end
+        if not entry or entry.valid ~= 1 then
+          return
+        end
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<cr>", true, true, true), "n", false)
         vim.schedule(function()
           local win = vim.fn.bufwinid(entry.bufnr)

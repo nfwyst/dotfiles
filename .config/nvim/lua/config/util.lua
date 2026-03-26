@@ -1,6 +1,6 @@
 local M = {}
 
--- Root directory detection (replaces LazyVim.root())
+-- Root directory detection
 function M.root()
   return vim.fs.root(0, { ".git", "lua" }) or vim.uv.cwd()
 end
@@ -9,7 +9,7 @@ function M.git_root()
   return vim.fs.root(0, { ".git" }) or vim.uv.cwd()
 end
 
--- Icons (replaces LazyVim.config.icons)
+-- Icons
 M.icons = {
   diagnostics = {
     Error = " ",

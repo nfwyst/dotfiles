@@ -1,5 +1,4 @@
 -- Plugin management using Neovim 0.12+ native vim.pack
--- Replaces lazy.nvim + LazyVim
 
 -- Suppress messages during plugin loading to prevent hit-enter prompt.
 -- vim.pack's progress reporting and lock_read can produce output that
