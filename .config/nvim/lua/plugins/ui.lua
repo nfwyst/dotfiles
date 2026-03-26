@@ -104,6 +104,15 @@ require("snacks").setup({
     hidden = true,
     ignored = true,
     exclude = exclude,
+    actions = {
+      toggle_cwd = function(p)
+        local root = vim.fs.normalize(require("config.util").root())
+        local cwd = vim.fs.normalize(vim.uv.cwd() or ".")
+        local current = p:cwd()
+        p:set_cwd(current == root and cwd or root)
+        p:find()
+      end,
+    },
     icons = {
       git = {
         added = " + ",
@@ -132,6 +141,7 @@ require("snacks").setup({
     win = {
       input = {
         keys = {
+          ["<a-c>"] = { "toggle_cwd", mode = { "i", "n" } },
           ["<c-e>"] = { "toggle_hidden", mode = { "i", "n" } },
           ["<c-r>"] = { "toggle_ignored", mode = { "i", "n" } },
         },

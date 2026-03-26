@@ -181,15 +181,15 @@ map("n", "<leader><tab>d", "<cmd>tabclose<cr>", { desc = "Close Tab" })
 -- Snacks Picker keymaps (replaces LazyVim's snacks integration)
 -- ===================================================================
 map("n", "<leader>,", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-map("n", "<leader>/", function() Snacks.picker.grep() end, { desc = "Grep (Root Dir)" })
+map("n", "<leader>/", function() Snacks.picker.grep({ cwd = util.root() }) end, { desc = "Grep (Root Dir)" })
 map("n", "<leader>:", function() Snacks.picker.command_history() end, { desc = "Command History" })
-map("n", "<leader><space>", function() Snacks.picker.files() end, { desc = "Find Files (Root Dir)" })
+map("n", "<leader><space>", function() Snacks.picker.files({ cwd = util.root() }) end, { desc = "Find Files (Root Dir)" })
 
 -- find
 map("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
 map("n", "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, { desc = "Find Config File" })
-map("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find Files (Root Dir)" })
-map("n", "<leader>fF", function() Snacks.picker.files({ cwd = vim.uv.cwd() }) end, { desc = "Find Files (cwd)" })
+map("n", "<leader>ff", function() Snacks.picker.files({ cwd = util.root() }) end, { desc = "Find Files (Root Dir)" })
+map("n", "<leader>fF", function() Snacks.picker.files() end, { desc = "Find Files (cwd)" })
 map("n", "<leader>fg", function() Snacks.picker.git_files() end, { desc = "Find Files (git-files)" })
 map("n", "<leader>fr", function() Snacks.picker.recent({ filter = { cwd = false } }) end, { desc = "Recent" })
 map("n", "<leader>fR", function() Snacks.picker.recent({ filter = { cwd = true } }) end, { desc = "Recent (cwd)" })
@@ -206,13 +206,14 @@ map("n", "<leader>gf", function() Snacks.picker.git_log_file() end, { desc = "Gi
 map("n", "<leader>gs", function() Snacks.picker.git_status() end, { desc = "Git Status" })
 map("n", "<leader>gS", function() Snacks.picker.git_stash() end, { desc = "Git Stash" })
 map("n", "<leader>gd", function() Snacks.picker.git_diff() end, { desc = "Git Diff (Hunks)" })
+map("n", "<leader>gD", function() Snacks.picker.git_diff({ base = "origin", group = true }) end, { desc = "Git Diff (origin)" })
 
 -- Grep
 map("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
 map("n", "<leader>sB", function() Snacks.picker.grep_buffers() end, { desc = "Grep Open Buffers" })
-map("n", "<leader>sg", function() Snacks.picker.grep() end, { desc = "Grep (Root Dir)" })
+map("n", "<leader>sg", function() Snacks.picker.grep({ cwd = util.root() }) end, { desc = "Grep (Root Dir)" })
 map("n", "<leader>sG", function() Snacks.picker.grep({ cwd = util.git_root() }) end, { desc = "Grep (Git Root)" })
-map({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word() end, { desc = "Visual selection or word" })
+map({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word({ cwd = util.root() }) end, { desc = "Visual selection or word (Root Dir)" })
 
 -- search
 map("n", "<leader>s\"", function() Snacks.picker.registers() end, { desc = "Registers" })
@@ -231,12 +232,11 @@ map("n", "<leader>sM", function() Snacks.picker.man() end, { desc = "Man Pages" 
 map("n", "<leader>sm", function() Snacks.picker.marks() end, { desc = "Marks" })
 map("n", "<leader>sR", function() Snacks.picker.resume() end, { desc = "Resume" })
 map("n", "<leader>sq", function() Snacks.picker.qflist() end, { desc = "Quickfix List" })
-map("n", "<leader>sp", function() Snacks.picker.projects() end, { desc = "Projects" })
 map("n", "<leader>s/", function() Snacks.picker.search_history() end, { desc = "Search History" })
 map("n", "<leader>su", function() Snacks.picker.undo() end, { desc = "Undotree" })
 map("n", "<leader>fB", function() Snacks.picker.buffers({ filter = false }) end, { desc = "Buffers (all)" })
 map("n", "<leader>fp", function() Snacks.picker.projects() end, { desc = "Projects" })
-map({ "n", "x" }, "<leader>sW", function() Snacks.picker.grep_word({ cwd = vim.uv.cwd() }) end, { desc = "Visual selection or word (cwd)" })
+map({ "n", "x" }, "<leader>sW", function() Snacks.picker.grep_word() end, { desc = "Visual selection or word (cwd)" })
 
 -- LSP picker keymaps
 map("n", "gd", function() Snacks.picker.lsp_definitions() end, { desc = "Goto Definition" })
@@ -248,8 +248,8 @@ map("n", "<leader>ss", function() Snacks.picker.lsp_symbols() end, { desc = "LSP
 map("n", "<leader>sS", function() Snacks.picker.lsp_workspace_symbols() end, { desc = "LSP Workspace Symbols" })
 
 -- Snacks features
-map("n", "<leader>e", function() Snacks.explorer() end, { desc = "File Explorer" })
-map("n", "<leader>E", function() Snacks.explorer({ cwd = vim.uv.cwd() }) end, { desc = "File Explorer (cwd)" })
+map("n", "<leader>e", function() Snacks.explorer({ cwd = util.root() }) end, { desc = "File Explorer (Root Dir)" })
+map("n", "<leader>E", function() Snacks.explorer() end, { desc = "File Explorer (cwd)" })
 map("n", "<leader>n", function() Snacks.notifier.show_history() end, { desc = "Notification History" })
 map("n", "<leader>un", function() Snacks.notifier.hide() end, { desc = "Dismiss All Notifications" })
 
@@ -258,8 +258,8 @@ map("n", "<leader>.", function() Snacks.scratch() end, { desc = "Toggle Scratch 
 map("n", "<leader>S", function() Snacks.scratch.select() end, { desc = "Select Scratch Buffer" })
 
 -- Lazygit
-map("n", "<leader>gg", function() Snacks.lazygit() end, { desc = "Lazygit (Root Dir)" })
-map("n", "<leader>gG", function() Snacks.lazygit({ cwd = vim.uv.cwd() }) end, { desc = "Lazygit (cwd)" })
+map("n", "<leader>gg", function() Snacks.lazygit({ cwd = util.git_root() }) end, { desc = "Lazygit (Root Dir)" })
+map("n", "<leader>gG", function() Snacks.lazygit() end, { desc = "Lazygit (cwd)" })
 
 -- Terminal mode window navigation
 map("t", "<C-h>", "<cmd>wincmd h<cr>", { desc = "Go to Left Window" })
@@ -365,6 +365,9 @@ set("n", "<leader>o", ":update<cr> :source<cr>", { desc = "Update Source" })
 set("n", "<leader>ft", function()
   Snacks.terminal(vim.o.shell)
 end, { desc = "Float Terminal (cwd)" })
+set("n", "<leader>fT", function()
+  Snacks.terminal(vim.o.shell, { cwd = util.root() })
+end, { desc = "Float Terminal (Root Dir)" })
 set({ "n", "t" }, "<c-_>", function()
   Snacks.terminal(vim.o.shell, { cwd = util.root() })
 end, { desc = "Float Terminal (root)" })

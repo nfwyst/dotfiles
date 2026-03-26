@@ -115,7 +115,7 @@ require("gitsigns").setup({
     gmap("n", "<leader>ghd", gs.diffthis, { desc = "Diff This" })
     gmap("n", "<leader>ghD", function() gs.diffthis("~") end, { desc = "Diff This ~" })
     -- Toggles
-    gmap("n", "<leader>ub", gs.toggle_current_line_blame, { desc = "Toggle Git Blame" })
+    gmap("n", "<leader>uB", gs.toggle_current_line_blame, { desc = "Toggle Git Blame" })
     -- Text object
     gmap({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", { desc = "GitSigns Select Hunk" })
   end,
