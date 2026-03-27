@@ -129,6 +129,17 @@ if command_exists "fzf"; then
   source <(fzf --zsh)
 fi
 
+# carapace - multi-shell completions
+if command_exists "carapace"; then
+  export CARAPACE_BRIDGES='zsh,bash,inshellisense'
+  source <(carapace _carapace zsh)
+fi
+
+# atuin - shell history
+if command_exists "atuin"; then
+  eval "$(atuin init zsh)"
+fi
+
 # Aliases
 alias ls="ls --color"
 alias vim="nvim"
