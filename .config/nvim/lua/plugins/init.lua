@@ -29,6 +29,7 @@ vim.pack.add({
   -- Editor
   "https://github.com/folke/which-key.nvim",
   "https://github.com/lewis6991/gitsigns.nvim",
+  "https://github.com/jrentlez/conflict.nvim",
   "https://github.com/MagicDuck/grug-far.nvim",
   "https://github.com/folke/trouble.nvim",
   "https://github.com/folke/flash.nvim",

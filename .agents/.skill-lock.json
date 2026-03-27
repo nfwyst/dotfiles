@@ -9,6 +9,15 @@
       "skillFolderHash": "3013fdeb8a11b10b1eb795ec3ae8bfca38f7c26d",
       "installedAt": "2026-03-27T02:40:47.810Z",
       "updatedAt": "2026-03-27T02:41:22.226Z"
+    },
+    "neovim": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/julianobarbosa/claude-code-skills.git",
+      "skillPath": "skills/neovim-skill/SKILL.md",
+      "skillFolderHash": "33138b72d690170777cae47335f20c39a67b8fc3",
+      "installedAt": "2026-03-27T07:50:24.714Z",
+      "updatedAt": "2026-03-27T07:50:24.714Z"
     }
   },
   "dismissed": {

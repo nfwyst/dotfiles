@@ -1,7 +1,7 @@
 -- Editor plugin configurations
 
 -- ===================================================================
--- Which-ke
+-- Which-key
 -- ===================================================================
 require("which-key").setup({
   preset = "classic",
@@ -40,6 +40,7 @@ require("which-key").setup({
     { "<leader>d", group = "debug" },
     { "<leader>f", group = "file/find" },
     { "<leader>g", group = "git" },
+    { "<leader>gc", group = "conflict" },
     { "<leader>gh", group = "hunks" },
     { "<leader>q", group = "quit/session" },
     { "<leader>s", group = "search" },
@@ -208,3 +209,9 @@ end, { desc = "Todo" })
 vim.keymap.set("n", "<leader>sT", function()
   Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })
 end, { desc = "Todo/Fix/Fixme" })
+
+vim.keymap.set("n", "]c", "<Plug>ConflictJumpToNext", { desc = "Next Conflict" })
+vim.keymap.set("n", "[c", "<Plug>ConflictJumpToPrevious", { desc = "Previous Conflict" })
+vim.keymap.set("n", "<leader>gcn", "<Plug>ConflictJumpToNext", { desc = "Next Conflict" })
+vim.keymap.set("n", "<leader>gcp", "<Plug>ConflictJumpToPrevious", { desc = "Previous Conflict" })
+vim.keymap.set("n", "<leader>gcr", "<Plug>ConflictResolveAroundCursor", { desc = "Resolve Conflict at Cursor" })

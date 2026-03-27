@@ -6,7 +6,7 @@ lua_modules
 legacy
 gh
 .jira
-history.txt
+history.*
 .aider*
 !.aider.conf.yml
 todo.md
