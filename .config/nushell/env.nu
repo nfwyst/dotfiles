@@ -171,6 +171,17 @@ $env.CGO_ENABLED = '1'
 
 $env.NODE_OPTIONS = '--openssl-legacy-provider'
 
+
+# ── Auto-install missing tools ──────────────────────────────────
+if (which nufmt | is-empty) and (which cargo | is-not-empty) {
+    cargo install --git https://github.com/nushell/nufmt
+}
+
+if $env.UNAME == "Darwin" and (which brew | is-not-empty) {
+    if (which vivid | is-empty) { brew install vivid }
+    if (which dark-notify | is-empty) { brew install cormacrelf/tap/dark-notify }
+}
+
 # Set LS_COLORS based on system theme (requires vivid: brew install vivid)
 if (which vivid | is-not-empty) {
     let theme_file = ($env.HOME | path join ".local/state/theme/mode")
