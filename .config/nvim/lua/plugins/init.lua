@@ -81,25 +81,13 @@ vim.api.nvim_create_autocmd("User", {
       local dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
       vim.notify("Building blink.cmp...", vim.log.levels.INFO)
       vim.system({ "cargo", "build", "--release" }, { cwd = dir }, function(result)
-        if result.code == 0 then
-          -- Write current git SHA to version file so blink.cmp's version check passes
-          vim.system({ "git", "-C", dir, "rev-parse", "HEAD" }, { text = true }, function(git_result)
-            if git_result.code == 0 and git_result.stdout then
-              local sha = vim.trim(git_result.stdout)
-              local version_file = dir .. "/target/release/version"
-              local fd = io.open(version_file, "w")
-              if fd then
-                fd:write(sha)
-                fd:close()
-              end
-            end
-            vim.schedule(function() vim.notify("blink.cmp built successfully") end)
-          end)
-        else
-          vim.schedule(function()
+        vim.schedule(function()
+          if result.code == 0 then
+            vim.notify("blink.cmp built successfully")
+          else
             vim.notify("blink.cmp build failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
-          end)
-        end
+          end
+        end)
       end)
     end
     -- Update treesitter parsers
