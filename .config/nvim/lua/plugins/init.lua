@@ -142,8 +142,8 @@ vim.api.nvim_create_user_command("PlugSync", function()
       vim.notify("Cleaned up: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
     end
   end
-  vim.pack.update(nil, { force = true })
-end, { desc = "Sync plugins: cleanup inactive + force update all" })
+  vim.pack.update()
+end, { desc = "Sync plugins: cleanup inactive + update all" })
 
 -- Load plugin configurations
 require("plugins.colorscheme")
