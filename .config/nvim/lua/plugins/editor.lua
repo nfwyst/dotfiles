@@ -210,8 +210,19 @@ vim.keymap.set("n", "<leader>sT", function()
   Snacks.picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })
 end, { desc = "Todo/Fix/Fixme" })
 
-vim.keymap.set("n", "]c", "<Plug>ConflictJumpToNext", { desc = "Next Conflict" })
-vim.keymap.set("n", "[c", "<Plug>ConflictJumpToPrevious", { desc = "Previous Conflict" })
-vim.keymap.set("n", "<leader>gcn", "<Plug>ConflictJumpToNext", { desc = "Next Conflict" })
-vim.keymap.set("n", "<leader>gcp", "<Plug>ConflictJumpToPrevious", { desc = "Previous Conflict" })
-vim.keymap.set("n", "<leader>gcr", "<Plug>ConflictResolveAroundCursor", { desc = "Resolve Conflict at Cursor" })
+-- ===================================================================
+-- Resolve (git conflict resolution)
+-- ===================================================================
+require("resolve").setup({
+  default_keymaps = false,
+})
+
+vim.keymap.set("n", "]c", "<Plug>(resolve-next)", { desc = "Next Conflict" })
+vim.keymap.set("n", "[c", "<Plug>(resolve-prev)", { desc = "Previous Conflict" })
+vim.keymap.set("n", "<leader>gcn", "<Plug>(resolve-next)", { desc = "Next Conflict" })
+vim.keymap.set("n", "<leader>gcp", "<Plug>(resolve-prev)", { desc = "Previous Conflict" })
+vim.keymap.set("n", "<leader>gco", "<Plug>(resolve-ours)", { desc = "Choose Ours" })
+vim.keymap.set("n", "<leader>gct", "<Plug>(resolve-theirs)", { desc = "Choose Theirs" })
+vim.keymap.set("n", "<leader>gcb", "<Plug>(resolve-both)", { desc = "Choose Both" })
+vim.keymap.set("n", "<leader>gcr", "<Plug>(resolve-none)", { desc = "Remove Conflict (None)" })
+vim.keymap.set("n", "<leader>gcl", "<Plug>(resolve-list)", { desc = "List Conflicts" })
