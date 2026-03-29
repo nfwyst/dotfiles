@@ -64,7 +64,8 @@ require("blink.cmp").setup({
   },
   signature = { window = { border = "rounded" } },
   sources = {
-    default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+    default = { "lsp", "path", "snippets", "buffer" },
+    per_filetype = { lua = { inherit_defaults = true, "lazydev" } },
     providers = {
       lazydev = {
         name = "LazyDev",
@@ -88,6 +89,7 @@ require("blink.cmp").setup({
   },
   cmdline = {
     keymap = {
+      preset = "cmdline",
       ["<c-l>"] = { "show", "fallback" },
       ["<c-e>"] = { "cancel", "fallback" },
     },
@@ -95,6 +97,11 @@ require("blink.cmp").setup({
       return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
     end,
     completion = {
+      menu = {
+        auto_show = function(ctx)
+          return vim.fn.getcmdtype() == ":"
+        end,
+      },
       ghost_text = {
         enabled = function()
           return get_by_cmdtype(true, false, false)
