@@ -24,10 +24,6 @@
       "rev": "d5551b1aac60e164fb569eba422ea9b65cd2d6f4",
       "src": "https://github.com/olimorris/codecompanion.nvim"
     },
-    "conflict.nvim": {
-      "rev": "7a05b8c9765d20b7360654a356982aeb822a451e",
-      "src": "https://github.com/jrentlez/conflict.nvim"
-    },
     "conform.nvim": {
       "rev": "086a40dc7ed8242c03be9f47fbcee68699cc2395",
       "src": "https://github.com/stevearc/conform.nvim"
