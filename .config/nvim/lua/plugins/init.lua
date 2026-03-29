@@ -106,6 +106,27 @@ for _, plugin in ipairs(disabled_builtins) do
   vim.g["loaded_" .. plugin] = 1
 end
 
+-- Auto-sync plugins on startup: clean up inactive and update active
+vim.defer_fn(function()
+  -- 1. Remove plugins no longer in vim.pack.add() (inactive in lockfile/disk)
+  local ok, all = pcall(vim.pack.get)
+  if not ok or not all then
+    return
+  end
+  local to_remove = {}
+  for _, plug in ipairs(all) do
+    if not plug.active then
+      table.insert(to_remove, plug.spec.name)
+    end
+  end
+  if #to_remove > 0 then
+    pcall(vim.pack.del, to_remove, { confirm = false })
+    vim.notify("Cleaned up inactive plugins: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
+  end
+  -- 2. Update all active plugins
+  pcall(vim.pack.update, nil, { confirm = false })
+end, 500)
+
 -- Load plugin configurations
 require("plugins.colorscheme")
 require("plugins.ui")
