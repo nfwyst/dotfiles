@@ -31,29 +31,27 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
--- Ensure blink.cmp Rust library is available before setup.
--- 1. Delete stale version file so blink.cmp takes the "missing" code path
---    (skips SHA comparison, directly pcall-loads the .dylib/.so).
--- 2. If the library doesn't exist yet (first install or failed build),
---    build synchronously from source so setup() can load it immediately.
+-- Replicate lazy.nvim's `build = "cargo build --release"` lifecycle for vim.pack:
+-- 1. Delete version file → blink.cmp takes "missing" path (skips SHA comparison)
+-- 2. Build from source if .dylib missing (first install / failed build)
+-- 3. Pre-load the Rust module into package.loaded cache
+-- When ensure_downloaded later calls pcall(require, 'blink.cmp.fuzzy.rust'),
+-- it hits the cache and returns immediately — no version check, no download attempt.
 do
   local blink_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
-  os.remove(blink_dir .. "/target/release/version")
-
   if vim.uv.fs_stat(blink_dir) then
-    local ext = (jit.os == "OSX" or jit.os == "Mac") and ".dylib"
-      or jit.os == "Windows" and ".dll" or ".so"
-    local lib = blink_dir .. "/target/release/libblink_cmp_fuzzy" .. ext
-    if not vim.uv.fs_stat(lib) then
-      vim.notify("Building blink.cmp from source (first time, please wait)...", vim.log.levels.INFO)
+    os.remove(blink_dir .. "/target/release/version")
+    local ext_map = { OSX = ".dylib", Windows = ".dll" }
+    local lib = blink_dir .. "/target/release/libblink_cmp_fuzzy" .. (ext_map[jit.os] or ".so")
+    if not vim.uv.fs_stat(lib) and vim.fn.executable("cargo") == 1 then
+      vim.notify("blink.cmp: building Rust fuzzy matcher...", vim.log.levels.INFO)
       vim.cmd("redraw")
       local result = vim.system({ "cargo", "build", "--release" }, { cwd = blink_dir }):wait()
-      if result.code == 0 then
-        vim.notify("blink.cmp built successfully", vim.log.levels.INFO)
-      else
+      if result.code ~= 0 then
         vim.notify("blink.cmp build failed:\n" .. (result.stderr or ""), vim.log.levels.ERROR)
       end
     end
+    pcall(require, "blink.cmp.fuzzy.rust")
   end
 end
 
@@ -86,8 +84,13 @@ require("blink.cmp").setup({
   },
   signature = { window = { border = "rounded" } },
   sources = {
-    default = { "lsp", "path", "snippets", "buffer" },
+    default = { "lazydev", "lsp", "path", "snippets", "buffer" },
     providers = {
+      lazydev = {
+        name = "LazyDev",
+        module = "lazydev.integrations.blink",
+        score_offset = 100,
+      },
       snippets = {
         min_keyword_length = 1,
         opts = {
@@ -126,6 +129,7 @@ require("blink.cmp").setup({
   },
   fuzzy = {
     implementation = "rust",
+    prebuilt_binaries = { download = false },
   },
 })
 
