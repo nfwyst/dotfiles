@@ -100,7 +100,6 @@ require("blink.cmp").setup({
   },
   fuzzy = {
     implementation = "rust",
-    prebuilt_binaries = { download = false, ignore_version_mismatch = true },
   },
 })
 
