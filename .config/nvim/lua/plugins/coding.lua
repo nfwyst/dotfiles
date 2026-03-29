@@ -99,7 +99,7 @@ require("blink.cmp").setup({
     ["<c-l>"] = { "show", "fallback" },
   },
   fuzzy = {
-    implementation = "prefer_rust",
+    implementation = "rust",
     prebuilt_binaries = { download = false },
   },
 })
