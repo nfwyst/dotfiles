@@ -53,6 +53,7 @@ opt.linebreak = true
 opt.list = true
 opt.mouse = "a"
 opt.number = true
+opt.statuscolumn = " "
 opt.pumblend = 10
 opt.pumheight = 10
 opt.scrolloff = scrolloff
