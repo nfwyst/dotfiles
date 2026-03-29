@@ -1,0 +1,15 @@
+{
+  "Hook:Table:Pagination": {
+    "prefix": "useResetLastPage",
+    "description": "reset current page when current bigger than range",
+    "body": [
+      "useEffect(() => {",
+      "  const { current = 1, pageSize = 10, onChange } = pagination || {};",
+      "  const totalPages = Math.ceil(total / pageSize);",
+      "  if (totalPages && current > totalPages) {",
+      "    ${1:onChange?}.(totalPages, pageSize);",
+      "  }",
+      "}, [pagination, total]);"
+    ]
+  }
+}

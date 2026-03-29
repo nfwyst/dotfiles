@@ -1,0 +1,36 @@
+{
+  "Table:column:status": {
+    "prefix": "actable-column-status",
+    "description": "toggle status column",
+    "body": [
+      "(isActive, record) => {",
+      "    const loading = !!(${1:recordToToggle?.id} && ${2:record.id === recordToToggle.id});",
+      "    const onChange = () => setRecordToToggle(record);",
+      "    return (",
+      "      <div onClick={(e) => e.stopPropagation()}>",
+      "        <Tooltip",
+      "          disabled={canToggle}",
+      "          content='${3:cant toggle}'",
+      "        >",
+      "          <Popconfirm",
+      "            focusLock",
+      "            disabled={!canToggle || !isActive}",
+      "            title='${4:disable?}'",
+      "            onOk={onChange}",
+      "          >",
+      "            <Switch",
+      "              loading={loading}",
+      "              disabled={!canToggle}",
+      "              size='small'",
+      "              checked={isActive}",
+      "              onChange={!isActive ? onChange : undefined}",
+      "            />",
+      "          </Popconfirm>",
+      "        </Tooltip>",
+      "      </div>",
+      "    );",
+      "  },",
+      "}"
+    ]
+  }
+}
