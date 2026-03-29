@@ -107,9 +107,13 @@ for _, plugin in ipairs(disabled_builtins) do
 end
 
 -- ===================================================================
--- Plugin auto-sync: cleanup inactive + background update check
+-- Plugin auto-sync: cleanup inactive + manual update
 -- ===================================================================
 local pack_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt"
+
+-- Plugins that have build steps producing artifacts in the git worktree.
+-- These need git clean before vim.pack.update() can fast-forward them.
+local build_plugins = { "blink.cmp" }
 
 -- Cleanup inactive plugins (fast, no network IO, safe on every startup)
 vim.defer_fn(function()
@@ -129,62 +133,46 @@ vim.defer_fn(function()
   end
 end, 300)
 
--- Background update check: async git fetch to detect available updates
--- without opening any UI or blocking interaction
-vim.defer_fn(function()
-  local ok, all = pcall(vim.pack.get)
-  if not ok or not all then
+--- Clean build artifacts from plugins that have build steps,
+--- so vim.pack.update() can fast-forward them cleanly.
+---@param callback fun()? called after all cleans finish
+local function clean_build_plugins(callback)
+  local remaining = #build_plugins
+  if remaining == 0 then
+    if callback then callback() end
     return
   end
-
-  local pending = 0
-  local outdated = {}
-
-  for _, plug in ipairs(all) do
-    if not plug.active then
-      goto continue
-    end
-    local dir = pack_dir .. "/" .. plug.spec.name
-    if vim.fn.isdirectory(dir .. "/.git") ~= 1 then
-      goto continue
-    end
-
-    pending = pending + 1
-    -- git remote update + rev-parse to compare local vs remote HEAD
-    vim.system({ "git", "-C", dir, "remote", "update" }, { text = true }, function()
+  for _, name in ipairs(build_plugins) do
+    local dir = pack_dir .. "/" .. name
+    if vim.fn.isdirectory(dir .. "/.git") == 1 then
+      -- Reset tracked files and remove untracked build artifacts
       vim.system(
-        { "git", "-C", dir, "rev-parse", "HEAD", "@{u}" },
+        { "git", "-C", dir, "checkout", "." },
         { text = true },
-        function(result)
-          if result.code == 0 and result.stdout then
-            local lines = vim.split(result.stdout, "\n", { trimempty = true })
-            if #lines >= 2 and lines[1] ~= lines[2] then
-              table.insert(outdated, plug.spec.name)
-            end
-          end
-          pending = pending - 1
-          if pending == 0 then
-            vim.schedule(function()
-              if #outdated > 0 then
-                vim.notify(
-                  string.format(
-                    " %d plugin(s) have updates: %s\nRun :PlugSync to update",
-                    #outdated,
-                    table.concat(outdated, ", ")
-                  ),
-                  vim.log.levels.INFO
-                )
+        function()
+          vim.system(
+            { "git", "-C", dir, "clean", "-fd" },
+            { text = true },
+            function()
+              remaining = remaining - 1
+              if remaining == 0 and callback then
+                vim.schedule(callback)
               end
-            end)
-          end
+            end
+          )
         end
       )
-    end)
-    ::continue::
+    else
+      remaining = remaining - 1
+      if remaining == 0 and callback then
+        vim.schedule(callback)
+      end
+    end
   end
-end, 2000)
+end
 
--- :PlugSync command — manual trigger for vim.pack.update + cleanup
+-- :PlugSync command — manual trigger for cleanup + update
+-- Cleans build artifacts first so vim.pack.update() can fast-forward all plugins.
 vim.api.nvim_create_user_command("PlugSync", function()
   -- Clean inactive first
   local ok, all = pcall(vim.pack.get)
@@ -200,9 +188,11 @@ vim.api.nvim_create_user_command("PlugSync", function()
       vim.notify("Cleaned up: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
     end
   end
-  -- Then update
-  vim.pack.update(nil, { confirm = false })
-end, { desc = "Sync plugins: cleanup inactive + update active" })
+  -- Clean build artifacts, then update
+  clean_build_plugins(function()
+    vim.pack.update(nil, { confirm = false })
+  end)
+end, { desc = "Sync plugins: cleanup inactive + clean build artifacts + update active" })
 
 -- Load plugin configurations
 require("plugins.colorscheme")
