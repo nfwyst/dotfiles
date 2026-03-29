@@ -31,29 +31,9 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
--- Replicate lazy.nvim's `build = "cargo build --release"` lifecycle for vim.pack:
--- 1. Delete version file → blink.cmp takes "missing" path (skips SHA comparison)
--- 2. Build from source if .dylib missing (first install / failed build)
--- 3. Pre-load the Rust module into package.loaded cache
--- When ensure_downloaded later calls pcall(require, 'blink.cmp.fuzzy.rust'),
--- it hits the cache and returns immediately — no version check, no download attempt.
-do
-  local blink_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
-  if vim.uv.fs_stat(blink_dir) then
-    os.remove(blink_dir .. "/target/release/version")
-    local ext_map = { OSX = ".dylib", Windows = ".dll" }
-    local lib = blink_dir .. "/target/release/libblink_cmp_fuzzy" .. (ext_map[jit.os] or ".so")
-    if not vim.uv.fs_stat(lib) and vim.fn.executable("cargo") == 1 then
-      vim.notify("blink.cmp: building Rust fuzzy matcher...", vim.log.levels.INFO)
-      vim.cmd("redraw")
-      local result = vim.system({ "cargo", "build", "--release" }, { cwd = blink_dir }):wait()
-      if result.code ~= 0 then
-        vim.notify("blink.cmp build failed:\n" .. (result.stderr or ""), vim.log.levels.ERROR)
-      end
-    end
-    pcall(require, "blink.cmp.fuzzy.rust")
-  end
-end
+-- Pre-load the Rust module so ensure_downloaded() hits the cache and skips download.
+-- First install / update builds are handled by the PackChanged hook in init.lua.
+pcall(require, "blink.cmp.fuzzy.rust")
 
 require("blink.cmp").setup({
   completion = {
@@ -129,7 +109,10 @@ require("blink.cmp").setup({
   },
   fuzzy = {
     implementation = "rust",
-    prebuilt_binaries = { download = false },
+    prebuilt_binaries = {
+      download = false,
+      ignore_version_mismatch = true,
+    },
   },
 })
 
