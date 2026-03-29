@@ -28,6 +28,8 @@ require("mason").setup({
     "nginx-config-formatter",
     "uv",
     "sqruff",
+    "json-lsp",
+    "yaml-language-server",
   },
   ui = {
     border = "rounded",
@@ -40,23 +42,19 @@ require("mason").setup({
   },
 })
 
--- Auto-install mason packages
-vim.api.nvim_create_autocmd("User", {
-  pattern = "VeryLazy",
-  once = true,
-  callback = function()
-    local mr = require("mason-registry")
-    mr.refresh(function()
-      local opts = require("mason.settings").current
-      for _, name in ipairs(opts.ensure_installed or {}) do
-        local pkg = mr.get_package(name)
-        if not pkg:is_installed() then
-          pkg:install()
-        end
+-- Auto-install mason packages (deferred to avoid blocking startup)
+vim.defer_fn(function()
+  local mr = require("mason-registry")
+  mr.refresh(function()
+    local opts = require("mason.settings").current
+    for _, name in ipairs(opts.ensure_installed or {}) do
+      local pkg = mr.get_package(name)
+      if not pkg:is_installed() then
+        pkg:install()
       end
-    end)
-  end,
-})
+    end
+  end)
+end, 100)
 
 -- ===================================================================
 -- Conform (formatting)
@@ -339,3 +337,4 @@ if vim.fn.executable("uv") == 1 and vim.fn.executable("python3") == 1 then
     })
   end)
 end
+

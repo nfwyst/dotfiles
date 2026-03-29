@@ -157,6 +157,27 @@ require("mini.ai").setup({
 })
 
 -- ===================================================================
+-- Mini.surround
+-- ===================================================================
+require("mini.surround").setup({
+  -- Use gs prefix (consistent with which-key group defined in editor.lua)
+  mappings = {
+    add = "gsa",
+    delete = "gsd",
+    find = "gsf",
+    find_left = "gsF",
+    highlight = "gsh",
+    replace = "gsr",
+    update_n_lines = "gsn",
+  },
+})
+
+-- ===================================================================
+-- nvim-ts-autotag (auto close/rename HTML/JSX/Vue/Svelte tags)
+-- ===================================================================
+require("nvim-ts-autotag").setup({})
+
+-- ===================================================================
 -- Render Markdown
 -- ===================================================================
 local anti_conceal = { enabled = false }

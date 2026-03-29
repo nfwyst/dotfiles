@@ -10,27 +10,14 @@ local g_opts = {
   python3_host_prog = "/opt/homebrew/bin/python3",
   markdowns = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth" },
   markdown_recommended_style = 0,
-  deprecation_warnings = false,
-  trouble_lualine = true,
 }
 
 for name, value in pairs(g_opts) do
   vim.g[name] = value
 end
 
--- Suppress white flash: make UI chrome transparent before colorscheme loads
-for _, hl in ipairs({
-  "Normal",
-  "NormalNC",
-  "StatusLine",
-  "StatusLineNC",
-  "TabLine",
-  "TabLineFill",
-  "TabLineSel",
-  "WinBar",
-  "WinBarNC",
-  "MsgArea",
-}) do
+-- Suppress white flash: make key UI groups transparent before colorscheme loads
+for _, hl in ipairs({ "Normal", "NormalNC", "MsgArea" }) do
   vim.api.nvim_set_hl(0, hl, { bg = "NONE", fg = "NONE" })
 end
 
@@ -60,7 +47,7 @@ opt.grepformat = "%f:%l:%c:%m"
 opt.grepprg = "rg --vimgrep"
 opt.ignorecase = true
 opt.jumpoptions = "view"
-opt.laststatus = 0
+opt.laststatus = 3
 opt.showtabline = 0
 opt.linebreak = true
 opt.list = true

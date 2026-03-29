@@ -61,6 +61,8 @@ vim.lsp.enable({
   "solc",
   "protols",
   "docker_language_server",
+  "jsonls",
+  "yamlls",
 })
 
 -- Auto-enable inlay hints for supported servers
