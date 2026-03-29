@@ -106,9 +106,13 @@ for _, plugin in ipairs(disabled_builtins) do
   vim.g["loaded_" .. plugin] = 1
 end
 
--- Auto-sync plugins on startup: clean up inactive and update active
+-- ===================================================================
+-- Plugin auto-sync: cleanup inactive + background update check
+-- ===================================================================
+local pack_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt"
+
+-- Cleanup inactive plugins (fast, no network IO, safe on every startup)
 vim.defer_fn(function()
-  -- 1. Remove plugins no longer in vim.pack.add() (inactive in lockfile/disk)
   local ok, all = pcall(vim.pack.get)
   if not ok or not all then
     return
@@ -123,9 +127,82 @@ vim.defer_fn(function()
     pcall(vim.pack.del, to_remove, { confirm = false })
     vim.notify("Cleaned up inactive plugins: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
   end
-  -- 2. Update all active plugins
-  pcall(vim.pack.update, nil, { confirm = false })
-end, 500)
+end, 300)
+
+-- Background update check: async git fetch to detect available updates
+-- without opening any UI or blocking interaction
+vim.defer_fn(function()
+  local ok, all = pcall(vim.pack.get)
+  if not ok or not all then
+    return
+  end
+
+  local pending = 0
+  local outdated = {}
+
+  for _, plug in ipairs(all) do
+    if not plug.active then
+      goto continue
+    end
+    local dir = pack_dir .. "/" .. plug.spec.name
+    if vim.fn.isdirectory(dir .. "/.git") ~= 1 then
+      goto continue
+    end
+
+    pending = pending + 1
+    -- git remote update + rev-parse to compare local vs remote HEAD
+    vim.system({ "git", "-C", dir, "remote", "update" }, { text = true }, function()
+      vim.system(
+        { "git", "-C", dir, "rev-parse", "HEAD", "@{u}" },
+        { text = true },
+        function(result)
+          if result.code == 0 and result.stdout then
+            local lines = vim.split(result.stdout, "\n", { trimempty = true })
+            if #lines >= 2 and lines[1] ~= lines[2] then
+              table.insert(outdated, plug.spec.name)
+            end
+          end
+          pending = pending - 1
+          if pending == 0 then
+            vim.schedule(function()
+              if #outdated > 0 then
+                vim.notify(
+                  string.format(
+                    " %d plugin(s) have updates: %s\nRun :PlugSync to update",
+                    #outdated,
+                    table.concat(outdated, ", ")
+                  ),
+                  vim.log.levels.INFO
+                )
+              end
+            end)
+          end
+        end
+      )
+    end)
+    ::continue::
+  end
+end, 2000)
+
+-- :PlugSync command — manual trigger for vim.pack.update + cleanup
+vim.api.nvim_create_user_command("PlugSync", function()
+  -- Clean inactive first
+  local ok, all = pcall(vim.pack.get)
+  if ok and all then
+    local to_remove = {}
+    for _, plug in ipairs(all) do
+      if not plug.active then
+        table.insert(to_remove, plug.spec.name)
+      end
+    end
+    if #to_remove > 0 then
+      pcall(vim.pack.del, to_remove, { confirm = false })
+      vim.notify("Cleaned up: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
+    end
+  end
+  -- Then update
+  vim.pack.update(nil, { confirm = false })
+end, { desc = "Sync plugins: cleanup inactive + update active" })
 
 -- Load plugin configurations
 require("plugins.colorscheme")
