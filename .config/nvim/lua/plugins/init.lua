@@ -190,7 +190,7 @@ vim.api.nvim_create_user_command("PlugSync", function()
   end
   -- Clean build artifacts, then update
   clean_build_plugins(function()
-    vim.pack.update(nil, { confirm = false })
+    vim.pack.update(nil, { force = true })
   end)
 end, { desc = "Sync plugins: cleanup inactive + clean build artifacts + update active" })
 
