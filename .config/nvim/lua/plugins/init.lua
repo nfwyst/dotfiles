@@ -65,7 +65,7 @@ vim.pack.add({
   "https://github.com/bngarren/checkmate.nvim",
   "https://github.com/typed-rocks/ts-worksheet-neovim",
   "https://github.com/benomahony/uv.nvim",
-}, { confirm = false })
+})
 
 -- Restore shortmess and clear any pending messages
 vim.o.shortmess = saved_shortmess
