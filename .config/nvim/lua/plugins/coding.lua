@@ -31,6 +31,20 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
+-- Sync blink.cmp version file with current git HEAD (source builds on main branch)
+-- This must run BEFORE blink.cmp setup so its version check sees the correct SHA
+do
+  local blink_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
+  local result = vim.system({ "git", "-C", blink_dir, "rev-parse", "HEAD" }, { text = true }):wait()
+  if result.code == 0 and result.stdout then
+    local version_file = blink_dir .. "/target/release/version"
+    if vim.fn.isdirectory(blink_dir .. "/target/release") == 1 then
+      local fd = io.open(version_file, "w")
+      if fd then fd:write(vim.trim(result.stdout)); fd:close() end
+    end
+  end
+end
+
 require("blink.cmp").setup({
   completion = {
     accept = {
