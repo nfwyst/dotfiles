@@ -22,8 +22,8 @@ vim.pack.add({
   { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
   "https://github.com/nvim-treesitter/nvim-treesitter-context",
 
-  -- Completion (use version range to get prebuilt binaries, no cargo needed)
-  { src = "https://github.com/saghen/blink.cmp", version = vim.version.range("1.x") },
+  -- Completion
+  "https://github.com/saghen/blink.cmp",
   "https://github.com/rafamadriz/friendly-snippets",
 
   -- Editor
@@ -74,8 +74,27 @@ vim.cmd("silent! redraw")
 -- Post-install/update hooks
 vim.api.nvim_create_autocmd("User", {
   pattern = "PackChanged",
-  callback = function()
-    pcall(vim.cmd, "TSUpdate")
+  callback = function(ev)
+    local name, kind = ev.data.spec.name, ev.data.kind
+    -- Build blink.cmp from source after install/update
+    if name == "blink.cmp" and (kind == "install" or kind == "update") then
+      local dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
+      vim.notify("Building blink.cmp...", vim.log.levels.INFO)
+      vim.system({ "cargo", "build", "--release" }, { cwd = dir }, function(result)
+        vim.schedule(function()
+          if result.code == 0 then
+            vim.notify("blink.cmp built successfully")
+          else
+            vim.notify("blink.cmp build failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
+          end
+        end)
+      end)
+    end
+    -- Update treesitter parsers
+    if name == "nvim-treesitter" and (kind == "install" or kind == "update") then
+      if not ev.data.active then vim.cmd.packadd("nvim-treesitter") end
+      pcall(vim.cmd, "TSUpdate")
+    end
   end,
 })
 
