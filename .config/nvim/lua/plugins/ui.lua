@@ -95,7 +95,7 @@ require("snacks").setup({
   lazygit = { enabled = true },
   styles = {
     notification = { wo = { wrap = true } },
-    terminal = { wo = { winbar = "" } },
+    terminal = { wo = { winbar = "" }, border = "rounded" },
     scratch = { width = 0.88, height = 0.88 },
   },
   dim = { enabled = true },

@@ -46,6 +46,10 @@ vim.lsp.config("*", {
 
 vim.lsp.log.set_level(vim.log.levels.OFF)
 
+-- Rounded borders for hover and signature help
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" })
+vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" })
+
 -- Enable all configured LSP servers
 -- Server configs are in lsp/*.lua files (native 0.12 convention)
 vim.lsp.enable({
