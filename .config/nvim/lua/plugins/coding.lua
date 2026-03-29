@@ -31,11 +31,30 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
--- Remove stale version file so blink.cmp skips SHA comparison on startup
--- and loads the Rust library directly via pcall (the "missing version" path)
+-- Ensure blink.cmp Rust library is available before setup.
+-- 1. Delete stale version file so blink.cmp takes the "missing" code path
+--    (skips SHA comparison, directly pcall-loads the .dylib/.so).
+-- 2. If the library doesn't exist yet (first install or failed build),
+--    build synchronously from source so setup() can load it immediately.
 do
   local blink_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/blink.cmp"
   os.remove(blink_dir .. "/target/release/version")
+
+  if vim.uv.fs_stat(blink_dir) then
+    local ext = (jit.os == "OSX" or jit.os == "Mac") and ".dylib"
+      or jit.os == "Windows" and ".dll" or ".so"
+    local lib = blink_dir .. "/target/release/libblink_cmp_fuzzy" .. ext
+    if not vim.uv.fs_stat(lib) then
+      vim.notify("Building blink.cmp from source (first time, please wait)...", vim.log.levels.INFO)
+      vim.cmd("redraw")
+      local result = vim.system({ "cargo", "build", "--release" }, { cwd = blink_dir }):wait()
+      if result.code == 0 then
+        vim.notify("blink.cmp built successfully", vim.log.levels.INFO)
+      else
+        vim.notify("blink.cmp build failed:\n" .. (result.stderr or ""), vim.log.levels.ERROR)
+      end
+    end
+  end
 end
 
 require("blink.cmp").setup({
