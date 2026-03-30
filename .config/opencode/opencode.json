@@ -20,17 +20,13 @@
   },
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
-    "opencode-mem",
+    "opencode-mem@latest",
     "oh-my-openagent@latest"
   ],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "@byted/codin-d2c-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "@byted/codin-d2c-mcp@latest"],
       "environment": {
         "CODIN_D2C_TOKEN": "{env:CODIN_D2C_TOKEN}",
         "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
