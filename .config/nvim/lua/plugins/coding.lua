@@ -8,9 +8,19 @@ for from, to in pairs(language_map) do
   vim.treesitter.language.register(to, from)
 end
 
--- Neovim 0.12+ enables treesitter highlight/indent natively.
 -- nvim-treesitter (main branch) only provides parser management.
 -- Parsers are kept up-to-date via :TSUpdate in the PackChanged hook.
+-- Neovim's built-in ftplugins only call vim.treesitter.start() for a few
+-- languages (lua, markdown, vim, etc.).  Enable it for ALL filetypes that
+-- have an installed parser so that every language gets highlighting.
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("treesitter_start", { clear = true }),
+  callback = function(ev)
+    if vim.bo[ev.buf].buftype == "" then
+      pcall(vim.treesitter.start, ev.buf)
+    end
+  end,
+})
 
 -- ===================================================================
 -- Treesitter Context
