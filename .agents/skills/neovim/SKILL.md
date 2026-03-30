@@ -1,468 +1,304 @@
----
-name: neovim
-description: Comprehensive guide for this Neovim 0.12+ configuration - a modular, performance-optimized Lua-based IDE using native vim.pack and vim.lsp APIs. Use when configuring plugins, adding keybindings, setting up LSP servers, debugging, or extending the configuration. Covers vim.pack.add(), vim.lsp.config/enable, 35+ plugins across 6 categories, Snacks.nvim ecosystem, and AI integrations.
----
+# Neovim Configuration Skill
 
-# Neovim 0.12+ Configuration Skill
-
-A comprehensive guide for working with this Neovim 0.12+ configuration using native APIs (`vim.pack`, `vim.lsp.config`) migrated from LazyVim.
-
-## Quick Reference
-
-| Metric | Value |
-|--------|-------|
-| Neovim Version | 0.12+ |
-| Plugin Manager | `vim.pack` (native) |
-| Total Plugins | ~35 |
-| LSP System | Native `vim.lsp.config` + `vim.lsp.enable` |
-| Leader Key | `<Space>` |
-| Local Leader | `\` |
+> Neovim 0.12+ native configuration — vim.pack, native LSP, Snacks UI framework
 
 ## Architecture Overview
 
+This configuration runs on **Neovim 0.12+** and is fully migrated away from LazyVim/lazy.nvim. It uses:
+
+- **`vim.pack`** — Neovim's built-in plugin manager (replaces lazy.nvim)
+- **Native LSP** — `vim.lsp.config()` + `vim.lsp.enable()` (replaces nvim-lspconfig `setup()`)
+- **Snacks.nvim** — Unified UI framework: picker, explorer, dashboard, notifier, terminal, and more
+- **blink.cmp** — Fast completion engine (Rust fuzzy matching, built from source via cargo)
+- **conform.nvim** — Formatting engine (replaces LSP formatting)
+- **nvim-lint** — Async linting (replaces LSP-only diagnostics)
+
+## Directory Structure
+
 ```
 ~/.config/nvim/
-├── init.lua                  # Entry point with resilient loader
-├── lsp/                      # LSP server configs (0.12+ native convention)
+├── init.lua                    # Entry: loads options → keymaps → autocmds → lsp → plugins
+├── nvim-pack-lock.json         # vim.pack lockfile (version-controlled)
+├── lsp/                        # Native LSP server configs (vim.lsp.config auto-discovers)
 │   ├── lua_ls.lua
 │   ├── vtsls.lua
 │   ├── html.lua
-│   └── ... (12 servers)
+│   ├── cssls.lua
+│   ├── css_variables.lua
+│   ├── cssmodules_ls.lua
+│   ├── emmet_language_server.lua
+│   ├── tailwindcss.lua
+│   ├── taplo.lua
+│   ├── solc.lua
+│   ├── protols.lua
+│   ├── docker_language_server.lua
+│   ├── jsonls.lua
+│   └── yamlls.lua
 ├── lua/
-│   ├── config/               # Core configuration (8 modules)
-│   │   ├── options.lua       # Vim options & globals
-│   │   ├── keymaps.lua       # Key bindings (600+ lines)
-│   │   ├── autocmds.lua      # Autocommands
-│   │   ├── lsp.lua           # Native LSP setup
-│   │   ├── hack.lua          # Workarounds & patches
-│   │   ├── util.lua          # Utility functions
-│   │   ├── constant.lua      # Constants
-│   │   └── price.lua         # Custom statusline component
-│   └── plugins/              # Plugin configs (6 categories)
-│       ├── init.lua          # vim.pack.add() plugin list
-│       ├── colorscheme.lua   # Theme management
-│       ├── ui.lua            # UI (snacks, lualine, bufferline)
-│       ├── editor.lua        # Editor (which-key, gitsigns, flash)
-│       ├── coding.lua        # Coding (treesitter, blink, mini)
-│       └── tools.lua         # Tools (mason, conform, lint, AI)
-├── snippets/                 # Custom snippets
-├── nvim-pack-lock.json       # Plugin version lock
-└── README.md
+│   ├── config/
+│   │   ├── options.lua         # vim.opt settings, filetype additions
+│   │   ├── keymaps.lua         # All keybindings (leader, LSP, picker, custom)
+│   │   ├── autocmds.lua        # Autocommands (yank highlight, restore cursor, etc.)
+│   │   ├── lsp.lua             # Native LSP config: diagnostics, global settings, vim.lsp.enable()
+│   │   ├── util.lua            # Helpers: root detection, icons, eslint config finder
+│   │   ├── constant.lua        # ESLint config file list
+│   │   ├── hack.lua            # Diagnostic blacklist filter
+│   │   └── price.lua           # ETH price ticker for lualine
+│   └── plugins/
+│       ├── init.lua            # vim.pack.add() + PackChanged hooks + PlugSync command
+│       ├── colorscheme.lua     # tokyonight/monokai-pro/NeoSolarized + auto dark mode
+│       ├── ui.lua              # Snacks, Noice, Lualine, Bufferline, Vimade
+│       ├── editor.lua          # which-key, gitsigns, grug-far, trouble, flash, todo-comments
+│       ├── coding.lua          # treesitter, blink.cmp, mini.pairs/ai/surround, ts-autotag, lazydev
+│       └── tools.lua           # mason, conform, nvim-lint, codecompanion (AI), leetcode, checkmate
 ```
 
 ## Plugin Management (vim.pack)
 
-### Adding a New Plugin
+### How It Works
 
-Edit `lua/plugins/init.lua` and add to the `vim.pack.add()` table:
+Plugins are declared in `lua/plugins/init.lua` via `vim.pack.add()`:
 
 ```lua
 vim.pack.add({
-  -- Existing plugins...
-
-  -- Simple plugin
-  "https://github.com/author/plugin-name",
-
-  -- With version/tag
-  { src = "https://github.com/author/plugin-name", version = "v1.0.0" },
-
-  -- With specific branch
-  { src = "https://github.com/author/plugin-name", version = "main" },
-}, { confirm = false })
+  "https://github.com/folke/snacks.nvim",
+  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
+  -- ...
+})
 ```
 
-### Post-Install Hooks (PackChanged)
+- **Lockfile**: `nvim-pack-lock.json` — tracks exact commits, version-controlled
+- **Install location**: `~/.local/share/nvim/site/pack/core/opt/`
+- **Events**: `PackChangedPre` / `PackChanged` — used for post-install hooks
+- **No lazy loading syntax**: Use `vim.schedule()` or autocmds for deferred loading
 
-Use `User PackChanged` autocommand for build steps:
+### Key Commands
+
+| Command | Action |
+|---------|--------|
+| `:PlugSync` | Clean inactive plugins + update all |
+| `vim.pack.update()` | Update all plugins |
+| `vim.pack.get()` | List all managed plugins |
+
+### Post-Install Hooks
 
 ```lua
--- Example: Build blink.cmp after install
+-- blink.cmp: cargo build after install/update
 vim.api.nvim_create_autocmd("User", {
   pattern = "PackChanged",
-  callback = function()
-    -- Find plugin path and run build command
-    for _, path in ipairs(vim.api.nvim_list_runtime_paths()) do
-      if path:match("plugin%-name$") then
-        vim.system({ "make" }, { cwd = path }, function(result)
-          -- Handle result
-        end)
-        break
-      end
+  callback = function(ev)
+    if ev.data.spec.name == "blink.cmp" and (ev.data.kind == "install" or ev.data.kind == "update") then
+      vim.system({ "cargo", "build", "--release" }, { cwd = dir })
     end
   end,
 })
 ```
 
-### Native Plugin Commands
+## Native LSP Setup (Neovim 0.12+)
 
-| Command | Description |
-|---------|-------------|
-| `:packadd {name}` | Load an optional plugin |
-| `:packloadall` | Load all plugins |
-| Check lock file | `nvim-pack-lock.json` |
-
-## LSP Configuration (Native 0.12+)
-
-### LSP Architecture
+### Architecture
 
 ```
-lsp/*.lua (server configs)
-    ↓
-vim.lsp.config() - register configs
-    ↓
-vim.lsp.enable() - enable servers
-    ↓
-LspAttach autocmd - buffer-specific setup
+lsp/*.lua           → Server-specific configs (auto-discovered by vim.lsp.config)
+lua/config/lsp.lua  → Global settings, diagnostics, vim.lsp.enable()
 ```
 
-### Adding an LSP Server
+### How Server Configs Work
 
-1. **Create config file** in `lsp/{server_name}.lua`:
+Each file in `lsp/` exports a table consumed by `vim.lsp.config`:
 
 ```lua
---- @type vim.lsp.Config
+-- lsp/lua_ls.lua
 return {
-  cmd = { "server-executable", "--args" },
-  filetypes = { "lua", "javascript" },
-  root_markers = { ".git", "package.json" },
-  settings = {
-    -- Server-specific settings
-  },
+  cmd = { "lua-language-server" },
+  filetypes = { "lua" },
+  root_markers = { ".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml", "stylua.toml" },
+  settings = { Lua = { ... } },
 }
 ```
 
-2. **Enable in** `lua/config/lsp.lua`:
+### Enabling Servers
+
+In `lua/config/lsp.lua`:
 
 ```lua
-vim.lsp.enable({
-  -- existing servers...
-  "your_new_server",  -- Add here (matches lsp/{name}.lua)
-})
+vim.lsp.config("*", { capabilities = { ... }, on_attach = function(client) ... end })
+vim.lsp.enable({ "lua_ls", "vtsls", "html", "cssls", ... })
 ```
 
-### Global LSP Settings
+### Key Differences from Old nvim-lspconfig
+
+| Old (nvim-lspconfig) | New (Native 0.12) |
+|---|---|
+| `require('lspconfig').lua_ls.setup({...})` | `lsp/lua_ls.lua` + `vim.lsp.enable('lua_ls')` |
+| `lspconfig.util.root_pattern(...)` | `root_markers = { ... }` in config table |
+| `:LspInfo` | `:lsp` or `:checkhealth vim.lsp` |
+| `vim.lsp.get_active_clients()` | `vim.lsp.get_clients()` |
+| `client.request()` | `Client:request()` |
+
+### Diagnostics Config
 
 ```lua
--- In lua/config/lsp.lua
-vim.lsp.config("*", {
-  capabilities = {
-    workspace = {
-      fileOperations = {
-        didRename = true,
-        willRename = true,
-      },
-    },
-  },
-  on_attach = function(client, bufnr)
-    -- Global on_attach logic
-  end,
-})
-```
-
-### Key LSP Keybindings
-
-| Key | Action |
-|-----|--------|
-| `gd` | Goto Definition (Snacks picker) |
-| `gD` | Goto Declaration |
-| `grr` | References |
-| `gri` | Implementation |
-| `grt` | Type Definition |
-| `<leader>ss` | Document Symbols |
-| `<leader>sS` | Workspace Symbols |
-| `<leader>cr` | Rename |
-| `<leader>ca` | Code Action |
-| `gK` | Signature Help |
-| `<c-k>` | Signature Help (insert) |
-| `<leader>cd` | Line Diagnostics |
-| `<leader>uh` | Toggle Inlay Hints |
-
-### Diagnostics (Neovim 0.12+ API)
-
-```lua
--- Configure in lua/config/lsp.lua
 vim.diagnostic.config({
   underline = false,
   virtual_lines = false,
-  virtual_text = { spacing = 0, current_line = true },
-  float = {
-    focusable = true,
-    style = "minimal",
-    border = "rounded",
-    source = true,
-  },
+  virtual_text = { spacing = 0, current_line = true },  -- inline on current line only
+  severity_sort = true,
+  signs = { text = { [ERROR] = "", [WARN] = "", ... } },
 })
-
--- Navigation (Neovim 0.12+ native)
-vim.diagnostic.jump({ count = 1, float = true })  -- Next diagnostic
 ```
 
-## Snacks.nvim (Core UI Framework)
+## Completion (blink.cmp)
 
-This configuration uses `folke/snacks.nvim` as the central UI framework.
+- Built from source via `cargo build --release` (Rust fuzzy matcher)
+- Main branch (latest), not stable releases
+- Sources: LSP, buffer, path, snippets, lazydev
+- Keybindings: `<C-space>` trigger, `<C-y>` accept, `<C-n>`/`<C-p>` navigate, `<Tab>`/`<S-Tab>` snippet jump
 
-### Enabled Modules
+## Snacks.nvim Framework
 
-| Module | Purpose |
-|--------|---------|
-| `animate` | Smooth animations (120fps) |
-| `bigfile` | Handle large files efficiently |
-| `dashboard` | Startup dashboard |
-| `dim` | Dim inactive windows |
-| `explorer` | File explorer |
-| `image` | Image viewer |
-| `indent` | Indent guides |
-| `input` | Enhanced input dialogs |
-| `lazygit` | Git UI integration |
-| `notifier` | Notification system |
-| `picker` | Fuzzy finder (replaces telescope) |
-| `quickfile` | Quick file operations |
-| `rename` | LSP rename helper |
-| `scratch` | Scratch buffers |
-| `scroll` | Smooth scrolling |
-| `statuscolumn` | Enhanced status column |
-| `terminal` | Terminal integration |
-| `words` | Word/ reference navigation |
-| `zen` | Zen mode |
-| `zoom` | Window zoom |
+Snacks provides a unified UI layer:
 
-### Snacks Picker Keybindings
+| Feature | Description |
+|---------|-------------|
+| `Snacks.picker` | File finder, grep, LSP symbols, git — replaces Telescope |
+| `Snacks.explorer` | File tree sidebar — replaces neo-tree |
+| `Snacks.dashboard` | Start screen with fortune |
+| `Snacks.notifier` | Notification system |
+| `Snacks.lazygit` | Lazygit integration |
+| `Snacks.terminal` | Floating terminal |
+| `Snacks.bufdelete` | Safe buffer deletion |
+| `Snacks.words` | Reference navigation |
+| `Snacks.dim` | Dim inactive code |
+| `Snacks.scratch` | Scratch buffers |
+| `Snacks.toggle` | Toggle animations, zoom, zen, indent |
+| `Snacks.quickfile` | Fast file open before plugins load |
+| `Snacks.bigfile` | Disable features for large files |
 
-| Key | Action |
-|-----|--------|
-| `<leader><space>` | Find Files |
-| `<leader>/` | Grep |
-| `<leader>,` | Buffers |
-| `<leader>:` | Command History |
-| `<leader>fb` | Find Buffers |
-| `<leader>ff` | Find Files (cwd) |
-| `<leader>fF` | Find Files (root) |
-| `<leader>fg` | Git Files |
-| `<leader>fr` | Recent Files |
-| `<leader>sg` | Grep (cwd) |
-| `<leader>sG` | Grep (root) |
-| `<leader>sw` | Grep Word |
-| `gd` | LSP Definitions |
-| `grr` | LSP References |
-| `<leader>e` | File Explorer |
-
-## Keybinding Structure
-
-### Adding Keybindings
+### Explorer Config
 
 ```lua
--- In lua/config/keymaps.lua
-local map = vim.keymap.set
-
--- Simple mapping
-map("n", "<leader>xx", "<cmd>Command<cr>", { desc = "Description" })
-
--- Function mapping
-map("n", "<leader>xx", function()
-  -- Your logic
-end, { desc = "Description" })
-
--- Multiple modes
-map({ "n", "v" }, "<leader>xx", action, { desc = "Description" })
-```
-
-### Which-Key Groups
-
-```lua
--- In lua/plugins/editor.lua which-key spec
-spec = {
-  { "<leader>a", group = "ai" },
-  { "<leader>b", group = "buffer" },
-  { "<leader>c", group = "code" },
-  { "<leader>f", group = "file/find" },
-  { "<leader>g", group = "git" },
-  { "<leader>s", group = "search" },
-  { "<leader>u", group = "ui" },
+explorer = {
+  ignored = true,       -- show gitignored files
+  watch = true,         -- auto-refresh on filesystem changes
+  follow_file = true,   -- auto-locate current file
+  diagnostics = false,  -- no diagnostic indicators in tree
 }
 ```
 
-## Plugin Categories
+> ENOENT errors from broken symlinks (e.g., in `node_modules`) are filtered via Noice.
 
-### Dependencies (3)
-- `plenary.nvim` - Lua utilities
-- `nui.nvim` - UI components
-- `nvim-web-devicons` - File icons
+### Picker Config
 
-### Colorschemes (3)
-- `tokyonight.nvim` - Primary theme (storm/day)
-- `monokai-pro.nvim` - Alternative
-- `NeoSolarized.nvim` - Alternative
+```lua
+picker = {
+  hidden = true,     -- show hidden files
+  ignored = true,    -- show gitignored files
+  exclude = { "**/.git/*", "node_modules", "dist", ... },
+}
+```
 
-### UI (6)
-- `snacks.nvim` - Core UI framework
-- `lualine.nvim` - Statusline
-- `bufferline.nvim` - Buffer tabs
-- `noice.nvim` - UI enhancements
-- `vimade` - Inactive window dimming
-- `which-key.nvim` - Keybinding helper
+## Treesitter
 
-### Editor (6)
-- `flash.nvim` - Enhanced search/jump
-- `gitsigns.nvim` - Git decorations
-- `grug-far.nvim` - Find and replace
-- `trouble.nvim` - Diagnostics list
-- `todo-comments.nvim` - Todo highlighting
-- `conflict.nvim` - Git conflict resolution
+### Highlighting Strategy
 
-### Coding (7)
-- `nvim-treesitter` - Syntax parsing
-- `nvim-treesitter-context` - Sticky context
-- `blink.cmp` - Completion engine
-- `friendly-snippets` - Snippet collection
-- `mini.pairs` - Auto-pairs
-- `mini.ai` - Text objects
-- `render-markdown.nvim` - Markdown preview
+A custom `try_treesitter_start()` function in `coding.lua` handles languages where treesitter parser exists but no highlight queries:
 
-### Tools (10)
-- `mason.nvim` - LSP/DAP installer
-- `conform.nvim` - Formatting
-- `nvim-lint` - Linting
-- `codecompanion.nvim` - AI chat
-- `leetcode.nvim` - LeetCode integration
-- `checkmate.nvim` - Todo management
-- `ts-worksheet-neovim` - TypeScript execution
-- `uv.nvim` - Python UV integration
-- `SchemaStore.nvim` - JSON schemas
-- `lazydev.nvim` - Lua development
+1. Check if `highlights.scm` queries exist via `vim.treesitter.query.get(lang, "highlights")`
+2. If queries exist → `vim.treesitter.start(buf, lang)`
+3. If no queries → stop treesitter if running, restore `vim.bo.syntax` fallback
+
+This prevents Snacks quickfile from starting treesitter for unsupported languages (e.g., `nu`) which would block syntax highlighting fallback.
+
+### Key Behavior (0.12)
+
+- `vim.treesitter.get_parser()` returns `nil` on failure (no longer throws)
+- Markdown highlighting enabled by default
+- `b:ts_highlight` blocks `syntax` fallback — must explicitly stop treesitter and restore syntax
+
+## Formatting (conform.nvim)
+
+- Format on save via `BufWritePre` autocmd (controlled by `vim.g.autoformat` / `vim.b.autoformat`)
+- Formatter selection: prettierD (JS/TS/CSS/HTML/JSON/YAML/MD), stylua (Lua), shfmt (shell)
+- `<leader>cf` — manual format with prettierD config selection based on `shiftwidth`
+
+## Linting (nvim-lint)
+
+- Async linting via `BufWritePost` / `InsertLeave` / `BufEnter`
+- ESLint (JS/TS), auto-detects config file in project root
+
+## AI Integration (codecompanion.nvim)
+
+- Anthropic Claude as primary adapter
+- Inline assistant and chat interface
+
+## Key Design Decisions
+
+1. **No lazy loading framework** — vim.pack has no built-in lazy loading; use `vim.schedule()` or autocmds
+2. **Semantic tokens disabled** — `on_attach` sets `semanticTokensProvider = nil` for all servers
+3. **LSP log disabled** — `vim.lsp.log.set_level(vim.log.levels.OFF)`
+4. **Inlay hints auto-enabled** — via `LspAttach` autocmd for supporting servers
+5. **Vimade for dimming** — "duo" recipe with animation for inactive windows
+6. **Global statusline** — `vim.o.laststatus = 3`
+7. **Bufferline** — `index` files show `parent/index.ext` to disambiguate
 
 ## Common Tasks
 
-### Adding an Autocommand
+### Add a New Plugin
 
 ```lua
--- In lua/config/autocmds.lua
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown", "text" },
-  callback = function()
-    vim.opt_local.wrap = true
-    vim.opt_local.spell = true
-  end,
+-- 1. Add URL to vim.pack.add() in lua/plugins/init.lua
+vim.pack.add({
+  -- ...existing...
+  "https://github.com/author/plugin-name",
 })
+
+-- 2. Add config in appropriate lua/plugins/*.lua file
+-- 3. Run :PlugSync or restart Neovim
 ```
 
-### Adding Vim Options
+### Add a New LSP Server
 
 ```lua
--- In lua/config/options.lua
-vim.opt.your_option = value
--- Or for global vars
-vim.g.your_global = value
+-- 1. Create lsp/<server_name>.lua
+return {
+  cmd = { "server-binary" },
+  filetypes = { "filetype" },
+  root_markers = { "marker_file" },
+  settings = {},
+}
+
+-- 2. Add to vim.lsp.enable() list in lua/config/lsp.lua
+vim.lsp.enable({ ..., "server_name" })
+
+-- 3. Install via Mason: :Mason → search → install
 ```
 
-### Creating a Utility Function
+### Add a Keybinding
 
 ```lua
--- In lua/config/util.lua
-local M = {}
-
-M.your_function = function(args)
-  -- Implementation
-end
-
-return M
--- Usage: require("config.util").your_function(args)
+-- In lua/config/keymaps.lua
+vim.keymap.set("n", "<leader>xx", function()
+  -- action
+end, { desc = "Description" })
 ```
 
-### Adding Custom Snippets
-
-Place snippet files in `snippets/` directory (VSCode format).
-
-## Colorscheme & Theme
-
-### Auto Theme Detection (macOS)
-
-The configuration automatically detects macOS appearance:
-- Uses `defaults read -g AppleInterfaceStyle` for detection
-- Watches `~/.local/state/theme/mode` when in tmux (dark-notify)
-- Falls back to polling every 5s outside tmux
-
-### Manual Theme Toggle
-
-```vim
-:lua vim.o.background = "dark"  " or "light"
-```
-
-### Available Themes
-
-| Command | Theme |
-|---------|-------|
-| `:colorscheme tokyonight` | Tokyo Night (default) |
-| `:colorscheme monokai-pro` | Monokai Pro |
-| `:colorscheme NeoSolarized` | Solarized |
-
-## Formatting & Linting
-
-### Conform (Formatting)
+### Add a Formatter
 
 ```lua
--- In lua/plugins/tools.lua
-require("conform").setup({
-  formatters_by_ft = {
-    javascript = { "prettierd" },
-    typescript = { "prettierd" },
-    lua = { "stylua" },
-    -- Add your filetype
-  },
-})
-```
-
-### Nvim-lint (Linting)
-
-```lua
--- In lua/plugins/tools.lua
-require("lint").linters_by_ft = {
-  javascript = { "eslint_d" },
-  typescript = { "eslint_d" },
+-- In lua/plugins/tools.lua, conform setup:
+formatters_by_ft = {
+  filetype = { "formatter_name" },
 }
 ```
 
-## AI Integration
+## References
 
-### CodeCompanion
-
-Configured for DeepSeek API with custom system prompts.
-
-| Key | Action |
-|-----|--------|
-| `<leader>acs` | Open Actions |
-| `<leader>act` | Toggle Chat |
-| `<leader>aca` | Add Selection to Chat |
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Plugin not loading | Check `nvim-pack-lock.json`, restart nvim |
-| LSP not starting | Check `:checkhealth vim.lsp`, verify server installed |
-| Icons missing | Install a Nerd Font |
-| Blink.cmp not working | Run `:packadd blink.cmp`, check build output |
-| Treesitter errors | Run `:TSUpdate` |
-| Keybinding conflicts | `:verbose map <key>` |
-
-### Health Check
-
-```vim
-:checkhealth
-```
-
-### Debug Mode
-
-```lua
--- Temporarily add to init.lua or relevant file
-vim.lsp.log.set_level(vim.log.levels.DEBUG)
--- Or for plugins
-log_level = vim.log.levels.DEBUG
-```
-
-## Resources
-
-- [Neovim 0.12 Documentation](https://neovim.io/doc/)
-- [vim.pack API](https://neovim.io/doc/user/lua.html#vim.pack)
-- [vim.lsp.config](https://neovim.io/doc/user/lsp.html#vim.lsp.config())
-- [Snacks.nvim](https://github.com/folke/snacks.nvim)
-- [Blink.cmp](https://github.com/Saghen/blink.cmp)
+- [configuration.md](references/configuration.md) — Startup sequence, options, autocommands
+- [keybindings.md](references/keybindings.md) — Complete keybinding reference
+- [lsp.md](references/lsp.md) — LSP stack, completion, formatting, diagnostics
+- [plugins.md](references/plugins.md) — All plugins with descriptions
+- [migration-0.12.md](references/migration-0.12.md) — Neovim 0.12 breaking changes and new APIs
+- [tools.md](references/tools.md) — Built-in commands, CLI tools, debug utilities
+- [troubleshooting.md](references/troubleshooting.md) — Common issues and solutions
+- [performance.md](references/performance.md) — Startup optimization, profiling

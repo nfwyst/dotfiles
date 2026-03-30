@@ -1,331 +1,299 @@
-# Keybindings Reference
+# Keybinding Reference
 
-Complete reference for all keybindings in this Neovim configuration.
+Complete keybinding reference matching the actual configuration.
 
-## Leader Key
-
-| Key | Function |
-|-----|----------|
-| `<Space>` | Leader key |
-| `\` | Local leader |
+> Leader key: `<Space>` | Local leader: `\`
 
 ## Navigation
 
-### Window Navigation
+| Key | Mode | Action |
+|-----|------|--------|
+| `j` / `k` | n, x | Smart down/up (respects wrapped lines) |
+| `<C-h/j/k/l>` | n | Move to left/lower/upper/right window |
+| `<C-h/j/k/l>` | t | Window navigation from terminal |
+| `<S-h>` / `<S-l>` | n | Previous / Next buffer (bufferline) |
+| `[b` / `]b` | n | Previous / Next buffer |
+| `n` / `N` | n, x, o | Next / Previous search result (with `zv`) |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<C-h>` | Move to left window | Normal |
-| `<C-j>` | Move to lower window | Normal |
-| `<C-k>` | Move to upper window | Normal |
-| `<C-l>` | Move to right window | Normal |
+## Buffers
 
-### Buffer Navigation
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>bb` | n | Switch to alternate buffer |
+| `` <leader>` `` | n | Switch to alternate buffer |
+| `<leader>bd` | n | Delete buffer (Snacks) |
+| `<leader>bo` | n | Delete other buffers |
+| `<leader>bD` | n | Delete buffer and window |
+| `<leader>bp` | n | Toggle pin |
+| `<leader>bP` | n | Delete non-pinned buffers |
+| `<leader>br` | n | Delete buffers to the right |
+| `<leader>bl` | n | Delete buffers to the left |
+| `<leader>bj` | n | Pick buffer |
+| `[B` / `]B` | n | Move buffer prev / next |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<S-h>` | Previous buffer | Normal |
-| `<S-l>` | Next buffer | Normal |
-| `<leader>bd` | Delete buffer | Normal |
-| `<leader>ba` | Delete all buffers except current | Normal |
+## File / Find (Snacks Picker)
 
-### Harpoon (Quick Files)
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader><space>` | n | Find files (cwd) |
+| `<leader>ff` | n | Find files (cwd) |
+| `<leader>fF` | n | Find files (root dir) |
+| `<leader>fb` | n | Buffers |
+| `<leader>fB` | n | Buffers (all) |
+| `<leader>fc` | n | Find config file |
+| `<leader>fg` | n | Find files (git) |
+| `<leader>fn` | n | New file |
+| `<leader>fr` | n | Recent files |
+| `<leader>fR` | n | Recent files (cwd) |
+| `<leader>fp` | n | Projects |
+| `<leader>ft` | n | Float terminal (cwd) |
+| `<leader>fT` | n | Float terminal (root) |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<leader>a` | Add file to harpoon | Normal |
-| `<C-e>` | Toggle harpoon menu | Normal |
-| `<C-1>` - `<C-4>` | Navigate to file 1-4 | Normal |
+### Picker Key Overrides (inside picker)
 
-### Jumps
+| Key | Mode | Action |
+|-----|------|--------|
+| `<A-c>` | i, n | Toggle cwd (root ↔ cwd) |
+| `<C-e>` | i, n | Toggle hidden files |
+| `<C-r>` | i, n | Toggle ignored files |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<C-d>` | Scroll down (centered) | Normal |
-| `<C-u>` | Scroll up (centered) | Normal |
-| `n` | Next search result (centered) | Normal |
-| `N` | Previous search result (centered) | Normal |
-| `[d` | Previous diagnostic | Normal |
-| `]d` | Next diagnostic | Normal |
-| `[c` | Previous git change | Normal |
-| `]c` | Next git change | Normal |
+## Search / Grep
 
-## Search (Telescope)
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>/` | n | Grep (cwd) |
+| `<leader>sg` | n | Grep (cwd) |
+| `<leader>sG` | n | Grep (root dir) |
+| `<leader>sb` | n | Buffer lines |
+| `<leader>sB` | n | Grep open buffers |
+| `<leader>sw` | n, x | Grep word / visual selection (cwd) |
+| `<leader>sW` | n, x | Grep word / visual selection (root) |
+| `<leader>s/` | n | Search history |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<leader>sf` | Search files | Normal |
-| `<leader>sg` | Search by grep | Normal |
-| `<leader>sw` | Search current word | Normal |
-| `<leader>sh` | Search help tags | Normal |
-| `<leader>sk` | Search keymaps | Normal |
-| `<leader>sd` | Search diagnostics | Normal |
-| `<leader>sr` | Resume last search | Normal |
-| `<leader>ss` | Search Telescope builtins | Normal |
-| `<leader>sn` | Search Neovim config files | Normal |
-| `<leader><space>` | Search buffers | Normal |
-| `<leader>/` | Fuzzy search in buffer | Normal |
-| `<leader>?` | Search recent files | Normal |
-| `<leader>gf` | Search git files | Normal |
+## Search (Misc)
+
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>:` | n | Command history |
+| `<leader>,` | n | Buffers |
+| `<leader>sa` | n | Autocmds |
+| `<leader>sc` | n | Command history |
+| `<leader>sC` | n | Commands |
+| `<leader>sd` | n | Diagnostics |
+| `<leader>sD` | n | Buffer diagnostics |
+| `<leader>sh` | n | Help pages |
+| `<leader>sH` | n | Highlights |
+| `<leader>si` | n | Icons |
+| `<leader>sj` | n | Jumps |
+| `<leader>sk` | n | Keymaps |
+| `<leader>sl` | n | Location list |
+| `<leader>sm` | n | Marks |
+| `<leader>sM` | n | Man pages |
+| `<leader>sq` | n | Quickfix list |
+| `<leader>sR` | n | Resume last picker |
+| `<leader>su` | n | Undotree |
+| `<leader>s"` | n | Registers |
+| `<leader>ss` | n | LSP symbols |
+| `<leader>sS` | n | LSP workspace symbols |
 
 ## LSP
 
-### Navigation
+| Key | Mode | Action |
+|-----|------|--------|
+| `gd` | n | Goto definition (Snacks picker) |
+| `gD` | n | Goto declaration |
+| `grr` | n | References |
+| `gri` | n | Goto implementation |
+| `grt` | n | Goto type definition |
+| `gk` | n | Hover (rounded border) |
+| `gK` | n | Signature help |
+| `<C-k>` | i | Signature help |
+| `<leader>cr` | n | Rename |
+| `<leader>ca` | n, v | Code action |
+| `<leader>cA` | n | Source action |
+| `<leader>cd` | n | Line diagnostics (float) |
+| `<leader>cc` | n, x | Run codelens |
+| `<leader>cC` | n | Refresh codelens |
+| `<leader>cf` | n, v | Format |
+| `<leader>cR` | n | Rename file |
+| `<leader>cl` | n | LSP health check |
+| `<leader>cm` | n | Mason |
+| `gai` | n | Incoming calls |
+| `gao` | n | Outgoing calls |
+| `]]` / `[[` | n | Next / Previous reference (Snacks.words) |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `gd` | Go to definition | Normal |
-| `gr` | Go to references | Normal |
-| `gI` | Go to implementation | Normal |
-| `gD` | Go to declaration | Normal |
-| `<leader>D` | Type definition | Normal |
-| `<leader>ds` | Document symbols | Normal |
-| `<leader>ws` | Workspace symbols | Normal |
+## Diagnostics
 
-### Actions
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `K` | Hover documentation | Normal |
-| `<C-k>` | Signature help | Insert |
-| `<leader>rn` | Rename symbol | Normal |
-| `<leader>ca` | Code action | Normal, Visual |
-| `<leader>cf` | Format buffer | Normal |
+| Key | Mode | Action |
+|-----|------|--------|
+| `]d` / `[d` | n | Next / Previous diagnostic |
+| `]e` / `[e` | n | Next / Previous error |
+| `]w` / `[w` | n | Next / Previous warning |
 
 ## Git
 
-### Gitsigns
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>gg` | n | Lazygit (cwd) |
+| `<leader>gG` | n | Lazygit (root) |
+| `<leader>gb` | n | Git blame line |
+| `<leader>gl` | n | Git log (cwd) |
+| `<leader>gL` | n | Git log (root) |
+| `<leader>gf` | n | Git current file history |
+| `<leader>gs` | n | Git status |
+| `<leader>gS` | n | Git stash |
+| `<leader>gd` | n | Git diff (hunks) |
+| `<leader>gD` | n | Git diff (origin) |
+| `<leader>gB` | n, x | Git browse (open) |
+| `<leader>gY` | n, x | Git browse (copy URL) |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<leader>hs` | Stage hunk | Normal |
-| `<leader>hr` | Reset hunk | Normal |
-| `<leader>hS` | Stage buffer | Normal |
-| `<leader>hR` | Reset buffer | Normal |
-| `<leader>hu` | Undo stage hunk | Normal |
-| `<leader>hp` | Preview hunk | Normal |
-| `<leader>hb` | Blame line | Normal |
-| `<leader>hd` | Diff against index | Normal |
-| `<leader>hD` | Diff against last commit | Normal |
-| `<leader>tb` | Toggle line blame | Normal |
-| `<leader>td` | Toggle deleted | Normal |
+### Gitsigns (buffer)
 
-### Text Objects (Git)
+| Key | Mode | Action |
+|-----|------|--------|
+| `]h` / `[h` | n | Next / Previous hunk |
+| `<leader>ghs` | n, v | Stage hunk |
+| `<leader>ghr` | n, v | Reset hunk |
+| `<leader>ghS` | n | Stage buffer |
+| `<leader>ghu` | n | Undo stage hunk |
+| `<leader>ghR` | n | Reset buffer |
+| `<leader>ghp` | n | Preview hunk inline |
+| `<leader>ghb` | n | Blame line |
+| `<leader>ghB` | n | Blame buffer |
+| `<leader>ghd` | n | Diff this |
+| `<leader>ghD` | n | Diff this (~) |
+| `ih` | o, x | Select hunk (text object) |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `ih` | Inner hunk | Operator-pending, Visual |
-| `ah` | Around hunk | Operator-pending, Visual |
+## Trouble
 
-### Fugitive
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>xx` | n | Diagnostics (Trouble) |
+| `<leader>xX` | n | Buffer diagnostics (Trouble) |
+| `<leader>cs` | n | Symbols (Trouble) |
+| `<leader>cS` | n | LSP references/definitions (Trouble) |
+| `<leader>xL` | n | Location list (Trouble) |
+| `<leader>xQ` | n | Quickfix list (Trouble) |
+| `<leader>xl` | n | Location list (native) |
+| `<leader>xq` | n | Quickfix list (native) |
+| `[q` / `]q` | n | Previous / Next trouble/quickfix item |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `:Git` | Git status | Command |
-| `:Gdiffsplit` | Diff current file | Command |
-| `:Gread` | Checkout file | Command |
-| `:Gwrite` | Stage file | Command |
+## Toggles
+
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>uf` | n | Toggle auto format (global) |
+| `<leader>uF` | n | Toggle auto format (buffer) |
+| `<leader>us` | n | Toggle spelling |
+| `<leader>uw` | n | Toggle word wrap |
+| `<leader>uL` | n | Toggle relative line numbers |
+| `<leader>ul` | n | Toggle line numbers |
+| `<leader>ud` | n | Toggle diagnostics |
+| `<leader>uc` | n | Toggle conceal level |
+| `<leader>uT` | n | Toggle treesitter highlight |
+| `<leader>ub` | n | Toggle background (dark/light) |
+| `<leader>uh` | n | Toggle inlay hints |
+| `<leader>uA` | n | Toggle tabline |
+| `<leader>uC` | n | Colorscheme picker |
+| `<leader>uD` | n | Toggle dim |
+| `<leader>ua` | n | Toggle animate |
+| `<leader>ug` | n | Toggle indent guides |
+| `<leader>uG` | n | Toggle git signs |
+| `<leader>uS` | n | Toggle smooth scroll |
+| `<leader>uz` | n | Toggle zen mode |
+| `<leader>uZ` | n | Toggle zoom |
+| `<leader>uv` | n | Toggle vimade |
 
 ## Editing
 
-### Basic
+| Key | Mode | Action |
+|-----|------|--------|
+| `<S-j>` / `<S-k>` | n, v, x | Move lines down / up |
+| `<` / `>` | v | Indent / Dedent (stay in visual) |
+| `gco` / `gcO` | n | Add comment below / above |
+| `m` | n, x, s | Toggle mark (set or delete) |
+| `jk` | i | Exit insert mode |
+| `,` / `.` / `;` | i | Undo break-points |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<Esc>` | Clear search highlights | Normal |
-| `jk` | Exit insert mode | Insert |
-| `<C-s>` | Save file | Normal, Insert |
-| `<leader>q` | Quit | Normal |
-| `<leader>Q` | Force quit | Normal |
-| `<leader>wa` | Save all | Normal |
+## Windows / Tabs
 
-### Text Manipulation
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>w` | n | Window prefix |
+| `<leader>-` | n | Split window below |
+| `<leader>\|` | n | Split window right |
+| `<leader>wd` | n | Delete window |
+| `<leader>wm` | n | Toggle zoom |
+| `<S-Up/Down>` | n | Resize window height |
+| `<S-Left/Right>` | n | Resize window width |
+| `<leader><tab><tab>` | n | New tab |
+| `<leader><tab>d` | n | Close tab |
+| `<leader><tab>]` / `[` | n | Next / Previous tab |
+| `<leader><tab>l` / `f` / `o` | n | Last / First / Close other tabs |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `J` | Move selection down | Visual |
-| `K` | Move selection up | Visual |
-| `<` | Indent left (keep selection) | Visual |
-| `>` | Indent right (keep selection) | Visual |
+## Explorer
 
-### Clipboard
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>e` | n | File explorer (cwd) |
+| `<leader>E` | n | File explorer (root) |
+| `/` | n (in explorer) | Toggle search input |
+| `<Esc>` | n, i (in input) | Toggle search input |
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<leader>y` | Yank to system clipboard | Normal, Visual |
-| `<leader>Y` | Yank line to clipboard | Normal |
-| `<leader>d` | Delete to void register | Normal, Visual |
-| `<leader>p` | Paste without yanking | Visual |
-| `<C-c>` | Copy to clipboard | Visual |
-| `<C-v>` | Paste from clipboard | Normal, Insert |
+## Misc
 
-### Commenting
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `gcc` | Toggle line comment | Normal |
-| `gbc` | Toggle block comment | Normal |
-| `gc` | Comment motion | Normal, Visual |
-| `gb` | Block comment motion | Normal, Visual |
-| `gco` | Add comment below | Normal |
-| `gcO` | Add comment above | Normal |
-| `gcA` | Add comment at end of line | Normal |
-
-### Surround (mini.surround)
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `sa` | Add surrounding | Normal, Visual |
-| `sd` | Delete surrounding | Normal |
-| `sr` | Replace surrounding | Normal |
-
-## File Explorer (Neo-tree)
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `\` or `\\` | Toggle Neo-tree | Normal |
-| `<leader>e` | Focus Neo-tree | Normal |
-
-### Inside Neo-tree
-
-| Key | Action |
-|-----|--------|
-| `?` | Show help |
-| `<CR>` | Open file/folder |
-| `s` | Open in horizontal split |
-| `v` | Open in vertical split |
-| `t` | Open in new tab |
-| `a` | Add file/folder |
-| `d` | Delete |
-| `r` | Rename |
-| `y` | Copy path |
-| `x` | Cut |
-| `p` | Paste |
-| `c` | Copy |
-| `R` | Refresh |
-| `H` | Toggle hidden files |
-
-## Completion (blink.cmp with super-tab preset)
-
-Using `super-tab` preset - Tab/S-Tab for menu navigation and snippet jumping.
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `<Tab>` | Next item / Jump to next snippet placeholder | Insert, Select |
-| `<S-Tab>` | Previous item / Jump to previous snippet placeholder | Insert, Select |
-| `<CR>` | Confirm selection | Insert |
-| `<C-Space>` | Show/toggle completion menu | Insert |
-| `<C-e>` | Close completion | Insert |
-| `<C-b>` | Scroll docs up | Insert |
-| `<C-f>` | Scroll docs down | Insert |
-
-**Note:** When no completion menu is visible, Tab inserts a normal tab character.
-
-## Debugging (DAP)
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `<F5>` | Continue/Start | Normal |
-| `<F10>` | Step over | Normal |
-| `<F11>` | Step into | Normal |
-| `<F12>` | Step out | Normal |
-| `<leader>b` | Toggle breakpoint | Normal |
-| `<leader>B` | Conditional breakpoint | Normal |
-| `<leader>lp` | Log point | Normal |
-| `<leader>dr` | Open REPL | Normal |
-| `<leader>dl` | Run last | Normal |
-| `<leader>dh` | Hover variables | Normal |
-
-## Terminal
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `<C-\>` | Toggle terminal | Normal |
-| `<Esc><Esc>` | Exit terminal mode | Terminal |
-| `<C-h/j/k/l>` | Navigate from terminal | Terminal |
-
-## Testing (Neotest)
-
-| Key | Action | Mode |
-|-----|--------|------|
-| `<leader>tt` | Run nearest test | Normal |
-| `<leader>tT` | Run all tests in file | Normal |
-| `<leader>tr` | Run test suite | Normal |
-| `<leader>tl` | Run last test | Normal |
-| `<leader>ts` | Toggle test summary | Normal |
-| `<leader>to` | Show test output | Normal |
+| Key | Mode | Action |
+|-----|------|--------|
+| `<C-s>` | i, x, n, s | Save file |
+| `<leader>i` | n, x, s | Save file |
+| `<leader>I` | n, x, s | Save all |
+| `<leader>X` | n, x, s | Save and quit all |
+| `<leader>Q` | n | Quit |
+| `<leader>qq` | n | Quit all |
+| `<leader>K` | n | Keywordprg |
+| `<leader>o` | n | Update and source |
+| `<leader>ur` | n | Redraw / Clear hlsearch |
+| `<leader>ui` | n | Inspect position |
+| `<leader>uI` | n | Inspect tree |
+| `<leader>.` | n | Scratch buffer |
+| `<leader>S` | n | Select scratch buffer |
+| `<leader>n` | n | Notification history |
+| `<leader>un` | n | Dismiss all notifications |
+| `<leader>qf` | n | Close quickfix list |
+| `<c-_>` | n, t | Float terminal (root) |
 
 ## Flash (Motion)
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `s` | Flash jump | Normal |
-| `S` | Flash treesitter | Normal |
-| `r` | Remote flash | Operator-pending |
+| Key | Mode | Action |
+|-----|------|--------|
+| `s` | n, x, o | Flash jump |
+| `S` | n, x, o | Flash treesitter |
+| `r` | o | Remote flash |
+| `R` | o, x | Treesitter search |
 
-## Treesitter
+## Noice
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `<C-space>` | Increment selection | Normal |
-| `<BS>` | Decrement selection | Visual |
+| Key | Mode | Action |
+|-----|------|--------|
+| `<S-Enter>` | c | Redirect cmdline |
+| `<leader>snl` | n | Last message |
+| `<leader>snh` | n | History |
+| `<leader>sna` | n | All messages |
+| `<leader>snd` | n | Dismiss all |
+| `<leader>snt` | n | Notification picker |
+| `<C-f>` / `<C-b>` | i, n, s | Scroll forward / backward (LSP docs) |
 
-### Text Objects
+## Quickfix (in qf buffer)
 
-| Key | Action | Mode |
-|-----|--------|------|
-| `af` | Around function | Operator-pending, Visual |
-| `if` | Inner function | Operator-pending, Visual |
-| `ac` | Around class | Operator-pending, Visual |
-| `ic` | Inner class | Operator-pending, Visual |
-| `]f` | Next function start | Normal |
-| `[f` | Previous function start | Normal |
-| `]c` | Next class start | Normal |
-| `[c` | Previous class start | Normal |
+| Key | Mode | Action |
+|-----|------|--------|
+| `<CR>` | n | Open and keep cursor position |
+| `dd` | n | Remove quickfix item |
+| `d` | n, v | Remove selected items |
 
-## Adding Custom Keybindings
+## Todos (Checkmate)
 
-### In config/keymaps.lua
-
-```lua
--- Inside M.setup()
-vim.keymap.set('n', '<leader>xx', function()
-  -- Your action here
-end, { desc = 'Description for which-key' })
-```
-
-### In Plugin Spec
-
-```lua
-{
-  "plugin/name",
-  keys = {
-    { "<leader>xx", "<cmd>Command<CR>", desc = "Description" },
-    { "<leader>xy", function() ... end, desc = "Lua function" },
-  },
-}
-```
-
-### Buffer-Local Keybindings
-
-```lua
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function()
-    vim.keymap.set('n', '<leader>mp', '<cmd>MarkdownPreview<CR>', {
-      buffer = true,
-      desc = "Markdown Preview",
-    })
-  end,
-})
-```
-
-## Discovering Keybindings
-
-| Command | Description |
-|---------|-------------|
-| `<leader>sk` | Search keymaps with Telescope |
-| `:map` | List all mappings |
-| `:nmap <leader>` | List leader mappings |
-| `:verbose map <key>` | Show where mapping is defined |
-| Press `<leader>` and wait | Which-key popup |
+| Key | Mode | Action |
+|-----|------|--------|
+| `<leader>T.` | n | Toggle global scratch todo |
+| `<leader>Tl` | n | Toggle local scratch todo |

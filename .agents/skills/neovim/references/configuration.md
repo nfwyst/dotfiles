@@ -1,272 +1,196 @@
 # Configuration Reference
 
-Complete reference for core Neovim configuration options.
+Detailed reference for Neovim 0.12+ configuration structure and options.
 
-## Entry Point (init.lua)
+## Startup Sequence
 
-The startup sequence:
-
-```lua
--- 1. Enable module caching
-vim.loader.enable()
-
--- 2. Disable built-in plugins for performance
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
--- ... (16 built-ins disabled)
-
--- 3. Bootstrap phase
-require('config.compat')      -- Compatibility layer
-require('config.lazy')        -- Plugin manager
-
--- 4. Deferred phase (non-blocking)
-vim.defer_fn(function()
-  require('config.options').setup()
-  require('config.keymaps').setup()
-  require('config.autocmds').setup()
-end, 0)
+```
+init.lua
+├── require("config.options")     # vim.opt settings, filetype additions
+├── require("config.keymaps")     # All keybindings
+├── require("config.autocmds")    # Autocommands
+├── require("config.lsp")         # Native LSP: diagnostics, vim.lsp.enable()
+└── require("plugins")            # vim.pack.add() + plugin configs
+    ├── require("plugins.colorscheme")
+    ├── require("plugins.ui")        # Snacks, Noice, Lualine, Bufferline, Vimade
+    ├── require("plugins.editor")    # which-key, gitsigns, trouble, flash, etc.
+    ├── require("plugins.coding")    # treesitter, blink.cmp, mini.*, lazydev
+    └── require("plugins.tools")     # mason, conform, nvim-lint, AI, etc.
 ```
 
-## Options (lua/config/options.lua)
+## Plugin Management (vim.pack)
 
-### Essential Options
+### init.lua (plugins/init.lua)
 
 ```lua
--- Line numbers
+-- Suppress messages during plugin loading
+local saved_shortmess = vim.o.shortmess
+vim.o.shortmess = "aAFOTIcC"
+
+vim.pack.add({
+  "https://github.com/folke/snacks.nvim",
+  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
+  -- ... all plugins
+})
+
+vim.o.shortmess = saved_shortmess
+vim.cmd("silent! redraw")
+```
+
+### vim.pack API
+
+```lua
+vim.pack.add(specs, opts?)        -- Install + load plugins
+vim.pack.update(names?, opts?)    -- Update plugins (default: all)
+vim.pack.del(names, opts?)        -- Remove plugins
+vim.pack.get(names?, opts?)       -- Query plugin state
+
+-- Spec format
+{ src = "https://github.com/user/repo", version = "main" }
+-- or shorthand:
+"https://github.com/user/repo"
+```
+
+### Lockfile
+
+- Path: `~/.config/nvim/nvim-pack-lock.json`
+- Tracks exact commit hashes for all plugins
+- Version-controlled for reproducible installs
+- `vim.pack.update({ target = "lockfile" })` to restore lockfile state
+
+### Plugin Events
+
+```lua
+vim.api.nvim_create_autocmd("User", {
+  pattern = "PackChanged",
+  callback = function(ev)
+    local name = ev.data.spec.name    -- plugin name
+    local kind = ev.data.kind         -- "install" | "update" | "delete"
+    local active = ev.data.active     -- boolean
+    local path = ev.data.path         -- install path
+  end,
+})
+```
+
+### PlugSync Command
+
+Custom command that combines cleanup + update:
+
+```vim
+:PlugSync    " Remove inactive plugins, then update all
+```
+
+### Automatic Cleanup
+
+On every startup (deferred 300ms), inactive plugins (no longer in `vim.pack.add()`) are auto-removed.
+
+## Core Options (config/options.lua)
+
+### Key Settings
+
+```lua
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+vim.g.autoformat = true               -- Global autoformat toggle
+
+vim.opt.clipboard = "unscheduled"     -- Lazy clipboard (0.12+)
+vim.opt.completeopt = "menu,menuone,noselect"
+vim.opt.conceallevel = 2
+vim.opt.confirm = true
+vim.opt.cursorline = true
+vim.opt.expandtab = true
+vim.opt.fillchars = { foldopen = "", foldclose = "", fold = " ", foldsep = " ", diff = "╱", eob = " " }
+vim.opt.ignorecase = true
+vim.opt.inccommand = "nosplit"
+vim.opt.jumpoptions = "view"
+vim.opt.laststatus = 3                -- Global statusline
 vim.opt.number = true
 vim.opt.relativenumber = true
-
--- Indentation
-vim.opt.tabstop = 2
+vim.opt.scrolloff = 4
+vim.opt.sessionoptions = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp", "folds" }
+vim.opt.shiftround = true
 vim.opt.shiftwidth = 2
-vim.opt.expandtab = true
-vim.opt.smartindent = true
-
--- Search
-vim.opt.ignorecase = true
-vim.opt.smartcase = true
-vim.opt.hlsearch = true
-vim.opt.incsearch = true
-
--- Visual
-vim.opt.termguicolors = true
-vim.opt.signcolumn = "yes"
-vim.opt.cursorline = true
-vim.opt.scrolloff = 8
+vim.opt.shortmess:append({ W = true, I = true, c = true, C = true })
+vim.opt.showmode = false
 vim.opt.sidescrolloff = 8
-
--- Behavior
-vim.opt.mouse = "a"
-vim.opt.clipboard = "unnamedplus"
-vim.opt.undofile = true
-vim.opt.swapfile = false
-vim.opt.backup = false
-
--- Splits
-vim.opt.splitright = true
+vim.opt.signcolumn = "yes"
+vim.opt.smartcase = true
+vim.opt.smartindent = true
 vim.opt.splitbelow = true
-
--- Performance
-vim.opt.updatetime = 250
+vim.opt.splitright = true
+vim.opt.tabstop = 2
+vim.opt.termguicolors = true
 vim.opt.timeoutlen = 300
+vim.opt.undofile = true
+vim.opt.undolevels = 10000
+vim.opt.updatetime = 200
+vim.opt.virtualedit = "block"
+vim.opt.wildmode = "longest:full,full"
+vim.opt.winminwidth = 5
+vim.opt.wrap = false
 ```
 
-### Adding New Options
+### Custom Filetypes
 
 ```lua
--- In lua/config/options.lua, inside M.setup():
-vim.opt.your_option = value
-
--- For buffer-local options:
-vim.opt_local.wrap = true
-
--- For global variables:
-vim.g.some_plugin_setting = "value"
-```
-
-## Lazy.nvim Configuration (lua/config/lazy.lua)
-
-```lua
-require("lazy").setup({
-  spec = {
-    { import = "plugins.specs.core" },
-    { import = "plugins.specs.ui" },
-    { import = "plugins.specs.editor" },
-    { import = "plugins.specs.lsp" },
-    { import = "plugins.specs.git" },
-    { import = "plugins.specs.ai" },
-    { import = "plugins.specs.debug" },
-    { import = "plugins.specs.tools" },
-    { import = "plugins.specs.treesitter" },
-    { import = "kickstart.plugins" },
-  },
-  defaults = {
-    lazy = true,        -- Lazy load by default
-    version = false,    -- Use latest commits
-  },
-  install = {
-    colorscheme = { "tokyonight", "habamax" },
-  },
-  checker = {
-    enabled = true,     -- Check for updates
-    notify = false,     -- Don't notify on startup
-  },
-  performance = {
-    cache = {
-      enabled = true,
-      ttl = 3600 * 24 * 7,  -- 1 week cache
-    },
-    rtp = {
-      disabled_plugins = {
-        "gzip", "matchit", "matchparen", "netrwPlugin",
-        "tarPlugin", "tohtml", "tutor", "zipPlugin",
-      },
-    },
-  },
+vim.filetype.add({
+  extension = { nu = "nu", mdx = "mdx", typ = "typst" },
+  pattern = { ["%.env%.[%w_.-]+"] = "sh" },
 })
 ```
 
-## Leaders (lua/config/leaders.lua)
+### Paste Guard
+
+Large paste operations (>10,000 lines) trigger confirmation prompt.
+
+## Autocommands (config/autocmds.lua)
+
+| Event | Purpose |
+|-------|---------|
+| `FocusGained`, `TermClose`, `TermLeave` | Auto-check for file changes |
+| `TextYankPost` | Highlight yanked text |
+| `VimResized` | Equalize window splits |
+| `BufReadPost` | Restore last cursor position |
+| `FileType` (help, qf, ...) | Close with `q` for transient buffers |
+| `FileType` (gitcommit, markdown) | Enable spell + wrap |
+| `BufWritePre` | Auto-create parent directories |
+| `BufWritePre` | Retab on save (optional, filetype-specific) |
+
+## Utility Functions (config/util.lua)
+
+### Root Detection
 
 ```lua
-vim.g.mapleader = " "       -- Space as leader
-vim.g.maplocalleader = "\\" -- Backslash as local leader
+local util = require("config.util")
+util.root()          -- Returns project root (git root or cwd)
+util.git_root()      -- Returns git root specifically
 ```
 
-## Autocommands (lua/config/autocmds.lua)
-
-### Common Autocommand Patterns
+### Icons
 
 ```lua
--- Highlight on yank
-vim.api.nvim_create_autocmd("TextYankPost", {
-  callback = function()
-    vim.highlight.on_yank({ timeout = 200 })
-  end,
-})
-
--- Filetype-specific settings
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown", "text" },
-  callback = function()
-    vim.opt_local.wrap = true
-    vim.opt_local.spell = true
-  end,
-})
-
--- Auto-resize splits
-vim.api.nvim_create_autocmd("VimResized", {
-  callback = function()
-    vim.cmd("tabdo wincmd =")
-  end,
-})
-
--- Remove trailing whitespace on save
-vim.api.nvim_create_autocmd("BufWritePre", {
-  pattern = "*",
-  callback = function()
-    local save_cursor = vim.fn.getpos(".")
-    vim.cmd([[%s/\s\+$//e]])
-    vim.fn.setpos(".", save_cursor)
-  end,
-})
+util.icons.diagnostics  -- { Error = " ", Warn = " ", Info = " ", Hint = "󰌶 " }
+util.icons.git          -- { added = " ", modified = " ", removed = " " }
 ```
 
-### Creating Autocommand Groups
+### ESLint Config Finder
 
 ```lua
-local group = vim.api.nvim_create_augroup("MyAutoGroup", { clear = true })
-
-vim.api.nvim_create_autocmd("BufEnter", {
-  group = group,
-  pattern = "*.lua",
-  callback = function()
-    -- Lua-specific setup
-  end,
-})
+util.find_eslint_config(startpath)  -- Walks up to find .eslintrc.*, eslint.config.*, etc.
 ```
 
-## Performance (lua/config/performance.lua)
+## Colorscheme (plugins/colorscheme.lua)
 
-### Disabled Built-in Plugins
+### Auto Dark Mode (macOS)
 
 ```lua
-local disabled = {
-  "gzip", "zip", "zipPlugin", "tar", "tarPlugin",
-  "getscript", "getscriptPlugin", "vimball", "vimballPlugin",
-  "2html_plugin", "logipat", "rrhelper", "spellfile_plugin",
-  "matchit", "matchparen", "netrw", "netrwPlugin",
-}
-
-for _, plugin in pairs(disabled) do
-  vim.g["loaded_" .. plugin] = 1
-end
+-- Reads macOS appearance on startup
+-- Sets vim.o.background = "dark" or "light"
+-- Default colorscheme: tokyonight
 ```
 
-### Disabled Providers
+### Available Colorschemes
 
-```lua
--- Disable unused language providers
-vim.g.loaded_node_provider = 0
-vim.g.loaded_perl_provider = 0
-vim.g.loaded_ruby_provider = 0
-```
-
-### GC Optimization
-
-```lua
--- Aggressive GC during startup
-collectgarbage("setstepmul", 200)
-
--- Relax after startup
-vim.api.nvim_create_autocmd("User", {
-  pattern = "VeryLazy",
-  callback = function()
-    collectgarbage("setstepmul", 100)
-  end,
-})
-```
-
-## Compatibility (lua/config/compat.lua)
-
-Provides shims for deprecated functions:
-
-```lua
--- vim.tbl_islist → vim.islist
-if vim.islist then
-  vim.tbl_islist = vim.islist
-end
-
--- vim.tbl_flatten (deprecated in 0.11)
-if not vim.tbl_flatten then
-  vim.tbl_flatten = function(t)
-    return vim.iter(t):flatten():totable()
-  end
-end
-```
-
-## Constants (lua/config/constants.lua)
-
-Centralized configuration values:
-
-```lua
-return {
-  -- UI
-  border = "rounded",
-  icons = {
-    diagnostics = {
-      Error = " ",
-      Warn = " ",
-      Info = " ",
-      Hint = " ",
-    },
-  },
-
-  -- Paths
-  paths = {
-    cache = vim.fn.stdpath("cache"),
-    data = vim.fn.stdpath("data"),
-    config = vim.fn.stdpath("config"),
-  },
-}
-```
+- **tokyonight** (default) — with transparent background
+- **monokai-pro** — "spectrum" filter
+- **NeoSolarized** — for light mode

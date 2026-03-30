@@ -1,76 +1,162 @@
-# Tools & Utilities Reference
+# Tools & Commands Reference
 
-Command-line tools, Neovim utilities, and AI-assisted workflow patterns for this configuration.
+Built-in commands, CLI tools, and debug utilities for Neovim 0.12+.
 
-## Neovim Built-in Tools
+## Built-in Commands
 
-### Health Checks
+### LSP
 
 ```vim
-:checkhealth              " Full system health check
-:checkhealth lazy         " Lazy.nvim health
-:checkhealth mason        " Mason health
-:checkhealth lspconfig    " LSP configuration health
-:checkhealth treesitter   " Treesitter health
+:lsp                       " Interactive LSP management (new in 0.12)
+:checkhealth vim.lsp       " LSP health check
 ```
 
-### LSP Tools
+### LSP (Lua)
 
-```vim
-:LspInfo                  " Show active LSP clients
-:LspLog                   " Open LSP log file
-:LspRestart               " Restart all LSP clients
-:LspStop                  " Stop all LSP clients
-:LspStart                 " Start LSP for current buffer
-
-" Debug
-:lua vim.lsp.set_log_level("debug")
-:lua print(vim.lsp.get_log_path())
+```lua
+vim.lsp.get_clients()                -- Active clients
+vim.lsp.get_clients({ bufnr = 0 })  -- Clients for current buffer
+vim.lsp.buf.format({ async = true }) -- Format document
+vim.lsp.buf.rename()                 -- Rename symbol
+vim.lsp.buf.code_action()            -- Code actions
+vim.lsp.buf.hover()                  -- Hover info
+vim.lsp.buf.signature_help()         -- Signature help
+vim.lsp.inlay_hint.enable(bool)      -- Toggle inlay hints
+vim.lsp.codelens.run()               -- Run codelens
+vim.lsp.codelens.enable(bool)        -- Toggle codelens
 ```
 
-### Mason (Package Manager)
+### Mason
 
 ```vim
-:Mason                    " Open Mason UI
-:MasonInstall <pkg>       " Install package
-:MasonUninstall <pkg>     " Uninstall package
-:MasonUpdate              " Update all packages
-:MasonLog                 " Open Mason log
+:Mason                     " Open Mason UI
+:MasonInstall <pkg>        " Install package
+:MasonUninstall <pkg>      " Uninstall package
+:MasonUpdate               " Update all packages
 ```
 
-### Lazy.nvim
+### vim.pack
 
 ```vim
-:Lazy                     " Open Lazy dashboard
-:Lazy sync                " Update and install plugins
-:Lazy update              " Update plugins
-:Lazy clean               " Remove unused plugins
-:Lazy profile             " Show startup profile
-:Lazy health              " Check Lazy health
-:Lazy log                 " Show plugin changelog
+:PlugSync                  " Custom: cleanup inactive + update all
+```
+
+```lua
+vim.pack.add(specs)        -- Install + load plugins
+vim.pack.update()          -- Update all
+vim.pack.get()             -- List all plugins with state
+vim.pack.del(names)        -- Remove plugins
 ```
 
 ### Treesitter
 
 ```vim
-:TSInstall <lang>         " Install parser
-:TSUpdate                 " Update all parsers
-:TSInstallInfo            " Show installed parsers
-:TSModuleInfo             " Show module status
-:InspectTree              " Show syntax tree
-:Inspect                  " Show highlight groups under cursor
+:TSInstall <lang>          " Install parser
+:TSUpdate                  " Update all parsers
+:TSInstallInfo             " Show installed parsers
+:InspectTree               " Show syntax tree
+:Inspect                   " Show highlight groups under cursor
+:EditQuery                 " Edit treesitter queries (with completion)
 ```
 
-### Telescope
+### Conform (Formatting)
 
 ```vim
-:Telescope                " Open Telescope
-:Telescope find_files     " Find files
-:Telescope live_grep      " Search in files
-:Telescope help_tags      " Search help
-:Telescope keymaps        " Search keybindings
-:Telescope commands       " Search commands
-:Telescope diagnostics    " Search diagnostics
+:ConformInfo               " Show active formatters for current buffer
+```
+
+### Snacks Picker
+
+All picker commands are accessed via Lua:
+
+```lua
+Snacks.picker.files()              -- Find files
+Snacks.picker.grep()               -- Grep
+Snacks.picker.buffers()            -- Buffers
+Snacks.picker.help()               -- Help pages
+Snacks.picker.keymaps()            -- Keymaps
+Snacks.picker.commands()           -- Commands
+Snacks.picker.diagnostics()        -- Diagnostics
+Snacks.picker.lsp_definitions()    -- LSP definitions
+Snacks.picker.lsp_references()     -- LSP references
+Snacks.picker.lsp_symbols()        -- LSP symbols
+Snacks.picker.git_log()            -- Git log
+Snacks.picker.git_status()         -- Git status
+Snacks.picker.colorschemes()       -- Colorscheme picker
+Snacks.picker.notifications()      -- Notification history
+Snacks.picker.resume()             -- Resume last picker
+Snacks.picker.undo()               -- Undo tree
+```
+
+### Snacks (Other)
+
+```lua
+Snacks.explorer()          -- File explorer
+Snacks.lazygit()           -- Lazygit
+Snacks.terminal(cmd)       -- Float terminal
+Snacks.bufdelete()         -- Delete buffer safely
+Snacks.notifier.show_history()  -- Show notifications
+Snacks.scratch()           -- Scratch buffer
+Snacks.rename.rename_file() -- Rename file
+Snacks.gitbrowse()         -- Open in browser
+Snacks.dim()               -- Toggle dim
+Snacks.toggle.zoom()       -- Toggle zoom
+Snacks.toggle.zen()        -- Toggle zen
+Snacks.words.jump(count)   -- Navigate references
+```
+
+### Noice
+
+```vim
+:Noice last                " Last message
+:Noice history             " Message history
+:Noice all                 " All messages
+:Noice dismiss             " Dismiss all
+```
+
+### Trouble
+
+```vim
+:Trouble diagnostics toggle            " Toggle diagnostics
+:Trouble diagnostics toggle filter.buf=0  " Buffer diagnostics
+:Trouble symbols toggle                " Toggle symbols
+:Trouble lsp toggle                    " LSP references/defs
+:Trouble loclist toggle                " Location list
+:Trouble qflist toggle                 " Quickfix list
+```
+
+### Git
+
+```lua
+-- Gitsigns
+require("gitsigns").stage_hunk()
+require("gitsigns").reset_hunk()
+require("gitsigns").preview_hunk_inline()
+require("gitsigns").blame_line()
+require("gitsigns").diffthis()
+require("gitsigns").toggle_signs()
+```
+
+### Grug-far (Search & Replace)
+
+```lua
+require("grug-far").open({ prefills = { paths = vim.fn.expand("%") } })
+```
+
+### Flash (Motion)
+
+```lua
+require("flash").jump()        -- Flash jump
+require("flash").treesitter()  -- Treesitter-aware jump
+require("flash").remote()      -- Remote flash (operator pending)
+```
+
+### Codecompanion (AI)
+
+```vim
+:CodeCompanion             " Open AI chat
+:CodeCompanionActions      " Show AI actions
+:CodeCompanionChat         " Chat interface
 ```
 
 ## CLI Tools
@@ -79,192 +165,99 @@ Command-line tools, Neovim utilities, and AI-assisted workflow patterns for this
 
 | Tool | Purpose | Install |
 |------|---------|---------|
-| `git` | Plugin management | System package manager |
-| `ripgrep` | Telescope grep | `brew install ripgrep` |
-| `fd` | Telescope find | `brew install fd` |
+| `git` | Plugin management, gitsigns | System package manager |
+| `ripgrep` | Snacks grep | `brew install ripgrep` |
+| `fd` | Snacks file finder | `brew install fd` |
+| `cargo` | Build blink.cmp | `brew install rust` |
 
 ### Optional
 
 | Tool | Purpose | Install |
 |------|---------|---------|
-| `node` | Copilot, markdown-preview | `brew install node` |
-| `python` | Python LSP, DAP | `brew install python` |
-| `go` | Go LSP, DAP | `brew install go` |
+| `node` | LSP servers, prettierd | `brew install node` |
+| `lazygit` | Git TUI | `brew install lazygit` |
+| `fortune` | Dashboard quotes | `brew install fortune` |
 | `lua-language-server` | Lua LSP | Via Mason |
 | `stylua` | Lua formatter | Via Mason |
+| `prettierd` | JS/TS/CSS formatter | Via Mason |
+| `shfmt` | Shell formatter | Via Mason |
+| `eslint_d` | JS/TS linter | Via Mason |
 
-### Performance Tools
+## Debug Utilities
 
-```bash
-# Startup time analysis
-nvim --startuptime /tmp/startup.log
-cat /tmp/startup.log | sort -k2 -n -r | head -20
-
-# Memory usage
-nvim --cmd 'lua print(collectgarbage("count"))' --cmd 'q'
-
-# Profile with verbose
-nvim -V10/tmp/nvim.log
-```
-
-## Lua Utilities
-
-### Debug Helpers
+### Lua Debug
 
 ```lua
 -- Print table contents
 :lua print(vim.inspect(some_table))
 
--- Get current buffer info
-:lua print(vim.inspect(vim.api.nvim_buf_get_name(0)))
+-- Buffer info
+:lua print(vim.api.nvim_buf_get_name(0))
+:lua print(vim.bo.filetype)
+:lua print(vim.bo.syntax)
 
--- List all keymaps
-:lua print(vim.inspect(vim.api.nvim_get_keymap("n")))
+-- Treesitter state
+:lua print(vim.b.ts_highlight)
+:lua print(vim.inspect(vim.treesitter.get_parser():lang()))
+:lua print(vim.treesitter.get_node():type())
 
--- Check loaded modules
+-- Check highlight queries exist
+:lua print(vim.treesitter.query.get("lua", "highlights") ~= nil)
+
+-- Loaded modules
 :lua print(vim.inspect(package.loaded))
 
 -- Reload module
-:lua package.loaded["module.name"] = nil
-:lua require("module.name")
+:lua package.loaded["module.name"] = nil; require("module.name")
 ```
 
-### LSP Utilities
+### LSP Debug
 
 ```lua
--- Get active clients
-:lua print(vim.inspect(vim.lsp.get_active_clients()))
+-- Active clients with names
+:lua print(vim.inspect(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients())))
 
--- Get client capabilities
-:lua print(vim.inspect(vim.lsp.get_active_clients()[1].server_capabilities))
+-- Client capabilities
+:lua print(vim.inspect(vim.lsp.get_clients()[1].server_capabilities))
 
--- Format document
-:lua vim.lsp.buf.format({ async = true })
-
--- Get diagnostics
+-- Diagnostics for current buffer
 :lua print(vim.inspect(vim.diagnostic.get(0)))
+
+-- Check if method supported
+:lua print(vim.lsp.get_clients()[1]:supports_method("textDocument/inlayHint"))
 ```
 
-### Treesitter Utilities
+### Startup Profiling
 
-```lua
--- Get current node type
-:lua print(vim.treesitter.get_node():type())
+```bash
+# Startup time analysis
+nvim --startuptime /tmp/startup.log
+sort -k2 -n -r /tmp/startup.log | head -20
 
--- Get parser info
-:lua print(vim.inspect(vim.treesitter.get_parser():lang()))
+# Memory usage
+nvim --cmd 'lua print(collectgarbage("count"))' --cmd 'q'
 
--- Query highlights
-:lua print(vim.inspect(vim.treesitter.get_captures_at_cursor(0)))
+# Verbose logging
+nvim -V10/tmp/nvim.log
 ```
 
-## AI Integration
-
-### ChatGPT.nvim Commands
+### Health Checks
 
 ```vim
-:ChatGPT                  " Open ChatGPT
-:ChatGPTActAs             " Act as a persona
-:ChatGPTEditWithInstructions  " Edit with AI
-:ChatGPTRun <action>      " Run specific action
+:checkhealth              " Full system check
+:checkhealth vim.lsp      " LSP only
+:checkhealth vim.treesitter " Treesitter only
+:checkhealth vim.deprecated " Check for deprecated usage
 ```
 
-Actions: `grammar_correction`, `translate`, `keywords`, `docstring`, `add_tests`, `optimize_code`, `summarize`, `fix_bugs`, `explain_code`, `roxygen_edit`, `code_readability_analysis`
-
-### Copilot Commands
-
-```vim
-:Copilot enable           " Enable Copilot
-:Copilot disable          " Disable Copilot
-:Copilot status           " Check status
-:Copilot panel            " Open suggestion panel
-:Copilot setup            " Configure Copilot
-```
-
-### MCP Hub (mcphub.nvim)
-
-```vim
-:MCPHub                   " Open MCP Hub
-```
-
-Provides integration with Model Context Protocol servers.
-
-## Claude Code Workflow Tips
-
-### Working with This Configuration
-
-When modifying this Neovim configuration with Claude Code:
-
-1. **Plugin Changes:**
-   ```
-   Edit lua/plugins/specs/<category>.lua
-   Then run :Lazy sync in Neovim
-   ```
-
-2. **Keymap Changes:**
-   ```
-   Edit lua/config/keymaps.lua
-   Then source with :source % or restart
-   ```
-
-3. **LSP Changes:**
-   ```
-   Edit lua/plugins/specs/lsp.lua
-   Then :LspRestart or restart Neovim
-   ```
-
-4. **Test Changes:**
-   ```bash
-   # Quick syntax check
-   luacheck lua/
-
-   # Full test
-   nvim --headless -c "checkhealth" -c "q"
-   ```
-
-### Common Tasks
-
-**Add a new plugin:**
-```lua
--- In appropriate lua/plugins/specs/*.lua
-{
-  "author/plugin-name",
-  event = "VeryLazy",
-  opts = {},
-}
-```
-
-**Add a keybinding:**
-```lua
--- In lua/config/keymaps.lua M.setup()
-vim.keymap.set('n', '<leader>xx', function()
-  -- action
-end, { desc = 'Description' })
-```
-
-**Add an LSP server:**
-```lua
--- In mason-tool-installer ensure_installed
-"server_name",
-
--- In servers config
-server_name = { settings = {} },
-```
-
-**Add a formatter:**
-```lua
--- In conform.nvim formatters_by_ft
-filetype = { "formatter_name" },
-```
-
-### Validation Commands
+## Validation Commands
 
 ```bash
 # Check Lua syntax
 luacheck lua/
 
 # Validate config loads
-nvim --headless -c "lua require('config.lazy')" -c "q"
+nvim --headless -c "lua require('config.options')" -c "q"
 
 # Run health checks
 nvim --headless -c "checkhealth" -c "qa!" 2>&1
@@ -272,109 +265,3 @@ nvim --headless -c "checkhealth" -c "qa!" 2>&1
 # Profile startup
 nvim --startuptime /tmp/startup.log -c "q" && cat /tmp/startup.log
 ```
-
-## External Tool Integration
-
-### Git Integration
-
-| Command | Description |
-|---------|-------------|
-| `:Git` | Full Git interface (fugitive) |
-| `:Git blame` | Line-by-line blame |
-| `:Git log` | Commit history |
-| `:DiffviewOpen` | Visual diff viewer |
-| `:DiffviewFileHistory` | File history |
-
-### Database (vim-dadbod)
-
-```vim
-:DB <connection>          " Connect to database
-:DBUI                     " Open database UI
-```
-
-### HTTP Client (rest.nvim)
-
-```vim
-:Rest run                 " Execute HTTP request under cursor
-```
-
-### Markdown Preview
-
-```vim
-:MarkdownPreview          " Open preview in browser
-:MarkdownPreviewStop      " Stop preview
-```
-
-### Terminal (toggleterm)
-
-```vim
-:ToggleTerm               " Toggle terminal
-:TermExec cmd="command"   " Execute command in terminal
-
-" Keybinding: <C-\>
-```
-
-## File Management
-
-### Neo-tree
-
-```vim
-:Neotree toggle           " Toggle file tree
-:Neotree reveal           " Reveal current file
-:Neotree float            " Floating file tree
-:Neotree buffers          " Show buffers
-:Neotree git_status       " Show git status
-```
-
-### Oil.nvim
-
-```vim
-:Oil                      " Open parent directory as buffer
-```
-
-### Harpoon
-
-```vim
-" Add file: <leader>a
-" Toggle menu: <C-e>
-" Navigate: <C-1> through <C-4>
-```
-
-## Search & Replace
-
-### Telescope
-
-```vim
-:Telescope live_grep      " Search in files
-:Telescope grep_string    " Search word under cursor
-```
-
-### Spectre
-
-```vim
-:Spectre                  " Open search/replace panel
-```
-
-### Grug-far
-
-```vim
-:GrugFar                  " Find and replace across files
-```
-
-## Quickfix & Location List
-
-```vim
-:copen                    " Open quickfix
-:cclose                   " Close quickfix
-:cnext                    " Next item
-:cprev                    " Previous item
-:cdo <cmd>                " Execute on each item
-
-:lopen                    " Open location list
-:lnext                    " Next location
-:lprev                    " Previous location
-```
-
-### BQF (Better Quickfix)
-
-Provides enhanced quickfix with preview, fzf integration, and more.
