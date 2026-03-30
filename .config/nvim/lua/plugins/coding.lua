@@ -8,22 +8,44 @@ for from, to in pairs(language_map) do
   vim.treesitter.language.register(to, from)
 end
 
--- nvim-treesitter (main branch) only provides parser management.
--- Parsers are kept up-to-date via :TSUpdate in the PackChanged hook.
--- Neovim's built-in ftplugins only call vim.treesitter.start() for a few
--- languages (lua, markdown, vim, etc.).  Enable it for ALL filetypes that
--- have an installed parser so that every language gets highlighting.
+-- Treesitter auto-start for all file buffers.
+-- Neovim 0.12 built-in ftplugins only call vim.treesitter.start() for ~20
+-- languages; this autocmd covers the rest.
+local ts_group = vim.api.nvim_create_augroup("treesitter_start", { clear = true })
+
+local function try_treesitter_start(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then return end
+  if vim.bo[buf].buftype ~= "" then return end
+  local ft = vim.bo[buf].filetype
+  if not ft or ft == "" then return end
+  local lang = vim.treesitter.language.get_lang(ft)
+  if not lang then return end
+  local ok = pcall(vim.treesitter.start, buf, lang)
+  if not ok then
+    -- Treesitter failed (parser not installed?), ensure syntax fallback
+    if vim.bo[buf].syntax == "" then
+      vim.bo[buf].syntax = ft
+    end
+  end
+end
+
 vim.api.nvim_create_autocmd("FileType", {
-  group = vim.api.nvim_create_augroup("treesitter_start", { clear = true }),
+  group = ts_group,
   callback = function(ev)
-    if vim.bo[ev.buf].buftype ~= "" then return end
-    local buf = ev.buf
-    -- Disable syntax BEFORE starting treesitter to prevent the
-    -- Syntax event from destroying the treesitter highlighter.
-    -- (Neovim's `syntax enable` sets syntax=<ft> on FileType,
-    -- which fires Syntax event -> treesitter self-destructs.)
-    vim.bo[buf].syntax = ""
-    pcall(vim.treesitter.start, buf)
+    try_treesitter_start(ev.buf)
+  end,
+})
+
+-- Safety net: start treesitter for buffers loaded before init finished
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = ts_group,
+  once = true,
+  callback = function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) and not vim.b[buf].ts_highlight then
+        try_treesitter_start(buf)
+      end
+    end
   end,
 })
 
