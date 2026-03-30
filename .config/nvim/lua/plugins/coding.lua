@@ -16,9 +16,13 @@ end
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("treesitter_start", { clear = true }),
   callback = function(ev)
-    if vim.bo[ev.buf].buftype == "" then
+    if vim.bo[ev.buf].buftype ~= "" then return end
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(ev.buf) then return end
+      if vim.bo[ev.buf].buftype ~= "" then return end
+      pcall(vim.treesitter.stop, ev.buf)
       pcall(vim.treesitter.start, ev.buf)
-    end
+    end)
   end,
 })
 
