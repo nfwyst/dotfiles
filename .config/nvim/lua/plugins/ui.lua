@@ -133,7 +133,8 @@ require("snacks").setup({
     sources = {
       files = { hidden = true, ignored = true, exclude = exclude },
       explorer = {
-        ignored = false,
+        ignored = true,
+        watch = false,
         follow_file = true,
         diagnostics = false,
         title = "",
