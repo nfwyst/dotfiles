@@ -110,11 +110,13 @@ require("conform").setup({
 
   },
   format_on_save = function(bufnr)
-    if not vim.g.autoformat then return end
+    if vim.b[bufnr].autoformat == false then return end
+    if vim.b[bufnr].autoformat == nil and not vim.g.autoformat then return end
     return { timeout_ms = 3000, lsp_fallback = true }
   end,
   format_after_save = function(bufnr)
-    if not vim.g.autoformat then return end
+    if vim.b[bufnr].autoformat == false then return end
+    if vim.b[bufnr].autoformat == nil and not vim.g.autoformat then return end
     -- retab: convert tabs to spaces according to buffer settings
     vim.api.nvim_buf_call(bufnr, function()
       vim.cmd.retab()
