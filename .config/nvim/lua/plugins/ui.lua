@@ -344,30 +344,7 @@ require("lualine").setup({
   },
   sections = {
     lualine_a = { "mode" },
-    lualine_b = {
-      {
-        "branch",
-        fmt = function(branch)
-          if not branch or branch == "" then
-            return ""
-          end
-          if vim.g.prev_git_branch and vim.g.prev_git_branch ~= branch then
-            vim.schedule(function()
-              local clients = vim.lsp.get_clients()
-              if #clients > 0 then
-                for _, client in ipairs(clients) do
-                  client:stop()
-                end
-                vim.cmd("doautocmd FileType")
-                vim.notify("LSP servers restarted")
-              end
-            end)
-          end
-          vim.g.prev_git_branch = branch
-          return branch
-        end,
-      },
-    },
+    lualine_b = { { "branch" } },
     lualine_c = {
       { root_dir_component, padding = { left = 0, right = 0 } },
       { lsp_info, padding = 0 },
@@ -521,6 +498,5 @@ require("vimade").setup({
 vim.defer_fn(function()
   pcall(vim.cmd.VimadeFadeActive)
 end, 500)
-
 
 vim.keymap.set("n", "<leader>uv", "<cmd>VimadeToggle<cr>", { desc = "Vimade: Toggle" })
