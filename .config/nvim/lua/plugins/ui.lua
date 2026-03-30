@@ -133,6 +133,7 @@ require("snacks").setup({
     sources = {
       files = { hidden = true, ignored = true, exclude = exclude },
       explorer = {
+        ignored = false,
         follow_file = true,
         diagnostics = false,
         title = "",
@@ -224,7 +225,6 @@ require("noice").setup({
           { find = "No information available" },
           { find = "This command may require a client extension" },
           { find = "vim/shared.lua:0: invalid" },
-          { find = "watch.watch: ENOENT: no such file or directory" },
           { find = "shared.lua:0" },
         },
       },
