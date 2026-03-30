@@ -17,12 +17,13 @@ vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("treesitter_start", { clear = true }),
   callback = function(ev)
     if vim.bo[ev.buf].buftype ~= "" then return end
-    vim.schedule(function()
-      if not vim.api.nvim_buf_is_valid(ev.buf) then return end
-      if vim.bo[ev.buf].buftype ~= "" then return end
-      pcall(vim.treesitter.stop, ev.buf)
-      pcall(vim.treesitter.start, ev.buf)
-    end)
+    local buf = ev.buf
+    -- Disable syntax BEFORE starting treesitter to prevent the
+    -- Syntax event from destroying the treesitter highlighter.
+    -- (Neovim's `syntax enable` sets syntax=<ft> on FileType,
+    -- which fires Syntax event -> treesitter self-destructs.)
+    vim.bo[buf].syntax = ""
+    pcall(vim.treesitter.start, buf)
   end,
 })
 
