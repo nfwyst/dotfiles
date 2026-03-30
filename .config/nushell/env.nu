@@ -140,7 +140,7 @@ mkdir ~/.config/nushell/cache/zoxide
 zoxide init nushell | save -f ~/.config/nushell/cache/zoxide/init.nu
 
 # prepare for carapace
-$env.CARAPACE_BRIDGES = 'zsh,bash,inshellisense'
+$env.CARAPACE_BRIDGES = 'zsh,bash'
 mkdir ~/.config/nushell/cache/carapace
 carapace _carapace nushell | save -f ~/.config/nushell/cache/carapace/init.nu
 
@@ -190,3 +190,30 @@ if (which vivid | is-not-empty) {
     $env.LS_COLORS = (vivid generate $vivid_theme)
     $env.__THEME_MODE = $mode
 }
+
+let plist = $'<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.als-theme</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>($env.HOME)/.config/als_reader</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ALS_THRESHOLD_DARK</key>
+        <string>100</string>
+        <key>ALS_THRESHOLD_LIGHT</key>
+        <string>200</string>
+    </dict>
+    <key>StartInterval</key>
+    <integer>30</integer>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>'
+
+$plist | save -f ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")

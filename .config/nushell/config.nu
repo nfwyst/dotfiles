@@ -926,6 +926,29 @@ source ~/.config/nushell/aliases/opencode.nu
 # integration with carapace
 source ~/.config/nushell/cache/carapace/init.nu
 
+# wrap carapace completer: skip package-name registry lookups (cause E500/timeout)
+# carapace internally calls `npm search` for ALL pkg managers (npm/bun/bunx/npx/pnpm/yarn)
+let _carapace_completer = $env.config.completions.external.completer
+$env.config.completions.external.completer = {|spans|
+    let last = ($spans | last)
+    let is_flag = ($last | str starts-with "-")
+    let len = ($spans | length)
+    let skip = (
+        # bunx/npx <pkg> — first positional is package name
+        ($spans.0 in [bunx npx] and $len > 1 and not $is_flag)
+        # npm install/uninstall/... <pkg>
+        or ($spans.0 == "npm" and $len > 2 and ($spans.1 in [install uninstall add remove link i un rm]) and not $is_flag)
+        # bun add/remove/x/... <pkg>
+        or ($spans.0 == "bun" and $len > 2 and ($spans.1 in [add remove link unlink x]) and not $is_flag)
+        # pnpm add/remove/install <pkg>
+        or ($spans.0 == "pnpm" and $len > 2 and ($spans.1 in [add remove install i]) and not $is_flag)
+        # yarn add/remove <pkg>
+        or ($spans.0 == "yarn" and $len > 2 and ($spans.1 in [add remove]) and not $is_flag)
+    )
+    if $skip { return [] }
+    do $_carapace_completer $spans
+}
+
 # integration with atuin
 source ~/.config/nushell/cache/atuin/init.nu
 
@@ -1032,3 +1055,35 @@ git config --global interactive.diffFilter 'delta --color-only'
 git config --global delta.navigate true
 git config --global merge.conflictStyle zdiff3
 git config --global merge.tool nvimdiff
+
+# ─── ALS Theme Monitor ───
+const ALS_LABEL = "com.user.als-theme"
+
+def als-plist-path [] {
+    $env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist"
+}
+
+def "als start" [] {
+    ^launchctl load (als-plist-path)
+    print "als-theme loaded"
+}
+
+def "als stop" [] {
+    ^launchctl unload (als-plist-path)
+    print "als-theme unloaded"
+}
+
+def "als status" [] {
+    let result = (^launchctl list | lines | where { $in =~ $ALS_LABEL })
+    if ($result | is-empty) {
+        print "not running"
+    } else {
+        print ($result | first)
+    }
+}
+
+def "als reload" [] {
+    ^launchctl unload (als-plist-path)
+    ^launchctl load (als-plist-path)
+    print "als-theme reloaded"
+}

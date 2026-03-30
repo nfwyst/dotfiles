@@ -88,7 +88,7 @@ require("conform").setup({
     graphql = formatter,
     ["markdown"] = md_formatter,
     ["markdown.mdx"] = md_formatter,
-    nu = { "nufmt" },
+    nu = {},
     sh = { "shfmt" },
     zsh = { "beautysh" },
     lua = { "stylua" },
