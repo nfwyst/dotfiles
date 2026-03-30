@@ -20,13 +20,11 @@ local function try_treesitter_start(buf)
   if not ft or ft == "" then return end
   local lang = vim.treesitter.language.get_lang(ft)
   if not lang then return end
-  local ok = pcall(vim.treesitter.start, buf, lang)
-  if not ok then
-    -- Treesitter failed (parser not installed?), ensure syntax fallback
-    if vim.bo[buf].syntax == "" then
-      vim.bo[buf].syntax = ft
-    end
-  end
+  -- Verify highlight queries exist. Without them treesitter sets
+  -- ts_highlight=true but renders nothing, blocking syntax fallback.
+  local ok, query = pcall(vim.treesitter.query.get, lang, "highlights")
+  if not ok or not query then return end
+  pcall(vim.treesitter.start, buf, lang)
 end
 
 vim.api.nvim_create_autocmd("FileType", {

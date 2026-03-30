@@ -497,7 +497,7 @@ require("bufferline").setup({
 -- ===================================================================
 require("vimade").setup({
   fadelevel = 0.7,
-  recipe = { "duo", { animate = true } },
+  recipe = { "default", { animate = true } },
   tint = function()
     local is_dark = vim.o.background == "dark"
     local rgb = is_dark and { 255, 255, 255 } or { 0, 0, 0 }
@@ -516,8 +516,5 @@ require("vimade").setup({
   },
 })
 
-vim.defer_fn(function()
-  pcall(vim.cmd.VimadeFadeActive)
-end, 500)
 
 vim.keymap.set("n", "<leader>uv", "<cmd>VimadeToggle<cr>", { desc = "Vimade: Toggle" })
