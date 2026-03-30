@@ -23,7 +23,17 @@ local function try_treesitter_start(buf)
   -- Verify highlight queries exist. Without them treesitter sets
   -- ts_highlight=true but renders nothing, blocking syntax fallback.
   local ok, query = pcall(vim.treesitter.query.get, lang, "highlights")
-  if not ok or not query then return end
+  if not ok or not query then
+    -- No queries available. If treesitter was already started (e.g. by
+    -- Snacks quickfile), stop it and restore syntax highlighting.
+    if vim.b[buf].ts_highlight then
+      pcall(vim.treesitter.stop, buf)
+    end
+    if vim.bo[buf].syntax == "" then
+      vim.bo[buf].syntax = ft
+    end
+    return
+  end
   pcall(vim.treesitter.start, buf, lang)
 end
 
