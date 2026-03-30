@@ -34,6 +34,27 @@
       },
       "timeout": 1800000,
       "enabled": false
+    },
+    "tradingview-mcp": {
+      "type": "local",
+      "command": ["bunx", "-y", "tradingview-mcp-server@latest"],
+      "timeout": 120000,
+      "enabled": true
+    },
+    "alpha-vantage-mcp": {
+      "type": "local",
+      "command": ["bunx", "-y", "alpha-vantage-mcp@latest"],
+      "environment": {
+        "ALPHA_VANTAGE_API_KEY": "{env:ALPHA_VANTAGE_API_KEY}"
+      },
+      "timeout": 120000,
+      "enabled": true
+    },
+    "yahoo-finance-mcp": {
+      "type": "local",
+      "command": ["bunx", "-y", "yahoo-finance-mcp@latest"],
+      "timeout": 120000,
+      "enabled": true
     }
   },
   "provider": {
