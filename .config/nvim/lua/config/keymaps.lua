@@ -97,7 +97,7 @@ end, { desc = "Next Trouble/Quickfix Item" })
 local diagnostic_goto = function(count, severity)
   severity = severity and vim.diagnostic.severity[severity] or nil
   return function()
-    vim.diagnostic.jump({ count = count, float = true, severity = severity })
+    vim.diagnostic.jump({ count = count, severity = severity })
   end
 end
 map("n", "]d", diagnostic_goto(1), { desc = "Next Diagnostic" })
