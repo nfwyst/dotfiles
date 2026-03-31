@@ -53,28 +53,23 @@ vim.defer_fn(function()
         pkg:install()
       end
     end
+    -- Ensure @mdx-js/typescript-plugin for MDX LSP support in vtsls.
+    -- Not a Mason package; installed as a dependency of the vtsls package.
+    local vtsls_dir = vim.fn.stdpath("data") .. "/mason/packages/vtsls"
+    local mdx_plugin = vtsls_dir .. "/node_modules/@mdx-js/typescript-plugin"
+    if vim.fn.isdirectory(vtsls_dir) == 1 and vim.fn.isdirectory(mdx_plugin) == 0 then
+      vim.system({ "bun", "install", "@mdx-js/typescript-plugin" }, { cwd = vtsls_dir }, function(result)
+        vim.schedule(function()
+          if result.code == 0 then
+            vim.notify("@mdx-js/typescript-plugin installed", vim.log.levels.INFO)
+          else
+            vim.notify("@mdx-js/typescript-plugin install failed: " .. (result.stderr or ""), vim.log.levels.WARN)
+          end
+        end)
+      end)
+    end
   end)
 end, 100)
-
--- Ensure @mdx-js/typescript-plugin for MDX LSP support in vtsls.
--- This is not a Mason package, so we install it as an npm dependency
--- of the vtsls Mason package. Runs with a delay so Mason can finish
--- installing vtsls first if needed.
-vim.defer_fn(function()
-  local vtsls_dir = vim.fn.stdpath("data") .. "/mason/packages/vtsls"
-  local mdx_plugin = vtsls_dir .. "/node_modules/@mdx-js/typescript-plugin"
-  if vim.fn.isdirectory(vtsls_dir) == 1 and vim.fn.isdirectory(mdx_plugin) == 0 then
-    vim.system({ "npm", "install", "--save", "@mdx-js/typescript-plugin" }, { cwd = vtsls_dir }, function(result)
-      vim.schedule(function()
-        if result.code == 0 then
-          vim.notify("@mdx-js/typescript-plugin installed", vim.log.levels.INFO)
-        else
-          vim.notify("@mdx-js/typescript-plugin install failed: " .. (result.stderr or ""), vim.log.levels.WARN)
-        end
-      end)
-    end)
-  end
-end, 3000)
 
 -- ===================================================================
 -- Conform (formatting)
