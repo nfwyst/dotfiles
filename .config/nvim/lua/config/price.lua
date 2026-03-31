@@ -30,8 +30,8 @@ local api_endpoints = {
     ),
     parser = function(body)
       local ok, data = pcall(vim.json.decode, body)
-      if ok and data and data.ereum then
-        return tonumber(data.ereum.usd)
+      if ok and data and data.ethereum then
+        return tonumber(data.ethereum.usd)
       end
     end,
   },
@@ -142,6 +142,14 @@ function M.setup()
   timer_id = vim.fn.timer_start(config.refresh_interval, refresh, { ["repeat"] = -1 })
 end
 
-M.setup()
+-- Defer network requests + timer until after UI is ready.
+-- price.lua is required at startup via lualine, but the ticker
+-- doesn't need to run until after the first paint.
+vim.api.nvim_create_autocmd("UIEnter", {
+  once = true,
+  callback = function()
+    vim.defer_fn(M.setup, 0)
+  end,
+})
 
 return M

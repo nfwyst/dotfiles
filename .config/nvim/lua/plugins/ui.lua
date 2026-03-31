@@ -26,26 +26,29 @@ local function pad_str(str, length, pad_char, is_to_start)
 end
 
 local align = "center"
-local handle = io.popen("fortune")
-if handle then
-  align = "left"
-  header = handle:read("*a")
-  handle:close()
-  local max_length = 0
-  local lines = vim.split(header, "\n", { trimempty = true })
-  for index, line in ipairs(lines) do
-    local new_line = line:gsub("\t", "")
-    lines[index] = new_line
-    if #new_line > max_length then
-      max_length = #new_line
+-- Use vim.system with timeout to avoid unbounded startup blocking.
+-- io.popen has no timeout and uses Lua IO instead of libuv.
+if vim.fn.executable("fortune") == 1 then
+  local result = vim.system({ "fortune" }, { text = true, timeout = 200 }):wait()
+  if result.code == 0 and result.stdout and result.stdout ~= "" then
+    align = "left"
+    header = result.stdout
+    local max_length = 0
+    local lines = vim.split(header, "\n", { trimempty = true })
+    for index, line in ipairs(lines) do
+      local new_line = line:gsub("\t", "")
+      lines[index] = new_line
+      if #new_line > max_length then
+        max_length = #new_line
+      end
     end
+    local total_rows = #lines
+    for index, line in ipairs(lines) do
+      local is_author_line = index > 1 and index == total_rows
+      lines[index] = pad_str(line, max_length, " ", is_author_line)
+    end
+    header = table.concat(lines, "\n")
   end
-  local total_rows = #lines
-  for index, line in ipairs(lines) do
-    local is_author_line = index > 1 and index == total_rows
-    lines[index] = pad_str(line, max_length, " ", is_author_line)
-  end
-  header = table.concat(lines, "\n")
 end
 
 local exclude = {
@@ -335,6 +338,26 @@ local filename = {
   padding = 0,
 }
 
+-- Cache price-ticker color; recompute only on colorscheme change.
+local price_color_cache = nil
+local function compute_price_color()
+  local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
+  local bg = normal.bg
+  if not bg then
+    bg = vim.o.background == "dark" and 0x24283b or 0xe1e2e7
+  end
+  local contrast = vim.o.background == "dark" and 0xFFFFFF or 0x000000
+  local r = math.floor(math.floor(bg / 65536) * 0.8 + math.floor(contrast / 65536) * 0.2)
+  local g = math.floor(math.floor(bg / 256) % 256 * 0.8 + math.floor(contrast / 256) % 256 * 0.2)
+  local b = math.floor(bg % 256 * 0.8 + contrast % 256 * 0.2)
+  price_color_cache = { fg = string.format("#%02x%02x%02x", r, g, b) }
+end
+compute_price_color()
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("price_color_cache", { clear = true }),
+  callback = compute_price_color,
+})
+
 vim.o.laststatus = 3
 require("lualine").setup({
   options = {
@@ -367,16 +390,7 @@ require("lualine").setup({
       {
         require("config.price").get_display_text,
         color = function()
-          local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
-          local bg = normal.bg
-          if not bg then
-            bg = vim.o.background == "dark" and 0x24283b or 0xe1e2e7
-          end
-          local contrast = vim.o.background == "dark" and 0xFFFFFF or 0x000000
-          local r = math.floor(math.floor(bg / 65536) * 0.8 + math.floor(contrast / 65536) * 0.2)
-          local g = math.floor(math.floor(bg / 256) % 256 * 0.8 + math.floor(contrast / 256) % 256 * 0.2)
-          local b = math.floor(bg % 256 * 0.8 + contrast % 256 * 0.2)
-          return { fg = string.format("#%02x%02x%02x", r, g, b) }
+          return price_color_cache
         end,
         padding = { left = 0, right = 1 },
       },
