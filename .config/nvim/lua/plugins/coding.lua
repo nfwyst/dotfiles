@@ -3,7 +3,7 @@
 -- ===================================================================
 -- Treesitter
 -- ===================================================================
-local language_map = { zsh = "bash", checkhealth = "markdown" }
+local language_map = { zsh = "bash", checkhealth = "markdown", mdx = "tsx" }
 for from, to in pairs(language_map) do
   vim.treesitter.language.register(to, from)
 end

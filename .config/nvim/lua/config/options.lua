@@ -101,6 +101,9 @@ opt.swapfile = false
 
 -- Filetype additions
 vim.filetype.add({
+  extension = {
+    mdx = "mdx",
+  },
   pattern = {
     ["compose.*%.ya?ml"] = "yaml.docker-compose",
     ["docker%-compose.*%.ya?ml"] = "yaml.docker-compose",

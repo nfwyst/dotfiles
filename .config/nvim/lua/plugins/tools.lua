@@ -87,7 +87,7 @@ require("conform").setup({
     yaml = formatter,
     graphql = formatter,
     ["markdown"] = md_formatter,
-    ["markdown.mdx"] = md_formatter,
+    ["mdx"] = fix_or_format,
     nu = {},
     sh = { "shfmt" },
     zsh = { "beautysh" },

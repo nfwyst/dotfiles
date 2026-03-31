@@ -2,41 +2,36 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "opencode/claude-opus-4-6",
-      "variant": "max"
+      "model": "opencode/gpt-5.4",
+      "variant": "high"
     },
     "hephaestus": {
       "model": "opencode/gpt-5.4",
       "variant": "medium"
     },
     "oracle": {
-      "model": "opencode/gpt-5.4",
-      "variant": "high"
+      "model": "opencode/glm-5"
     },
     "librarian": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "explore": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "multimodal-looker": {
-      "model": "opencode/gpt-5.4",
-      "variant": "medium"
+      "model": "kimi-for-coding/k2p5"
     },
     "prometheus": {
-      "model": "opencode/claude-opus-4-6",
-      "variant": "max"
+      "model": "opencode/glm-5"
     },
     "metis": {
-      "model": "opencode/claude-opus-4-6",
-      "variant": "max"
+      "model": "opencode/glm-5"
     },
     "momus": {
-      "model": "opencode/gpt-5.4",
-      "variant": "xhigh"
+      "model": "opencode/glm-5"
     },
     "atlas": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "opencode/glm-5"
     },
     "sisyphus-junior": {
       "model": "kimi-for-coding/k2p5"
@@ -44,7 +39,7 @@
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode/gemini-3.1-pro",
+      "model": "opencode/gpt-5.4",
       "variant": "high"
     },
     "ultrabrain": {
@@ -52,11 +47,11 @@
       "variant": "xhigh"
     },
     "deep": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "opencode/gpt-5.4",
+      "variant": "medium"
     },
     "artistry": {
-      "model": "opencode/gemini-3.1-pro",
-      "variant": "high"
+      "model": "opencode/glm-5"
     },
     "quick": {
       "model": "kimi-for-coding/k2p5"
@@ -65,8 +60,7 @@
       "model": "kimi-for-coding/k2p5"
     },
     "unspecified-high": {
-      "model": "opencode/claude-opus-4-6",
-      "variant": "max"
+      "model": "opencode/glm-5"
     },
     "writing": {
       "model": "kimi-for-coding/k2p5"

@@ -9,7 +9,7 @@ local bun_path = vim.fn.exepath("bun")
 
 return {
   cmd = { "bun", "run", "--bun", "vtsls", "--stdio" },
-  filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
+  filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx", "mdx" },
   root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
   settings = {
     typescript = {
@@ -19,6 +19,17 @@ return {
     },
     vtsls = {
       typescript = { globalTsdk = tsdk },
+      tsserver = {
+        globalPlugins = {
+          {
+            name = "@mdx-js/typescript-plugin",
+            location = vim.fn.stdpath("data")
+              .. "/mason/packages/vtsls/node_modules/@mdx-js/typescript-plugin",
+            languages = { "mdx" },
+            enableForWorkspaceTypeScriptVersions = true,
+          },
+        },
+      },
       experimental = {
         maxInlayHintLength = 25,
         completion = { enableServerSideFuzzyMatch = true },
