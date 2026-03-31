@@ -71,6 +71,16 @@ vim.pack.add({
 vim.o.shortmess = saved_shortmess
 vim.cmd("silent! redraw")
 
+-- Bridge nvim-treesitter main-branch query layout to Neovim's rtp lookup.
+-- The main branch stores queries at runtime/queries/{lang}/ but Neovim
+-- expects {rtp}/queries/{lang}/. TSInstall symlinks shared dirs (ecma,
+-- html_tags, jsx) but skips per-language ones (tsx, typescript, etc.).
+-- Prepending runtime/ to rtp makes all queries discoverable directly.
+local ts_runtime = vim.fn.stdpath("data") .. "/site/pack/core/opt/nvim-treesitter/runtime"
+if vim.uv.fs_stat(ts_runtime) then
+  vim.opt.rtp:prepend(ts_runtime)
+end
+
 -- Post-install/update hooks
 vim.api.nvim_create_autocmd("User", {
   pattern = "PackChanged",
