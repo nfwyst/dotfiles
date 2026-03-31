@@ -60,10 +60,6 @@
       "rev": "44d1e90e1f66e077268191e3ee9d2ac97cc18e65",
       "src": "https://github.com/mason-org/mason.nvim"
     },
-    "mdx.nvim": {
-      "rev": "c2644328587bbd58eede41b2cd0c1ccc99175661",
-      "src": "https://github.com/davidmh/mdx.nvim"
-    },
     "mini.ai": {
       "rev": "4b0a6207341d895b6cfe9bcb1e4d3e8607bfe4f4",
       "src": "https://github.com/nvim-mini/mini.ai"
