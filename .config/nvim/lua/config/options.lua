@@ -16,8 +16,9 @@ for name, value in pairs(g_opts) do
   vim.g[name] = value
 end
 
--- Suppress white flash: make key UI groups transparent before colorscheme loads
-for _, hl in ipairs({ "Normal", "NormalNC", "MsgArea" }) do
+-- Suppress visual flash before colorscheme loads: transparent backgrounds prevent
+-- blue MsgSeparator banner during vim.pack install and white flash on startup
+for _, hl in ipairs({ "Normal", "NormalNC", "MsgArea", "MsgSeparator", "StatusLine", "StatusLineNC" }) do
   vim.api.nvim_set_hl(0, hl, { bg = "NONE", fg = "NONE" })
 end
 
