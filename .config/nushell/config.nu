@@ -967,6 +967,17 @@ alias cat = bat
 alias find = fd
 alias openclaw = bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)
 
+# Safe exit for Ghostty + tmux: nushell's exit cleanup can block the PTY,
+# causing a race condition that freezes the entire Ghostty window.
+# This command bypasses nushell's cleanup by letting tmux kill the pane directly.
+def q [] {
+    if ("TMUX" in $env) {
+        ^tmux kill-pane
+    } else {
+        exit
+    }
+}
+
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {
     mkdir $target_dir
