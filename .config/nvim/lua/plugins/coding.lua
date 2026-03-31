@@ -121,6 +121,9 @@ require("blink.cmp").setup({
         min_keyword_length = 1,
         opts = {
           search_paths = { vim.fn.stdpath("config") .. "/snippets" },
+          extended_filetypes = {
+            mdx = { "javascript", "javascriptreact", "typescript", "typescriptreact", "html" },
+          },
         },
       },
       buffer = { min_keyword_length = 2 },
