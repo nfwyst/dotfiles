@@ -703,7 +703,7 @@ $env.config = {
             event: [
                 {
                     send: executehostcommand
-                    cmd: "if (commandline get | str trim) == 'exit' and ('TMUX' in $env) { commandline edit --replace '^tmux kill-pane' }"
+                    cmd: "if (commandline | str trim) == 'exit' and ('TMUX' in $env) { commandline --replace '^tmux kill-pane' }"
                 }
                 { send: enter }
             ]
