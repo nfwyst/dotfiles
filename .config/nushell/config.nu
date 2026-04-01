@@ -700,14 +700,8 @@ $env.config = {
             name: newline_or_run_command
             modifier: none
             keycode: enter
-            mode: [emacs, vi_normal, vi_insert]
-            event: [
-                {
-                    send: executehostcommand
-                    cmd: "if (commandline | str trim) == 'exit' { commandline edit --replace '_safe_exit' }"
-                }
-                { send: enter }
-            ]
+            mode: emacs
+            event: { send: enter }
         }
         {
             name: move_left
@@ -976,10 +970,6 @@ alias cat = bat
 alias find = fd
 alias openclaw = bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)
 
-# Safe exit for Ghostty + tmux: nushell's exit cleanup can block the PTY,
-# causing a race condition that freezes the entire Ghostty window.
-# This command bypasses nushell's cleanup by letting tmux kill the pane directly.
-
 
 def create_worktree [target_dir, branch_name] {
   if not ($target_dir | path exists) {
@@ -1059,10 +1049,9 @@ def free_memory [] {
 
 # Safe exit: use tmux kill-pane inside tmux to prevent nushell cleanup
 # from hanging the PTY and freezing the terminal.
-# Note: `def` cannot override built-in `exit` (parser keyword takes
-# precedence), and `alias` silently fails too. Instead we intercept
-# at the Enter keybinding level: if the commandline is "exit", replace
-# it with "_safe_exit" before submitting.
+# Note: nushell built-in `exit` is a parser keyword that cannot be
+# overridden by def, alias, or Enter keybinding interception.
+# Use Ctrl-D to exit cleanly (mapped to this function via keybinding).
 def _safe_exit [] {
     if ("TMUX" in $env) {
         ^tmux kill-pane
