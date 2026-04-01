@@ -693,20 +693,12 @@ $env.config = {
             mode: vi_normal
             event: { edit: moveleft }
         }
-        # Intercept `exit` in tmux: replace with `tmux kill-pane` to avoid
-        # nushell cleanup hanging the PTY and freezing Ghostty.
         {
             name: newline_or_run_command
             modifier: none
             keycode: enter
-            mode: [emacs vi_normal vi_insert]
-            event: [
-                {
-                    send: executehostcommand
-                    cmd: "if (commandline | str trim) == 'exit' and ('TMUX' in $env) { ^tmux kill-pane }"
-                }
-                { send: enter }
-            ]
+            mode: emacs
+            event: { send: enter }
         }
         {
             name: move_left
@@ -974,6 +966,17 @@ alias pip = python3 -m pip
 alias cat = bat
 alias find = fd
 alias openclaw = bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)
+
+# Safe exit for Ghostty + tmux: nushell's exit cleanup can block the PTY,
+# causing a race condition that freezes the entire Ghostty window.
+# This command bypasses nushell's cleanup by letting tmux kill the pane directly.
+def q [] {
+    if ("TMUX" in $env) {
+        ^tmux kill-pane
+    } else {
+        exit
+    }
+}
 
 
 def create_worktree [target_dir, branch_name] {
