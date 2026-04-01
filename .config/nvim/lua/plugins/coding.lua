@@ -8,6 +8,16 @@ for from, to in pairs(language_map) do
   vim.treesitter.language.register(to, from)
 end
 
+-- Custom treesitter predicate: restrict query patterns to specific filetypes.
+-- Used in after/queries/markdown/injections.scm to limit tsx injection to mdx
+-- files only, avoiding expensive regex evaluation on every inline node in
+-- regular markdown files.
+vim.treesitter.query.add_predicate("is-filetype?", function(match, pattern, source, predicate)
+  if type(source) ~= "number" then return false end
+  return vim.bo[source].filetype == predicate[3]
+end, { force = true })
+
+
 -- Treesitter auto-start for all file buffers.
 -- Neovim 0.12 built-in ftplugins only call vim.treesitter.start() for ~20
 -- languages; this autocmd covers the rest.
