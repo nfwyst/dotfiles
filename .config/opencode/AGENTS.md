@@ -19,6 +19,7 @@
 
 - 必须通过 ESLint 和 TypeScript 类型检查。
 - 优先使用 bun / bunx，仅在不可用时回退至 npm / npx。
+- 永远不要执行 openclaw doctor --fix 命令。
 
 ## 编码风格
 
