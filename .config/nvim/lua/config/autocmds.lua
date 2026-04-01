@@ -155,3 +155,25 @@ vim.api.nvim_create_autocmd("BufNewFile", {
     vim.b[bufnr].is_new_file_fixed = true
   end,
 })
+
+
+-- Re-render inline images after floating windows close.
+-- Kitty graphics protocol placements are invalidated when a floating window
+-- (e.g. snacks picker) overlays the buffer area. After the float closes,
+-- the unicode placeholder characters are redrawn but the terminal does not
+-- re-associate them with the uploaded image data. `:mode` forces a full
+-- screen clear + redraw cycle that restores the image-placeholder association.
+vim.api.nvim_create_autocmd("WinClosed", {
+  group = augroup("image_refresh"),
+  callback = function()
+    vim.schedule(function()
+      local buf = vim.api.nvim_get_current_buf()
+      if not vim.api.nvim_buf_is_valid(buf) then return end
+      -- Only refresh when the buffer has snacks inline image extmarks
+      local ok, marks = pcall(vim.api.nvim_buf_get_extmarks, buf, vim.api.nvim_create_namespace("snacks.image"), 0, -1, { limit = 1 })
+      if ok and #marks > 0 then
+        vim.cmd("mode")
+      end
+    end)
+  end,
+})
