@@ -1,86 +1,75 @@
 -- Fix: images become invisible after floating windows (picker, noice, hover) close.
 --
 -- Root cause: floating windows overwrite terminal cells containing kitty graphics
--- placeholders (U+10EEEE). After float closes, the terminal has the placeholder
--- characters back in cells (Neovim redraws them from extmarks), but the virtual
--- placement association is stale — the terminal doesn't re-scan existing
--- placeholders for an already-active placement.
+-- unicode placeholders (U+10EEEE). After the float closes, Neovim redraws the
+-- buffer but the terminal doesn't re-render existing placeholder characters as
+-- images. Re-sending the virtual placement command (a=p,U=1) alone is insufficient
+-- because render_grid() reuses extmark IDs (in-place update) — the terminal never
+-- sees "newly painted" placeholder characters.
 --
--- Fix: on WinClosed, delete all terminal-side placements (a=d,d=A), then force
--- snacks to re-create them (a=p,U=1) via a generation counter that invalidates
--- the state cache. The terminal re-scans visible cells for matching placeholder
--- characters and renders images. No extmark manipulation needed.
+-- Fix: destroy all placements via Snacks.image.placement.clean() (sends terminal
+-- delete commands, clears extmarks, removes internal tracking), then trigger a
+-- full rebuild via buffer nudge (on_lines → inline.update → fresh placements).
+-- New placements have no cached state, so the full render path executes: fresh
+-- terminal commands (a=p,U=1) + fresh extmarks with placeholder characters.
 --
 -- Remove this file once an upstream fix lands in folke/snacks.nvim.
 -- Tracking: https://github.com/folke/snacks.nvim/issues/2634
-local patched = false
-local generation = 0
 local augroup = vim.api.nvim_create_augroup("snacks_image_fix", { clear = true })
 local debounce_timer = nil
+local ns = vim.api.nvim_create_namespace("snacks.image")
 
-local function refresh_images()
-  -- Step 1: Delete all terminal-side image placements.
-  -- terminal.request({a="d", d="A"}) encodes to ESC_Ga=d,d=A,q=2ESC\
-  -- which tells the terminal to delete all virtual placements (d=A).
-  local term_ok, term = pcall(require, "snacks.image.terminal")
-  if term_ok and term.request then
-    pcall(function() term.request({ a = "d", d = "A" }) end)
-  end
+local function nudge(buf)
+  if not vim.api.nvim_buf_is_valid(buf) then return end
+  local ok_m, was_modified = pcall(function() return vim.bo[buf].modified end)
+  local ok_u, ul = pcall(function() return vim.bo[buf].undolevels end)
+  if not ok_m or not ok_u then return end
+  vim.bo[buf].undolevels = -1
+  pcall(function()
+    vim.api.nvim_buf_set_text(buf, 0, 0, 0, 0, { " " })
+    vim.api.nvim_buf_set_text(buf, 0, 0, 0, 1, { "" })
+  end)
+  vim.bo[buf].undolevels = ul
+  vim.bo[buf].modified = was_modified
+end
 
-  -- Step 2: Trigger placement updates on all buffers with images.
-  -- The generation counter ensures update() proceeds past the state cache,
-  -- re-sending a=p,U=1 commands that make the terminal re-scan for placeholders.
-  local ns = vim.api.nvim_create_namespace("snacks.image")
+local function rebuild()
+  -- Collect buffers with snacks image extmarks
+  local bufs = {}
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then
       local ok, marks = pcall(vim.api.nvim_buf_get_extmarks, buf, ns, 0, -1, { limit = 1 })
       if ok and #marks > 0 then
-        pcall(vim.api.nvim_exec_autocmds, "BufWinEnter", { buffer = buf })
+        bufs[#bufs + 1] = buf
       end
     end
   end
+  if #bufs == 0 then return end
+
+  -- Step 1: Destroy all placements (terminal delete + clear extmarks + remove tracking)
+  for _, buf in ipairs(bufs) do
+    pcall(function() Snacks.image.placement.clean(buf) end)
+  end
+
+  -- Step 2: Nudge buffers to trigger on_lines → inline.update → fresh placements
+  -- Small delay so terminal processes the delete commands before new ones arrive
+  vim.defer_fn(function()
+    for _, buf in ipairs(bufs) do
+      nudge(buf)
+    end
+  end, 50)
 end
 
 vim.api.nvim_create_autocmd("WinClosed", {
   group = augroup,
   callback = function()
-    generation = generation + 1
-    -- Debounce rapid float cycles (e.g. noice notifications)
+    -- Debounce: coalesce rapid float open/close cycles (e.g., noice notifications)
     if debounce_timer then
       debounce_timer:stop()
     end
     debounce_timer = vim.defer_fn(function()
       debounce_timer = nil
-      refresh_images()
+      rebuild()
     end, 50)
   end,
 })
-
-local function patch()
-  if patched then return end
-  local ok, M = pcall(require, "snacks.image.placement")
-  if not ok or type(M) ~= "table" or not M.state then return end
-  patched = true
-
-  -- Inject generation counter into state to invalidate the deep_equal cache.
-  -- placement:update() does `if vim.deep_equal(state, self._state) then return end`
-  -- so bumping _generation forces it to proceed past the check and re-send
-  -- the terminal.request({a="p", U=1, ...}) command + re-render the grid.
-  local orig_state = M.state
-  M.state = function(self, ...)
-    local state = orig_state(self, ...)
-    if type(state) == "table" then
-      state._generation = generation
-    end
-    return state
-  end
-end
-
-patch()
-if not patched then
-  vim.api.nvim_create_autocmd("FileType", {
-    once = true,
-    pattern = { "markdown", "image" },
-    callback = function() vim.defer_fn(patch, 200) end,
-  })
-end
