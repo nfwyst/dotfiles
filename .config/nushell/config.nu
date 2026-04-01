@@ -479,7 +479,7 @@ $env.config = {
             mode: [emacs, vi_normal, vi_insert]
             event: {
                 send: executehostcommand
-                cmd: "exit"
+                cmd: "_safe_exit"
             }
         }
         {
@@ -700,8 +700,14 @@ $env.config = {
             name: newline_or_run_command
             modifier: none
             keycode: enter
-            mode: emacs
-            event: { send: enter }
+            mode: [emacs, vi_normal, vi_insert]
+            event: [
+                {
+                    send: executehostcommand
+                    cmd: "if (commandline | str trim) == 'exit' { commandline edit --replace '_safe_exit' }"
+                }
+                { send: enter }
+            ]
         }
         {
             name: move_left
@@ -1054,8 +1060,9 @@ def free_memory [] {
 # Safe exit: use tmux kill-pane inside tmux to prevent nushell cleanup
 # from hanging the PTY and freezing the terminal.
 # Note: `def` cannot override built-in `exit` (parser keyword takes
-# precedence), but `alias` can, so we define the logic in _safe_exit
-# and alias exit to it.
+# precedence), and `alias` silently fails too. Instead we intercept
+# at the Enter keybinding level: if the commandline is "exit", replace
+# it with "_safe_exit" before submitting.
 def _safe_exit [] {
     if ("TMUX" in $env) {
         ^tmux kill-pane
@@ -1064,7 +1071,6 @@ def _safe_exit [] {
     }
 }
 
-alias exit = _safe_exit
 let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
 if not ($custom_env_path | path exists) {
   touch $custom_env_path
