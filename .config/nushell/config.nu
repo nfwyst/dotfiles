@@ -970,13 +970,6 @@ alias openclaw = bun run ($env.HOME | path join .bun install global node_modules
 # Safe exit for Ghostty + tmux: nushell's exit cleanup can block the PTY,
 # causing a race condition that freezes the entire Ghostty window.
 # This command bypasses nushell's cleanup by letting tmux kill the pane directly.
-def q [] {
-    if ("TMUX" in $env) {
-        ^tmux kill-pane
-    } else {
-        exit
-    }
-}
 
 
 def create_worktree [target_dir, branch_name] {
@@ -1053,6 +1046,16 @@ def free_memory [] {
     return
   }
   sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+}
+
+# Shadow built-in exit: use tmux kill-pane inside tmux to prevent
+# nushell cleanup from hanging the PTY and freezing the terminal.
+def exit [] {
+    if ("TMUX" in $env) {
+        ^tmux kill-pane
+    } else {
+        ^kill -KILL $nu.pid
+    }
 }
 
 let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
