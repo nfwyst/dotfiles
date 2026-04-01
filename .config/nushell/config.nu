@@ -477,10 +477,7 @@ $env.config = {
             modifier: control
             keycode: char_d
             mode: [emacs, vi_normal, vi_insert]
-            event: {
-                send: executehostcommand
-                cmd: "_safe_exit"
-            }
+            event: { send: ctrld }
         }
         {
             name: clear_screen
@@ -1045,19 +1042,6 @@ def free_memory [] {
     return
   }
   sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
-}
-
-# Safe exit: use tmux kill-pane inside tmux to prevent nushell cleanup
-# from hanging the PTY and freezing the terminal.
-# Note: nushell built-in `exit` is a parser keyword that cannot be
-# overridden by def, alias, or Enter keybinding interception.
-# Use Ctrl-D to exit cleanly (mapped to this function via keybinding).
-def _safe_exit [] {
-    if ("TMUX" in $env) {
-        ^tmux kill-pane
-    } else {
-        ^kill -KILL $nu.pid
-    }
 }
 
 let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
