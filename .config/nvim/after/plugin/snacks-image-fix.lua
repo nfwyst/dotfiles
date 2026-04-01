@@ -1,48 +1,54 @@
--- Upstream fix for folke/snacks.nvim#2634: re-show hidden image placements
--- when returning to a buffer. Remove this file once the fix is merged upstream.
--- See: https://github.com/KEMSHlM/snacks.nvim/commit/054e90e
+-- Fix: re-render image placements after floating windows close.
 --
--- Root cause: when switching away from an image buffer, placement:update()
--- calls self:hide() setting self.hidden = true.  On return, show() was never
--- called because the code path went straight to self.img:place() without
--- checking the hidden flag.
+-- Root cause: snacks.image placement:update() caches logical state (position,
+-- size, window list) in self._state and skips re-rendering when
+-- vim.deep_equal(state, self._state) returns true. But after a floating window
+-- (e.g. snacks picker) covers and then closes over the buffer, the terminal's
+-- kitty graphics placeholders (U+10EEEE) are visually wiped — the terminal
+-- needs the `a=p,U=1` escape sequence re-sent to re-associate placeholders
+-- with image data. Since the logical state hasn't changed, update() returns
+-- early and never re-sends the command.
 --
--- This monkey-patches M.update on the placement prototype so every instance
--- inherits the corrected behaviour.
+-- Fix: monkey-patch placement:state() to include a generation counter that
+-- increments on every WinClosed event, forcing vim.deep_equal to fail and
+-- update() to proceed with the full render path.
+--
+-- Remove this file once an upstream fix lands in folke/snacks.nvim.
+-- Tracking: https://github.com/folke/snacks.nvim/issues/2634
 local patched = false
+local generation = 0
+
+vim.api.nvim_create_autocmd("WinClosed", {
+  group = vim.api.nvim_create_augroup("snacks_image_generation", { clear = true }),
+  callback = function()
+    generation = generation + 1
+  end,
+})
 
 local function patch()
   if patched then return end
   local ok, M = pcall(require, "snacks.image.placement")
-  if not ok or type(M) ~= "table" or not M.update then return end
+  if not ok or type(M) ~= "table" or not M.state then return end
   patched = true
 
-  local orig_update = M.update
-  M.update = function(self, ...)
-    -- When the buffer becomes visible again after being hidden (#wins went
-    -- from 0 → >0), the original update() would skip re-showing because it
-    -- only hides (on 0 wins) and never reverses that.  Re-show here.
-    if self.hidden and self.buf and vim.api.nvim_buf_is_valid(self.buf) then
-      local wins = vim.fn.win_findbuf(self.buf)
-      if wins and #wins > 0 then
-        self:show()
-        return
-      end
+  local orig_state = M.state
+  M.state = function(self, ...)
+    local state = orig_state(self, ...)
+    if type(state) == "table" then
+      state._generation = generation
     end
-    return orig_update(self, ...)
+    return state
   end
 end
 
--- Try immediately: snacks core is loaded by plugins/ui.lua, but the image
--- sub-module is lazy and may not exist yet.
+-- Try immediately (snacks may already be loaded)
 patch()
 
--- Fallback: patch when the first markdown buffer is opened (which is when
--- snacks.image gets required for inline image rendering).
+-- Fallback: patch when first markdown/image file opens
 if not patched then
   vim.api.nvim_create_autocmd("FileType", {
     once = true,
-    pattern = "markdown",
+    pattern = { "markdown", "image" },
     callback = function()
       vim.defer_fn(patch, 200)
     end,
