@@ -37,7 +37,9 @@ lark-cli docs +create --title "学习笔记" --wiki-space my_library --markdown 
 > 如果后续要调用 [`lark-doc-media-insert`](lark-doc-media-insert.md) 这类当前只支持 `doc_id` 或 `/docx/...` URL 自动提取的 skill，请优先使用返回值里的 `doc_id`，不要直接复用这个 `doc_url`。
 
 > [!IMPORTANT]
-> 如果文档是**以应用身份（bot）创建**的，agent 在创建成功后应**默认继续使用 bot 身份**，为当前可用的 user 身份添加该文档的 `full_access`（管理员）权限。推荐流程：
+> 优先使用 `--as user` 创建文档，这样文档默认归属当前用户本人，避免后续再补做 bot → user 授权。
+>
+> 只有在用户明确要求以应用身份创建，或当前环境暂时没有可用的 user 身份时，才使用 `--as bot` 创建文档。此时，agent 在创建成功后应继续使用 bot 身份，为当前可用的 user 身份添加该文档的 `full_access`（管理员）权限。推荐流程：
 > 1. 先用 `lark-cli contact +get-user` 获取当前用户信息，并从返回结果中读取该用户的 `open_id`
 > 2. 再切回 bot 身份，使用这个 `open_id` 给该用户授权该文档的 `full_access`（管理员）权限
 >
@@ -49,6 +51,8 @@ lark-cli docs +create --title "学习笔记" --wiki-space my_library --markdown 
 > - 如果授权失败：明确说明文档已创建成功，但授权失败，并透出失败原因；同时提示用户可以稍后重试授权，或继续使用应用身份（bot）处理该文档
 >
 > 如果授权未完成，应继续给出后续引导：用户可以稍后重试授权，也可以继续使用应用身份（bot）处理该文档；如果希望后续改由自己管理，也可将文档 owner 转移给该用户。
+>
+> 如果本地已经存在可用的 user 身份，而用户也没有明确要求应用身份，请不要为了省事改用 `--as bot` 创建文档。
 >
 > **仍然不要擅自执行 owner 转移。** 如果用户需要把 owner 转给自己，必须单独确认。
 
