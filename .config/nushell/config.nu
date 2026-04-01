@@ -1051,9 +1051,12 @@ def free_memory [] {
   sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
 }
 
-# Shadow built-in exit: use tmux kill-pane inside tmux to prevent
-# nushell cleanup from hanging the PTY and freezing the terminal.
-def exit [] {
+# Safe exit: use tmux kill-pane inside tmux to prevent nushell cleanup
+# from hanging the PTY and freezing the terminal.
+# Note: `def` cannot override built-in `exit` (parser keyword takes
+# precedence), but `alias` can, so we define the logic in _safe_exit
+# and alias exit to it.
+def _safe_exit [] {
     if ("TMUX" in $env) {
         ^tmux kill-pane
     } else {
@@ -1061,6 +1064,7 @@ def exit [] {
     }
 }
 
+alias exit = _safe_exit
 let custom_env_path = $nu.default-config-dir | path join 'custom-env.nu'
 if not ($custom_env_path | path exists) {
   touch $custom_env_path
