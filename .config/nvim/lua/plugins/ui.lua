@@ -89,7 +89,10 @@ require("snacks").setup({
   scope = { debounce = 45 },
   bigfile = { enabled = true },
   quickfile = { enabled = true },
-  scroll = { enabled = false },  -- disabled: causes C-d/C-u lag when held
+  scroll = {
+    enabled = true,
+    animate_repeat = { delay = 50, duration = { step = 2, total = 20 }, easing = "linear" },
+  },
   indent = { enabled = true },
   input = { enabled = true },
   notifier = { enabled = true },
