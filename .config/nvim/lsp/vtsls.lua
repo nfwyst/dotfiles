@@ -7,9 +7,23 @@ if vim.fn.isdirectory(tsdk_path) == 1 then
 end
 local bun_path = vim.fn.exepath("bun")
 
+-- Resolve @vue/typescript-plugin from Mason-installed vue-language-server.
+-- This plugin enables TypeScript intellisense inside .vue <script> blocks
+-- when vtsls is the TypeScript server.
+local vue_plugin_path = vim.fn.stdpath("data")
+  .. "/mason/packages/vue-language-server/node_modules/@vue/language-server"
+local vue_plugin = nil
+if vim.fn.isdirectory(vue_plugin_path) == 1 then
+  vue_plugin = vue_plugin_path
+end
+
 return {
   cmd = { "bun", "run", "--bun", "vtsls", "--stdio" },
-  filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx", "mdx" },
+  filetypes = {
+    "javascript", "javascriptreact", "javascript.jsx",
+    "typescript", "typescriptreact", "typescript.tsx",
+    "mdx", "vue",
+  },
   root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
   get_language_id = function(bufnr, filetype)
     -- Tell vtsls to treat MDX as native TSX so tsserver provides completions
@@ -34,6 +48,17 @@ return {
     },
     vtsls = {
       typescript = { globalTsdk = tsdk },
+      tsserver = {
+        globalPlugins = vue_plugin and {
+          {
+            name = "@vue/typescript-plugin",
+            location = vue_plugin,
+            languages = { "vue" },
+            configNamespace = "typescript",
+            enableForWorkspaceTypeScriptVersions = true,
+          },
+        } or {},
+      },
       experimental = {
         maxInlayHintLength = 25,
         completion = { enableServerSideFuzzyMatch = true },

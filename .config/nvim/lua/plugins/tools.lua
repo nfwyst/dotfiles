@@ -30,6 +30,7 @@ require("mason").setup({
     "sqruff",
     "json-lsp",
     "yaml-language-server",
+    "vue-language-server",
   },
   ui = {
     border = "rounded",

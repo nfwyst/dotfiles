@@ -63,6 +63,7 @@ vim.lsp.enable({
   "docker_language_server",
   "jsonls",
   "yamlls",
+  "vue_ls",
 })
 
 -- Auto-enable inlay hints for supported servers
