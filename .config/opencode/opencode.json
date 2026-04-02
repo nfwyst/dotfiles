@@ -14,6 +14,7 @@
     "todoread": "allow",
     "todowrite": "allow",
     "websearch": "allow",
+    "webfetch": "allow",
     "codesearch": "allow",
     "external_directory": "allow",
     "doom_loop": "allow"
@@ -26,11 +27,7 @@
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "@byted/codin-d2c-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "@byted/codin-d2c-mcp@latest"],
       "environment": {
         "CODIN_D2C_TOKEN": "{env:CODIN_D2C_TOKEN}",
         "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
@@ -41,21 +38,13 @@
     },
     "tradingview-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "tradingview-mcp-server@latest"
-      ],
+      "command": ["bunx", "-y", "tradingview-mcp-server@latest"],
       "timeout": 120000,
       "enabled": true
     },
     "alpha-vantage-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "alpha-vantage-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "alpha-vantage-mcp@latest"],
       "environment": {
         "ALPHA_VANTAGE_API_KEY": "{env:ALPHA_VANTAGE_API_KEY}"
       },
@@ -64,11 +53,7 @@
     },
     "yahoo-finance-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "yahoo-finance-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "yahoo-finance-mcp@latest"],
       "timeout": 120000,
       "enabled": true
     },
