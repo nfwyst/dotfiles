@@ -61,12 +61,12 @@
       "type": "remote",
       "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
       "timeout": 120000,
-      "enabled": true,
-      "environment": {
-        "PAPER_SEARCH_MCP_UNPAYWALL_EMAIL": "{env:PAPER_SEARCH_MCP_UNPAYWALL_EMAIL}",
-        "PAPER_SEARCH_MCP_CORE_API_KEY": "{env:PAPER_SEARCH_MCP_CORE_API_KEY}",
-        "PAPER_SEARCH_MCP_SEMANTIC_SCHOLAR_API_KEY": "{env:PAPER_SEARCH_MCP_CORE_API_KEY}"
-      }
+      "enabled": true
+    }
+  },
+  "lsp": {
+    "biome": {
+      "command": ["bunx", "@biomejs/biome", "lsp-proxy", "--stdio"]
     }
   },
   "provider": {
