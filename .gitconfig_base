@@ -5,3 +5,5 @@
   clean = git-lfs clean -- %f
 [include]
   path = ~/.config/delta/themes.gitconfig
+[core]
+  quotePath = false
