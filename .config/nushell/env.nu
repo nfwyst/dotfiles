@@ -170,7 +170,8 @@ $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
 $env.CGO_ENABLED = '1'
 
 $env.NODE_OPTIONS = '--openssl-legacy-provider'
-
+# 为当前 shell 启用 web search
+$env.OPENCODE_ENABLE_EXA = 1
 
 # ── Auto-install missing tools ──────────────────────────────────
 if (which nufmt | is-empty) and (which cargo | is-not-empty) {

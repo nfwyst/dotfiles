@@ -19,6 +19,8 @@
 
 - 必须通过 ESLint 和 TypeScript 类型检查。
 - 优先使用 bun / bunx，仅在不可用时回退至 npm / npx。
+- 优先使用 uv，仅在不可用时回退至 pip。
+- 为 Agent 安装 skills, mcp, tool 时, 将所有描述文件以及运行程序的 npm/yarn/pnpm 用 bun 替换, npx 用 bunx 替换, pip 用 uv 替换
 - 永远不要执行 openclaw doctor --fix 命令。
 
 ## 编码风格
