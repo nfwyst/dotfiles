@@ -31,10 +31,10 @@
       "environment": {
         "CODIN_D2C_TOKEN": "{env:CODIN_D2C_TOKEN}",
         "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
-        "BUN_CONFIG_REGISTRY": "{env:BUN_CONFIG_REGISTRY}"
+        "BUN_CONFIG_REGISTRY": "https://bnpm.byted.org/"
       },
       "timeout": 1800000,
-      "enabled": false
+      "enabled": true
     },
     "tradingview-mcp": {
       "type": "local",
