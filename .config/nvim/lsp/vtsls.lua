@@ -20,16 +20,23 @@ end
 return {
   cmd = { "bun", "run", "--bun", "vtsls", "--stdio" },
   filetypes = {
-    "javascript", "javascriptreact", "javascript.jsx",
-    "typescript", "typescriptreact", "typescript.tsx",
-    "mdx", "vue",
+    "javascript",
+    "javascriptreact",
+    "javascript.jsx",
+    "typescript",
+    "typescriptreact",
+    "typescript.tsx",
+    "mdx",
+    "vue",
   },
   root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
   get_language_id = function(bufnr, filetype)
     -- Tell vtsls to treat MDX as native TSX so tsserver provides completions
     -- without relying on @mdx-js/typescript-plugin (which has a completion bug:
     -- "reduce of empty array with no initial value" from its acorn parser).
-    if filetype == "mdx" then return "typescriptreact" end
+    if filetype == "mdx" then
+      return "typescriptreact"
+    end
     return filetype
   end,
   on_attach = function(client, bufnr)
