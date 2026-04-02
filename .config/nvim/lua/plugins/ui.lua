@@ -106,6 +106,7 @@ require("snacks").setup({
   },
   dim = { enabled = true },
   image = { enabled = true },
+  explorer = { replace_netrw = true },
   picker = {
     hidden = true,
     ignored = true,
