@@ -58,14 +58,8 @@
       "enabled": true
     },
     "paper-search-mcp": {
-      "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "@smithery/cli",
-        "run",
-        "@openags/paper-search-mcp"
-      ],
+      "type": "remote",
+      "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
       "timeout": 120000,
       "enabled": true,
       "environment": {
