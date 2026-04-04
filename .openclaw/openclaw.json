@@ -73,11 +73,16 @@
           {
             "id": "k2p5",
             "name": "Kimi K2.5",
-            "reasoning": true,
+            "reasoning": false,
             "input": [
               "text",
               "image"
             ],
+            "params": {
+              "thinking": {
+                "type": "disabled"
+              }
+            },
             "cost": {
               "input": 0,
               "output": 0,
