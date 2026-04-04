@@ -1,39 +1,145 @@
 ---
 name: openclaw-config
-description: Manage OpenClaw bot configuration - channels, agents, security, and autopilot settings
-version: 3.0.0
+description: Manage OpenClaw bot configuration - channels, agents, security, gateway, cron, memory, skills, and multi-agent orchestration
+version: 4.0.0
 ---
 
 # OpenClaw Operations Runbook
 
-Diagnose and fix real problems. Every command here is tested and works.
+环境: ghostty + tmux + starship + nushell + bun + bunx + uv
+
+> **注意**: 本文档中所有命令均适配 nushell 语法。bash 命令仅在 `bash -c "..."` 包裹时使用。
+> 包管理优先级: bun > npm, bunx > npx, uv > pip。
+> **禁止执行 `openclaw doctor --fix`。**
 
 ---
 
 ## Quick Health Check
 
-Run this first when anything seems wrong. Copy-paste the whole block:
+出现问题时首先运行:
+
+```nu
+# Gateway 进程检查
+ps | where name =~ openclaw | length
+
+# 配置 JSON 有效性
+open ~/.openclaw/openclaw.json | to json | ignore; echo "JSON: OK"
+
+# 频道状态
+open ~/.openclaw/openclaw.json | get channels | transpose key val | each {|r| $"($r.key): policy=($r.val.dmPolicy? | default 'n/a') enabled=($r.val.enabled? | default 'implicit')" }
+
+# 插件状态
+open ~/.openclaw/openclaw.json | get plugins.entries | transpose key val | each {|r| $"($r.key): ($r.val.enabled)" }
+
+# Cron 概览
+open ~/.openclaw/cron/jobs.json | get jobs | each {|j| $"($j.name): enabled=($j.enabled) status=($j.state.lastStatus? | default 'never')" }
+
+# 内存数据库
+sqlite3 ~/.openclaw/memory/main.sqlite "SELECT COUNT(*) || ' chunks, ' || (SELECT COUNT(*) FROM files) || ' files indexed' FROM chunks;"
+
+# 最近错误
+tail -10 ~/.openclaw/logs/gateway.err.log
+```
+
+### CLI 健康检查梯队（按顺序执行）
 
 ```bash
-echo "=== GATEWAY ===" && \
-ps aux | grep -c "[o]penclaw" && \
-echo "=== CONFIG JSON ===" && \
-python3 -m json.tool ~/.openclaw/openclaw.json > /dev/null 2>&1 && echo "JSON: OK" || echo "JSON: BROKEN" && \
-echo "=== CHANNELS ===" && \
-cat ~/.openclaw/openclaw.json | jq -r '.channels | to_entries[] | "\(.key): policy=\(.value.dmPolicy // "n/a") enabled=\(.value.enabled // "implicit")"' && \
-echo "=== PLUGINS ===" && \
-cat ~/.openclaw/openclaw.json | jq -r '.plugins.entries | to_entries[] | "\(.key): \(.value.enabled)"' && \
-echo "=== CREDS ===" && \
-ls ~/.openclaw/credentials/whatsapp/default/ 2>/dev/null | wc -l | xargs -I{} echo "WhatsApp keys: {} files" && \
-for d in ~/.openclaw/credentials/telegram/*/; do bot=$(basename "$d"); [ -f "$d/token.txt" ] && echo "Telegram $bot: OK" || echo "Telegram $bot: MISSING"; done && \
-[ -f ~/.openclaw/credentials/bird/cookies.json ] && echo "Bird cookies: OK" || echo "Bird cookies: MISSING" && \
-echo "=== CRON ===" && \
-cat ~/.openclaw/cron/jobs.json | jq -r '.jobs[] | "\(.name): enabled=\(.enabled) status=\(.state.lastStatus // "never") \(.state.lastError // "")"' && \
-echo "=== RECENT ERRORS ===" && \
-tail -10 ~/.openclaw/logs/gateway.err.log 2>/dev/null && \
-echo "=== MEMORY DB ===" && \
-sqlite3 ~/.openclaw/memory/main.sqlite "SELECT COUNT(*) || ' chunks, ' || (SELECT COUNT(*) FROM files) || ' files indexed' FROM chunks;" 2>/dev/null
+openclaw status --all
+openclaw gateway status --deep
+openclaw health --json
+openclaw channels status --probe
+openclaw logs --follow
 ```
+
+---
+
+## CLI 命令速查
+
+### Gateway
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw gateway` | 启动 gateway（`--port`/`--force`/`--verbose`/`--allow-unconfigured`） |
+| `openclaw gateway status --deep` | 运行状态 + RPC 探针 |
+| `openclaw gateway install` | 安装为系统服务（launchd/systemd） |
+| `openclaw gateway restart` | 重启 |
+| `openclaw gateway stop` | 停止 |
+| `openclaw gateway call <method>` | RPC 调用 |
+| `openclaw status --all` | 本地综合诊断 |
+| `openclaw health --json` | 完整健康快照 |
+| `openclaw logs --follow` | 实时日志 |
+| `openclaw doctor` | 诊断修复（**禁止加 --fix**） |
+| `openclaw update` | 更新 OpenClaw |
+| `openclaw backup` | 备份状态 |
+
+### 配置
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw config get <key>` | 读取配置值（点号 / 方括号记法） |
+| `openclaw config set <key> <value>` | 写入配置值 |
+| `openclaw config unset <key>` | 删除配置键 |
+| `openclaw config file` | 显示配置文件路径 |
+| `openclaw config schema` | 查看 JSON Schema |
+| `openclaw config validate` | 校验配置 |
+| `openclaw secrets reload` | 运行时重新加载密钥 |
+
+### 频道
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw channels login` | 认证频道 |
+| `openclaw channels logout` | 登出频道 |
+| `openclaw channels status --probe` | 频道状态探针 |
+| `openclaw channels list` | 列出频道 |
+| `openclaw channels add` | 添加频道 |
+| `openclaw pairing list` | 列出配对状态 |
+
+### Agent & 会话
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw agents add <id>` | 新增隔离 Agent |
+| `openclaw agents list --bindings` | 列出 Agent 及绑定 |
+| `openclaw sessions list` | 列出会话 |
+| `openclaw sessions history` | 会话历史 |
+| `openclaw sessions cleanup --dry-run` | 清理会话 |
+
+### Cron
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw cron add` | 添加定时任务（`--name`/`--at`/`--every`/`--cron`/`--tz`/`--session`/`--message`/`--model`/`--agent`） |
+| `openclaw cron list` | 列出任务 |
+| `openclaw cron edit <jobId>` | 编辑任务 |
+| `openclaw cron run <jobId>` | 手动触发 |
+| `openclaw cron runs --id <jobId>` | 运行历史 |
+| `openclaw cron remove <jobId>` | 删除任务 |
+| `openclaw cron status` | 调度器状态 |
+
+### MCP
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw mcp serve` | 作为 MCP Server 运行 |
+| `openclaw mcp list` | 列出已注册的 MCP Server |
+| `openclaw mcp show [name]` | 查看定义详情 |
+| `openclaw mcp set <name> <json>` | 保存 MCP Server 定义 |
+| `openclaw mcp unset <name>` | 移除 MCP Server 定义 |
+
+### 其它
+
+| 命令 | 作用 |
+|---|---|
+| `openclaw browser status/start/profiles` | 浏览器工具 |
+| `openclaw voicecall call/status/end` | 语音通话 |
+| `openclaw memory status --deep` | 内存搜索状态 |
+| `openclaw models status` | 模型状态 |
+| `openclaw nodes status` | 配对节点状态 |
+| `openclaw plugins install <pkg>` | 安装插件 |
+| `openclaw dashboard` | 打开 Web 面板 |
+| `openclaw onboard` | 引导式安装 |
+| `openclaw configure` | 配置向导 |
 
 ---
 
@@ -41,804 +147,701 @@ sqlite3 ~/.openclaw/memory/main.sqlite "SELECT COUNT(*) || ' chunks, ' || (SELEC
 
 ```
 ~/.openclaw/
-├── openclaw.json                    # MAIN CONFIG — channels, auth, gateway, plugins, skills
-├── openclaw.json.bak*               # Auto-backups (.bak, .bak.1, .bak.2 ...)
-├── exec-approvals.json              # Exec approval socket config
+├── openclaw.json                    # 主配置 (JSON5, 支持注释/尾逗号)
+├── openclaw.json.bak*               # 自动备份
+├── .env                             # 全局环境变量
+├── exec-approvals.json              # exec 审批配置
 │
-├── agents/main/
-│   ├── agent/auth-profiles.json     # Anthropic auth tokens
+├── agents/<agentId>/
+│   ├── agent/
+│   │   └── auth-profiles.json       # 模型认证 Token
 │   └── sessions/
-│       ├── sessions.json            # SESSION INDEX — keys are like agent:main:whatsapp:+1234
-│       └── *.jsonl                  # Session transcripts (one JSON per line)
+│       ├── sessions.json            # 会话索引
+│       └── *.jsonl                  # 会话转录
 │
-├── workspace/                       # Agent workspace (git-tracked)
-│   ├── SOUL.md                      # Personality, writing style, tone rules
-│   ├── IDENTITY.md                  # Name, creature type, vibe
-│   ├── USER.md                      # Owner context and preferences
-│   ├── AGENTS.md                    # Session behavior, memory rules, safety
-│   ├── BOOT.md                      # Boot instructions (autopilot notification protocol)
-│   ├── HEARTBEAT.md                 # Periodic task checklist (empty = skip heartbeat)
-│   ├── MEMORY.md                    # Curated long-term memory (main session only)
-│   ├── TOOLS.md                     # Contacts, SSH hosts, device nicknames
-│   ├── memory/                      # Daily logs: YYYY-MM-DD.md, topic-chat.md
-│   └── skills/                      # Workspace-level skills
+├── workspace/                       # Agent 工作区 (可 git 管理)
+│   ├── SOUL.md                      # 人格/语气/风格
+│   ├── IDENTITY.md                  # 名称/形象/emoji
+│   ├── USER.md                      # 用户偏好
+│   ├── AGENTS.md                    # 行为规则/安全策略
+│   ├── BOOT.md                      # 启动指令
+│   ├── HEARTBEAT.md                 # 心跳任务清单 (空 = 跳过)
+│   ├── MEMORY.md                    # 策划的长期记忆
+│   ├── TOOLS.md                     # 工具备注 (联系人/SSH/设备)
+│   ├── BOOTSTRAP.md                 # 首次运行仪式
+│   ├── memory/                      # 每日日志 YYYY-MM-DD.md
+│   ├── skills/                      # 工作区级 Skills
+│   └── canvas/                      # Canvas UI 文件
 │
-├── memory/main.sqlite               # Vector memory DB (Gemini embeddings, FTS5 search)
+├── memory/<agentId>.sqlite          # 向量记忆数据库 (SQLite + 嵌入)
 │
 ├── logs/
-│   ├── gateway.log                  # Runtime: startup, channel init, config reload, shutdown
-│   ├── gateway.err.log              # Errors: connection drops, API failures, timeouts
-│   └── commands.log                 # Command execution log
+│   ├── gateway.log                  # 运行日志: 启动/频道初始化/配置重载/关闭
+│   ├── gateway.err.log              # 错误日志: 连接断开/API 失败/超时
+│   └── commands.log                 # 命令执行日志
 │
 ├── cron/
-│   ├── jobs.json                    # Job definitions (schedule, payload, delivery target)
-│   └── runs/                        # Per-job run logs: {job-uuid}.jsonl
+│   ├── jobs.json                    # 任务定义
+│   └── runs/<jobId>.jsonl           # 运行日志
 │
 ├── credentials/
-│   ├── whatsapp/default/            # Baileys session: ~1400 app-state-sync-key-*.json files
-│   ├── telegram/{botname}/token.txt # Bot tokens (one per bot account)
-│   └── bird/cookies.json            # X/Twitter auth cookies
+│   ├── whatsapp/<accountId>/        # Baileys 会话 (~1400 文件)
+│   ├── telegram/<botname>/token.txt # Bot Token
+│   ├── oauth.json                   # OAuth Token
+│   └── bird/cookies.json            # X/Twitter cookies
 │
-├── extensions/{name}/               # Custom plugins (TypeScript)
-│   ├── openclaw.plugin.json         # {"id", "channels", "configSchema"}
-│   ├── index.ts                     # Entry point
-│   └── src/                         # channel.ts, actions.ts, runtime.ts, types.ts
-│
+├── skills/                          # 共享/托管 Skills
+├── extensions/<name>/               # 自定义插件 (TypeScript)
+├── sandboxes/                       # 沙盒工作区
 ├── identity/                        # device.json, device-auth.json
 ├── devices/                         # paired.json, pending.json
-├── media/inbound/                   # Received images, audio files
-├── media/browser/                   # Browser screenshots
-├── browser/openclaw/user-data/      # Chromium profile (~180MB)
-├── tools/signal-cli/                # Signal CLI binary
-├── subagents/runs.json              # Sub-agent execution log
-├── canvas/index.html                # Web canvas UI
+├── media/inbound/                   # 接收的媒体文件
+├── media/browser/                   # 浏览器截图
+├── browser/openclaw/user-data/      # Chromium 配置
+├── tools/signal-cli/                # Signal CLI 二进制
+├── subagents/runs.json              # 子 Agent 日志
+├── canvas/                          # Canvas HTML
 └── telegram/
-    ├── update-offset-coder.json     # {"lastUpdateId": N} — Telegram polling cursor
-    └── update-offset-sales.json     # Reset these to 0 to replay missed messages
+    └── update-offset-*.json         # Telegram 轮询游标
 ```
+
+---
+
+## 配置文件结构
+
+配置文件 `~/.openclaw/openclaw.json` 使用 JSON5 格式, 支持:
+- 注释 (`//` 和 `/* */`)
+- 尾逗号
+- `$include` 拆分 (最多 10 层)
+- `${VAR_NAME}` 环境变量替换
+- SecretRef 对象 (`source: env | file | exec`)
+- Gateway 热重载 (文件变更自动生效)
+
+### 顶层结构
+
+```json5
+{
+  gateway: {
+    port: 18789,              // --port > OPENCLAW_GATEWAY_PORT > config > 18789
+    bind: "loopback",         // loopback | lan | tailnet | 自定义地址
+    auth: { token, password, mode },
+    reload: { mode: "hybrid", debounceMs },
+    push: { apns: {} },
+    channelHealthCheckMinutes: 5,
+    channelStaleEventThresholdMinutes: 30,
+    channelMaxRestartsPerHour: 10,
+  },
+  agents: {
+    defaults: {
+      workspace, model: { primary, fallbacks }, models: {},
+      heartbeat: { every, target, directPolicy },
+      memorySearch: {}, sandbox: { mode, scope },
+      skills: [], bootstrapMaxChars, bootstrapTotalMaxChars,
+      maxConcurrent, compaction: {},
+    },
+    list: [{ id, name, default, workspace, agentDir, model, identity, groupChat, sandbox, tools, skills }],
+  },
+  channels: { whatsapp: {}, telegram: {}, discord: {}, slack: {}, signal: {}, imessage: {}, googlechat: {}, bluebubbles: {}, irc: {}, qq: {} },
+  bindings: [{ agentId, match: { channel, accountId, peer, guildId, teamId, roles } }],
+  session: {
+    dmScope: "main",          // main | per-peer | per-channel-peer | per-account-channel-peer
+    threadBindings: { enabled, idleHours, maxAgeHours },
+    reset: { mode: "daily", atHour: 4, idleMinutes },
+  },
+  tools: {
+    allow, deny, profile,     // full | coding | messaging | minimal
+    byProvider: {},
+    agentToAgent: { enabled, allow },
+    exec: {}, media: {},
+  },
+  cron: { enabled, store, maxConcurrentRuns, retry: {}, webhookToken, sessionRetention, runLog: {} },
+  hooks: { enabled, token, path, defaultSessionKey, mappings: [], gmail: {} },
+  plugins: { entries: {}, allow: [] },
+  mcp: { servers: {} },
+  memory: { backend, citations, qmd: {} },
+  env: { vars: {}, shellEnv: { enabled, timeoutMs } },
+  secrets: { providers: {} },
+  browser: { executablePath, profiles: {}, ssrfPolicy: {} },
+  messages: { tts: {}, queue: {}, groupChat: {} },
+  ui: {}, logging: {}, identity: {}, broadcast: {},
+}
+```
+
+### 热重载规则
+
+| 模式 (`gateway.reload.mode`) | 行为 |
+|---|---|
+| `hybrid` (默认) | 安全变更热生效, 关键变更自动重启 |
+| `hot` | 仅热生效安全变更, 关键变更仅告警 |
+| `restart` | 任何变更都重启 |
+| `off` | 关闭文件监听 |
+
+**无需重启**: channels, agents, models, hooks, cron, sessions, tools, browser, skills, bindings, logging, UI
+**需要重启**: gateway.* (port, bind, auth, TLS), discovery, canvasHost, plugins
 
 ---
 
 ## Troubleshooting: WhatsApp
 
-### "I sent a message but got no reply"
+### 消息发送了但无回复
 
-This is the #1 issue. The message arrives but the bot doesn't respond. Check in this order:
+```nu
+# 1. 检查 bot 是否在运行
+open ~/.openclaw/logs/gateway.log | lines | where ($it | str contains "whatsapp") and ($it | str contains "starting" or "listening") | last 5
 
-```bash
-# 1. Is the bot actually running?
-grep -i "whatsapp.*starting\|whatsapp.*listening" ~/.openclaw/logs/gateway.log | tail -5
+# 2. 检查 408 超时断连 (WhatsApp web 经常断)
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "408") or ($it | str contains "retry") | last 10
+# "Retry 1/12" 正常自动恢复, 到 12/12 则完全断连
 
-# 2. Check for 408 timeout drops (WhatsApp web disconnects frequently)
-grep -i "408\|499\|retry" ~/.openclaw/logs/gateway.err.log | tail -10
-# If you see "Web connection closed (status 408). Retry 1/12" — this is normal,
-# it auto-recovers. But if retries reach 12/12, the session dropped completely.
+# 3. 检查跨频道拦截
+open ~/.openclaw/logs/gateway.err.log | lines | where $it | str contains "cross-context" | last 5
 
-# 3. Check for cross-context messaging blocks
-grep -i "cross-context.*denied" ~/.openclaw/logs/gateway.err.log | tail -10
-# Common: "Cross-context messaging denied: action=send target provider "whatsapp" while bound to "signal""
-# This means the agent was in a Signal session and tried to reply on WhatsApp.
-# FIX: The message needs to come through in the WhatsApp session context, not Signal.
+# 4. 检查会话是否存在
+open ~/.openclaw/agents/main/sessions/sessions.json | transpose key val | where ($key | str contains "whatsapp") | select key val.origin.label?
 
-# 4. Check the session exists for that contact
-cat ~/.openclaw/agents/main/sessions/sessions.json | jq -r 'to_entries[] | select(.key | test("whatsapp")) | "\(.key) | \(.value.origin.label // "?")"'
+# 5. 检查 DM 策略
+open ~/.openclaw/openclaw.json | get channels.whatsapp | select dmPolicy? allowFrom? selfChatMode? groupPolicy?
+# dmPolicy=allowlist 且发送者不在 allowFrom 中 → 消息静默丢弃
 
-# 5. Check if the sender is allowed
-cat ~/.openclaw/openclaw.json | jq '.channels.whatsapp | {dmPolicy, allowFrom, selfChatMode, groupPolicy}'
-# If dmPolicy is "allowlist" and the sender isn't in allowFrom, message is silently dropped.
-
-# 6. Check if it's a group message (groups are disabled by default)
-cat ~/.openclaw/openclaw.json | jq '.channels.whatsapp.groupPolicy'
-# "disabled" means ALL group messages are ignored.
-
-# 7. Check for lane congestion (agent busy with another task)
-grep "lane wait exceeded" ~/.openclaw/logs/gateway.err.log | tail -5
-# If the agent is stuck on a long LLM call, new messages queue up.
-
-# 8. Check for agent run timeout
-grep "embedded run timeout" ~/.openclaw/logs/gateway.err.log | tail -5
-# Hard limit is 600s (10 min). If the agent's response takes longer, it's killed.
+# 6. 检查 Agent 阻塞
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "lane wait") or ($it | str contains "embedded run timeout") | last 5
 ```
 
-### "WhatsApp fully disconnected"
+### WhatsApp 完全断连
 
-```bash
-# Check credential files exist (should be ~1400 files)
-ls ~/.openclaw/credentials/whatsapp/default/ | wc -l
+```nu
+# 检查凭证文件 (正常 ~1400 个)
+ls ~/.openclaw/credentials/whatsapp/default/ | length
 
-# If 0 files: session was never created or got wiped
-# Fix: re-pair with `openclaw configure`
-
-# Check for QR/pairing events
-grep -i "pair\|link\|qr\|scan\|logged out" ~/.openclaw/logs/gateway.log | tail -10
-
-# Check for Baileys errors
-grep -i "baileys\|DisconnectReason\|logout\|stream:error" ~/.openclaw/logs/gateway.err.log | tail -20
-
-# Nuclear fix: delete credentials and re-pair
-# rm -rf ~/.openclaw/credentials/whatsapp/default/
+# 如果为 0: 重新配对
 # openclaw configure
+
+# 检查 Baileys 错误
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "baileys") or ($it | str contains "DisconnectReason") or ($it | str contains "logout") | last 20
 ```
 
 ---
 
 ## Troubleshooting: Telegram
 
-### "Bots have issues / forget things"
+### Bot 无响应或遗忘
 
-Two separate problems that look the same:
+```nu
+# 1. 配置校验 — 必须用 botToken 不是 token
+open ~/.openclaw/openclaw.json | get channels.telegram
 
-```bash
-# 1. Check for config validation errors (THE COMMON ONE)
-grep -i "telegram.*unrecognized\|telegram.*invalid\|telegram.*policy" ~/.openclaw/logs/gateway.err.log | tail -10
-# Known issue: the keys "token" and "username" under accounts are not recognized.
-# The correct field is "botToken", not "token".
+# 2. 轮询状态 — getUpdates 超时意味着断连
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "telegram") and (($it | str contains "exit") or ($it | str contains "timeout") or ($it | str contains "getUpdates")) | last 10
+# 修复: openclaw gateway restart
 
-# 2. Check the actual config
-cat ~/.openclaw/openclaw.json | jq '.channels.telegram'
-# Verify each bot has "botToken" (not "token") and "name" fields.
+# 3. 轮询偏移
+ls ~/.openclaw/telegram/update-offset-*.json | each {|f| $"($f.name): (open $f.name)" }
 
-# 3. Check polling status — bots die after getUpdates timeout
-grep -i "telegram.*exit\|telegram.*timeout\|getUpdates" ~/.openclaw/logs/gateway.err.log | tail -10
-# "[telegram] [sales] channel exited: Request to 'getUpdates' timed out after 500 seconds"
-# This means the bot lost connection to Telegram's API and stopped listening.
-# Fix: restart gateway — `openclaw gateway restart`
-
-# 4. Check the polling offset (if bot "forgets" or replays old messages)
-cat ~/.openclaw/telegram/update-offset-coder.json
-cat ~/.openclaw/telegram/update-offset-sales.json
-# If lastUpdateId is stuck or 0, the bot will reprocess old messages.
-# To skip to latest: the gateway sets this automatically on restart.
-
-# 5. Check if both bots are starting
-grep -i "telegram.*starting\|telegram.*coder\|telegram.*sales" ~/.openclaw/logs/gateway.log | tail -10
-
-# 6. "Bot forgets" — this is usually a session issue, not Telegram
-# Each Telegram user gets their own session in sessions.json.
-# Check if the session exists:
-cat ~/.openclaw/agents/main/sessions/sessions.json | jq -r 'to_entries[] | select(.key | test("telegram")) | "\(.key) | \(.value.origin.label // "?")"'
-
-# 7. Check if compaction happened (context window pruned = "forgot")
-SESS_ID="paste-session-id"
-grep '"compaction"' ~/.openclaw/agents/main/sessions/$SESS_ID.jsonl | wc -l
-# If compaction count > 0, old messages were pruned from context.
-# The agent's compaction mode is:
-cat ~/.openclaw/openclaw.json | jq '.agents.defaults.compaction'
+# 4. 会话和压缩 (compaction = 上下文被裁剪 = "遗忘")
+open ~/.openclaw/agents/main/sessions/sessions.json | transpose key val | where ($key | str contains "telegram") | each {|r| $"($r.key) | ($r.val.origin.label? | default '?')" }
 ```
 
-### Telegram config fix template
+### Telegram 配置模板
 
-```bash
-# Correct Telegram config structure:
-cat ~/.openclaw/openclaw.json | jq '.channels.telegram = {
-  "enabled": true,
-  "accounts": {
-    "coder": {
-      "name": "Bot Display Name",
-      "enabled": true,
-      "botToken": "your-bot-token-here"
-    },
-    "sales": {
-      "name": "Sales Bot Name",
-      "enabled": true,
-      "botToken": "your-bot-token-here"
+```json5
+{
+  channels: {
+    telegram: {
+      enabled: true,
+      accounts: {
+        mybot: {
+          name: "Bot Display Name",
+          enabled: true,
+          botToken: "your-bot-token-here"  // 注意: 是 botToken 不是 token
+        }
+      },
+      dmPolicy: "pairing",
+      groupPolicy: "disabled"
     }
-  },
-  "dmPolicy": "pairing",
-  "groupPolicy": "disabled"
-}' > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+  }
+}
 ```
 
 ---
 
 ## Troubleshooting: Signal
 
-### "Signal RPC Failed to send message"
+### RPC 发送失败
 
-This blocks cron jobs and cross-channel notifications.
+```nu
+# 1. signal-cli 进程状态
+ps | where name =~ "signal-cli"
 
-```bash
-# 1. Check if signal-cli process is alive
-ps aux | grep "[s]ignal-cli"
+# 2. RPC 端点
+open ~/.openclaw/logs/gateway.log | lines | where ($it | str contains "signal") and ($it | str contains "starting") | last 5
 
-# 2. Check the RPC endpoint
-grep -i "signal.*starting\|signal.*8080\|signal.*rpc" ~/.openclaw/logs/gateway.log | tail -10
-# Should see: "[signal] [default] starting provider (http://127.0.0.1:8080)"
+# 3. 连接稳定性
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "HikariPool") or ($it | str contains "SSE stream error") | last 10
 
-# 3. Check for connection instability
-grep -i "HikariPool\|reconnecting\|SSE stream error\|terminated" ~/.openclaw/logs/gateway.err.log | tail -10
-# "HikariPool-1 - Thread starvation or clock leap detected" = signal-cli internal DB issue
-# "SSE stream error: TypeError: terminated" = lost connection to signal-cli daemon
+# 4. 限流
+open ~/.openclaw/logs/gateway.err.log | lines | where ($it | str contains "signal") and ($it | str contains "rate") | last 5
 
-# 4. Check for rate limiting
-grep -i "signal.*rate" ~/.openclaw/logs/gateway.err.log | tail -5
-# "Signal RPC -5: Failed to send message due to rate limiting"
-
-# 5. Check for wrong target format
-grep -i "unknown target" ~/.openclaw/logs/gateway.err.log | tail -5
-# "Unknown target "adi" for Signal. Hint: <E.164|uuid:ID|...>"
-# The agent must use phone numbers (+1...) or uuid: format, not names.
-
-# 6. Fix profile name warning spam
-grep -c "No profile name set" ~/.openclaw/logs/gateway.err.log
-# If high count: run signal-cli updateProfile to set a name
-
-# 7. Test signal-cli directly
-ACCT=$(cat ~/.openclaw/openclaw.json | jq -r '.channels.signal.account')
-echo "Account: $ACCT"
-# signal-cli -a $ACCT send -m "test" +TARGET_NUMBER
-
-# 8. Check if the signal-cli daemon needs restart
-# The gateway manages signal-cli as a subprocess.
-# Restart the whole gateway: openclaw gateway restart
+# 5. 目标格式错误 — 必须用电话号码或 uuid:ID
+open ~/.openclaw/logs/gateway.err.log | lines | where $it | str contains "unknown target" | last 5
 ```
 
 ---
 
-## Troubleshooting: Cron Jobs
+## Troubleshooting: Cron
 
-```bash
-# 1. Overview of all jobs
-cat ~/.openclaw/cron/jobs.json | jq -r '.jobs[] | "\(.enabled | if . then "ON " else "OFF" end) \(.state.lastStatus // "never" | if . == "error" then "FAIL" elif . == "ok" then "OK  " else .  end) \(.name)"'
+```nu
+# 所有任务概览
+open ~/.openclaw/cron/jobs.json | get jobs | select name enabled state.lastStatus?
 
-# 2. Failing jobs with error details
-cat ~/.openclaw/cron/jobs.json | jq '.jobs[] | select(.state.lastStatus == "error") | {name, error: .state.lastError, lastRun: (.state.lastRunAtMs | . / 1000 | todate), id}'
+# 失败任务详情
+open ~/.openclaw/cron/jobs.json | get jobs | where state.lastStatus? == "error" | select name state.lastError? id
 
-# 3. Read the actual run log for a failing job
-JOB_ID="paste-job-uuid-here"
-tail -20 ~/.openclaw/cron/runs/$JOB_ID.jsonl | python3 -c "
-import sys, json
-for line in sys.stdin:
-    try:
-        obj = json.loads(line)
-        if obj.get('type') == 'message':
-            role = obj['message']['role']
-            text = ''.join(c.get('text','') for c in obj['message'].get('content',[]) if isinstance(c,dict))
-            if text.strip():
-                print(f'[{role}] {text[:300]}')
-    except: pass
-"
+# 常见失败原因:
+# - "Signal RPC -1" → signal-cli 守护进程挂了
+# - "gateway timeout after 10000ms" → gateway 重启期间 cron 触发
+# - "Brave Search 429" → 免费额度用完 (2000 req/month)
+# - "embedded run timeout" → 任务超 600s
 
-# 4. Common cron failure causes:
-#    - "Signal RPC -1" → Signal daemon down, see Signal section above
-#    - "gateway timeout after 10000ms" → gateway was restarting when cron fired
-#    - "Brave Search 429" → free tier rate limit hit (2000 req/month)
-#    - "embedded run timeout" → job took longer than 600s
+# 下次运行时间
+open ~/.openclaw/cron/jobs.json | get jobs | where enabled | each {|j| $"($j.name): ($j.state.nextRunAtMs? | default 0 | into int | $in * 1_000_000 | into datetime)" }
 
-# 5. Next scheduled run times
-cat ~/.openclaw/cron/jobs.json | jq -r '.jobs[] | select(.enabled) | "\(.name): \((.state.nextRunAtMs // 0) | . / 1000 | todate)"'
-
-# 6. Disable a broken job temporarily
-cat ~/.openclaw/cron/jobs.json | jq '(.jobs[] | select(.name == "JOB_NAME")).enabled = false' > /tmp/cron.json && mv /tmp/cron.json ~/.openclaw/cron/jobs.json
+# 临时禁用故障任务
+# openclaw cron edit <jobId> --disable
 ```
 
 ---
 
-## Troubleshooting: Memory / "It Forgot"
+## Troubleshooting: Memory / "它忘了"
 
-The memory system has 3 layers. When the agent "forgets," one of these broke:
+记忆系统有 3 层, "遗忘" 时逐层排查:
 
-### Layer 1: Context window (within a session)
+### Layer 1: 上下文窗口 (会话内)
 
-```bash
-# Check compaction count for a session (compaction = old messages pruned)
-grep -c '"compaction"' ~/.openclaw/agents/main/sessions/SESSION_ID.jsonl
-# 7 compactions = the agent has "forgotten" its earliest messages 7 times.
+```nu
+# 压缩次数 (compaction = 旧消息被裁剪)
+open ~/.openclaw/agents/main/sessions/SESSION_ID.jsonl | lines | where ($it | str contains "compaction") | length
 
-# Check compaction mode
-cat ~/.openclaw/openclaw.json | jq '.agents.defaults.compaction'
-# "safeguard" = only compacts when hitting context limit
+# 压缩模式
+open ~/.openclaw/openclaw.json | get agents.defaults.compaction?
+# "safeguard" = 仅在触及上下文限制时压缩
 ```
 
-### Layer 2: Workspace memory files
+### Layer 2: 工作区记忆文件
 
-```bash
-# What daily memory files exist
-ls -la ~/.openclaw/workspace/memory/
-
-# What's in MEMORY.md (long-term curated)
+```nu
+ls ~/.openclaw/workspace/memory/
 cat ~/.openclaw/workspace/MEMORY.md
-
-# Search memory files for something specific
+# 搜索
 grep -ri "KEYWORD" ~/.openclaw/workspace/memory/
 ```
 
-### Layer 3: Vector memory database (SQLite + Gemini embeddings)
+### Layer 3: 向量记忆库 (SQLite + 嵌入)
 
 ```bash
-# What files are indexed
+# 已索引文件
 sqlite3 ~/.openclaw/memory/main.sqlite "SELECT path, size, datetime(mtime/1000, 'unixepoch') as modified FROM files;"
 
-# How many chunks (text fragments) exist
-sqlite3 ~/.openclaw/memory/main.sqlite "SELECT COUNT(*) FROM chunks;"
-
-# Search chunks by text (FTS5 full-text search)
+# 全文搜索
 sqlite3 ~/.openclaw/memory/main.sqlite "SELECT substr(text, 1, 200) FROM chunks_fts WHERE chunks_fts MATCH 'KEYWORD' LIMIT 5;"
 
-# Check embedding config
-sqlite3 ~/.openclaw/memory/main.sqlite "SELECT value FROM meta WHERE key='memory_index_meta_v1';" | python3 -m json.tool
+# 嵌入限流检查
+grep -i "RESOURCE_EXHAUSTED\|429" ~/.openclaw/logs/gateway.err.log | tail -10
 
-# Check for Gemini embedding rate limits (breaks indexing)
-grep -i "gemini.*batch.*failed\|RESOURCE_EXHAUSTED\|429" ~/.openclaw/logs/gateway.err.log | tail -10
-# "embeddings: gemini batch failed (2/2); disabling batch" = indexing degraded
-
-# Rebuild memory index (re-index all workspace files)
-# Delete the DB and restart gateway — it will rebuild:
+# 重建索引 (删库重启, 自动重建):
 # rm ~/.openclaw/memory/main.sqlite && openclaw gateway restart
 ```
+
+**嵌入提供者 (自动检测顺序)**: local → OpenAI → Gemini → Voyage → Mistral → Ollama
 
 ---
 
 ## Searching Sessions
 
-### Find a person's conversations
+```nu
+# 按名字搜索
+open ~/.openclaw/agents/main/sessions/sessions.json | transpose key val | where ($val.origin.label? | default "" | str contains -i "NAME") | each {|r| $"($r.val.sessionId) | ($r.val.lastChannel?) | ($r.val.origin.label?)" }
 
-```bash
-# Search session index by name (case-insensitive)
-cat ~/.openclaw/agents/main/sessions/sessions.json | jq -r 'to_entries[] | select(.value.origin.label // "" | test("NAME"; "i")) | "\(.value.sessionId) | \(.value.lastChannel) | \(.value.origin.label)"'
-```
+# 按频道过滤
+open ~/.openclaw/agents/main/sessions/sessions.json | transpose key val | where ($val.lastChannel? == "whatsapp") | each {|r| $"($r.val.sessionId) | ($r.val.origin.label? | default $r.key)" }
 
-### Find sessions by channel
+# 最近会话
+open ~/.openclaw/agents/main/sessions/sessions.json | transpose key val | sort-by -r { $in.val.updatedAt? | default 0 } | first 10 | each {|r| $"($r.val.updatedAt? | default 0 | into int | $in * 1_000_000 | into datetime) | ($r.val.lastChannel? | default 'cron') | ($r.val.origin.label? | default $r.key)" }
 
-```bash
-cat ~/.openclaw/agents/main/sessions/sessions.json | jq -r 'to_entries[] | select(.value.lastChannel == "whatsapp") | "\(.value.sessionId) | \(.value.origin.label // .key)"'
-# Replace "whatsapp" with: signal, telegram, or check .key for cron sessions
-```
-
-### Most recent sessions
-
-```bash
-cat ~/.openclaw/agents/main/sessions/sessions.json | jq -r '[to_entries[] | {id: .value.sessionId, updated: .value.updatedAt, label: (.value.origin.label // .key), ch: (.value.lastChannel // "cron")}] | sort_by(.updated) | reverse | .[:10][] | "\(.updated | . / 1000 | todate) | \(.ch) | \(.label)"'
-```
-
-### Search message content across all sessions
-
-```bash
-# Quick: find which session files contain a keyword
+# 跨会话关键词搜索
 grep -l "KEYWORD" ~/.openclaw/agents/main/sessions/*.jsonl
-
-# Detailed: show matching messages with timestamps
-grep "KEYWORD" ~/.openclaw/agents/main/sessions/*.jsonl | python3 -c "
-import sys, json
-for line in sys.stdin:
-    path, data = line.split(':', 1)
-    try:
-        obj = json.loads(data)
-        if obj.get('type') == 'message':
-            role = obj['message']['role']
-            text = ''.join(c.get('text','') for c in obj['message'].get('content',[]) if isinstance(c,dict))
-            if text.strip():
-                sid = path.split('/')[-1].replace('.jsonl','')[:8]
-                ts = obj.get('timestamp','')[:19]
-                print(f'{ts} [{sid}] [{role}] {text[:200]}')
-    except: pass
-" | head -30
-```
-
-### Read a specific session transcript
-
-```bash
-# Last 30 messages from a session
-tail -50 ~/.openclaw/agents/main/sessions/SESSION_ID.jsonl | python3 -c "
-import sys, json
-for line in sys.stdin:
-    try:
-        obj = json.loads(line)
-        if obj.get('type') == 'message':
-            role = obj['message']['role']
-            text = ''.join(c.get('text','') for c in obj['message'].get('content',[]) if isinstance(c,dict))
-            if text.strip() and role != 'toolResult':
-                print(f'[{role}] {text[:300]}')
-                print()
-    except: pass
-"
 ```
 
 ---
 
 ## Config Editing
 
-### Safe edit pattern
+### 安全编辑模式
 
-Always: backup, edit with jq, restart.
-
+**使用 openclaw CLI (推荐):**
 ```bash
+openclaw config set channels.whatsapp.dmPolicy "allowlist"
+openclaw config set channels.whatsapp.allowFrom '["[ph_PHONE_NUMBER_2_ph]"]' --strict-json
+```
+
+**使用 jq 手动编辑:**
+```nu
 cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak.manual
-jq 'YOUR_EDIT_HERE' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+# 编辑后验证:
+openclaw config validate
 openclaw gateway restart
 ```
 
-### Common edits
+### 常见编辑
 
 ```bash
-# Switch WhatsApp to allowlist
-jq '.channels.whatsapp.dmPolicy = "allowlist" | .channels.whatsapp.allowFrom = ["+1XXXXXXXXXX"]' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+# 切换 WhatsApp 为 allowlist
+openclaw config set channels.whatsapp.dmPolicy "allowlist"
+openclaw config set channels.whatsapp.allowFrom '["[ph_PHONE_NUMBER_2_ph]"]' --strict-json
 
-# Enable WhatsApp autopilot (bot responds as you to everyone)
-jq '.channels.whatsapp += {dmPolicy: "open", selfChatMode: false, allowFrom: ["*"]}' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+# 切换模型
+openclaw config set agents.defaults.model.primary "anthropic/claude-sonnet-4"
 
-# Add number to Signal allowlist
-jq '.channels.signal.allowFrom += ["+1XXXXXXXXXX"]' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+# 设置并发
+openclaw config set agents.defaults.maxConcurrent 10
 
-# Change model
-jq '.agents.defaults.models = {"anthropic/claude-sonnet-4": {"alias": "sonnet"}}' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
-
-# Set concurrency
-jq '.agents.defaults.maxConcurrent = 10 | .agents.defaults.subagents.maxConcurrent = 10' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
-
-# Disable a plugin
-jq '.plugins.entries.imessage.enabled = false' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+# 禁用插件
+openclaw config set plugins.entries.imessage.enabled false
 ```
 
-### Restore from backup
+### 从备份恢复
 
-```bash
-# Latest backup
+```nu
+# 最新备份
 cp ~/.openclaw/openclaw.json.bak ~/.openclaw/openclaw.json
 
-# List all backups by date
-ls -lt ~/.openclaw/openclaw.json.bak*
+# 列出备份
+ls ~/.openclaw/openclaw.json.bak* | sort-by modified -r
 
-# Validate JSON before restart
-python3 -m json.tool ~/.openclaw/openclaw.json > /dev/null && echo "OK" || echo "BROKEN"
-
-# Nuclear reset
-openclaw configure
+# 验证
+openclaw config validate
 ```
 
 ---
 
 ## Channel Security Modes
 
-| Mode | Behavior | Risk |
+| Mode | 行为 | 风险 |
 |---|---|---|
-| `open` + `allowFrom: ["*"]` | Anyone can message, bot responds to all | HIGH — burns API credits, bot speaks as you |
-| `allowlist` + `allowFrom: ["+1..."]` | Only listed numbers get through | LOW — explicit control |
-| `pairing` | Unknown senders get a code, you approve | LOW — approval gate |
-| `disabled` | Channel completely off | NONE |
+| `open` + `allowFrom: ["*"]` | 所有人可发消息, bot 回复所有 | **高** — 消耗 API 额度, bot 以你身份发言 |
+| `allowlist` + `allowFrom: ["+1..."]` | 仅列表中的号码通过 | 低 |
+| `pairing` | 未知发送者需审批 | 低 |
+| `disabled` | 频道完全关闭 | 无 |
 
-### Check current security posture
+### 检查安全态势
 
-```bash
-cat ~/.openclaw/openclaw.json | jq '{
-  whatsapp: {policy: .channels.whatsapp.dmPolicy, from: .channels.whatsapp.allowFrom, groups: .channels.whatsapp.groupPolicy, selfChat: .channels.whatsapp.selfChatMode},
-  signal: {policy: .channels.signal.dmPolicy, from: .channels.signal.allowFrom, groups: .channels.signal.groupPolicy},
-  telegram: {policy: .channels.telegram.dmPolicy, groups: .channels.telegram.groupPolicy, bots: [.channels.telegram.accounts | to_entries[] | "\(.key)=\(.value.enabled)"]},
-  imessage: {enabled: .channels.imessage.enabled, policy: .channels.imessage.dmPolicy}
-}'
+```nu
+open ~/.openclaw/openclaw.json | get channels | transpose key ch | each {|r|
+  $"($r.key): policy=($r.ch.dmPolicy? | default 'n/a') groups=($r.ch.groupPolicy? | default 'n/a') enabled=($r.ch.enabled? | default 'implicit')"
+}
 ```
+
+### 工具权限组
+
+| 组 | 包含工具 |
+|---|---|
+| `group:runtime` | exec, bash, process, code_execution |
+| `group:fs` | read, write, edit, apply_patch |
+| `group:sessions` | sessions_list/history/send/spawn/yield, subagents |
+| `group:memory` | memory_search, memory_get |
+| `group:web` | web_search, x_search, web_fetch |
+| `group:ui` | browser, canvas |
+| `group:automation` | cron, gateway |
+| `group:messaging` | message |
+| `group:nodes` | nodes |
+| `group:openclaw` | 所有内置工具 |
 
 ---
 
 ## Workspace Files
 
-| File | What | When to edit |
+| 文件 | 用途 | 何时编辑 |
 |---|---|---|
-| `SOUL.md` | Personality: tone, style ("no em dashes, lowercase casual") | To change how the bot talks |
-| `IDENTITY.md` | Name (Jarvis), creature type, emoji | To rebrand |
-| `USER.md` | Owner info, preferences | When user context changes |
-| `AGENTS.md` | Operating rules: memory protocol, safety, group chat behavior, heartbeat instructions | To change bot behavior |
-| `BOOT.md` | Startup instructions (autopilot notification protocol: WA → Signal) | To change what happens on boot |
-| `HEARTBEAT.md` | Periodic checklist (empty = no heartbeat API calls) | To add/remove periodic tasks |
-| `MEMORY.md` | Curated long-term memory (loaded only in main/direct sessions) | Bot manages this itself |
-| `TOOLS.md` | Contacts, SSH hosts, device nicknames | To add local tool notes |
-| `memory/*.md` | Daily raw logs, topic-specific chat logs | Bot writes automatically |
+| `SOUL.md` | 人格: 语气、风格 | 改变 bot 说话方式 |
+| `IDENTITY.md` | 名称、形象、emoji | 重新品牌化 |
+| `USER.md` | 用户信息和偏好 | 用户上下文变化时 |
+| `AGENTS.md` | 行为规则: 记忆/安全/群聊/心跳 | 改变 bot 行为 |
+| `BOOT.md` | 启动指令 (开机通知协议) | 改变启动行为 |
+| `HEARTBEAT.md` | 心跳清单 (空 = 不执行) | 增减周期任务 |
+| `MEMORY.md` | 策划的长期记忆 | Bot 自管理 |
+| `TOOLS.md` | 联系人/SSH/设备 | 增加工具备注 |
+| `BOOTSTRAP.md` | 首次运行仪式 | 首次设置 |
 
 ---
 
 ## Session JSONL Format
 
-Each `.jsonl` file has one JSON object per line. Types:
+每行一个 JSON 对象, `type` 字段:
 
-| type | What |
+| type | 内容 |
 |---|---|
-| `session` | Session header: id, timestamp, cwd |
-| `message` | Conversation turn: role (user/assistant/toolResult), content, model, usage |
-| `custom` | Metadata: `model-snapshot`, `openclaw.cache-ttl` |
-| `compaction` | Context window was pruned (old messages dropped) |
-| `model_change` | Model was switched mid-session |
-| `thinking_level_change` | Thinking level adjusted |
+| `session` | 会话头: id, timestamp, cwd |
+| `message` | 对话轮次: role (user/assistant/toolResult), content, model, usage |
+| `custom` | 元数据: model-snapshot, cache-ttl |
+| `compaction` | 上下文窗口被裁剪 |
+| `model_change` | 模型切换 |
+| `thinking_level_change` | 思考级别调整 |
 
-Session index (`sessions.json`) keys:
-- Pattern: `agent:main:{channel}:{contact}` or `agent:main:cron:{job-uuid}`
-- Fields: `sessionId` (UUID = filename), `lastChannel`, `origin.label` (human name), `origin.from` (canonical address), `updatedAt` (epoch ms), `chatType` (direct/group)
+### Session Key 格式
+
+```
+agent:<agentId>:<mainKey>                              # DM (主)
+agent:<agentId>:<channel>:group:<id>                   # 群组
+agent:<agentId>:<channel>:channel:<id>                 # 房间
+agent:main:telegram:group:-1001234567890:topic:42      # Telegram 论坛
+agent:main:discord:channel:123456:thread:987654        # Discord 帖子
+```
+
+### DM 作用域 (`session.dmScope`)
+
+| 值 | 行为 |
+|---|---|
+| `main` (默认) | 所有 DM 共享一个会话 |
+| `per-peer` | 按发送者 ID 隔离 |
+| `per-channel-peer` | 按频道+发送者隔离 (多用户推荐) |
+| `per-account-channel-peer` | 按账号+频道+发送者隔离 |
 
 ---
 
-## Gateway Startup Sequence
+## Gateway Startup
 
-Normal startup takes ~3 seconds:
+### 快速启动
+
+```bash
+# 启动 (默认端口 18789)
+openclaw gateway --port 18789
+
+# 调试模式
+openclaw gateway --port 18789 --verbose
+
+# 强制重启 (先杀死现有监听)
+openclaw gateway --force
+```
+
+### 端口优先级
+
+`--port` > `OPENCLAW_GATEWAY_PORT` > `gateway.port` > `18789`
+
+### 绑定优先级
+
+CLI override > `gateway.bind` > `loopback`
+
+### 安装为系统服务
+
+```bash
+# macOS (launchd): Label ai.openclaw.gateway
+openclaw gateway install
+
+# Linux (systemd user)
+openclaw gateway install
+systemctl --user enable --now openclaw-gateway.service
+sudo loginctl enable-linger $USER
+```
+
+### 正常启动序列 (~3 秒)
+
 ```
 [heartbeat] started
 [gateway] listening on ws://127.0.0.1:18789
 [browser/service] Browser control service ready
-[hooks] loaded 3 internal hook handlers (boot-md, command-logger, session-memory)
+[hooks] loaded N internal hook handlers
 [whatsapp] [default] starting provider
 [signal] [default] starting provider (http://127.0.0.1:8080)
-[telegram] [coder] starting provider
-[telegram] [sales] starting provider
+[telegram] [botname] starting provider
 [whatsapp] Listening for personal WhatsApp inbound messages.
-[signal] signal-cli: Started HTTP server on /127.0.0.1:8080
 ```
 
-If any line is missing, that component failed to start. Check `gateway.err.log`.
+如果任何行缺失, 该组件启动失败, 查看 `gateway.err.log`。
+
+### 运行时协议
+
+- 单端口复用: WebSocket 控制/RPC, HTTP API (OpenAI 兼容), Control UI, Hooks
+- OpenAI 兼容端点: `/v1/models`, `/v1/embeddings`, `/v1/chat/completions`, `/v1/responses`
+- 首帧必须是 `connect`, Gateway 返回 `hello-ok` 快照
 
 ---
 
 ## Known Error Patterns
 
-| Error | Meaning | Fix |
+| 错误 | 含义 | 修复 |
 |---|---|---|
-| `Web connection closed (status 408)` | WhatsApp web timeout, auto-retries up to 12x | Usually self-heals. If reaches 12/12, restart gateway |
-| `Signal RPC -1: Failed to send message` | signal-cli daemon lost connection | Restart gateway |
-| `Signal RPC -5: Failed to send message due to rate limiting` | Signal rate limit | Wait and retry, reduce message frequency |
-| `No profile name set` (signal-cli WARN) | Floods logs, harmless | `signal-cli -a +ACCOUNT updateProfile --given-name "Name"` |
-| `Cross-context messaging denied` | Agent tried to send across channels | Not a bug — security guardrail. Message must originate from correct channel session |
-| `getUpdates timed out after 500 seconds` | Telegram bot lost polling connection | Restart gateway |
-| `Unrecognized keys: "token", "username"` | Wrong config keys for Telegram bots | Use `botToken` not `token` in openclaw.json |
-| `RESOURCE_EXHAUSTED` (Gemini 429) | Embedding rate limit | Reduce workspace file churn, or upgrade Gemini quota |
-| `lane wait exceeded` | Agent blocked on long LLM call | Wait, or restart if stuck > 2 min |
-| `embedded run timeout: timeoutMs=600000` | Agent response exceeded 10 min | Break task into smaller pieces |
-| `gateway timeout after 10000ms` | Gateway unreachable during restart window | Cron fired while gateway was down — transient |
+| `Web connection closed (status 408)` | WhatsApp web 超时, 自动重试 12 次 | 通常自愈; 到 12/12 则 `openclaw gateway restart` |
+| `Signal RPC -1: Failed to send message` | signal-cli 断连 | `openclaw gateway restart` |
+| `Signal RPC -5: rate limiting` | Signal 限流 | 降低发送频率 |
+| `No profile name set` (signal-cli WARN) | 刷日志, 无害 | `signal-cli -a +ACCT updateProfile --given-name "Name"` |
+| `Cross-context messaging denied` | Agent 跨频道发送被拦截 | 安全特性; 消息须从正确频道会话发起 |
+| `getUpdates timed out after 500 seconds` | Telegram bot 轮询断连 | `openclaw gateway restart` |
+| `Unrecognized keys: "token", "username"` | Telegram 配置键错误 | 改用 `botToken` |
+| `RESOURCE_EXHAUSTED` (Gemini 429) | 嵌入限流 | 减少工作区文件变动 / 升级配额 |
+| `lane wait exceeded` | Agent 被长 LLM 调用阻塞 | 等待或超 2 分钟后重启 |
+| `embedded run timeout: timeoutMs=600000` | Agent 响应超 10 分钟 | 拆分为更小任务 |
+| `gateway timeout after 10000ms` | Gateway 重启期间不可达 | 瞬态 — cron 在 gateway 停机时触发 |
+| `refusing to bind ... without auth` | 非回环绑定无认证 | 设置 `gateway.auth.token` 或 `password` |
+| `EADDRINUSE` | 端口冲突 | 使用 `--force` 或手动杀进程 |
 
 ---
 
 ## Extending OpenClaw
 
-OpenClaw has 4 extension layers. Each solves a different problem:
+### 扩展层级
 
-| Layer | What | Where | How to add |
+| 层 | 用途 | 位置 | 添加方式 |
 |---|---|---|---|
-| **Skills** | Knowledge + workflows the agent loads on demand | `/opt/homebrew/lib/node_modules/openclaw/skills/` or `~/.openclaw/workspace/skills/` | `clawdhub install <slug>` or `bunx add-skill <repo>` |
-| **Extensions** | Custom channel plugins (TypeScript) | `~/.openclaw/extensions/{name}/` | Create `openclaw.plugin.json` + TypeScript source |
-| **Channels** | Messaging platforms (built-in) | `openclaw.json → channels.*` + `plugins.entries.*` | Configure in openclaw.json, add credentials |
-| **Cron jobs** | Scheduled autonomous tasks | `~/.openclaw/cron/jobs.json` | Agent creates them via tool, or edit jobs.json directly |
+| **Skills** | 知识 + 工作流 | `~/.openclaw/workspace/skills/` 或 `~/.openclaw/skills/` | `clawhub install <slug>` |
+| **Extensions** | 自定义频道插件 | `~/.openclaw/extensions/<name>/` | TypeScript 开发 |
+| **Channels** | 消息平台 | `openclaw.json → channels.*` | 配置 + 凭证 |
+| **Cron** | 定时自治任务 | `~/.openclaw/cron/jobs.json` | CLI 或直接编辑 |
+| **Plugins** | npm 包 (频道/模型/工具/语音) | `plugins.entries` | `openclaw plugins install <pkg>` |
+| **MCP** | 外部 MCP Server 集成 | `mcp.servers` | `openclaw mcp set` |
 
-### Skills: ClawdHub Ecosystem
-
-Skills are the primary way to extend what the agent knows and can do. They're markdown files with optional scripts/assets that get loaded into context when relevant.
+### Skills: ClawHub
 
 ```bash
-# Search for skills (vector search across the registry)
-clawdhub search "postgres optimization"
-clawdhub search "image generation"
+# 搜索 (向量搜索)
+clawhub search "postgres optimization"
 
-# Browse latest skills
-clawdhub explore
+# 安装
+clawhub install supabase-postgres-best-practices
 
-# Install a skill
-clawdhub install supabase-postgres-best-practices
-clawdhub install nano-banana-pro
+# 列出已安装
+clawhub list
 
-# Install a specific version
-clawdhub install my-skill --version 1.2.3
+# 更新所有
+clawhub update --all
 
-# List what's installed
-clawdhub list
-
-# Update all installed skills
-clawdhub update --all
-
-# Update a specific skill
-clawdhub update my-skill
-clawdhub update my-skill --force  # overwrite local changes
+# 发布
+clawhub login
+clawhub publish ./my-skill --slug my-skill --name "My Skill" --version 1.0.0
 ```
 
-**Currently installed skills (bundled with OpenClaw):**
-
-| Category | Skills |
-|---|---|
-| **Messaging** | discord, slack, imsg, wacli, voice-call |
-| **Social/Web** | bird (X/Twitter), blogwatcher, github, trello, notion |
-| **Google** | gog, google-workspace-mcp, goplaces, local-places |
-| **Media** | nano-banana-pro (Gemini image gen), openai-image-gen, video-frames, gifgrep, pixelation, sag (TTS), openai-whisper, sherpa-onnx-tts, songsee, camsnap |
-| **Coding agents** | coding-agent (Codex/Claude Code/Pi), ccbg (background runner), tmux |
-| **Productivity** | apple-notes, apple-reminders, bear-notes, things-mac, obsidian, himalaya (email) |
-| **Smart home** | openhue (Philips Hue), eightctl (Eight Sleep), sonoscli, blucli (BluOS) |
-| **Dev tools** | github, worktree, starter, desktop, supabase-postgres-best-practices, superdesign |
-| **Content** | remotion-best-practices, remotion-fastest-tech-stack, humanizer, summarize, market, buildinpublic |
-| **Meta** | skill-creator, clawdhub, find-skills, add-skill, model-usage, session-logs, recentplans, canvas |
-
-### Creating Your Own Skill
-
-A skill is just a folder with a `SKILL.md`:
+### 创建 Skill
 
 ```
 my-skill/
-├── SKILL.md              # Required: YAML frontmatter + markdown instructions
-├── scripts/              # Optional: executable scripts
-├── references/           # Optional: docs loaded on demand
-└── assets/               # Optional: templates, images
+├── SKILL.md              # 必需: YAML frontmatter + 指令
+├── scripts/              # 可选: 可执行脚本
+├── references/           # 可选: 按需加载的文档
+└── assets/               # 可选: 模板/图片
 ```
 
-**SKILL.md format:**
+**SKILL.md 格式:**
 ```markdown
 ---
 name: my-skill
-description: What this does and WHEN to trigger it. The description is the primary
-  trigger — the agent reads this to decide whether to load the full skill.
+description: 做什么 + 何时触发。description 是主要触发器 — Agent 据此决定是否加载完整 Skill。
 ---
 
 # My Skill
 
-Instructions go here. Only loaded AFTER the skill triggers.
-Keep under 500 lines. Split large content into references/ files.
-```
-
-**Key principle: the context window is a shared resource.** Only include what the agent doesn't already know. Prefer concise examples over verbose explanations.
-
-```bash
-# Publish to ClawdHub
-clawdhub login
-clawdhub publish ./my-skill --slug my-skill --name "My Skill" --version 1.0.0
-
-# Or publish to GitHub for bunx add-skill
-# (see add-skill skill for details)
+指令内容。仅在 Skill 触发后加载。
+保持在 500 行以内, 大内容拆到 references/。
 ```
 
 ### Multi-Agent Orchestration
 
-OpenClaw can spawn other AI agents (Codex, Claude Code, Pi) as background workers. This is how you run parallel coding tasks, reviews, or any work that benefits from multiple agents.
+OpenClaw 支持多个隔离 Agent, 每个有独立工作区、会话和工具配置。
 
-**The pattern:** `bash pty:true background:true workdir:/path command:"agent 'task'"`
+**Agent 绑定优先级** (从高到低): peer > parentPeer > guildId+roles > guildId > teamId > accountId > channel > default
+
+**Agent 间通信** (需开启):
+```json5
+tools: { agentToAgent: { enabled: true, allow: ["agent-b"] } }
+```
+
+**后台 Agent 工作流 (tmux):**
 
 ```bash
-# Spawn Codex to build something (background, auto-approve)
-bash pty:true workdir:~/project background:true command:"codex exec --full-auto 'Build a REST API for todos'"
-# Returns sessionId for tracking
+# 在 tmux 新窗格中启动编码 Agent
+tmux split-window -h "codex exec --full-auto 'Build a REST API'"
 
-# Spawn Claude Code on a different task
-bash pty:true workdir:~/other-project background:true command:"claude 'Refactor the auth module'"
-
-# Monitor all running agents
-process action:list
-
-# Check output of a specific agent
-process action:log sessionId:XXX
-
-# Send input if agent asks a question
-process action:submit sessionId:XXX data:"yes"
-
-# Kill a stuck agent
-process action:kill sessionId:XXX
+# 或用 openclaw 内置子 Agent:
+# bash pty:true background:true workdir:~/project command:"codex exec 'task'"
 ```
 
-**Parallel PR reviews:**
+> **环境适配**: 我们在 ghostty + tmux 环境中工作, 启动子 Agent 时:
+> - 使用 `tmux split-window` 或 `tmux new-window` 而非裸 `bash`
+> - 需要长时间运行的 Agent 任务, 使用 tmux `detach` 保护
+> - nushell 下使用 `^command` 语法调用外部命令
+
+### MCP Server 集成
+
+**OpenClaw 作为 MCP Server:**
 ```bash
-# Fetch all PR refs
-git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'
-
-# Launch one agent per PR
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #86. git diff origin/main...origin/pr/86'"
-bash pty:true workdir:~/project background:true command:"codex exec 'Review PR #87. git diff origin/main...origin/pr/87'"
+openclaw mcp serve --url ws://127.0.0.1:18789 --token $OPENCLAW_GATEWAY_TOKEN
 ```
 
-**Parallel issue fixing with git worktrees:**
+提供工具: `conversations_list`, `conversation_get`, `messages_read`, `messages_send`, `events_poll`, `attachments_fetch`, `permissions_list_open`, `permissions_respond`
+
+**OpenClaw 作为 MCP Client:**
 ```bash
-git worktree add -b fix/issue-78 /tmp/issue-78 main
-git worktree add -b fix/issue-99 /tmp/issue-99 main
+# 注册外部 MCP Server
+openclaw mcp set my-server '{"command": ["bunx", "my-mcp-server"], "transport": "stdio"}'
 
-bash pty:true workdir:/tmp/issue-78 background:true command:"codex --yolo 'Fix issue #78: description. Commit and push.'"
-bash pty:true workdir:/tmp/issue-99 background:true command:"codex --yolo 'Fix issue #99: description. Commit and push.'"
+# 支持的传输协议: stdio, SSE/HTTP, streamable-http
 ```
 
-**Auto-notify when agent finishes:**
-```bash
-bash pty:true workdir:~/project background:true command:"codex --yolo exec 'Your task.
-
-When completely finished, run: openclaw gateway wake --text \"Done: summary\" --mode now'"
-```
-
-### Adding a New Channel
-
-Channels are messaging platforms the agent can communicate through. Built-in: WhatsApp, Signal, Telegram, iMessage, Discord, Slack.
-
-**Enable a built-in channel:**
-```bash
-# 1. Enable the plugin
-jq '.plugins.entries.discord.enabled = true' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
-
-# 2. Add channel config
-jq '.channels.discord = {enabled: true, dmPolicy: "pairing", groupPolicy: "disabled"}' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
-
-# 3. Add credentials (channel-specific)
-# 4. Restart gateway
-openclaw gateway restart
-```
-
-**Build a custom channel extension:**
-
-```
-~/.openclaw/extensions/{name}/
-├── openclaw.plugin.json    # {"id": "name", "channels": ["name"], "configSchema": {...}}
-├── package.json            # Standard npm package
-├── index.ts                # Entry point
-└── src/
-    ├── channel.ts          # Inbound message handling + outbound send
-    ├── actions.ts          # Tool actions the agent can invoke
-    ├── runtime.ts          # Lifecycle: start, stop, health check
-    ├── config-schema.ts    # JSON schema for plugin config
-    └── types.ts            # TypeScript types
-```
+### Voice Call
 
 ```bash
-# List installed extensions
-ls ~/.openclaw/extensions/
+# 检查插件
+openclaw config get plugins.entries.voice-call
 
-# View extension manifests
-cat ~/.openclaw/extensions/*/openclaw.plugin.json | jq .
+# 发起通话
+openclaw voicecall call --to "+1234567890" --message "Hello"
 
-# Check extension source files
-find ~/.openclaw/extensions/ -name "*.ts" -not -path "*/node_modules/*"
+# 支持: Twilio, Telnyx, Plivo
 ```
 
-### Cross-Channel Communication
+### Canvas
 
-The agent can receive on one channel and send on another, but there are guardrails:
-
-```bash
-# Check cross-context settings
-cat ~/.openclaw/openclaw.json | jq '.tools.message.crossContext'
-# allowAcrossProviders: true = agent CAN send across channels
-# marker.enabled: false = no "[via Signal]" prefix on cross-channel messages
-
-# If you see "Cross-context messaging denied" errors:
-# The agent tried to send from a session bound to channel A to channel B.
-# This is a security feature. To allow it:
-jq '.tools.message.crossContext.allowAcrossProviders = true' ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
-```
-
-**BOOT.md notification protocol** (already configured):
-The agent receives WhatsApp messages, responds on WhatsApp, then sends a notification summary to Signal. This is the primary cross-channel pattern — autopilot on one channel, control center on another.
-
-### Canvas: Web UI for Connected Devices
-
-Push HTML/games/dashboards to connected Mac/iOS/Android nodes:
+将 HTML/应用推送到连接的设备 (Mac/iOS/Android):
 
 ```bash
-# Check canvas config
-cat ~/.openclaw/openclaw.json | jq '.canvasHost // "not configured"'
-
-# List connected nodes
-openclaw nodes list
-
-# Present HTML content on a node
-# canvas action:present node:<node-id> target:http://localhost:18793/__moltbot__/canvas/my-page.html
-
-# Canvas files live in:
+openclaw nodes status
 ls ~/.openclaw/canvas/
 ```
 
-### Voice Calls
+---
 
-Initiate phone calls via Twilio/Telnyx/Plivo:
+## 环境特定注意事项
 
-```bash
-# Check if voice-call plugin is enabled
-cat ~/.openclaw/openclaw.json | jq '.plugins.entries["voice-call"] // "not configured"'
+### Ghostty Terminal
 
-# CLI usage
-openclaw voicecall call --to "+15555550123" --message "Hello"
-openclaw voicecall status --call-id <id>
-```
+- OpenClaw 的浏览器截图和媒体预览在 Ghostty 中正常显示
+- 使用 Ghostty 的 `shell-integration` 特性可改善命令跟踪
 
-### Cron: Scheduled Autonomous Tasks
+### tmux 集成
 
-```bash
-# View all jobs
-cat ~/.openclaw/cron/jobs.json | jq '.jobs[] | {name, enabled, schedule: .schedule, channel: .payload.channel, to: .payload.to}'
+- Gateway 日志可用 `tmux split-window "openclaw logs --follow"` 常驻
+- kill-pane 时注意 nushell 无 SIGHUP 处理: 先 `kill -9 #{pane_pid}` 再 `kill-pane`
+- cron 任务和子 Agent 推荐在独立 tmux window 中运行
 
-# Job schedule types:
-# "kind": "at", "atMs": <epoch>          — one-shot at specific time
-# "kind": "every", "everyMs": <ms>       — recurring interval
+### nushell
 
-# Job delivery targets:
-# channel + to fields determine where results go (signal, whatsapp, telegram)
-# sessionTarget: "isolated" = fresh context each run (no memory of previous runs)
+- `openclaw` 别名: `bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)`
+- JSON 解析直接用 nushell 内置: `open file.json | get key`
+- 管道操作替代 `jq`: `open ~/.openclaw/openclaw.json | get channels | transpose key val`
+- 外部命令需 `^` 前缀: `^openclaw gateway status`
 
-# To add a job, the agent creates it via tool, or edit jobs.json:
-# See existing jobs as templates in ~/.openclaw/cron/jobs.json
-```
+### Starship Prompt
+
+- 长时间的 `openclaw gateway` 进程不会影响 Starship 的命令计时
+- 可在 `starship.toml` 中添加自定义模块显示 gateway 状态
+
+### 包管理
+
+| 场景 | 使用 |
+|---|---|
+| 安装 npm 包 | `bun install` / `bun add` |
+| 执行 npx 命令 | `bunx` |
+| Python 包 | `uv pip install` |
+| Python 脚本 | `uv run` |
+| OpenClaw 插件 | `openclaw plugins install` (内部使用 npm, 无需手动) |
+| ClawHub Skill | `clawhub install` |
 
 ---
 
