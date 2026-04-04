@@ -37,3 +37,12 @@ AGENTS.md
 nvm
 test/
 tests/
+.openclaw/agents
+.openclaw/canvas
+.openclaw/devices
+.openclaw/identity
+.openclaw/logs
+.openclaw/tasks
+.openclaw/update-check.json
+.openclaw/workspace
+

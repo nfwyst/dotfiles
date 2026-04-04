@@ -54,6 +54,15 @@
       "skillFolderHash": "12fbca55392c6d55822ed4253d3a39b79a93ec5b",
       "installedAt": "2026-04-01T04:12:49.891Z",
       "updatedAt": "2026-04-01T04:12:49.891Z"
+    },
+    "openclaw-config": {
+      "source": "adisinghstudent/easyclaw",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/adisinghstudent/easyclaw.git",
+      "skillPath": "skills/openclaw-config/SKILL.md",
+      "skillFolderHash": "5324109e33e114ddcfd53b942c62b07088a33d96",
+      "installedAt": "2026-04-04T08:50:45.322Z",
+      "updatedAt": "2026-04-04T08:50:45.322Z"
     }
   },
   "dismissed": {
