@@ -139,7 +139,7 @@
             "apiKey": {
               "source": "env",
               "provider": "default",
-              "id": "EXA_API_KEY"
+              "id": "LOCAL_EXA_API_KEY"
             }
           }
         }
