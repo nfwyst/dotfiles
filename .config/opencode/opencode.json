@@ -80,8 +80,8 @@
   },
   "lsp": {
     "biome": {
-      "command": "bunx",
-      "args": [
+      "command": [
+        "bunx",
         "@biomejs/biome",
         "lsp-proxy",
         "--stdio"
