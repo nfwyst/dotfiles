@@ -16,6 +16,10 @@
       },
       "model": {
         "primary": "kimi/kimi-code"
+      },
+      "memorySearch": {
+        "provider": "ollama",
+        "model": "qwen3-embedding:8b"
       }
     }
   },
@@ -82,6 +86,21 @@
             },
             "contextWindow": 262144,
             "maxTokens": 32768
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://localhost:11434",
+        "api": "ollama",
+        "models": [
+          {
+            "id": "qwen3-embedding:8b",
+            "name": "Qwen3 Embedding",
+            "input": ["text"],
+            "cost": {
+              "input": 0,
+              "output": 0
+            }
           }
         ]
       }
