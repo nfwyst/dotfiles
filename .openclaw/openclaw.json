@@ -36,7 +36,7 @@
       "resetOnExit": false
     },
     "controlUi": {
-      "allowInsecureAuth": true
+      "allowInsecureAuth": false
     },
     "nodes": {
       "denyCommands": [
@@ -139,7 +139,7 @@
             "apiKey": {
               "source": "env",
               "provider": "default",
-              "id": "LOCAL_EXA_API_KEY"
+              "id": "EXA_API_KEY"
             }
           }
         }
