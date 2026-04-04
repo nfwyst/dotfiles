@@ -46,3 +46,4 @@ tests/
 .openclaw/update-check.json
 .openclaw/workspace
 .openclaw/telegram
+.openclaw/exec-approvals.json
