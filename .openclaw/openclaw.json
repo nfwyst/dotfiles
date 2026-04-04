@@ -10,12 +10,12 @@
     "defaults": {
       "workspace": "/Users/malisheng/.openclaw/workspace",
       "models": {
-        "kimi/k2p5": {
+        "kimi-coding/k2p5": {
           "alias": "Kimi"
         }
       },
       "model": {
-        "primary": "kimi/k2p5"
+        "primary": "kimi-coding/k2p5"
       },
       "memorySearch": {
         "provider": "ollama",
@@ -66,7 +66,24 @@
   "models": {
     "mode": "merge",
     "providers": {
-      "kimi": {
+      "ollama": {
+        "baseUrl": "http://localhost:11434",
+        "api": "ollama",
+        "models": [
+          {
+            "id": "qwen3-embedding:8b",
+            "name": "Qwen3 Embedding",
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0
+            }
+          }
+        ]
+      },
+      "kimi-coding": {
         "baseUrl": "https://api.kimi.com/coding/",
         "api": "anthropic-messages",
         "models": [
@@ -88,30 +105,13 @@
             "maxTokens": 32768
           }
         ]
-      },
-      "ollama": {
-        "baseUrl": "http://localhost:11434",
-        "api": "ollama",
-        "models": [
-          {
-            "id": "qwen3-embedding:8b",
-            "name": "Qwen3 Embedding",
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0
-            }
-          }
-        ]
       }
     }
   },
   "auth": {
     "profiles": {
-      "kimi:default": {
-        "provider": "kimi",
+      "kimi-coding:default": {
+        "provider": "kimi-coding",
         "mode": "api_key"
       }
     }
