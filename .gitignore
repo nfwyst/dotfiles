@@ -45,4 +45,4 @@ tests/
 .openclaw/tasks
 .openclaw/update-check.json
 .openclaw/workspace
-
+.openclaw/telegram

@@ -2,15 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "opencode/gpt-5.4",
-      "variant": "high"
+      "model": "kimi-for-coding/k2p5"
     },
     "hephaestus": {
-      "model": "opencode/gpt-5.4",
-      "variant": "medium"
+      "model": "kimi-for-coding/k2p5"
     },
     "oracle": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "librarian": {
       "model": "kimi-for-coding/k2p5"
@@ -22,16 +20,16 @@
       "model": "kimi-for-coding/k2p5"
     },
     "prometheus": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "metis": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "momus": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "atlas": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "sisyphus-junior": {
       "model": "kimi-for-coding/k2p5"
@@ -39,19 +37,16 @@
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode/gpt-5.4",
-      "variant": "high"
+      "model": "kimi-for-coding/k2p5"
     },
     "ultrabrain": {
-      "model": "opencode/gpt-5.4",
-      "variant": "xhigh"
+      "model": "kimi-for-coding/k2p5"
     },
     "deep": {
-      "model": "opencode/gpt-5.4",
-      "variant": "medium"
+      "model": "kimi-for-coding/k2p5"
     },
     "artistry": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "quick": {
       "model": "kimi-for-coding/k2p5"
@@ -60,7 +55,7 @@
       "model": "kimi-for-coding/k2p5"
     },
     "unspecified-high": {
-      "model": "opencode/glm-5"
+      "model": "kimi-for-coding/k2p5"
     },
     "writing": {
       "model": "kimi-for-coding/k2p5"
