@@ -167,11 +167,12 @@ $env.QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS = 134144
 $env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
 
 # settings for go
-$env.CGO_ENABLED = '1'
+$env.CGO_ENABLED = "1"
 
-$env.NODE_OPTIONS = '--openssl-legacy-provider'
+$env.NODE_OPTIONS = "--openssl-legacy-provider"
 # 为当前 shell 启用 web search
 $env.OPENCODE_ENABLE_EXA = 1
+$env.METRICS_LOG_LEVEL = "error"
 
 # ── Auto-install missing tools ──────────────────────────────────
 if (which nufmt | is-empty) and (which cargo | is-not-empty) {

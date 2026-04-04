@@ -119,9 +119,10 @@ export QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS=134144
 export QWEN_AGENT_DEFAULT_MAX_REF_TOKEN=89429
 
 # settings for go
-export CGO_ENABLED='1'
+export CGO_ENABLED="1"
 # 为当前 shell 启用 web search
 export OPENCODE_ENABLE_EXA=1
+export METRICS_LOG_LEVEL="error"
 
 # Shell integrations
 source <(starship init zsh)
