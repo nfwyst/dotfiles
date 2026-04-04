@@ -1,164 +1,189 @@
 # Performance Reference
 
-Startup optimization, profiling, and performance tuning.
+Startup optimization techniques and profiling methods.
 
-## Startup Architecture
+## Current Startup Optimizations
 
-```
-nvim launch
-├── vim.pack.add()         " Plugin download/load (blocking)
-│   └── shortmess hack    " Suppress messages during load
-├── config.options         " vim.opt settings
-├── config.keymaps         " Keybindings
-├── config.autocmds        " Autocommands
-├── config.lsp             " LSP config + vim.lsp.enable()
-└── plugins/*              " Plugin setup() calls
-    ├── colorscheme        " Theme (synchronous, needed first)
-    ├── ui                 " Snacks, Noice, Lualine, Bufferline, Vimade
-    ├── editor             " which-key, gitsigns, trouble, flash
-    ├── coding             " treesitter, blink.cmp, mini.*
-    └── tools              " mason, conform, nvim-lint
-```
+### 1. vim.loader.enable()
 
-### Deferred Operations
+Bytecode cache for Lua modules. First line in `init.lua`. Caches compiled Lua chunks in `~/.cache/nvim/luac/`.
 
-| Operation | Mechanism | Delay |
-|-----------|-----------|-------|
-| Plugin cleanup | `vim.defer_fn` | 300ms |
-| VimadeFadeActive | `vim.defer_fn` | 500ms |
-| Treesitter start (VimEnter) | autocmd | After UI ready |
-| blink.cmp cargo build | `vim.system` async | PackChanged event |
-
-## Profiling
-
-### Startup Time
-
-```bash
-# Detailed startup profiling
-nvim --startuptime /tmp/startup.log
-sort -k2 -n -r /tmp/startup.log | head -20
-
-# Quick check
-nvim --startuptime /dev/stderr -c "q" 2>&1 | tail -1
-```
-
-### Runtime Profiling
+### 2. Message Suppression During Plugin Loading
 
 ```lua
--- Memory usage
-:lua print(string.format("%.1f MB", collectgarbage("count") / 1024))
-
--- Force GC
-:lua collectgarbage("collect")
-
--- Check loaded modules count
-:lua local n = 0; for _ in pairs(package.loaded) do n = n + 1 end; print(n .. " modules loaded")
-```
-
-### Plugin Load Impact
-
-```lua
--- Check which plugins are active
-:lua for _, p in ipairs(vim.pack.get()) do print(p.spec.name, p.active and "active" or "inactive") end
-```
-
-## Optimization Techniques
-
-### Message Suppression During Load
-
-```lua
--- Prevent hit-enter prompt during vim.pack operations
 local saved_shortmess = vim.o.shortmess
 vim.o.shortmess = "aAFOTIcC"
-vim.pack.add({ ... })
+vim.pack.add({...})
 vim.o.shortmess = saved_shortmess
 vim.cmd("silent! redraw")
 ```
 
-### Snacks Quickfile
+Prevents hit-enter prompts from vim.pack progress output before noice.nvim loads.
 
-`Snacks.quickfile` runs early (before plugins fully load) to start treesitter for directly opened files. This provides instant highlighting but requires the `try_treesitter_start()` guard for languages without queries.
+### 3. Transparent Background Bootstrap
 
-### Snacks Bigfile
-
-`Snacks.bigfile` automatically disables expensive features (treesitter, LSP, etc.) for large files.
-
-### Treesitter Query Caching
-
-`vim.treesitter.query.get()` caches queries internally. The `try_treesitter_start()` function uses this to efficiently check if highlight queries exist.
-
-### Clipboard
+Sets highlight groups to `bg=NONE, fg=NONE` before any plugin loads:
 
 ```lua
-vim.opt.clipboard = "unscheduled"  -- Lazy clipboard initialization (0.12+)
-```
-
-### Disabled Built-in Plugins
-
-```lua
-local disabled = { "gzip", "netrwPlugin", "rplugin", "tarPlugin", "tohtml", "tutor", "zipPlugin" }
-for _, plugin in ipairs(disabled) do
-  vim.g["loaded_" .. plugin] = 1
+for _, hl in ipairs({ "Normal", "NormalNC", "MsgArea", "MsgSeparator", "StatusLine", "StatusLineNC" }) do
+  vim.api.nvim_set_hl(0, hl, { bg = "NONE", fg = "NONE" })
 end
 ```
 
-## Large File Handling
+Prevents blue `MsgSeparator` banner and white flash during startup.
 
-Snacks bigfile automatically handles large files. Manual thresholds:
+### 4. Snacks.quickfile
+
+Fast file open — opens the file before plugins finish loading. Enabled via `quickfile = { enabled = true }`.
+
+### 5. Deferred Operations
+
+| Operation | Delay | Why |
+|---|---|---|
+| Mason auto-install | 100ms | Don't block startup for network IO |
+| Plugin cleanup | 300ms | Don't block for filesystem scanning |
+| ETH price fetch | UIEnter + 0ms | Network request after first paint |
+| Vimade FadeActive | 500ms | Let UI stabilize first |
+| Colorscheme detection | Sync at startup | Must complete before first paint |
+| Fortune header | 200ms timeout | Capped to prevent slow startup |
+
+### 6. Resilient Module Loading
 
 ```lua
--- Treesitter disable for large files
-highlight = {
-  disable = function(lang, buf)
-    local max_filesize = 100 * 1024  -- 100KB
-    local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
-    return ok and stats and stats.size > max_filesize
-  end,
-}
-```
-
-## LSP Performance
-
-### Semantic Tokens Disabled
-
-```lua
-on_attach = function(client)
-  client.server_capabilities.semanticTokensProvider = nil
+local errors = {}
+local function safe_require(mod)
+  local ok, err = pcall(require, mod)
+  if not ok then errors[#errors + 1] = mod .. ": " .. tostring(err) end
 end
 ```
 
-This avoids the overhead of semantic token processing. Treesitter provides sufficient highlighting.
+One module's failure doesn't block the rest. Errors shown after `UIEnter`.
 
-### LSP Log Disabled
+### 7. Disabled Built-in Plugins
+
+`gzip`, `netrwPlugin`, `rplugin`, `tarPlugin`, `tohtml`, `tutor`, `zipPlugin` — prevents loading unused Vim plugins.
+
+### 8. Disabled Providers
+
+```lua
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+```
+
+### 9. blink.cmp Pre-load
+
+```lua
+pcall(require, "blink.cmp.fuzzy.rust")
+```
+
+Pre-loads the Rust module so `ensure_downloaded()` hits the cache and skips download check.
+
+### 10. LSP Log Disabled
 
 ```lua
 vim.lsp.log.set_level(vim.log.levels.OFF)
 ```
 
-### Viewport-Only Semantic Tokens (0.12)
+Prevents log file IO on every LSP message.
 
-If semantic tokens were enabled, 0.12 supports `textDocument/semanticTokens/range` which only requests tokens for the visible viewport, significantly reducing payload.
-
-## Explorer Performance
-
-### Filesystem Watcher
-
-With `watch = true`, the explorer registers `uv.fs_event` watchers on open directories. ENOENT errors from broken symlinks are filtered via Noice.
-
-### Diagnostics Disabled in Explorer
+### 11. termsync Disabled in tmux
 
 ```lua
-explorer = { diagnostics = false }
+if vim.env.TMUX then opt.termsync = false end
 ```
 
-This avoids unnecessary diagnostic computation for the file tree.
+Avoids double-synchronized output that causes cursor ghosting and potential rendering overhead.
 
-## Monitoring
+## Profiling Methods
+
+### Startup Time
+
+```bash
+# Basic startup time
+nvim --startuptime /tmp/startup.log
+sort -k 2 -n -r /tmp/startup.log | head -20
+
+# With specific file
+nvim --startuptime /tmp/startup.log some_file.ts
+```
+
+### Lua Profiling
+
+```bash
+# Profile all functions
+nvim --cmd "profile start /tmp/profile.log" --cmd "profile func *" -c "qa"
+
+# Profile specific file
+nvim --cmd "profile start /tmp/profile.log" --cmd "profile file lua/plugins/ui.lua" -c "qa"
+```
+
+### Runtime Performance Check
+
+```vim
+" Check if treesitter is causing slowness
+:lua vim.print(vim.b.ts_highlight)
+
+" Check active LSP clients (too many?)
+:lua vim.print(#vim.lsp.get_clients({ bufnr = 0 }))
+
+" Check notification queue
+:lua vim.print(Snacks.notifier.get_history())
+```
+
+### Memory Usage
+
+```vim
+" Lua memory
+:lua vim.print(collectgarbage("count") .. " KB")
+
+" Force garbage collection
+:lua collectgarbage("collect")
+```
+
+## Startup Sequence Timing
+
+Approximate timing for each phase (on Apple Silicon Mac):
+
+| Phase | Time | Notes |
+|---|---|---|
+| vim.loader.enable() | ~1ms | Bytecode cache setup |
+| config.options | ~2ms | vim.opt settings |
+| config.hack | ~1ms | Diagnostic override |
+| vim.pack.add() | ~5-15ms | Plugin resolution (cached) |
+| Plugin configs | ~30-60ms | Colorscheme + UI + Editor + Coding + Tools |
+| config.lsp | ~3ms | Diagnostics + vim.lsp.enable() |
+| config.keymaps | ~5ms | All keybindings |
+| config.autocmds | ~2ms | Autocommands |
+| **Total** | **~50-90ms** | Without Mason install |
+
+First launch adds ~2-5s for plugin downloads + blink.cmp cargo build.
+
+## Large File Handling
+
+Snacks.bigfile automatically disables expensive features for files exceeding a size threshold:
+- Treesitter highlighting
+- LSP attachment
+- Indent guides
+- Other Snacks features
+
+## Render-Markdown Performance
+
+render-markdown.nvim is configured to render in all modes (`render_modes = { "n", "c", "t", "i" }`). For very large markdown files, this can cause performance issues. The `anti_conceal` is disabled for non-listed buffers and nofile buftypes to reduce overhead in popup windows.
+
+## Noice Throttling
 
 ```lua
--- Watch memory over time
-:lua vim.defer_fn(function() print(string.format("%.1f MB", collectgarbage("count") / 1024)) end, 5000)
-
--- Check LSP response time
-:lua local start = vim.uv.hrtime(); vim.lsp.buf.hover(); print(string.format("%.1fms", (vim.uv.hrtime() - start) / 1e6))
+throttle = 1000 / 120  -- 120 FPS cap
 ```
+
+Prevents noice from overwhelming the rendering pipeline with rapid message updates.
+
+## Scroll Animation Budget
+
+```lua
+scroll = {
+  animate_repeat = { delay = 50, duration = { step = 2, total = 20 }, easing = "linear" },
+}
+```
+
+Keeps scroll animation tight (20ms total) to feel responsive without blocking input.

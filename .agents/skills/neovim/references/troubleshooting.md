@@ -1,374 +1,277 @@
-# Troubleshooting Guide
+# Troubleshooting Reference
 
-Common issues and solutions for Neovim 0.12+ native configuration.
-
-## Quick Diagnostics
-
-```vim
-:checkhealth              " Full system check
-:checkhealth vim.lsp      " LSP status
-:checkhealth vim.deprecated " Deprecated API usage
-:lsp                      " Interactive LSP management
-:Mason                    " Installed tools
-:messages                 " Recent messages/errors
-:ConformInfo              " Active formatters
-```
-
----
+Common issues and solutions for this Neovim configuration.
 
 ## Startup Issues
 
-### Neovim Won't Start
+### Blank screen or no colorscheme
 
+**Cause**: Plugins not yet installed (first launch) or colorscheme plugin failed to load.
+
+**Fix**:
+```vim
+:PlugSync
+```
+Wait for downloads, then restart Neovim. The transparent background bootstrap in `options.lua` prevents white flash during install.
+
+### "E5113: Error while calling lua chunk" on startup
+
+**Cause**: One of the `safe_require()` modules has a syntax error or missing dependency.
+
+**Fix**: Errors are deferred to `UIEnter` and shown as notifications. Read the error message carefully — it includes the module name (e.g., `plugins: ...`).
+
+### Hit-enter prompt during plugin loading
+
+**Cause**: `vim.pack.add()` progress messages overflow `cmdheight` before noice.nvim loads.
+
+**Fix**: Already handled — `shortmess` is set to `"aAFOTIcC"` during `vim.pack.add()` and restored after. If still occurring, check if `vim.o.shortmess` is being reset elsewhere.
+
+### Slow startup (>200ms)
+
+**Diagnosis**:
 ```bash
-# Start with minimal config
-nvim --clean
-
-# Start without plugins
-nvim -u NONE
-
-# Check for errors
 nvim --startuptime /tmp/startup.log
-cat /tmp/startup.log | grep -i error
-
-# Verbose mode
-nvim -V10/tmp/nvim.log
-cat /tmp/nvim.log | grep -i error
+sort -k 2 -n -r /tmp/startup.log | head -20
 ```
 
-### Plugin Installation Fails
-
-```bash
-# Clear plugin cache
-rm -rf ~/.local/share/nvim/site/pack/core/opt/
-
-# Remove lockfile
-rm ~/.config/nvim/nvim-pack-lock.json
-
-# Check network
-curl -I https://github.com
-
-# Reinstall
-nvim  # vim.pack.add() will re-download
-```
-
-### Slow Startup
-
-```bash
-nvim --startuptime /tmp/startup.log -c "q"
-sort -k2 -n -r /tmp/startup.log | head -20
-```
-
-Check for:
-- Heavy plugin setup in `require()` calls (not deferred)
-- Large number of treesitter parsers
-- Slow LSP server startup
-- Slow `fortune` command in dashboard
-
----
-
-## Syntax Highlighting Issues
-
-### No Highlighting on Direct File Open
-
-**Root cause**: Snacks quickfile starts treesitter before plugins load. For languages where parser exists but no `highlights.scm` queries (e.g., `nu`), treesitter sets `b:ts_highlight=true` and clears `syntax=""`, blocking vim syntax fallback.
-
-**Solution** (already implemented in `coding.lua`):
-
-```lua
--- try_treesitter_start() validates queries exist before starting
-local ok, query = pcall(vim.treesitter.query.get, lang, "highlights")
-if not ok or not query then
-  -- Stop treesitter if running without queries
-  if vim.b[buf].ts_highlight then
-    pcall(vim.treesitter.stop, buf)
-  end
-  -- Restore syntax fallback
-  if vim.bo[buf].syntax == "" then
-    vim.bo[buf].syntax = ft
-  end
-  return
-end
-```
-
-**Diagnostic steps:**
-
-```lua
--- Check treesitter state for current buffer
-:lua print("ft=" .. vim.bo.filetype .. " ts_hl=" .. tostring(vim.b.ts_highlight) .. " syntax=" .. vim.bo.syntax)
-
--- Check if highlight queries exist
-:lua local lang = vim.treesitter.language.get_lang(vim.bo.filetype); print(lang, vim.treesitter.query.get(lang, "highlights") ~= nil)
-```
-
-### Key Behaviors (0.12)
-
-- `vim.treesitter.get_parser()` returns `nil` (doesn't throw)
-- `b:ts_highlight = true` blocks `syntax` fallback
-- `vim.treesitter.start()` succeeds even without queries (creates highlighter, renders nothing)
-- Markdown highlighting is enabled by default in 0.12
-
----
+**Common causes**:
+- Mason auto-install triggering on first launch (one-time, deferred 100ms)
+- blink.cmp cargo build (one-time, on PackChanged)
+- fortune command timeout (capped at 200ms via `vim.system`)
 
 ## LSP Issues
 
-### LSP Not Starting
+### No LSP attached to buffer
+
+**Check**:
+```vim
+:checkhealth vim.lsp
+:lua vim.print(vim.lsp.get_clients({ bufnr = 0 }))
+```
+
+**Common causes**:
+1. Binary not installed: `:Mason` → search → install
+2. Binary not in PATH: Check `vim.fn.stdpath("data") .. "/mason/bin"` is in PATH
+3. Server not in `vim.lsp.enable()` list: Edit `lua/config/lsp.lua`
+4. No root marker found: Server needs a `root_markers` file (e.g., `package.json`, `.git`)
+
+### LSP errors in log
 
 ```vim
-:lsp                   " Check status
-:checkhealth vim.lsp   " Health check
+:lua vim.lsp.log.set_level(vim.log.levels.DEBUG)
+" Reproduce, then check:
+:!cat ~/.local/state/nvim/lsp.log
+" Remember to disable after:
+:lua vim.lsp.log.set_level(vim.log.levels.OFF)
 ```
 
-**Common causes:**
-1. Server binary not installed → `:Mason` → install
-2. Server not in `vim.lsp.enable()` list → add to `config/lsp.lua`
-3. Missing `lsp/<name>.lua` config → create config file
-4. `root_markers` not found → add appropriate markers
-5. Mason bin not in PATH → check `config/lsp.lua` PATH setup
+### vtsls "Invalid input" or crashes
 
-### LSP Not Attaching to Buffer
+**Cause**: Memory exhaustion (large monorepo).
 
+**Fix**: Already set `maxTsServerMemory = 32768` (32GB). If still crashing:
 ```lua
--- Check filetype
-:set filetype?
-
--- Check if filetype matches server config
-:lua print(vim.inspect(vim.lsp.get_configs()))
-
--- Check root detection
-:lua print(vim.inspect(vim.fs.root(0, {".git", "package.json"})))
+-- In lsp/vtsls.lua
+tsserver = { maxTsServerMemory = 1024 * 64 },
 ```
 
-### Completions Not Working
+### Vue files: no TypeScript intellisense in `<script>`
 
-1. Check blink.cmp is loaded:
-   ```lua
-   :lua print(package.loaded["blink.cmp"] ~= nil)
-   ```
-
-2. Check LSP is attached:
-   ```lua
-   :lua print(vim.inspect(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients({ bufnr = 0 }))))
-   ```
-
-3. Manual trigger: `<C-space>` in insert mode
-
-4. Check blink.cmp fuzzy (Rust):
-   ```bash
-   ls ~/.local/share/nvim/site/pack/core/opt/blink.cmp/target/release/
-   # Should contain libblink_cmp_fuzzy.dylib or .so
-   ```
-
-5. Rebuild if missing:
-   ```bash
-   cd ~/.local/share/nvim/site/pack/core/opt/blink.cmp
-   cargo build --release
-   ```
-
-### Formatting Not Working
-
+**Check**:
+1. vue-language-server installed: `:Mason` → check
+2. `@vue/typescript-plugin` path exists:
 ```vim
-:ConformInfo       " Check active formatters
+:lua vim.print(vim.fn.isdirectory(vim.fn.stdpath("data") .. "/mason/packages/vue-language-server/node_modules/@vue/language-server"))
+```
+3. Both `vue_ls` and `vtsls` attached:
+```vim
+:lua vim.print(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients({ bufnr = 0 })))
 ```
 
-**Common causes:**
-1. Formatter not installed → `:Mason` → install
-2. `vim.g.autoformat = false` → `<leader>uf` to toggle
-3. `vim.b.autoformat = false` → `<leader>uF` to toggle
-4. Formatter binary not in PATH → check Mason bin dir
-5. Wrong prettierD config → check `PRETTIERD_DEFAULT_CONFIG`
+### Tailwind LSP starts but provides no completions
 
-### Diagnostics Not Showing
+**Cause**: No `tailwind.config.{js,ts,cjs,mjs}` found in project root.
 
+**Fix**: The `on_attach` auto-stops the client if no config found. Create a tailwind config or check the config file name.
+
+### Noisy diagnostics (false positives)
+
+**Already handled** in `hack.lua`. To add new suppressions:
 ```lua
--- Check if diagnostics exist
-:lua print(vim.inspect(vim.diagnostic.get(0)))
-
--- Check if enabled
-:lua print(vim.diagnostic.is_enabled())
-
--- Toggle diagnostics
--- <leader>ud
+-- In lua/config/hack.lua, add to black_list:
+{ source = "source_name", message = "pattern" },
+{ source = "source_name", codes = { 1234 } },
 ```
 
----
+## Completion Issues
 
-## Snacks Explorer Issues
+### blink.cmp: "module not found" or no fuzzy matching
 
-### ENOENT Errors
+**Cause**: Rust module not built.
 
-**Symptom**: `watch.watch: ENOENT: no such file or directory` notifications
-
-**Cause**: Broken symlinks in `node_modules` cause `uv.fs_event` watcher to fail.
-
-**Solution**: Filtered via Noice notify route:
-```lua
-{ find = "ENOENT" }
-```
-
-The watcher handles the failure gracefully (closes handle, returns). Only the notification needed suppressing.
-
-### Explorer Not Auto-Refreshing
-
-Check `watch = true` in explorer config:
-```lua
-explorer = { watch = true, ... }
-```
-
-### follow_file Not Working for gitignored Dirs
-
-Ensure `ignored = true` in explorer config. With `ignored = false`, gitignored directories aren't entered into the tree, so `follow_file` can't locate files inside them.
-
----
-
-## Plugin Issues
-
-### Plugin Not Loading
-
-```lua
--- Check if plugin is active
-:lua for _, p in ipairs(vim.pack.get()) do if p.spec.name == "plugin-name" then print(vim.inspect(p)) end end
-```
-
-**Solutions:**
-1. Run `:PlugSync` to install missing plugins
-2. Check plugin URL in `plugins/init.lua`
-3. Check lockfile integrity
-
-### blink.cmp Build Fails
-
+**Fix**:
 ```bash
-# Check Rust/Cargo is available
-cargo --version
-
-# Manual rebuild
 cd ~/.local/share/nvim/site/pack/core/opt/blink.cmp
 cargo build --release
 ```
 
-### Treesitter Parser Issues
+Or trigger via `:PlugSync` → PackChanged hook will rebuild.
 
+### Completion menu not showing
+
+**Check**:
 ```vim
-:TSInstallInfo          " Check installed parsers
-:TSUpdate               " Update all parsers
-:TSInstall! <lang>      " Force reinstall specific parser
+:lua vim.print(pcall(require, "blink.cmp.fuzzy.rust"))
+:lua vim.print(require("blink.cmp.config").get().sources)
 ```
 
----
+**Causes**: LSP not attached (no LSP source), buffer too small (buffer source min_keyword_length=2), or Rust module build failure.
+
+### Cmdline completion not working
+
+**Check**: Only auto-shows for `:` commands. For `/`/`?` search, completion is via ghost text only.
+
+## Treesitter Issues
+
+### No syntax highlighting for a filetype
+
+**Check**:
+```vim
+:lua vim.print(vim.b.ts_highlight)
+:lua vim.print(vim.treesitter.language.get_lang(vim.bo.filetype))
+:lua vim.print(vim.treesitter.query.get(vim.treesitter.language.get_lang(vim.bo.filetype), "highlights"))
+```
+
+**Causes**:
+1. No parser installed: `:TSInstall <language>`
+2. No highlight queries: `try_treesitter_start()` falls back to syntax highlighting
+3. Language not registered: Add `vim.treesitter.language.register()` in `coding.lua`
+
+### Nushell (nu) files: no treesitter highlighting
+
+**Expected behavior**: Nu parser exists but has no highlight queries. `try_treesitter_start()` detects this and falls back to `vim.bo.syntax = "nu"`. If treesitter was started first (e.g., by quickfile), it's explicitly stopped.
+
+### MDX: import/export not highlighted as code
+
+**Check**: MDX treesitter injections rely on the custom `is-filetype?` predicate. Verify:
+```vim
+:lua vim.print(vim.bo.filetype)  -- Should be "mdx"
+:InspectTree  -- Check injection nodes
+```
+
+## Formatting Issues
+
+### Format on save not working
+
+**Check**:
+```vim
+:lua vim.print(vim.g.autoformat)   -- Global toggle
+:lua vim.print(vim.b.autoformat)   -- Buffer toggle
+:lua vim.print(require("conform").list_formatters())
+```
+
+**Toggle**: `<leader>uf` (global), `<leader>uF` (buffer)
+
+### prettierd using wrong config
+
+**Check**: `<leader>cf` sets `PRETTIERD_DEFAULT_CONFIG` based on `shiftwidth`. If using `shiftwidth=4`, it uses `.prettierrc_tab.json`.
+
+```vim
+:lua vim.print(vim.env.PRETTIERD_DEFAULT_CONFIG)
+```
+
+### eslint_d not finding config
+
+**Check**: `util.get_file_path()` walks up from the buffer's directory. It checks for eslint config files and also looks for `eslintConfig` in `package.json`.
+
+```vim
+:lua vim.print(require("config.util").get_file_path(require("config.constant").ESLINT, { for_eslint = true, ensure_package = true }))
+```
+
+### Tabs remain after formatting
+
+**Already handled**: Post-save hook runs `:retab` via `format_after_save`.
 
 ## UI Issues
 
-### Icons Not Displaying
+### Images invisible after closing floating windows
 
-1. Install a Nerd Font: `brew install --cask font-jetbrains-mono-nerd-font`
-2. Configure terminal to use the Nerd Font
-3. Verify: `:lua print("")` should show a folder icon
+**Known issue**: Kitty graphics protocol placeholders get overwritten by float redraws. Workaround in `after/plugin/snacks-image-fix.lua` — auto-rebuilds placements on `WinClosed`.
 
-### Colors Wrong
+**If still broken**: Check Snacks version for upstream fix (tracking: snacks.nvim#2634).
 
-```lua
--- Check termguicolors
-:set termguicolors?
+### Cursor ghosting in tmux
 
--- Check colorscheme
-:colorscheme
+**Cause**: Double synchronized output (termsync from both Neovim and tmux).
 
--- Check terminal
-echo $TERM  -- Should be xterm-256color or similar
+**Already handled**: `opt.termsync = false` when `$TMUX` is set.
+
+### Vimade dimming terminals
+
+**Already handled**: Vimade blocklist excludes `snacks_terminal` and `opencode_terminal` filetypes and `terminal` buftype.
+
+### Snacks explorer ENOENT errors
+
+**Cause**: Broken symlinks in `node_modules` trigger ENOENT when Snacks explorer scans directories.
+
+**Already handled**: Noice routes filter ENOENT notifications.
+
+### Bufferline: multiple "index.tsx" buffers indistinguishable
+
+**Already handled**: `name_formatter` prepends parent directory for index files: `components/index.tsx` instead of `index.tsx`.
+
+### Which-key popup too tall
+
+**Already handled**: `height = { max = 23 }`, `no_overlap = false`.
+
+## Dark Mode Issues
+
+### Theme doesn't change with system dark mode
+
+**Inside tmux**: Requires `dark-notify` writing to `~/.local/state/theme/mode`. If file doesn't exist, falls back to 5s polling.
+
+**Outside tmux**: Uses `defaults read -g AppleInterfaceStyle` every 5s.
+
+**Check**:
+```bash
+cat ~/.local/state/theme/mode  # Should contain "dark" or "light"
 ```
 
-### Noice Issues
+### Transparent background not working
 
-```vim
-:Noice dismiss       " Dismiss all messages
-:Noice disable       " Temporarily disable
-:Noice enable        " Re-enable
-```
-
-### Vimade Issues
-
-```vim
-:VimadeToggle        " Toggle vimade
-:VimadeFadeActive    " Manually trigger fade
-```
-
-If Vimade causes issues with specific plugins:
-```lua
--- Add to blocklist in ui.lua
-blocklist = { custom = { buf_opts = { filetype = { "problematic_ft" } } } }
-```
-
----
-
-## Deprecated API Warnings
-
-### `opts.float is deprecated`
-
-**Source**: `vim.diagnostic.jump({ float = true })` in keymaps
-
-**Fix**: Remove `float = true` — replaced by `on_jump` callback in 0.12
-
-### `vim.lsp.get_active_clients()`
-
-**Fix**: Replace with `vim.lsp.get_clients()`
-
-### `vim.loop`
-
-**Fix**: Replace with `vim.uv`
-
-### Check All Deprecations
-
-```vim
-:checkhealth vim.deprecated
-```
-
----
+**Check**: `vim.g.transparent_enabled` must be `true`. Tokyonight `transparent = true` only applies in dark mode.
 
 ## Performance Issues
 
-### High Memory
+### Large files slow
 
-```lua
-:lua print(collectgarbage("count") .. " KB")
-:lua collectgarbage("collect")
-```
+**Already handled**: `Snacks.bigfile` disables features for large files.
 
-### Input Lag
+### Undo file error E828
 
-1. Check LSP response time
-2. Reduce `updatetime` (currently 200ms)
-3. Check treesitter for very large files (Snacks bigfile should handle this)
-4. Disable animations: `<leader>ua`
+**Cause**: File path too long for undo file name on macOS (>255 chars).
 
----
+**Already handled**: `undo_file_check` autocmd disables `undofile` for affected buffers.
 
-## Reset & Recovery
+### eslint_d consuming too much memory
 
-### Full Reset
-
+**Fix**: Restart eslint_d:
 ```bash
-# Backup
-mv ~/.config/nvim ~/.config/nvim.bak
-mv ~/.local/share/nvim ~/.local/share/nvim.bak
-mv ~/.local/state/nvim ~/.local/state/nvim.bak
-mv ~/.cache/nvim ~/.cache/nvim.bak
-
-# Restore from dotfiles
-# git clone <repo> → copy .config/nvim/
-nvim  # Plugins auto-install via vim.pack
+eslint_d restart
 ```
 
-### Clear Plugin Cache Only
+The `ESLINT_D_PPID` is set to Neovim's PID, so eslint_d should auto-stop when Neovim exits.
 
-```bash
-rm -rf ~/.local/share/nvim/site/pack/core/opt/
-rm ~/.config/nvim/nvim-pack-lock.json
-nvim  # Re-downloads everything
-```
+## Plugin Issues
 
-### Quick Troubleshoot
+### Plugin not loading after adding to vim.pack.add()
 
-```bash
-nvim --clean        # No config
-nvim -u NONE        # No init.lua
-```
+**Steps**:
+1. Restart Neovim (vim.pack installs on startup)
+2. Or run `:PlugSync`
+3. Check `:lua vim.print(vim.pack.get("plugin-name"))`
+4. Verify plugin is in `~/.local/share/nvim/site/pack/core/opt/`
+
+### Inactive plugin cleanup on every startup
+
+**Expected behavior**: Deferred cleanup runs 300ms after startup. If a plugin URL changes but the old directory remains, it's cleaned up automatically.

@@ -1,267 +1,192 @@
-# Tools & Commands Reference
+# Tools Reference
 
-Built-in commands, CLI tools, and debug utilities for Neovim 0.12+.
+Built-in commands, CLI tools, and debug utilities.
 
-## Built-in Commands
+## User Commands
 
-### LSP
+| Command | Source | Action |
+|---|---|---|
+| `:PlugSync` | plugins/init.lua | Clean inactive plugins + update all |
+| `:AddQuotes` | config/keymaps.lua | Convert selected lines to JSON snippet format (visual mode) |
+| `:Tsw rt=bun show_order=true` | ts-worksheet | Run current JS/TS file with bun, show execution order |
+| `:Mason` | mason.nvim | Open Mason UI (install/update LSP servers and tools) |
+| `:Leet` | leetcode.nvim | Open LeetCode menu |
 
-```vim
-:lsp                       " Interactive LSP management (new in 0.12)
-:checkhealth vim.lsp       " LSP health check
-```
+## Neovim Built-in Commands
 
-### LSP (Lua)
+| Command | Action |
+|---|---|
+| `:checkhealth vim.lsp` | LSP server status and diagnostics |
+| `:checkhealth` | Full health check |
+| `:lsp` | Quick LSP info |
+| `:Inspect` | Show highlight groups under cursor |
+| `:InspectTree` | Show treesitter tree |
 
-```lua
-vim.lsp.get_clients()                -- Active clients
-vim.lsp.get_clients({ bufnr = 0 })  -- Clients for current buffer
-vim.lsp.buf.format({ async = true }) -- Format document
-vim.lsp.buf.rename()                 -- Rename symbol
-vim.lsp.buf.code_action()            -- Code actions
-vim.lsp.buf.hover()                  -- Hover info
-vim.lsp.buf.signature_help()         -- Signature help
-vim.lsp.inlay_hint.enable(bool)      -- Toggle inlay hints
-vim.lsp.codelens.run()               -- Run codelens
-vim.lsp.codelens.enable(bool)        -- Toggle codelens
-```
+## Debug Tools
 
-### Mason
+### LSP Debugging
 
 ```vim
-:Mason                     " Open Mason UI
-:MasonInstall <pkg>        " Install package
-:MasonUninstall <pkg>      " Uninstall package
-:MasonUpdate               " Update all packages
+" Check active LSP clients for current buffer
+:lua vim.print(vim.lsp.get_clients({ bufnr = 0 }))
+
+" Check LSP capabilities
+:lua vim.print(vim.lsp.get_clients()[1].server_capabilities)
+
+" Enable LSP logging (disabled by default)
+:lua vim.lsp.log.set_level(vim.log.levels.DEBUG)
+" Log location: ~/.local/state/nvim/lsp.log
+
+" Check if server supports a method
+:lua vim.print(vim.lsp.get_clients()[1]:supports_method("textDocument/inlayHint"))
+
+" Force-restart all LSP clients
+:lua for _, client in pairs(vim.lsp.get_clients()) do client:stop() end
+" Then reopen the file
 ```
 
-### vim.pack
+### Treesitter Debugging
 
 ```vim
-:PlugSync                  " Custom: cleanup inactive + update all
+" Check if treesitter is active
+:lua vim.print(vim.b.ts_highlight)
+
+" Check available parsers
+:lua vim.print(vim.treesitter.language.get_lang(vim.bo.filetype))
+
+" Check highlight queries
+:lua vim.print(vim.treesitter.query.get("typescript", "highlights"))
+
+" Inspect tree
+:InspectTree
+" or
+:lua vim.treesitter.inspect_tree()
+
+" Force-restart treesitter
+:lua vim.treesitter.stop() vim.treesitter.start()
 ```
 
-```lua
-vim.pack.add(specs)        -- Install + load plugins
-vim.pack.update()          -- Update all
-vim.pack.get()             -- List all plugins with state
-vim.pack.del(names)        -- Remove plugins
-```
-
-### Treesitter
+### Diagnostic Debugging
 
 ```vim
-:TSInstall <lang>          " Install parser
-:TSUpdate                  " Update all parsers
-:TSInstallInfo             " Show installed parsers
-:InspectTree               " Show syntax tree
-:Inspect                   " Show highlight groups under cursor
-:EditQuery                 " Edit treesitter queries (with completion)
+" List all diagnostics for current buffer
+:lua vim.print(vim.diagnostic.get(0))
+
+" Check diagnostic namespaces
+:lua vim.print(vim.diagnostic.get_namespaces())
+
+" Check if diagnostics are enabled
+:lua vim.print(vim.diagnostic.is_enabled({ bufnr = 0 }))
 ```
 
-### Conform (Formatting)
+### Plugin Debugging
 
 ```vim
-:ConformInfo               " Show active formatters for current buffer
+" List all managed plugins
+:lua vim.print(vim.pack.get())
+
+" Check if a plugin is loaded
+:lua vim.print(vim.pack.get("snacks.nvim"))
+
+" Check plugin install location
+" ~/.local/share/nvim/site/pack/core/opt/
+
+" Force-update a specific plugin
+:lua vim.pack.update("snacks.nvim")
 ```
 
-### Snacks Picker
-
-All picker commands are accessed via Lua:
-
-```lua
-Snacks.picker.files()              -- Find files
-Snacks.picker.grep()               -- Grep
-Snacks.picker.buffers()            -- Buffers
-Snacks.picker.help()               -- Help pages
-Snacks.picker.keymaps()            -- Keymaps
-Snacks.picker.commands()           -- Commands
-Snacks.picker.diagnostics()        -- Diagnostics
-Snacks.picker.lsp_definitions()    -- LSP definitions
-Snacks.picker.lsp_references()     -- LSP references
-Snacks.picker.lsp_symbols()        -- LSP symbols
-Snacks.picker.git_log()            -- Git log
-Snacks.picker.git_status()         -- Git status
-Snacks.picker.colorschemes()       -- Colorscheme picker
-Snacks.picker.notifications()      -- Notification history
-Snacks.picker.resume()             -- Resume last picker
-Snacks.picker.undo()               -- Undo tree
-```
-
-### Snacks (Other)
-
-```lua
-Snacks.explorer()          -- File explorer
-Snacks.lazygit()           -- Lazygit
-Snacks.terminal(cmd)       -- Float terminal
-Snacks.bufdelete()         -- Delete buffer safely
-Snacks.notifier.show_history()  -- Show notifications
-Snacks.scratch()           -- Scratch buffer
-Snacks.rename.rename_file() -- Rename file
-Snacks.gitbrowse()         -- Open in browser
-Snacks.dim()               -- Toggle dim
-Snacks.toggle.zoom()       -- Toggle zoom
-Snacks.toggle.zen()        -- Toggle zen
-Snacks.words.jump(count)   -- Navigate references
-```
-
-### Noice
+### Completion Debugging (blink.cmp)
 
 ```vim
-:Noice last                " Last message
-:Noice history             " Message history
-:Noice all                 " All messages
-:Noice dismiss             " Dismiss all
+" Check if Rust module is loaded
+:lua vim.print(pcall(require, "blink.cmp.fuzzy.rust"))
+
+" Check completion sources
+:lua vim.print(require("blink.cmp.config").get().sources)
 ```
 
-### Trouble
+### Formatter Debugging
 
 ```vim
-:Trouble diagnostics toggle            " Toggle diagnostics
-:Trouble diagnostics toggle filter.buf=0  " Buffer diagnostics
-:Trouble symbols toggle                " Toggle symbols
-:Trouble lsp toggle                    " LSP references/defs
-:Trouble loclist toggle                " Location list
-:Trouble qflist toggle                 " Quickfix list
+" Check which formatters would run
+:lua vim.print(require("conform").list_formatters())
+
+" Check formatter config
+:lua vim.print(require("conform").get_formatter_info("prettierd"))
+
+" Manual format with logging
+:lua require("conform").format({ timeout_ms = 3000, lsp_fallback = true })
+
+" Check autoformat state
+:lua vim.print(vim.g.autoformat, vim.b.autoformat)
 ```
 
-### Git
-
-```lua
--- Gitsigns
-require("gitsigns").stage_hunk()
-require("gitsigns").reset_hunk()
-require("gitsigns").preview_hunk_inline()
-require("gitsigns").blame_line()
-require("gitsigns").diffthis()
-require("gitsigns").toggle_signs()
-```
-
-### Grug-far (Search & Replace)
-
-```lua
-require("grug-far").open({ prefills = { paths = vim.fn.expand("%") } })
-```
-
-### Flash (Motion)
-
-```lua
-require("flash").jump()        -- Flash jump
-require("flash").treesitter()  -- Treesitter-aware jump
-require("flash").remote()      -- Remote flash (operator pending)
-```
-
-### Codecompanion (AI)
+### Linter Debugging
 
 ```vim
-:CodeCompanion             " Open AI chat
-:CodeCompanionActions      " Show AI actions
-:CodeCompanionChat         " Chat interface
+" Check which linters are configured
+:lua vim.print(require("lint").linters_by_ft)
+
+" Manually trigger lint
+:lua require("lint").try_lint()
+
+" Check eslint_d status
+:!eslint_d --status
 ```
 
-## CLI Tools
+## External CLI Tools
 
-### Required
+Tools installed via Mason and used by this configuration:
 
-| Tool | Purpose | Install |
-|------|---------|---------|
-| `git` | Plugin management, gitsigns | System package manager |
-| `ripgrep` | Snacks grep | `brew install ripgrep` |
-| `fd` | Snacks file finder | `brew install fd` |
-| `cargo` | Build blink.cmp | `brew install rust` |
+| Tool | Purpose | Used By |
+|---|---|---|
+| `eslint_d` | Fast ESLint daemon | nvim-lint, conform (fix mode) |
+| `prettierd` | Fast Prettier daemon | conform |
+| `stylua` | Lua formatter | conform |
+| `shfmt` | Shell formatter | conform |
+| `beautysh` | Zsh/Bash formatter | conform |
+| `taplo` | TOML formatter + LSP | conform, lsp |
+| `vale` | Prose linter | nvim-lint |
+| `kulala-fmt` | HTTP file formatter | conform |
+| `nginxfmt` | Nginx config formatter | conform |
+| `sqruff` | SQL formatter | conform |
+| `ast-grep` | Structural search/replace | Manual use |
+| `tectonic` | LaTeX engine | render-markdown |
+| `tree-sitter-cli` | Parser management | TSInstall |
+| `mmdc` | Mermaid diagram renderer | Manual use |
+| `uv` | Python package manager | uv.nvim |
 
-### Optional
+## File Paths
 
-| Tool | Purpose | Install |
-|------|---------|---------|
-| `node` | LSP servers, prettierd | `brew install node` |
-| `lazygit` | Git TUI | `brew install lazygit` |
-| `fortune` | Dashboard quotes | `brew install fortune` |
-| `lua-language-server` | Lua LSP | Via Mason |
-| `stylua` | Lua formatter | Via Mason |
-| `prettierd` | JS/TS/CSS formatter | Via Mason |
-| `shfmt` | Shell formatter | Via Mason |
-| `eslint_d` | JS/TS linter | Via Mason |
+| Path | Content |
+|---|---|
+| `~/.config/nvim/` | Configuration root |
+| `~/.local/share/nvim/site/pack/core/opt/` | vim.pack plugins |
+| `~/.local/share/nvim/mason/` | Mason root |
+| `~/.local/share/nvim/mason/bin/` | Mason-installed binaries |
+| `~/.local/state/nvim/lsp.log` | LSP log (when enabled) |
+| `~/.local/share/nvim/snacks/todo/todo.md` | Global todo file |
+| `~/.config/.prettierrc.json` | Prettier config (2-space) |
+| `~/.config/.prettierrc_tab.json` | Prettier config (4-space/tab) |
 
-## Debug Utilities
-
-### Lua Debug
-
-```lua
--- Print table contents
-:lua print(vim.inspect(some_table))
-
--- Buffer info
-:lua print(vim.api.nvim_buf_get_name(0))
-:lua print(vim.bo.filetype)
-:lua print(vim.bo.syntax)
-
--- Treesitter state
-:lua print(vim.b.ts_highlight)
-:lua print(vim.inspect(vim.treesitter.get_parser():lang()))
-:lua print(vim.treesitter.get_node():type())
-
--- Check highlight queries exist
-:lua print(vim.treesitter.query.get("lua", "highlights") ~= nil)
-
--- Loaded modules
-:lua print(vim.inspect(package.loaded))
-
--- Reload module
-:lua package.loaded["module.name"] = nil; require("module.name")
-```
-
-### LSP Debug
-
-```lua
--- Active clients with names
-:lua print(vim.inspect(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients())))
-
--- Client capabilities
-:lua print(vim.inspect(vim.lsp.get_clients()[1].server_capabilities))
-
--- Diagnostics for current buffer
-:lua print(vim.inspect(vim.diagnostic.get(0)))
-
--- Check if method supported
-:lua print(vim.lsp.get_clients()[1]:supports_method("textDocument/inlayHint"))
-```
-
-### Startup Profiling
+## Startup Profiling
 
 ```bash
-# Startup time analysis
-nvim --startuptime /tmp/startup.log
-sort -k2 -n -r /tmp/startup.log | head -20
+# Startup time report
+nvim --startuptime /tmp/nvim-startup.log
+cat /tmp/nvim-startup.log | sort -k 2 -n -r | head -20
 
-# Memory usage
-nvim --cmd 'lua print(collectgarbage("count"))' --cmd 'q'
-
-# Verbose logging
-nvim -V10/tmp/nvim.log
+# Profile specific module
+nvim --cmd "profile start /tmp/profile.log" --cmd "profile func *" -c "qa"
 ```
 
-### Health Checks
+## Environment Variables
 
-```vim
-:checkhealth              " Full system check
-:checkhealth vim.lsp      " LSP only
-:checkhealth vim.treesitter " Treesitter only
-:checkhealth vim.deprecated " Check for deprecated usage
-```
-
-## Validation Commands
-
-```bash
-# Check Lua syntax
-luacheck lua/
-
-# Validate config loads
-nvim --headless -c "lua require('config.options')" -c "q"
-
-# Run health checks
-nvim --headless -c "checkhealth" -c "qa!" 2>&1
-
-# Profile startup
-nvim --startuptime /tmp/startup.log -c "q" && cat /tmp/startup.log
-```
+| Variable | Purpose | Used In |
+|---|---|---|
+| `TERMINAL` | Ghostty detection | plugins/init.lua |
+| `TMUX` | tmux detection (termsync disable) | config/options.lua |
+| `SSH_TTY` | SSH detection (clipboard disable) | config/options.lua |
+| `ESLINT_D_PPID` | eslint_d lifecycle management | plugins/tools.lua |
+| `PRETTIERD_DEFAULT_CONFIG` | Prettier config path override | config/keymaps.lua |
+| `DEEPSEEK_API_KEY` | DeepSeek API key | plugins/tools.lua |

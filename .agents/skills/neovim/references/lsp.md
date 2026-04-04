@@ -1,102 +1,105 @@
-# LSP Stack Reference
+# LSP Reference
 
-Native Neovim 0.12+ LSP configuration with blink.cmp completion and conform.nvim formatting.
+Complete LSP stack documentation for Neovim 0.12+ native configuration.
 
 ## Architecture
 
 ```
-vim.lsp.config("*", global_opts)   → Global LSP settings for all servers
-lsp/<server>.lua                    → Per-server configs (auto-discovered)
-vim.lsp.enable({ list })           → Activate servers
-lua/config/lsp.lua                 → Diagnostics, global config, enable list
-lua/plugins/coding.lua             → blink.cmp completion
-lua/plugins/tools.lua              → Mason, conform (formatting), nvim-lint (linting)
+lsp/*.lua             → Server-specific configs (auto-discovered by vim.lsp.config)
+lua/config/lsp.lua    → Mason PATH, diagnostics, global settings, vim.lsp.enable()
+lua/config/hack.lua   → Diagnostic blacklist (vim.diagnostic.set override)
+lua/plugins/tools.lua → Mason setup, conform (formatting), nvim-lint (linting)
+lua/plugins/coding.lua → blink.cmp (completion), lazydev (Lua dev)
 ```
 
-## Native LSP Setup
+## Enabled Servers
 
-### Global Config
+| Server | Filetypes | Binary | Notes |
+|---|---|---|---|
+| `lua_ls` | lua | lua-language-server | Workspace checkThirdParty=false, callSnippet=Replace |
+| `vtsls` | js/ts/jsx/tsx/mdx/vue | bun run vtsls | 32GB memory limit, @vue/typescript-plugin for Hybrid Mode |
+| `vue_ls` | vue | vue-language-server | Volar, resolves tsdk from Mason vtsls bundle |
+| `html` | html, templ | vscode-html-language-server | |
+| `cssls` | css, scss, less | vscode-css-language-server | |
+| `css_variables` | css, scss | css-variables-language-server | |
+| `cssmodules_ls` | js/ts/jsx/tsx | bun run cssmodules-language-server | |
+| `emmet_language_server` | html/css/scss/less/jsx/tsx/svelte/vue | bun run emmet-language-server | |
+| `tailwindcss` | html/css/scss/js/ts/jsx/tsx/svelte/vue | bun run tailwindcss-language-server | Auto-stops if no tailwind config found |
+| `taplo` | toml | taplo | SchemaStore integration |
+| `jsonls` | json, jsonc | vscode-json-language-server | SchemaStore integration |
+| `yamlls` | yaml, yaml.docker-compose | yaml-language-server | SchemaStore, keyOrdering=false |
+| `solc` | solidity | solc | Root: hardhat.config/foundry.toml |
+| `protols` | proto | protols | |
+| `docker_language_server` | dockerfile | docker-langserver | |
+
+## Vue Hybrid Mode
+
+Two servers cooperate for Vue files:
+
+1. **vue_ls** (Volar) — handles `<template>` semantics and `<style>` CSS intellisense
+2. **vtsls** with `@vue/typescript-plugin` — handles `<script>` TypeScript in `.vue` files
+
+### Configuration Details
+
+**vtsls** includes `"vue"` in its filetypes and loads the Vue plugin:
 
 ```lua
--- lua/config/lsp.lua
-vim.lsp.config("*", {
-  capabilities = {
-    workspace = {
-      fileOperations = { didRename = true, willRename = true },
+tsserver = {
+  globalPlugins = {
+    {
+      name = "@vue/typescript-plugin",
+      location = vim.fn.stdpath("data") .. "/mason/packages/vue-language-server/node_modules/@vue/language-server",
+      languages = { "vue" },
+      configNamespace = "typescript",
+      enableForWorkspaceTypeScriptVersions = true,
     },
   },
-  on_attach = function(client)
-    client.server_capabilities.semanticTokensProvider = nil  -- Disable semantic tokens
-  end,
-})
-
-vim.lsp.log.set_level(vim.log.levels.OFF)
+},
 ```
 
-### Server Config Files
-
-Each `lsp/<name>.lua` returns a config table:
+**vue_ls** resolves tsdk from Mason's vtsls bundle:
 
 ```lua
--- lsp/lua_ls.lua
-return {
-  cmd = { "lua-language-server" },
-  filetypes = { "lua" },
-  root_markers = { ".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml" },
-  settings = {
-    Lua = {
-      runtime = { version = "LuaJIT" },
-      workspace = { checkThirdParty = false, library = { ... } },
-    },
+init_options = {
+  typescript = {
+    tsdk = vim.fn.stdpath("data") .. "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib",
   },
-}
+},
 ```
 
-### Enabled Servers
+## vtsls Special Features
+
+### MDX Support
+
+- MDX files get `get_language_id = "typescriptreact"` so tsserver provides completions
+- Diagnostics are disabled for MDX buffers (false positives from TS treating prose as code)
+
+### Bun Integration
 
 ```lua
-vim.lsp.enable({
-  "lua_ls", "vtsls", "html", "cssls", "css_variables", "cssmodules_ls",
-  "emmet_language_server", "tailwindcss", "taplo", "solc", "protols",
-  "docker_language_server", "jsonls", "yamlls",
-})
+typescript = {
+  npm = bun_path,           -- Use bun for npm resolution
+  tsserver = { nodePath = bun_path },  -- Use bun as Node runtime
+},
 ```
 
-### Key vim.lsp API (0.12)
+## Global LSP Settings
+
+Applied to all servers via `vim.lsp.config("*", ...)`:
 
 ```lua
-vim.lsp.config(name, opts)       -- Register/merge config (auto-discovers lsp/*.lua)
-vim.lsp.config("*", opts)        -- Global defaults for all servers
-vim.lsp.enable(names)            -- Start/stop clients as needed
-vim.lsp.is_enabled(name)         -- Check if config is enabled (new in 0.12)
-vim.lsp.get_configs(filter?)     -- Get all configs (new in 0.12)
-vim.lsp.get_clients(filter?)     -- Get active clients (replaces get_active_clients)
-
--- Client methods (0.11+ style)
-Client:request(method, params)   -- Send LSP request
-Client:supports_method(method)   -- Check capability
-Client:stop(force?)              -- Stop client (force = timeout before SIGKILL)
-Client:is_stopped()              -- Check if stopped
-Client:exec_cmd(command)         -- Execute LSP command
-
--- Built-in command
-:lsp                             -- Interactive LSP management (new in 0.12)
+capabilities = {
+  workspace = {
+    fileOperations = { didRename = true, willRename = true },
+  },
+},
+on_attach = function(client)
+  client.server_capabilities.semanticTokensProvider = nil  -- Disable semantic tokens
+end,
 ```
 
-### Inlay Hints
-
-Auto-enabled for supporting servers via `LspAttach`:
-
-```lua
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(event)
-    local client = vim.lsp.get_client_by_id(event.data.client_id)
-    if client and client:supports_method("textDocument/inlayHint") then
-      vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
-    end
-  end,
-})
-```
+- **Log level**: OFF (`vim.lsp.log.set_level(vim.log.levels.OFF)`)
+- **Inlay hints**: Auto-enabled via `LspAttach` for servers supporting `textDocument/inlayHint`
 
 ## Diagnostics
 
@@ -106,160 +109,162 @@ vim.api.nvim_create_autocmd("LspAttach", {
 vim.diagnostic.config({
   underline = false,
   virtual_lines = false,
-  virtual_text = { spacing = 0, current_line = true },  -- Show on current line only
+  virtual_text = { spacing = 0, current_line = true },
   float = { focusable = true, style = "minimal", border = "rounded", source = true },
   severity_sort = true,
   signs = {
-    text = {
-      [vim.diagnostic.severity.ERROR] = "",
-      [vim.diagnostic.severity.WARN] = "",
-      [vim.diagnostic.severity.INFO] = "",
-      [vim.diagnostic.severity.HINT] = "󰌶",
-    },
+    text = { [ERROR] = "", [WARN] = "", [INFO] = "", [HINT] = "󰌶" },
   },
 })
 ```
 
-### Diagnostic API (0.12)
+### Blacklist (hack.lua)
 
-```lua
-vim.diagnostic.jump({ count = 1, severity = ... })   -- Jump (replaces goto_next/prev)
-vim.diagnostic.enable(bool)                            -- Toggle diagnostics
-vim.diagnostic.is_enabled()                            -- Check state
-vim.diagnostic.get(bufnr, opts)                        -- Get diagnostics
-vim.diagnostic.open_float()                            -- Float at cursor
-vim.diagnostic.status()                                -- Status description (new in 0.12)
+Intercepts `vim.diagnostic.set` to filter noisy diagnostics before display:
 
--- REMOVED in 0.12:
--- vim.diagnostic.disable()        → use vim.diagnostic.enable(false)
--- vim.diagnostic.is_disabled()    → use not vim.diagnostic.is_enabled()
--- vim.diagnostic.goto_next/prev   → use vim.diagnostic.jump()
-```
-
-### Diagnostic Blacklist (config/hack.lua)
-
-Custom filter that removes diagnostics from specific sources/codes (e.g., noisy ESLint rules).
+| Source | Filter Type | Pattern/Codes |
+|---|---|---|
+| eslint_d | message | `path::String` |
+| eslint_d | message | `projectService` |
+| ts | message | `File is a CommonJS module` |
+| ts | codes | 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 |
 
 ## Completion (blink.cmp)
 
-### Setup
+### Sources
 
-- **Fuzzy engine**: Rust (compiled from source via `cargo build --release`)
-- **Branch**: `main` (latest features)
-- **No Lua fallback**: Rust-only fuzzy matching
+| Source | Priority | Min Keyword | Notes |
+|---|---|---|---|
+| LSP | default | default | Primary |
+| path | default | default | Show hidden files, trailing slash |
+| snippets | default | 1 | Custom snippets from `~/.config/nvim/snippets/` |
+| buffer | default | 2 | |
+| lazydev | 100 (Lua only) | default | `lazydev.integrations.blink` module |
 
-### Sources (priority order)
+### Snippet Extensions
 
-1. **lazydev** — Neovim Lua API completions
-2. **lsp** — Language server completions
-3. **path** — File path completions
-4. **snippets** — friendly-snippets
-5. **buffer** — Buffer word completions
+MDX files inherit snippets from: javascript, javascriptreact, typescript, typescriptreact, html.
 
-### Key Bindings (insert mode)
+### Fuzzy Matching
 
-| Key | Action |
-|-----|--------|
-| `<C-space>` | Trigger completion |
-| `<C-y>` | Accept completion |
-| `<C-n>` / `<C-p>` | Navigate items |
-| `<C-b>` / `<C-f>` | Scroll docs |
-| `<Tab>` | Snippet: jump forward |
-| `<S-Tab>` | Snippet: jump backward |
+- Implementation: Rust (`blink.cmp.fuzzy.rust`)
+- Built from source via `cargo build --release` (PackChanged hook)
+- `download = false`, `ignore_version_mismatch = true`
 
-### Configuration Highlights
+### Cmdline
 
-```lua
-require("blink.cmp").setup({
-  keymap = { preset = "default" },
-  completion = {
-    accept = { auto_brackets = { enabled = true } },
-    menu = { border = "rounded", draw = { treesitter = { "lsp" } } },
-    documentation = { auto_show = true, auto_show_delay_ms = 200, window = { border = "rounded" } },
-  },
-  sources = {
-    default = { "lazydev", "lsp", "path", "snippets", "buffer" },
-    providers = { lazydev = { name = "LazyDev", module = "lazydev.integrations.blink", score_offset = 100 } },
-  },
-})
-```
+- Auto-show for `:` commands
+- Ghost text for `/` and `?` search
+- Position integrates with Noice via `vim.g.ui_cmdline_pos`
+- Preset: `cmdline` with `<c-l>` show, `<c-e>` cancel
+
+### Menu
+
+- Direction priority: north, south
+- Treesitter highlighting for LSP items
+- Columns: label + description | kind icon + kind | source name
+- Rounded border, no scrollbar
 
 ## Formatting (conform.nvim)
 
-### Format on Save
+### Formatter Selection Logic
 
-```lua
-vim.api.nvim_create_autocmd("BufWritePre", {
-  callback = function(args)
-    if vim.g.autoformat and vim.b[args.buf].autoformat ~= false then
-      require("conform").format({ bufnr = args.buf, timeout_ms = 3000 })
-    end
-  end,
-})
-```
+| Mode | Triggered By | Formatters |
+|---|---|---|
+| Format (default) | `<leader>cf`, auto-save | prettierd |
+| Fix | `<leader>ci` | eslint_d |
+| Injected | `<leader>cF` | injected languages |
 
-### Formatters by Filetype
+### Prettierrc Selection
 
-| Filetype | Formatter |
-|----------|-----------|
-| lua | `stylua` |
-| javascript, typescript, jsx, tsx | `prettierd` |
-| html, css, scss, less | `prettierd` |
-| json, jsonc, yaml | `prettierd` |
-| markdown, mdx | `prettierd` |
-| sh, bash, zsh | `shfmt` |
-
-### Manual Format
-
-`<leader>cf` — Formats with prettierD config selection:
+Based on current buffer's `shiftwidth`:
 - `shiftwidth == 4` → `~/.config/.prettierrc_tab.json`
 - Otherwise → `~/.config/.prettierrc.json`
 
-### Toggles
+### Formatters by Filetype
 
-- `<leader>uf` — Toggle autoformat globally (`vim.g.autoformat`)
-- `<leader>uF` — Toggle autoformat for current buffer (`vim.b.autoformat`)
+| Filetype | Formatters |
+|---|---|
+| JS/TS/JSX/TSX/Svelte | prettierd (format) or eslint_d (fix) |
+| CSS/SCSS/Less/HTML/JSON/JSONC/YAML/GraphQL | prettierd |
+| Markdown | prettierd + markdownlint-cli2 + markdown-toc |
+| MDX | prettierd or eslint_d |
+| Lua | stylua |
+| Shell | shfmt |
+| Zsh | beautysh (indent based on shiftwidth) |
+| TOML | taplo |
+| HTTP | kulala-fmt |
+| Nginx | nginxfmt |
+| SQL | sqruff |
+| Nu | (none — explicitly empty) |
+| Other | trim_whitespace |
+
+### Post-Save Hook
+
+After formatting, runs `retab` to convert tabs to spaces.
 
 ## Linting (nvim-lint)
 
-### Trigger Events
+### Configuration
 
-Linting runs on: `BufWritePost`, `InsertLeave`, `BufEnter`
+- `ESLINT_D_PPID` set to Neovim PID (lifecycle management)
+- eslint_d `--config` argument uses `util.get_file_path()` to auto-detect config
+- Config search walks up directory tree, checks `package.json` for `eslintConfig` field
 
 ### Linters by Filetype
 
-| Filetype | Linter |
-|----------|--------|
-| javascript, typescript, jsx, tsx | ESLint (auto-detects config) |
+| Filetype | Linters |
+|---|---|
+| JS/TS/JSX/TSX/Svelte | eslint_d |
+| Shell | bash |
+| Zsh | zsh |
+| Markdown | vale |
 
-### ESLint Config Detection
+### Lint Events
 
-`config/util.lua` has `find_eslint_config()` that walks up the directory tree looking for any ESLint config file (`.eslintrc.*`, `eslint.config.*`, etc., defined in `config/constant.lua`).
+`BufWritePost`, `BufReadPost`, `InsertLeave`
 
-## Mason (Package Manager)
+## Mason
 
-Mason manages LSP servers, formatters, and linters:
+### Standalone Setup (No Bridge)
 
-```vim
-:Mason              " Open Mason UI
-:MasonInstall <pkg> " Install package
+Mason only installs binaries. No mason-lspconfig or mason-nvim-lint bridge.
+
+- PATH prepended manually in `config/lsp.lua`
+- Auto-install via deferred `mason-registry` refresh (100ms)
+- UI: rounded border, 0.7 height
+
+### ensure_installed
+
+```
+lua-language-server, vtsls, html-lsp, css-lsp, css-variables-language-server,
+emmet-language-server, tailwindcss-language-server, taplo, ast-grep, tectonic,
+tree-sitter-cli, eslint_d, beautysh, prettierd, vale, kulala-fmt, mmdc,
+nginx-config-formatter, uv, sqruff, json-lsp, yaml-language-server,
+vue-language-server
 ```
 
-Mason's bin directory is prepended to `PATH` in `config/lsp.lua`:
+## SchemaStore Integration
+
+Three servers use `SchemaStore.nvim` for schema validation:
+
+| Server | Schemas |
+|---|---|
+| jsonls | `require("schemastore").json.schemas()` |
+| yamlls | `require("schemastore").yaml.schemas()` |
+| taplo | `require("schemastore").json.schemas()` (TOML) |
+
+All wrapped in `pcall` for resilience.
+
+## Tailwind Auto-Stop
+
+Tailwindcss LSP has custom `on_attach` that stops the client if no tailwind config file is found in the buffer's root:
 
 ```lua
-local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
-vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
+on_attach = function(client, bufnr)
+  local config_root = vim.fs.root(bufnr, config_files)
+  if not config_root then client:stop() end
+end,
 ```
 
-## Troubleshooting LSP
-
-```vim
-:lsp                              " Interactive LSP management (0.12)
-:checkhealth vim.lsp              " LSP health check
-:lua print(vim.inspect(vim.lsp.get_clients()))    " List active clients
-:lua print(vim.inspect(vim.diagnostic.get(0)))    " Buffer diagnostics
-
-" Check if server is attached to current buffer
-:lua print(vim.inspect(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients({ bufnr = 0 }))))
-```
+Config files checked: `tailwind.config.{js,ts,cjs,mjs}`

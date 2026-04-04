@@ -6,191 +6,135 @@ Detailed reference for Neovim 0.12+ configuration structure and options.
 
 ```
 init.lua
-├── require("config.options")     # vim.opt settings, filetype additions
-├── require("config.keymaps")     # All keybindings
-├── require("config.autocmds")    # Autocommands
-├── require("config.lsp")         # Native LSP: diagnostics, vim.lsp.enable()
-└── require("plugins")            # vim.pack.add() + plugin configs
-    ├── require("plugins.colorscheme")
-    ├── require("plugins.ui")        # Snacks, Noice, Lualine, Bufferline, Vimade
-    ├── require("plugins.editor")    # which-key, gitsigns, trouble, flash, etc.
-    ├── require("plugins.coding")    # treesitter, blink.cmp, mini.*, lazydev
-    └── require("plugins.tools")     # mason, conform, nvim-lint, AI, etc.
+├── vim.loader.enable()             # Bytecode cache
+├── vim.g.mapleader = " "           # Leader keys (before plugins)
+├── vim.g.maplocalleader = "\\"
+├── safe_require("config.options")  # vim.opt settings, filetype additions
+├── safe_require("config.hack")     # Diagnostic blacklist filter
+├── safe_require("plugins")         # vim.pack.add() + plugin configs
+│   ├── vim.pack.add({...})         # Install/load plugins
+│   ├── treesitter runtime bridge   # Prepend ts runtime to rtp
+│   ├── PackChanged hooks           # blink.cmp cargo build, TSUpdate
+│   ├── Ghostty rtp support         # If TERMINAL == "ghostty"
+│   ├── Disabled built-ins          # gzip, netrwPlugin, etc.
+│   ├── Deferred cleanup            # Remove inactive plugins (300ms)
+│   ├── :PlugSync command           # Manual cleanup + update
+│   └── Plugin configs              # colorscheme → ui → editor → coding → tools
+├── safe_require("config.lsp")      # Mason PATH, diagnostics, vim.lsp.enable()
+├── safe_require("config.keymaps")  # All keybindings
+└── safe_require("config.autocmds") # Autocommands
 ```
 
-## Plugin Management (vim.pack)
+`safe_require()` defers errors to `UIEnter` so one module's failure doesn't block the rest.
 
-### init.lua (plugins/init.lua)
+## Options (config/options.lua)
 
-```lua
--- Suppress messages during plugin loading
-local saved_shortmess = vim.o.shortmess
-vim.o.shortmess = "aAFOTIcC"
+### Global Variables
 
-vim.pack.add({
-  "https://github.com/folke/snacks.nvim",
-  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" },
-  -- ... all plugins
-})
+| Variable | Value | Purpose |
+|---|---|---|
+| `snacks_animate` | `true` | Enable Snacks animations |
+| `editorconfig` | `true` | Respect .editorconfig |
+| `transparent_enabled` | `true` | Transparent background |
+| `autoformat` | `true` | Format on save |
+| `todopath` | `stdpath("data")/snacks/todo/todo.md` | Global todo file |
+| `loaded_perl_provider` | `0` | Disable Perl provider |
+| `loaded_ruby_provider` | `0` | Disable Ruby provider |
+| `python3_host_prog` | `/opt/homebrew/bin/python3` | Python 3 path |
+| `markdowns` | `{"markdown","Avante","codecompanion",...}` | Markdown-like filetypes |
+| `markdown_recommended_style` | `0` | Disable recommended markdown style |
 
-vim.o.shortmess = saved_shortmess
-vim.cmd("silent! redraw")
-```
+### Key Options
 
-### vim.pack API
+| Option | Value | Notes |
+|---|---|---|
+| `clipboard` | `unnamedplus` (not over SSH) | System clipboard |
+| `scrolloff` | Dynamic (window_height/4, min 4) | Calculated at startup |
+| `shiftwidth`/`tabstop`/`softtabstop` | `2` | 2-space indent |
+| `expandtab` | `true` | Spaces not tabs |
+| `conceallevel` | `3` | Full conceal |
+| `laststatus` | `0` (set to `3` after Snacks loads) | Global statusline |
+| `showtabline` | `0` | Hidden by default |
+| `formatexpr` | `conform.formatexpr()` | Use conform for gq |
+| `grepprg` | `rg --vimgrep` | Ripgrep |
+| `smoothscroll` | `true` | Smooth scroll |
+| `undofile` | `true` | Persistent undo |
+| `updatetime` | `200` | Faster CursorHold |
+| `timeoutlen` | `300` | Key sequence timeout |
+| `swapfile` | `false` | No swap files |
+| `modeline` | `false` | Disabled for security |
+| `termsync` | `false` (in tmux only) | Prevent double-sync ghosting |
 
-```lua
-vim.pack.add(specs, opts?)        -- Install + load plugins
-vim.pack.update(names?, opts?)    -- Update plugins (default: all)
-vim.pack.del(names, opts?)        -- Remove plugins
-vim.pack.get(names?, opts?)       -- Query plugin state
-
--- Spec format
-{ src = "https://github.com/user/repo", version = "main" }
--- or shorthand:
-"https://github.com/user/repo"
-```
-
-### Lockfile
-
-- Path: `~/.config/nvim/nvim-pack-lock.json`
-- Tracks exact commit hashes for all plugins
-- Version-controlled for reproducible installs
-- `vim.pack.update({ target = "lockfile" })` to restore lockfile state
-
-### Plugin Events
-
-```lua
-vim.api.nvim_create_autocmd("User", {
-  pattern = "PackChanged",
-  callback = function(ev)
-    local name = ev.data.spec.name    -- plugin name
-    local kind = ev.data.kind         -- "install" | "update" | "delete"
-    local active = ev.data.active     -- boolean
-    local path = ev.data.path         -- install path
-  end,
-})
-```
-
-### PlugSync Command
-
-Custom command that combines cleanup + update:
-
-```vim
-:PlugSync    " Remove inactive plugins, then update all
-```
-
-### Automatic Cleanup
-
-On every startup (deferred 300ms), inactive plugins (no longer in `vim.pack.add()`) are auto-removed.
-
-## Core Options (config/options.lua)
-
-### Key Settings
-
-```lua
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
-vim.g.autoformat = true               -- Global autoformat toggle
-
-vim.opt.clipboard = "unscheduled"     -- Lazy clipboard (0.12+)
-vim.opt.completeopt = "menu,menuone,noselect"
-vim.opt.conceallevel = 2
-vim.opt.confirm = true
-vim.opt.cursorline = true
-vim.opt.expandtab = true
-vim.opt.fillchars = { foldopen = "", foldclose = "", fold = " ", foldsep = " ", diff = "╱", eob = " " }
-vim.opt.ignorecase = true
-vim.opt.inccommand = "nosplit"
-vim.opt.jumpoptions = "view"
-vim.opt.laststatus = 3                -- Global statusline
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.scrolloff = 4
-vim.opt.sessionoptions = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp", "folds" }
-vim.opt.shiftround = true
-vim.opt.shiftwidth = 2
-vim.opt.shortmess:append({ W = true, I = true, c = true, C = true })
-vim.opt.showmode = false
-vim.opt.sidescrolloff = 8
-vim.opt.signcolumn = "yes"
-vim.opt.smartcase = true
-vim.opt.smartindent = true
-vim.opt.splitbelow = true
-vim.opt.splitright = true
-vim.opt.tabstop = 2
-vim.opt.termguicolors = true
-vim.opt.timeoutlen = 300
-vim.opt.undofile = true
-vim.opt.undolevels = 10000
-vim.opt.updatetime = 200
-vim.opt.virtualedit = "block"
-vim.opt.wildmode = "longest:full,full"
-vim.opt.winminwidth = 5
-vim.opt.wrap = false
-```
-
-### Custom Filetypes
+### Filetype Additions
 
 ```lua
 vim.filetype.add({
-  extension = { nu = "nu", mdx = "mdx", typ = "typst" },
-  pattern = { ["%.env%.[%w_.-]+"] = "sh" },
+  extension = { mdx = "mdx" },
+  pattern = {
+    ["compose.*%.ya?ml"] = "yaml.docker-compose",
+    ["docker%-compose.*%.ya?ml"] = "yaml.docker-compose",
+  },
 })
 ```
 
 ### Paste Guard
 
-Large paste operations (>10,000 lines) trigger confirmation prompt.
+Custom `vim.paste` override: returns `false` for non-modifiable buffers to prevent E21.
+
+### Transparent Background Bootstrap
+
+Before colorscheme loads, sets `Normal`, `NormalNC`, `MsgArea`, `MsgSeparator`, `StatusLine`, `StatusLineNC` to `bg=NONE, fg=NONE` to suppress visual flash during startup.
 
 ## Autocommands (config/autocmds.lua)
 
-| Event | Purpose |
-|-------|---------|
-| `FocusGained`, `TermClose`, `TermLeave` | Auto-check for file changes |
-| `TextYankPost` | Highlight yanked text |
-| `VimResized` | Equalize window splits |
-| `BufReadPost` | Restore last cursor position |
-| `FileType` (help, qf, ...) | Close with `q` for transient buffers |
-| `FileType` (gitcommit, markdown) | Enable spell + wrap |
-| `BufWritePre` | Auto-create parent directories |
-| `BufWritePre` | Retab on save (optional, filetype-specific) |
+| Event | Group | Purpose |
+|---|---|---|
+| `FocusGained`, `TermClose`, `TermLeave` | checktime | Auto-reload changed files |
+| `TextYankPost` | highlight_yank | Flash yanked text |
+| `VimResized` | resize_splits | Equalize splits on resize |
+| `BufReadPost` | last_loc | Restore cursor position |
+| `FileType` (qf, help, etc.) | close_with_q | Close with `q` key |
+| `FileType` (man) | man_unlisted | Mark man pages as unlisted |
+| `FileType` (text, markdown, etc.) | wrap_spell | Enable wrap + spell |
+| `FileType` (json, jsonc, json5) | json_conceal | Set conceallevel=0 |
+| `BufWritePre` | auto_create_dir | Auto-create parent dirs |
+| `FileType` (markdowns) | markdown_linebreak | Disable linebreak |
+| `BufReadPre`, `BufNewFile` | undo_file_check | Disable undofile for long paths (>255 chars, E828 on macOS) |
+| `BufNewFile` | new_file_indent | Fix Snacks indent guide for new files |
 
 ## Utility Functions (config/util.lua)
 
-### Root Detection
+| Function | Purpose |
+|---|---|
+| `M.root()` | Find root via `.git` or `lua` marker, fallback `vim.uv.cwd()` |
+| `M.git_root()` | Find root via `.git` only |
+| `M.has_eslint_config(path)` | Check if package.json has `eslintConfig` field |
+| `M.get_file_path(filenames, opts)` | Walk upward to find config file, supports `for_eslint` and `ensure_package` |
+| `M.format_snippet_json(args)` | Convert selected lines to JSON snippet format (`:AddQuotes`) |
+| `M.set_hl(hl, delay)` | Set highlight, optionally deferred |
+| `M.icons` | Diagnostic and git icons |
 
-```lua
-local util = require("config.util")
-util.root()          -- Returns project root (git root or cwd)
-util.git_root()      -- Returns git root specifically
-```
+## Diagnostic Blacklist (config/hack.lua)
 
-### Icons
+Overrides `vim.diagnostic.set` to filter noisy diagnostics:
 
-```lua
-util.icons.diagnostics  -- { Error = " ", Warn = " ", Info = " ", Hint = "󰌶 " }
-util.icons.git          -- { added = " ", modified = " ", removed = " " }
-```
+| Source | Filter |
+|---|---|
+| `eslint_d` | Messages matching `path::String` |
+| `eslint_d` | Messages matching `projectService` |
+| `ts` | `File is a CommonJS module` |
+| `ts` | Codes: 7016 (no type declaration), 80001 (convert to ES module), 80006, 80007, 2305, 6387, 7044, 1149 |
 
-### ESLint Config Finder
+## ETH Price Ticker (config/price.lua)
 
-```lua
-util.find_eslint_config(startpath)  -- Walks up to find .eslintrc.*, eslint.config.*, etc.
-```
+Rotates between 3 API endpoints with randomized User-Agent:
 
-## Colorscheme (plugins/colorscheme.lua)
+1. **Binance**: `/api/v3/ticker/price?symbol=ETHUSDT`
+2. **CoinGecko**: `/api/v3/simple/price?ids=ethereum&vs_currencies=usd`
+3. **Kraken**: `/0/public/Ticker?pair=ETHUSD`
 
-### Auto Dark Mode (macOS)
-
-```lua
--- Reads macOS appearance on startup
--- Sets vim.o.background = "dark" or "light"
--- Default colorscheme: tokyonight
-```
-
-### Available Colorschemes
-
-- **tokyonight** (default) — with transparent background
-- **monokai-pro** — "spectrum" filter
-- **NeoSolarized** — for light mode
+- Refresh interval: 6000ms
+- Timeout: 10000ms
+- Deferred setup: starts after `UIEnter` to avoid blocking startup
+- Display: `Ξ {price}` in lualine_x
+- Toggle: `<leader>cUp`

@@ -1,207 +1,205 @@
 # Neovim 0.12 Migration Reference
 
-Breaking changes, deprecations, and new features in Neovim 0.12 (compared to 0.11).
+Breaking changes and new APIs in Neovim 0.12+ that this configuration uses.
 
-## Breaking Changes
+## vim.pack (Native Plugin Manager)
 
-### LSP
+Replaces lazy.nvim entirely.
 
-| Change | Details |
-|--------|---------|
-| JSON null → `vim.NIL` | LSP messages now use `vim.NIL` for JSON `"null"` (was `nil`). Missing fields remain `nil`. |
-| `vim.lsp.semantic_tokens.start/stop()` | Renamed to `vim.lsp.semantic_tokens.enable(true/false)` |
-| Signature help parameter handling | Values < 0 or out of range now treated as `nil` |
+### API
 
-### Diagnostics
+```lua
+vim.pack.add(specs, opts?)        -- Install + load plugins
+vim.pack.update(names?, opts?)    -- Update plugins (default: all)
+vim.pack.get()                    -- List all managed plugins
+vim.pack.del(names, opts?)        -- Remove plugins
+```
 
-| Change | Details |
-|--------|---------|
-| `vim.diagnostic.disable()` | **Removed** — use `vim.diagnostic.enable(false)` |
-| `vim.diagnostic.is_disabled()` | **Removed** — use `not vim.diagnostic.is_enabled()` |
-| Legacy `enable()` signature | **Removed** — old `vim.diagnostic.enable(buf, namespace)` no longer works |
-| `:sign-define` for diagnostics | **Removed** — must use `vim.diagnostic.config({ signs = { ... } })` |
+### Spec Format
 
-### Treesitter
+```lua
+vim.pack.add({
+  "https://github.com/user/repo",                           -- Short form
+  { src = "https://github.com/user/repo", version = "main" }, -- Pin to branch
+})
+```
 
-| Change | Details |
-|--------|---------|
-| `vim.treesitter.get_parser()` | Returns `nil` on failure (no longer throws error) |
-| `Query:iter_matches()` "all" option | **Removed** (was transition aid from 0.11) |
-| `treesitter-directive-offset!` | Sets `metadata[capture_id].offset` instead of `.range` |
+### Key Differences from lazy.nvim
 
-### Lua
+| Feature | lazy.nvim | vim.pack |
+|---|---|---|
+| Lazy loading | Built-in (event, cmd, ft, keys) | Manual (autocmds, vim.schedule) |
+| Lockfile | lazy-lock.json | nvim-pack-lock.json |
+| Install location | ~/.local/share/nvim/lazy/ | ~/.local/share/nvim/site/pack/core/opt/ |
+| Post-install hooks | `build = "..."` | `PackChanged` user event |
+| UI | `:Lazy` | None (custom :PlugSync) |
+| Startup stats | `:Lazy profile` | `--startuptime` |
+| Plugin spec | Lua table with lazy keys | URL string or {src, version} |
 
-| Change | Details |
-|--------|---------|
-| `vim.diff` | **Renamed** to `vim.text.diff()` |
+### Migration Pattern
 
-### Options
+```lua
+-- OLD (lazy.nvim)
+{ "folke/snacks.nvim", event = "VeryLazy", config = function() ... end }
 
-| Change | Details |
-|--------|---------|
-| `'shelltemp'` | Defaults to `false` (was `true`) |
+-- NEW (vim.pack)
+vim.pack.add({ "https://github.com/folke/snacks.nvim" })
+-- Config in separate file, loaded via require()
+-- Deferred loading via vim.defer_fn() or autocmd
+```
 
-### Editor
+## Native LSP (vim.lsp.config + vim.lsp.enable)
 
-| Change | Details |
-|--------|---------|
-| `i_CTRL-R` | Inserts registers **literally** (like paste), not as user input |
+Replaces nvim-lspconfig plugin.
 
-### Plugins
+### API Changes
 
-| Change | Details |
-|--------|---------|
-| "shellmenu" plugin | **Removed** |
-| `package-tohtml` | Now opt-in: `:packadd nvim.tohtml` required |
-
-## Deprecated APIs (0.12)
-
-### LSP
-
-| Deprecated | Replacement |
+| Old (nvim-lspconfig) | New (Neovim 0.12) |
 |---|---|
-| `vim.lsp.stop_client()` | `Client:stop()` |
-| `vim.lsp.client_is_stopped()` | `vim.lsp.get_client_by_id()` |
-| `vim.lsp.set_log_level()` | `vim.lsp.log.set_level()` |
-| `vim.lsp.get_log_path()` | `vim.lsp.log.get_filename()` |
-| `vim.lsp.get_buffers_by_client_id()` | `client.attached_buffers` |
-| `vim.lsp.codelens.refresh()` | `vim.lsp.codelens.enable(true)` |
-| `vim.lsp.codelens.clear()` | `vim.lsp.codelens.enable(false)` |
-| `vim.lsp.util.stylize_markdown()` | `vim.treesitter.start()` + `conceallevel=2` |
-
-### Diagnostics
-
-| Deprecated | Replacement |
-|---|---|
-| `"float"` in `vim.diagnostic.JumpOpts` | Use `on_jump` callback instead |
-
-### Lua
-
-| Deprecated | Replacement |
-|---|---|
-| `"buffer"` in `vim.keymap.set/del` opts | Renamed to `"buf"` |
-
-### Still Deprecated from 0.11
-
-| Deprecated | Replacement |
-|---|---|
-| `vim.lsp.start_client()` | `vim.lsp.start()` |
+| `require('lspconfig').server.setup({...})` | `lsp/server.lua` file + `vim.lsp.enable('server')` |
+| `lspconfig.util.root_pattern(...)` | `root_markers = { ... }` |
+| `capabilities` (from cmp-nvim-lsp) | `vim.lsp.config("*", { capabilities = ... })` |
+| `:LspInfo` | `:checkhealth vim.lsp` |
 | `vim.lsp.get_active_clients()` | `vim.lsp.get_clients()` |
-| `vim.lsp.buf.execute_command` | `Client:exec_cmd()` |
-| `vim.diagnostic.goto_next/prev` | `vim.diagnostic.jump()` |
-| `vim.highlight` | `vim.hl` |
-| `vim.loop` | `vim.uv` |
-| `vim.tbl_flatten()` | `Iter:flatten()` |
-| `vim.tbl_islist()` | `vim.islist()` |
+| `client.request()` | `Client:request()` |
+| `vim.lsp.buf.formatting()` | Use conform.nvim |
 
-## New Features (0.12)
-
-### vim.pack (Built-in Plugin Manager)
+### Server Config Format
 
 ```lua
-vim.pack.add(specs, opts?)       -- Install + load
-vim.pack.update(names?, opts?)   -- Update (all or specific)
-vim.pack.del(names, opts?)       -- Remove
-vim.pack.get(names?, opts?)      -- Query state
+-- lsp/server_name.lua
+--- @type vim.lsp.Config
+return {
+  cmd = { "binary-name", "--stdio" },
+  filetypes = { "ft1", "ft2" },
+  root_markers = { "marker1", "marker2" },
+  settings = {},
+  init_options = {},
+  on_attach = function(client, bufnr) end,
+}
 ```
 
-- Lockfile: `nvim-pack-lock.json`
-- Events: `PackChangedPre`, `PackChanged`
-- Storage: `site/pack/core/opt/`
+### Auto-Discovery
 
-### LSP Enhancements
+Neovim auto-discovers `lsp/*.lua` files. No need to explicitly call `vim.lsp.config()` for individual servers — just place the file and call `vim.lsp.enable("name")`.
+
+## Treesitter Changes
+
+### Parser Loading
 
 ```lua
-vim.lsp.enable(names)             -- Start/stop/detach as needed
-vim.lsp.is_enabled(name)          -- Check if enabled
-vim.lsp.get_configs(filter?)      -- Get all configs
-vim.lsp.buf.workspace_diagnostics() -- Workspace diagnostics
-vim.lsp.inline_completion.enable() -- Inline completion support
-
--- Code lenses reimplemented as virtual lines
--- vim.lsp.buf.rename() now highlights symbol with LspReferenceTarget
--- Code action filter receives client_id: filter = function(action, client_id)
--- New default keymaps: grt (type definition), grx (codelens run)
+-- OLD: vim.treesitter.get_parser() throws on failure
+-- NEW: Returns nil on failure (no more pcall needed for checking)
+local parser = vim.treesitter.get_parser(bufnr, lang)
+if not parser then return end
 ```
 
-### Treesitter
-
-- Markdown highlighting enabled by **default**
-- `LanguageTree:parse()` accepts list of ranges
-- `:EditQuery` gained tab-completion and works with injected languages
-- Visual mode incremental selection: `v_an` (outward), `v_in` (inward), `v_]n`/`v_[n` (navigate)
-
-### New Lua APIs
+### Language Registration
 
 ```lua
-vim.net.request()                  -- HTTP fetch/download
-vim.text.diff()                    -- Diff (renamed from vim.diff)
-vim.list.unique(list)              -- Deduplicate list
-vim.list.bisect(list)              -- Binary search
-vim.fs.ext(path)                   -- Get file extension
-vim.version.intersect(a, b)        -- Version range intersection
-vim.json.encode(val, { indent = 2, sort_keys = true })  -- Pretty JSON
-vim.json.decode(str, { skip_comments = true })           -- JSON with comments
-Iter:unique()                      -- Deduplicate iterators
-Iter:peek()                        -- Works for all iterator types
+-- Register language alias
+vim.treesitter.language.register("bash", "zsh")
+vim.treesitter.language.register("markdown", { "checkhealth", "mdx" })
 ```
 
-### Editor Improvements
+### Custom Predicates
 
-```vim
-:iput              " Like :put but adjusts indent
-:retab -indentonly " Only change leading whitespace
-:uniq              " Deduplicate text
-:wall ++p          " Auto-create parent directories
-:restart           " Restart Nvim, reattach UI
-:DiffTool          " Compare directories/files (new bundled plugin)
-:Undotree          " Visual undo tree (new bundled plugin)
+```lua
+-- Add custom query predicate
+vim.treesitter.query.add_predicate("is-filetype?", function(match, pattern, source, predicate)
+  return vim.bo[source].filetype == predicate[3]
+end, { force = true })
 ```
 
-### New Options
+### Built-in ftplugin Coverage
 
-| Option | Purpose |
-|--------|---------|
-| `'pumborder'` | Popup menu border |
-| `'pummaxwidth'` | Popup menu max width |
-| `'winborder'` | Window border style |
-| `'autocomplete'` | Enable ins-autocompletion |
-| `'maxsearchcount'` | Max for `searchcount()` |
+Neovim 0.12 built-in ftplugins call `vim.treesitter.start()` for ~20 languages. This config adds a `FileType` autocmd to cover all remaining languages with highlight queries.
 
-### New Highlights
+### ts_highlight Flag
 
-| Highlight | Purpose |
-|-----------|---------|
-| `DiffTextAdd` | Added text within changed line |
-| `SnippetTabstopActive` | Active snippet tabstop |
-| `PmenuBorder` | Popup menu border |
+When treesitter is active, `vim.b.ts_highlight = true`. This **blocks** traditional `syntax` highlighting. To restore syntax:
 
-### New Events
+```lua
+vim.treesitter.stop(buf)
+vim.bo[buf].syntax = ft
+```
 
-| Event | Purpose |
-|-------|---------|
-| `CmdlineLeavePre` | Before leaving command line |
-| `MarkSet` | After setting a mark |
-| `SessionLoadPre` | Before loading session |
-| `TabClosedPre` | Before closing tabpage |
-| `Progress` | Progress messages via `nvim_echo()` |
+## Diagnostic API
 
-### Performance Improvements
+### New Jump API
 
-- `vim.glob.to_lpeg()` ~50% faster
-- `i_CTRL-R` literal insert: 10x speedup
-- `textDocument/semanticTokens/range` — viewport-only tokens
-- `:packadd` no longer invalidates Lua package path cache
+```lua
+-- OLD
+vim.diagnostic.goto_next({ severity = ... })
 
-## Migration Checklist (0.11 → 0.12)
+-- NEW
+vim.diagnostic.jump({ count = 1, severity = ... })
+vim.diagnostic.jump({ count = -1, severity = ... })
+```
 
-- [ ] Replace `vim.diff()` → `vim.text.diff()`
-- [ ] Replace `vim.diagnostic.disable()` → `vim.diagnostic.enable(false)`
-- [ ] Replace `vim.diagnostic.is_disabled()` → `not vim.diagnostic.is_enabled()`
-- [ ] Replace `vim.lsp.semantic_tokens.start/stop()` → `enable(true/false)`
-- [ ] Update any `vim.diagnostic.enable(buf, ns)` → `vim.diagnostic.enable(true, { bufnr = buf })`
-- [ ] Replace `:sign-define` for diagnostics → `vim.diagnostic.config({ signs = ... })`
-- [ ] Handle `vim.treesitter.get_parser()` returning `nil`
-- [ ] Replace `float` in `vim.diagnostic.jump()` → use `on_jump` callback
-- [ ] Check `'shelltemp'` default change if using shell commands
-- [ ] Test `i_CTRL-R` behavior with literal register insert
+### Enable/Disable
+
+```lua
+-- Toggle all diagnostics
+vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+
+-- Per-buffer, per-namespace
+vim.diagnostic.enable(false, { bufnr = bufnr, ns_id = ns })
+```
+
+## Inlay Hints
+
+```lua
+-- Enable
+vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+
+-- Toggle
+vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+
+-- Check
+vim.lsp.inlay_hint.is_enabled()
+```
+
+## vim.uv (replaces vim.loop)
+
+```lua
+-- OLD
+vim.loop.fs_stat(path)
+vim.loop.new_timer()
+
+-- NEW
+vim.uv.fs_stat(path)
+vim.uv.new_timer()
+vim.uv.cwd()
+```
+
+## vim.hl (replaces vim.highlight)
+
+```lua
+-- OLD
+vim.highlight.on_yank()
+
+-- NEW (with backward compat)
+(vim.hl or vim.highlight).on_yank()
+```
+
+## vim.system
+
+```lua
+-- Async external command (replaces io.popen/jobstart for simple cases)
+vim.system({ "fortune" }, { text = true, timeout = 200 }):wait()
+vim.system({ "curl", "-s", url }, { timeout = 10000 }, function(result)
+  if result.code == 0 then ... end
+end)
+```
+
+## Key Breaking Changes Summary
+
+1. **No lazy loading in vim.pack** — use manual deferred patterns
+2. **LSP configs as files** — `lsp/*.lua` instead of `lspconfig.setup()`
+3. **root_markers replaces root_pattern** — simpler table, no function
+4. **vim.treesitter.get_parser() returns nil** — no longer throws
+5. **vim.diagnostic.jump() replaces goto_next/goto_prev** — count-based API
+6. **vim.uv replaces vim.loop** — same libuv bindings, new namespace
+7. **Semantic tokens need manual disable** — no lspconfig `on_init` hook
+8. **vim.pack.add needs full URLs** — not short `user/repo` format
