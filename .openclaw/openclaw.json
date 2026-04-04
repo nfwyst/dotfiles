@@ -10,12 +10,12 @@
     "defaults": {
       "workspace": "/Users/malisheng/.openclaw/workspace",
       "models": {
-        "kimi/kimi-code": {
+        "kimi/k2p5": {
           "alias": "Kimi"
         }
       },
       "model": {
-        "primary": "kimi/kimi-code"
+        "primary": "kimi/k2p5"
       },
       "memorySearch": {
         "provider": "ollama",
@@ -71,8 +71,8 @@
         "api": "anthropic-messages",
         "models": [
           {
-            "id": "kimi-code",
-            "name": "Kimi Code",
+            "id": "k2p5",
+            "name": "Kimi K2.5",
             "reasoning": true,
             "input": [
               "text",
@@ -96,7 +96,9 @@
           {
             "id": "qwen3-embedding:8b",
             "name": "Qwen3 Embedding",
-            "input": ["text"],
+            "input": [
+              "text"
+            ],
             "cost": {
               "input": 0,
               "output": 0
@@ -118,7 +120,9 @@
     "telegram": {
       "enabled": true,
       "dmPolicy": "open",
-      "allowFrom": ["*"],
+      "allowFrom": [
+        "*"
+      ],
       "groups": {
         "*": {
           "requireMention": true
