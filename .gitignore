@@ -47,3 +47,4 @@ tests/
 .openclaw/workspace
 .openclaw/telegram
 .openclaw/exec-approvals.json
+.openclaw/memory
