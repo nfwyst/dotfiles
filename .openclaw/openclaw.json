@@ -40,14 +40,13 @@
     },
     "nodes": {
       "denyCommands": [
-        "camera.snap",
-        "camera.clip",
-        "screen.record",
-        "contacts.add",
-        "calendar.add",
-        "reminders.add",
-        "sms.send",
-        "sms.search"
+        "canvas.eval",
+        "canvas.present",
+        "canvas.navigate",
+        "canvas.snapshot",
+        "canvas.a2ui.push",
+        "canvas.a2ui.pushJSONL",
+        "canvas.a2ui.reset"
       ]
     }
   },
@@ -119,7 +118,7 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "open",
+      "dmPolicy": "pairing",
       "allowFrom": [
         "*"
       ],
