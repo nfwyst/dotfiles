@@ -63,6 +63,14 @@
       "skillFolderHash": "5324109e33e114ddcfd53b942c62b07088a33d96",
       "installedAt": "2026-04-04T08:50:45.322Z",
       "updatedAt": "2026-04-04T08:50:45.322Z"
+    },
+    "smithery-ai-cli": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "sourceUrl": "https://smithery.ai/skills/smithery-ai/cli/.well-known/skills/smithery-ai-cli/SKILL.md",
+      "skillFolderHash": "",
+      "installedAt": "2026-04-05T14:28:11.504Z",
+      "updatedAt": "2026-04-05T14:28:11.504Z"
     }
   },
   "dismissed": {

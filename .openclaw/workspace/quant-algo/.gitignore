@@ -1,0 +1,32 @@
+# 依赖目录
+node_modules/
+
+# 日志
+logs/
+*.log
+
+# 环境配置（包含敏感信息）
+config/.env
+
+# 运行时数据
+*.pid
+*.seed
+*.pid.lock
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 测试覆盖率
+coverage/
+
+# 构建输出
+dist/
+build/

@@ -45,7 +45,15 @@ tests/
 .openclaw/logs
 .openclaw/tasks
 .openclaw/update-check.json
-.openclaw/workspace
 .openclaw/telegram
 .openclaw/exec-approvals.json
 .openclaw/memory
+.openclaw/workspace/AGENTS.md
+.openclaw/workspace/BOOTSTRAP.md
+.openclaw/workspace/HEARTBEAT.md
+.openclaw/workspace/IDENTITY.md
+.openclaw/workspace/SOUL.md
+.openclaw/workspace/TOOLS.md
+.openclaw/workspace/USER.md
+.openclaw/workspace/memory/
+

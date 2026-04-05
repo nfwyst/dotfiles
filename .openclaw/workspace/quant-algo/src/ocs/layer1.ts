@@ -1,0 +1,257 @@
+/**
+ * OCS Layer 1: 时间序列处理层
+ * 严格遵循技术报告实现 + v312增强
+ * - Volume Price Mean (VPM)
+ * - Ehlers Adaptive Moving Average (AMA)
+ * - Relative Strength Stochastics on Supertrend
+ * - Gaussian Structure Framework (v312)
+ */
+
+import { GaussianStructure } from './enhanced/gaussianStructure';
+
+export interface OHLCV {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface Layer1Output {
+  // VPM
+  vpm: {
+    value: number;
+    upperBand: number;
+    lowerBand: number;
+    position: number; // 0-1
+  };
+  
+  // Ehlers AMA
+  ama: {
+    value: number;
+    trend: 'up' | 'down' | 'flat';
+    period: number;
+  };
+  
+  // Supertrend + Stochastics
+  supertrend: {
+    value: number;
+    direction: 'up' | 'down';
+  };
+  stochastics: {
+    k: number;
+    d: number;
+    oversold: boolean;
+    overbought: boolean;
+  };
+  
+  // ATR for later layers
+  atr14: number;
+  
+  // v312: Gaussian Structure
+  gaussian: {
+    smoothedClose: number;
+    smoothedVolume: number;
+    sigma: number;
+    windowSize: number;
+  };
+}
+
+export class OCSLayer1 {
+  private gaussianStructure: GaussianStructure;
+  
+  constructor() {
+    this.gaussianStructure = new GaussianStructure(2.0, 20);
+  }
+  process(data: OHLCV[]): Layer1Output {
+    const closes = data.map(d => d.close);
+    const highs = data.map(d => d.high);
+    const lows = data.map(d => d.low);
+    const volumes = data.map(d => d.volume);
+    
+    // 计算高斯平滑 (v312)
+    const gaussianClose = this.gaussianStructure.smooth(closes);
+    const gaussianVolume = this.gaussianStructure.smooth(volumes);
+    
+    return {
+      vpm: this.calculateVPM(closes, volumes),
+      ama: this.calculateEhlersAMA(closes),
+      supertrend: this.calculateSupertrend(highs, lows, closes),
+      stochastics: this.calculateStochastics(highs, lows, closes),
+      atr14: this.calculateATR(highs, lows, closes, 14),
+      gaussian: {
+        smoothedClose: gaussianClose.value,
+        smoothedVolume: gaussianVolume.value,
+        sigma: gaussianClose.sigma,
+        windowSize: gaussianClose.windowSize,
+      },
+    };
+  }
+  
+  /**
+   * Volume Price Mean (VPM)
+   * 计算市场参与者的平均持仓成本
+   */
+  private calculateVPM(prices: number[], volumes: number[]): Layer1Output['vpm'] {
+    const period = Math.min(20, prices.length);
+    const recentPrices = prices.slice(-period);
+    const recentVolumes = volumes.slice(-period);
+    
+    let totalVolume = 0;
+    let weightedSum = 0;
+    
+    for (let i = 0; i < period; i++) {
+      totalVolume += recentVolumes[i];
+      weightedSum += recentPrices[i] * recentVolumes[i];
+    }
+    
+    const mean = weightedSum / totalVolume;
+    
+    // 计算标准差
+    let variance = 0;
+    for (let i = 0; i < period; i++) {
+      variance += Math.pow(recentPrices[i] - mean, 2);
+    }
+    variance /= period;
+    const std = Math.sqrt(variance);
+    
+    const currentPrice = prices[prices.length - 1];
+    
+    return {
+      value: mean,
+      upperBand: mean + 2 * std,
+      lowerBand: mean - 2 * std,
+      position: (currentPrice - (mean - 2 * std)) / (4 * std),
+    };
+  }
+  
+  /**
+   * Ehlers Adaptive Moving Average (AMA)
+   * 使用效率比率(ER)动态调整平滑系数
+   */
+  private calculateEhlersAMA(prices: number[]): Layer1Output['ama'] {
+    const fastLength = 2;
+    const slowLength = 30;
+    
+    if (prices.length < 10) {
+      return { value: prices[prices.length - 1], trend: 'flat', period: 20 };
+    }
+    
+    // 计算效率比率 (ER)
+    const change = Math.abs(prices[prices.length - 1] - prices[prices.length - 10]);
+    let volatility = 0;
+    for (let i = prices.length - 9; i < prices.length; i++) {
+      volatility += Math.abs(prices[i] - prices[i - 1]);
+    }
+    
+    const er = volatility === 0 ? 0 : change / volatility;
+    
+    // 计算平滑常数
+    const fastSC = 2 / (fastLength + 1);
+    const slowSC = 2 / (slowLength + 1);
+    const sc = Math.pow(er * (fastSC - slowSC) + slowSC, 2);
+    
+    // 计算AMA
+    let ama = prices[0];
+    for (let i = 1; i < prices.length; i++) {
+      ama = sc * prices[i] + (1 - sc) * ama;
+    }
+    
+    // 判断趋势
+    const prevAMA = sc * prices[prices.length - 2] + (1 - sc) * (ama - sc * prices[prices.length - 1] + (1 - sc) * ama);
+    const trend = ama > prevAMA * 1.001 ? 'up' : ama < prevAMA * 0.999 ? 'down' : 'flat';
+    
+    return {
+      value: ama,
+      trend,
+      period: Math.round(2 / sc - 1),
+    };
+  }
+  
+  /**
+   * Supertrend - 基于ATR的趋势跟踪
+   */
+  private calculateSupertrend(highs: number[], lows: number[], closes: number[]): Layer1Output['supertrend'] {
+    const period = 10;
+    const multiplier = 3;
+    
+    const atr = this.calculateATR(highs, lows, closes, period);
+    const lastClose = closes[closes.length - 1];
+    const lastHigh = highs[highs.length - 1];
+    const lastLow = lows[lows.length - 1];
+    
+    const basicUpperBand = (lastHigh + lastLow) / 2 + multiplier * atr;
+    const basicLowerBand = (lastHigh + lastLow) / 2 - multiplier * atr;
+    
+    // 简化判断
+    const direction = lastClose > basicUpperBand ? 'up' : lastClose < basicLowerBand ? 'down' : 'up';
+    
+    return {
+      value: direction === 'up' ? basicLowerBand : basicUpperBand,
+      direction,
+    };
+  }
+  
+  /**
+   * Stochastics - 动量振荡器
+   */
+  private calculateStochastics(highs: number[], lows: number[], closes: number[]): Layer1Output['stochastics'] {
+    const kPeriod = 14;
+    const dPeriod = 3;
+    
+    if (closes.length < kPeriod) {
+      return { k: 50, d: 50, oversold: false, overbought: false };
+    }
+    
+    const lowestLow = Math.min(...lows.slice(-kPeriod));
+    const highestHigh = Math.max(...highs.slice(-kPeriod));
+    const currentClose = closes[closes.length - 1];
+    
+    const k = ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
+    
+    // 简化的D值（K的SMA）
+    let d = k;
+    if (closes.length >= kPeriod + dPeriod - 1) {
+      let sumK = 0;
+      for (let i = 0; i < dPeriod; i++) {
+        const periodLowest = Math.min(...lows.slice(-kPeriod - i, -i || undefined));
+        const periodHighest = Math.max(...highs.slice(-kPeriod - i, -i || undefined));
+        const periodClose = closes[closes.length - 1 - i];
+        sumK += ((periodClose - periodLowest) / (periodHighest - periodLowest)) * 100;
+      }
+      d = sumK / dPeriod;
+    }
+    
+    return {
+      k: Math.max(0, Math.min(100, k)),
+      d: Math.max(0, Math.min(100, d)),
+      oversold: k < 20,
+      overbought: k > 80,
+    };
+  }
+  
+  /**
+   * ATR - 平均真实波幅
+   */
+  private calculateATR(highs: number[], lows: number[], closes: number[], period: number): number {
+    if (closes.length < 2) return 0;
+    
+    const trs: number[] = [];
+    for (let i = 1; i < closes.length; i++) {
+      const tr = Math.max(
+        highs[i] - lows[i],
+        Math.abs(highs[i] - closes[i - 1]),
+        Math.abs(lows[i] - closes[i - 1])
+      );
+      trs.push(tr);
+    }
+    
+    if (trs.length < period) {
+      return trs.reduce((a, b) => a + b, 0) / trs.length;
+    }
+    
+    return trs.slice(-period).reduce((a, b) => a + b, 0) / period;
+  }
+}
+
+export default OCSLayer1;

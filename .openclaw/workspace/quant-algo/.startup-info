@@ -1,0 +1,11 @@
+启动时间: Fri Feb 27 20:30:43 CST 2026
+交易PID: 28127
+监控PID: 28133
+日志前缀: 20260227_203040
+
+使用方法:
+  查看交易日志: tail -f logs/trader_20260227_203040.log
+  查看监控日志: tail -f logs/monitor_20260227_203040.log
+  
+  停止系统: ./stop.sh
+  查看状态: ./status.sh
