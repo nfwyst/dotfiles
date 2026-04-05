@@ -37,6 +37,7 @@ AGENTS.md
 nvm
 test/
 tests/
+.env
 .openclaw/agents
 .openclaw/canvas
 .openclaw/devices
