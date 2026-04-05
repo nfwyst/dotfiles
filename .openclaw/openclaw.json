@@ -36,7 +36,7 @@
       "resetOnExit": false
     },
     "controlUi": {
-      "allowInsecureAuth": false
+      "allowInsecureAuth": true
     },
     "nodes": {
       "denyCommands": [
@@ -72,7 +72,9 @@
           {
             "id": "qwen3-embedding:8b",
             "name": "Qwen3 Embedding",
-            "input": ["text"],
+            "input": [
+              "text"
+            ],
             "cost": {
               "input": 0,
               "output": 0
@@ -88,7 +90,10 @@
             "id": "k2p5",
             "name": "Kimi K2.5",
             "reasoning": true,
-            "input": ["text", "image"],
+            "input": [
+              "text",
+              "image"
+            ],
             "cost": {
               "input": 0,
               "output": 0,
@@ -113,8 +118,10 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "pairing",
-      "allowFrom": ["*"],
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "*"
+      ],
       "groups": {
         "*": {
           "requireMention": true
@@ -159,4 +166,3 @@
     "lastTouchedAt": "2026-04-04T08:17:14.920Z"
   }
 }
-
