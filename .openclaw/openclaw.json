@@ -164,5 +164,13 @@
   "meta": {
     "lastTouchedVersion": "2026.4.2",
     "lastTouchedAt": "2026-04-04T08:17:14.920Z"
+  },
+  "mcp": {
+    "servers": {
+      "paper-search-mcp": {
+        "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
+        "connectionTimeoutMs": 120000
+      }
+    }
   }
 }
