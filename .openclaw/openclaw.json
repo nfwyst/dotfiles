@@ -118,7 +118,7 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "allowlist",
+      "dmPolicy": "open",
       "allowFrom": [
         "*"
       ],
