@@ -241,13 +241,16 @@ export class LeakageControlledBacktest {
       // Fix 3: Circuit breaker tracking
       if (balance > maxEquitySeen) maxEquitySeen = balance;
       const drawdown = maxEquitySeen > 0 ? (maxEquitySeen - balance) / maxEquitySeen : 0;
-      if (drawdown > 0.15 && !circuitBreakerActive) {
+      if (drawdown > 0.10 && !circuitBreakerActive) {
         circuitBreakerActive = true;
-        circuitBreakerBarsLeft = 2000; // ~7 days at 5m
+        circuitBreakerBarsLeft = 1500; // ~5 days at 5m (matching Phase A)
       }
       if (circuitBreakerActive) {
         circuitBreakerBarsLeft--;
-        if (circuitBreakerBarsLeft <= 0) circuitBreakerActive = false;
+        if (circuitBreakerBarsLeft <= 0) {
+          circuitBreakerActive = false;
+          maxEquitySeen = balance; // Reset peak after cooldown (matching Phase A)
+        }
       }
 
       // 更新持仓价值
