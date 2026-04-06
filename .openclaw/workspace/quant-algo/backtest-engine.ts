@@ -598,15 +598,19 @@ export class BacktestEngine {
     index: number
   ): StrategySignal | null {
 
-    // 使用预计算的 Layer2 输出
-    const ohlcvSlice = this.ohlcv.slice(0, index + 1);
-    const closePrices = ohlcvSlice.map(h => h.close);
+    // FIX: Use fixed 300-bar sliding window instead of slice(0, index+1)
+    // The old code created a growing array for every bar (O(n²) memory),
+    // causing OOM kills on 105K-bar datasets.
+    const SIGNAL_WINDOW = 300;
+    const winStart = Math.max(0, index - SIGNAL_WINDOW);
+    const ohlcvWindow = this.ohlcv.slice(winStart, index + 1);
+    const closePrices = ohlcvWindow.map(h => h.close);
     
     // Layer3 - 使用 close 数组
     const l3 = this.ocsLayer3.process(l2Output.features3D, closePrices);
     
     // Enhanced 增强
-    const enhancedOutput = this.ocsEnhanced.enhance(ohlcvSlice, l2Output, l3);
+    const enhancedOutput = this.ocsEnhanced.enhance(ohlcvWindow, l2Output, l3);
     
     // Layer4 - 最终信号
     const l4 = this.ocsLayer4.process(
@@ -628,16 +632,16 @@ export class BacktestEngine {
       ? l3.confidence / 100
       : enhancedOutput.combinedSignal.confidence / 100;
     
-    // 使用 SLTPCalculator
-    const highs = ohlcvSlice.map(h => h.high);
-    const lows = ohlcvSlice.map(h => h.low);
+    // 使用 SLTPCalculator (only needs recent S/R levels, 300 bars sufficient)
+    const highs = ohlcvWindow.map(h => h.high);
+    const lows = ohlcvWindow.map(h => h.low);
     
     const sltp = this.sltpCalculator.calculate(
       finalDirection,
       l4.setup.entryPrice,
       highs,
       lows,
-      ohlcvSlice.length - 1
+      ohlcvWindow.length - 1
     );
     
     // BUG 11 FIX: Compute default SL/TP from ATR if not provided by SLTP calculator
