@@ -3,6 +3,8 @@
  * 基于 ATLAS 和 Expert Teams 论文的细粒度任务分解
  */
 
+import { OHLCV, Position } from '../../events/types';
+
 // ==================== 基础类型 ====================
 
 export type SignalType = 'buy' | 'sell' | 'hold';
@@ -297,22 +299,7 @@ export interface AgentStatus {
 
 // ==================== 辅助类型 ====================
 
-export interface OHLCV {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
 
-export interface Position {
-  side: 'long' | 'short';
-  size: number;
-  entryPrice: number;
-  unrealizedPnl: number;
-  leverage: number;
-}
 
 // ==================== 导出 ====================
 

@@ -3,7 +3,17 @@
  * 定义事件驱动架构中所有事件的类型和数据结构
  */
 
-import type { Position } from '../riskManager';
+export interface Position {
+  side: 'long' | 'short' | 'none';
+  size: number;
+  entryPrice: number;
+  leverage: number;
+  unrealizedPnl: number;
+  markPrice?: number;
+  liquidationPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+}
 
 // ==================== 共享类型定义 ====================
 // 这些类型定义在这里，避免循环依赖

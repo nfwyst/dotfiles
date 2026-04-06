@@ -5,15 +5,8 @@
  */
 
 import { MicrostructureFeatures, microstructureExtractor } from './microstructure';
-
-export interface OHLCV {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
+import { OHLCV } from '../events/types';
+export { OHLCV } from '../events/types';
 
 export interface TechnicalIndicators {
   timestamp: number;

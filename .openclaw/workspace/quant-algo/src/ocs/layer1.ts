@@ -8,14 +8,7 @@
  */
 
 import { GaussianStructure } from './enhanced/gaussianStructure';
-
-export interface OHLCV {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
+import { OHLCV } from '../events/types';
 
 export interface Layer1Output {
   // VPM

@@ -1,8 +1,8 @@
 /**
  * 优化模块入口
- * Adaptive-OPRO 动态 Prompt 优化系统
+ * Adaptive-OPRO 动态 Prompt 优化系统 + Parameter Sensitivity & Walk-Forward
  * 
- * 基于 ATLAS 论文
+ * 基于 ATLAS 论文 + López de Prado (2018) methodology
  */
 
 export type {
@@ -18,6 +18,22 @@ export { calculateScore, hashPrompt, generateOptimizationId, DEFAULT_OPRO_CONFIG
 export { composePrompt, validatePromptTemplate, REQUIRED_PLACEHOLDERS } from './promptTemplates';
 export { AdaptiveOPRO } from './adaptiveOPRO';
 export { FeedbackLoop } from './feedbackLoop';
+
+// ── Parameter sensitivity & walk-forward validation (M4 fix) ──
+export type {
+  BacktestMetrics,
+  TunableParameter,
+  SensitivityResult,
+  WalkForwardConfig,
+  WalkForwardFold,
+  WalkForwardResult,
+} from './parameterSensitivity';
+
+export {
+  ParameterRegistry,
+  SensitivityAnalyzer,
+  WalkForwardValidator,
+} from './parameterSensitivity';
 
 // 单例实例
 import { AdaptiveOPRO } from './adaptiveOPRO';

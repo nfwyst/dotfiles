@@ -15,20 +15,11 @@ import {
   type TimeSeriesObservation,
 } from './cpcvValidation';
 
+import { OHLCV } from '../events/types';
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 const CRYPTO_TRADING_DAYS = 365;
 
 // ==================== 类型定义 ====================
-
-export interface OHLCV {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
 export interface BacktestConfig {
   symbol: string;
   startDate: number;

@@ -1,6 +1,8 @@
 /**
  * Quant Algo 2.0 系统集成入口
  * 整合所有模块：Market Intelligence + Central Trading Agent + OPRO + Execution
+ *
+ * FIX M1: Added exports for event-driven runtime, layers, and state module.
  */
 
 // ==================== 核心模块 ====================
@@ -97,6 +99,39 @@ export type {
   Strategy as BacktestStrategy,
 } from './backtest';
 
+// ==================== FIX M1: Event-driven runtime ====================
+
+export { EventDrivenRuntime } from './runtime';
+export type { RuntimeConfig, RuntimeDeps, RuntimeHealth, ComponentHealth } from './runtime';
+
+// ==================== FIX M1: Event-driven layers ====================
+
+export {
+  EventDrivenDataLayer,
+  EventDrivenStrategyLayer,
+  EventDrivenExecutionLayer,
+} from './layers';
+
+// ==================== FIX M1: State module ====================
+
+export {
+  StateManager,
+  StateStore,
+  WALManager,
+  SnapshotManager,
+  createStateManager,
+  createDefaultState,
+} from './state';
+
+export type {
+  StateConfig,
+  UnifiedState,
+  WALEntry,
+  WALStats,
+  StateSnapshot,
+  SnapshotInfo,
+} from './state';
+
 // ==================== 系统工厂 ====================
 
 import { MarketIntelligencePipeline } from './agents/marketIntelligence';
@@ -190,7 +225,7 @@ export function createTradingSystem(config?: Partial<TradingSystemConfig>) {
     // 便捷方法
     async initialize() {
       await tradingBot.initialize();
-      logger.info('✅ Trading system initialized');
+      logger.info('Trading system initialized');
     },
     
     getStatus() {

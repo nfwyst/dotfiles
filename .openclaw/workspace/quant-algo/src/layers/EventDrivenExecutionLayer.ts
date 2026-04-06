@@ -6,7 +6,8 @@
 import type { ExchangeManager } from '../exchange';
 import type { RiskManager, Position } from '../riskManager';
 import type { NotificationManager } from '../notifier';
-import type { StateManager } from '../stateManager';
+// FIX M1: Import from refactored state module instead of god object
+import type { StateManager } from '../state';
 import { getEventBus } from '../events';
 import {
   EventChannels,

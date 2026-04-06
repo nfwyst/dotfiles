@@ -1,16 +1,8 @@
 import { config } from './config';
 import logger from './logger';
+import { Position } from './events/types';
+export { Position } from './events/types';
 
-export interface Position {
-  side: 'long' | 'short' | 'none';
-  size: number;
-  entryPrice: number;
-  leverage: number;
-  unrealizedPnl: number;
-  liquidationPrice?: number;
-  stopLoss?: number;    // 止损价格
-  takeProfit?: number;  // 止盈价格
-}
 
 export interface DailyStats {
   date: string;

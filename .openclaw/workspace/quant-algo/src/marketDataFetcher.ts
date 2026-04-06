@@ -7,6 +7,7 @@ import {
   tracingManager,
   getTraceContextForLogging,
 } from './monitoring/tracing';
+import { OHLCV } from './events/types';
 
 const BINANCE_API = 'https://demo-fapi.binance.com';
 
@@ -21,14 +22,6 @@ export interface MarketData {
   timestamp: number;
 }
 
-export interface OHLCV {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
 
 export class MarketDataFetcher {
   private symbol: string = 'ETHUSDT';
