@@ -616,12 +616,11 @@ export class BacktestEngine {
     // For 90K iterations × 5000 elements, this reduces allocation from
     // 45GB (OHLCV) to ~3.6GB (numbers), well within GC capacity.
     
-    // Full close history for Layer3 volatility + Enhanced (CVD, Gaussian, TRIX)
-    const closesUpTo = this.allCloses.slice(0, index + 1);
-    const volumesUpTo = this.allVolumes.slice(0, index + 1);
-    
-    // Layer3 - uses close prices for volatility calculation
-    const l3 = this.ocsLayer3.process(l2Output.features3D, closesUpTo);
+    // Layer3 only needs prices for calculateVolatility (14-bar ATR).
+    // Use 300-bar window — avoids O(n²) from slice(0, index+1).
+    const l3WinStart = Math.max(0, index - 300);
+    const closesForL3 = this.allCloses.slice(l3WinStart, index + 1);
+    const l3 = this.ocsLayer3.process(l2Output.features3D, closesForL3);
     
     // Enhanced 增强 — build lightweight OHLCV window from pre-extracted arrays
     // 500 bars for CVD convergence (avoids costly object allocation of full history)

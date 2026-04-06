@@ -16,10 +16,10 @@
    初始资金: $10,000
 
 ⚡ 预计算指标和OCS特征...
-   ⏳ 进度: 31.7% (33344/105071) | 10s | 3331 bars/s | ETA: 22s
-   ⏳ 进度: 63.0% (66200/105071) | 20s | 3308 bars/s | ETA: 12s
-   ⏳ 进度: 94.4% (99137/105071) | 30s | 3303 bars/s | ETA: 2s
-   ✅ 预计算完成 (32.4秒)
+   ⏳ 进度: 31.9% (33531/105071) | 10s | 3348 bars/s | ETA: 21s
+   ⏳ 进度: 63.4% (66661/105071) | 20s | 3331 bars/s | ETA: 12s
+   ⏳ 进度: 94.8% (99563/105071) | 30s | 3317 bars/s | ETA: 2s
+   ✅ 预计算完成 (32.2秒)
   📊 趋势: ↓下跌 | 信号: short | 置信度: 0.80 | 阈值: 0.4
    [4/7/2025, 12:45:00 AM] 开仓 SHORT @ 1745.47
    [4/7/2025, 12:55:00 AM] 平仓 tp1 @ 1715.01 | PnL: +84.28
@@ -3439,17 +3439,17 @@
    平均持仓: 101 根K线
 ============================================================
 
-📄 报告已保存: /opt/tiger/mira_nas/workspace/85680993299/dotfiles/.openclaw/workspace/quant-algo/backtest-reports/ocs-backtest-2026-04-06T12-47-24-841Z.json
-⏱  Phase A 耗时: 88.6s
+📄 报告已保存: /opt/tiger/mira_nas/workspace/85680993299/dotfiles/.openclaw/workspace/quant-algo/backtest-reports/ocs-backtest-2026-04-06T12-59-09-789Z.json
+⏱  Phase A 耗时: 82.0s
 
 ════════════════════════════════════════════════════════════
 🅱️  Phase B — 前视偏差检测 & 执行一致性验证
 ════════════════════════════════════════════════════════════
-[32m[8:47:24 PM] [INFO] [quant-alto][0m 📊 Loaded 105121 candles for backtest 
+[32m[8:59:09 PM] [INFO] [quant-alto][0m 📊 Loaded 105121 candles for backtest 
    📦 聚合 1514 笔交易 → 847 个完整仓位
-[32m[8:47:24 PM] [INFO] [quant-alto][0m 🔄 Running backtest for OCS-Replay... 
-[32m[8:47:24 PM] [INFO] [quant-alto][0m    Period: 2025-04-06T00:00:00.000Z - 2026-04-06T00:00:00.000Z 
-[32m[8:48:28 PM] [INFO] [quant-alto][0m ✅ Backtest complete: 846 trades, -75.53% return 
+[32m[8:59:09 PM] [INFO] [quant-alto][0m 🔄 Running backtest for OCS-Replay... 
+[32m[8:59:09 PM] [INFO] [quant-alto][0m    Period: 2025-04-06T00:00:00.000Z - 2026-04-06T00:00:00.000Z 
+[32m[9:00:11 PM] [INFO] [quant-alto][0m ✅ Backtest complete: 846 trades, -75.53% return 
 
 📊 Phase B 结果:
    Phase A 总收益: +6.02%
@@ -3459,7 +3459,7 @@
    Phase B 交易数: 846
    Phase B 胜率: 43.74%
    Phase B 最大回撤: 0.82%
-⏱  Phase B 耗时: 63.6s
+⏱  Phase B 耗时: 61.5s
 
 ⚠️  警告: P&L 偏差超过 5%, 可能存在前视偏差或执行模型差异!
    建议: 检查策略信号是否依赖未来数据, 或对比两个引擎的滑点/手续费模型。
@@ -3510,9 +3510,9 @@
 | C: 总体通过            | false          | ❌    |
 +--------------------+----------------+------+
 
-⏱  总耗时: 152.2s
+⏱  总耗时: 143.6s
 
 ⚠️ 最终判定: WARN
    策略有警告项, 建议优化后重新验证。
 
-📄 报告已保存: /opt/tiger/mira_nas/workspace/85680993299/dotfiles/.openclaw/workspace/quant-algo/backtest-reports/runner-report-2026-04-06T12-48-28-492Z.json
+📄 报告已保存: /opt/tiger/mira_nas/workspace/85680993299/dotfiles/.openclaw/workspace/quant-algo/backtest-reports/runner-report-2026-04-06T13-00-11-351Z.json
