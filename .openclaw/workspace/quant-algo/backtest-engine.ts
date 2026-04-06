@@ -119,6 +119,10 @@ export class BacktestEngine {
   // FIX C3: Pending signal queue for next-bar execution
   private pendingSignal: { signal: StrategySignal; barIndex: number } | null = null;
 
+  // FIX 2: Max Drawdown Circuit Breaker state
+  private peakEquity: number = 0;
+  private circuitBreakerActive: boolean = false;
+
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
   private ocsLayer2: OCSLayer2;
@@ -140,6 +144,8 @@ export class BacktestEngine {
     this.config = config;
     this.balance = config.initialBalance;
     this.equity = config.initialBalance;
+    // FIX 4: Initialize peakEquity from initial balance
+    this.peakEquity = config.initialBalance;
     this.strategyEngine = new StrategyEngineModule('ocs');
     this.ta = new TechnicalAnalysisModule();
     this.ocsLayer1 = new OCSLayer1();
@@ -469,13 +475,15 @@ export class BacktestEngine {
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      if (this.pendingSignal && !this.position) {
+      // FIX 2: Also check circuit breaker before executing pending signal
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      if (!this.position) {
+      // FIX 2: Add circuit breaker check — don't generate new signals during drawdown
+      if (!this.position && !this.circuitBreakerActive) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
@@ -500,6 +508,17 @@ export class BacktestEngine {
           const confidenceThreshold = isTrendAligned ? 0.5 : 0.8;
           
           if (signal.confidence >= confidenceThreshold) {
+            // FIX 3: Minimum R:R filter — TP1 reward must be at least 1.0x the SL risk
+            if (signal.stopLoss && signal.takeProfits) {
+              const slRisk = Math.abs(signal.entryPrice - signal.stopLoss);
+              const tp1Reward = Math.abs(signal.takeProfits.tp1 - signal.entryPrice);
+              if (slRisk > 0 && tp1Reward / slRisk < 1.0) {
+                console.log(`  ⏭️ R:R过低: TP1/SL = ${(tp1Reward/slRisk).toFixed(2)} < 1.0`);
+                // Don't queue signal — skip this trade
+                continue;
+              }
+            }
+
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
             // FIX C3: Queue signal for next-bar execution instead of immediate fill
             this.pendingSignal = { signal, barIndex: i };
@@ -511,6 +530,15 @@ export class BacktestEngine {
       // 记录权益曲线
       this.equity = this.calculateEquity(currentCandle.close);
       this.equityCurve.push(this.equity);
+
+      // FIX 2: Circuit breaker — stop new entries if drawdown > 15%, resume when < 10%
+      if (this.equity > this.peakEquity) this.peakEquity = this.equity;
+      const currentDrawdown = (this.peakEquity - this.equity) / this.peakEquity;
+      if (currentDrawdown > 0.15) {
+        this.circuitBreakerActive = true;
+      } else if (currentDrawdown < 0.10) {
+        this.circuitBreakerActive = false;
+      }
     }
 
     // 平掉最后的持仓
@@ -604,6 +632,9 @@ export class BacktestEngine {
 
   /**
    * 检查持仓止盈止损
+   * FIX 1: Reordered TP checks to SL → TP3 → TP2 → TP1 (check highest TPs first).
+   * After TP1 hit → move SL to breakeven (entry price).
+   * After TP2 hit → trail SL to TP1 level.
    */
   private checkPosition(candle: OHLCV, index: number): void {
     if (!this.position) return;
@@ -611,53 +642,77 @@ export class BacktestEngine {
     const { side, entryPrice, stopLoss, takeProfits, tp1Hit, tp2Hit } = this.position;
 
     if (side === 'long') {
+      // 1. Check Stop Loss first
       // FIX H6: Check for gap — if bar opens below SL, fill at open (not SL price)
       if (candle.low <= stopLoss) {
         const gapFillPrice = candle.open < stopLoss ? candle.open : undefined;
         this.closePosition(candle, 'stop_loss', index, gapFillPrice);
         return;
       }
-      // FIX H6: Check for gap — if bar opens above TP1, fill at open (not TP1 price)
-      if (!tp1Hit && candle.high >= takeProfits.tp1) {
-        const gapFillPrice = candle.open > takeProfits.tp1 ? candle.open : undefined;
-        this.closePosition(candle, 'tp1', index, gapFillPrice);
-        return;
-      }
-      // FIX H6: Check for gap — if bar opens above TP2, fill at open (not TP2 price)
-      if (!tp2Hit && candle.high >= takeProfits.tp2) {
-        const gapFillPrice = candle.open > takeProfits.tp2 ? candle.open : undefined;
-        this.closePosition(candle, 'tp2', index, gapFillPrice);
-        return;
-      }
+      // 2. Check TP3 (highest) — full close
       // FIX H6: Check for gap — if bar opens above TP3, fill at open (not TP3 price)
       if (candle.high >= takeProfits.tp3) {
         const gapFillPrice = candle.open > takeProfits.tp3 ? candle.open : undefined;
         this.closePosition(candle, 'tp3', index, gapFillPrice);
         return;
       }
+      // 3. Check TP2 — partial close, then trail SL to TP1
+      // FIX H6: Check for gap — if bar opens above TP2, fill at open (not TP2 price)
+      if (!tp2Hit && candle.high >= takeProfits.tp2) {
+        const gapFillPrice = candle.open > takeProfits.tp2 ? candle.open : undefined;
+        this.closePosition(candle, 'tp2', index, gapFillPrice);
+        // FIX 1: After TP2 hit, trail stop to TP1 level
+        if (this.position) {
+          this.position.stopLoss = takeProfits.tp1;
+        }
+        return;
+      }
+      // 4. Check TP1 — partial close, then move SL to breakeven
+      // FIX H6: Check for gap — if bar opens above TP1, fill at open (not TP1 price)
+      if (!tp1Hit && candle.high >= takeProfits.tp1) {
+        const gapFillPrice = candle.open > takeProfits.tp1 ? candle.open : undefined;
+        this.closePosition(candle, 'tp1', index, gapFillPrice);
+        // FIX 1: After TP1 hit, move stop to breakeven (entry price)
+        if (this.position) {
+          this.position.stopLoss = entryPrice;
+        }
+        return;
+      }
     } else if (side === 'short') {
+      // 1. Check Stop Loss first
       // FIX H6: Check for gap — if bar opens above SL, fill at open (not SL price)
       if (candle.high >= stopLoss) {
         const gapFillPrice = candle.open > stopLoss ? candle.open : undefined;
         this.closePosition(candle, 'stop_loss', index, gapFillPrice);
         return;
       }
-      // FIX H6: Check for gap — if bar opens below TP1, fill at open (not TP1 price)
-      if (!tp1Hit && candle.low <= takeProfits.tp1) {
-        const gapFillPrice = candle.open < takeProfits.tp1 ? candle.open : undefined;
-        this.closePosition(candle, 'tp1', index, gapFillPrice);
-        return;
-      }
-      // FIX H6: Check for gap — if bar opens below TP2, fill at open (not TP2 price)
-      if (!tp2Hit && candle.low <= takeProfits.tp2) {
-        const gapFillPrice = candle.open < takeProfits.tp2 ? candle.open : undefined;
-        this.closePosition(candle, 'tp2', index, gapFillPrice);
-        return;
-      }
+      // 2. Check TP3 (lowest for shorts) — full close
       // FIX H6: Check for gap — if bar opens below TP3, fill at open (not TP3 price)
       if (candle.low <= takeProfits.tp3) {
         const gapFillPrice = candle.open < takeProfits.tp3 ? candle.open : undefined;
         this.closePosition(candle, 'tp3', index, gapFillPrice);
+        return;
+      }
+      // 3. Check TP2 — partial close, then trail SL to TP1
+      // FIX H6: Check for gap — if bar opens below TP2, fill at open (not TP2 price)
+      if (!tp2Hit && candle.low <= takeProfits.tp2) {
+        const gapFillPrice = candle.open < takeProfits.tp2 ? candle.open : undefined;
+        this.closePosition(candle, 'tp2', index, gapFillPrice);
+        // FIX 1: After TP2 hit, trail stop to TP1 level
+        if (this.position) {
+          this.position.stopLoss = takeProfits.tp1;
+        }
+        return;
+      }
+      // 4. Check TP1 — partial close, then move SL to breakeven
+      // FIX H6: Check for gap — if bar opens below TP1, fill at open (not TP1 price)
+      if (!tp1Hit && candle.low <= takeProfits.tp1) {
+        const gapFillPrice = candle.open < takeProfits.tp1 ? candle.open : undefined;
+        this.closePosition(candle, 'tp1', index, gapFillPrice);
+        // FIX 1: After TP1 hit, move stop to breakeven (entry price)
+        if (this.position) {
+          this.position.stopLoss = entryPrice;
+        }
         return;
       }
     }

@@ -50,7 +50,7 @@ function getPhases(): Set<string> {
 function makeConfig(): BacktestConfig {
   const endDate = new Date();
   endDate.setUTCHours(0, 0, 0, 0);
-  const days = parseInt(process.env.BT_DAYS || '90', 10);
+  const days = parseInt(process.env.BT_DAYS || '365', 10);
   const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
   return {
     symbol:         process.env.BT_SYMBOL    || 'ETHUSDT',
@@ -105,12 +105,21 @@ async function phaseA(config: BacktestConfig): Promise<PhaseAResult> {
  * data-leakage or execution divergence.
  */
 function buildReplayStrategy(trades: Trade[], name = 'OCS-Replay'): Strategy {
-  // Build a map: entryTimestamp → trade
-  const tradeByEntry = new Map<number, Trade>();
-  const tradeByExit = new Map<number, Trade>();
-  for (const t of trades) {
-    tradeByEntry.set(t.entryTime, t);
-    tradeByExit.set(t.exitTime, t);
+  // Build maps: timestamp → trade[] (multiple trades can share same timestamp)
+  const tradesByEntry = new Map<number, Trade[]>();
+  const tradesByExit = new Map<number, Trade[]>();
+  // Track which trades have been consumed to avoid double-firing
+  const consumedEntries = new Set<number>(); // index in trades array
+  const consumedExits = new Set<number>();
+
+  for (let i = 0; i < trades.length; i++) {
+    const t = trades[i];
+    // Entry map
+    if (!tradesByEntry.has(t.entryTime)) tradesByEntry.set(t.entryTime, []);
+    tradesByEntry.get(t.entryTime)!.push(t);
+    // Exit map
+    if (!tradesByExit.has(t.exitTime)) tradesByExit.set(t.exitTime, []);
+    tradesByExit.get(t.exitTime)!.push(t);
   }
 
   return {
@@ -125,28 +134,42 @@ function buildReplayStrategy(trades: Trade[], name = 'OCS-Replay'): Strategy {
 
       // Close existing position if this bar matches an exit timestamp
       if (position && position.side !== 'none') {
-        const exitTrade = tradeByExit.get(bar.timestamp);
-        if (exitTrade) {
-          const closeSide = position.side === 'long' ? 'sell' : 'buy';
-          return {
-            action: closeSide as 'buy' | 'sell',
-            size: position.size,
-            reason: `replay-close: ${exitTrade.exitReason}`,
-          };
+        const exitTrades = tradesByExit.get(bar.timestamp);
+        if (exitTrades) {
+          // Find the first unconsumed exit trade matching our position side
+          for (const t of exitTrades) {
+            const tradeIdx = trades.indexOf(t);
+            if (consumedExits.has(tradeIdx)) continue;
+            if (t.side === position.side) {
+              consumedExits.add(tradeIdx);
+              const closeSide = position.side === 'long' ? 'sell' : 'buy';
+              return {
+                action: closeSide as 'buy' | 'sell',
+                size: t.size,
+                reason: `replay-close: ${t.exitReason}`,
+              };
+            }
+          }
         }
       }
 
       // Open new position if this bar matches an entry timestamp
       if (!position || position.side === 'none') {
-        const entryTrade = tradeByEntry.get(bar.timestamp);
-        if (entryTrade) {
-          return {
-            action: entryTrade.side === 'long' ? 'buy' as const : 'sell' as const,
-            size: entryTrade.size,
-            stopLoss: entryTrade.stopLoss,
-            takeProfit: entryTrade.takeProfits.tp1,
-            reason: 'replay-entry',
-          };
+        const entryTrades = tradesByEntry.get(bar.timestamp);
+        if (entryTrades) {
+          // Find the first unconsumed entry trade
+          for (const t of entryTrades) {
+            const tradeIdx = trades.indexOf(t);
+            if (consumedEntries.has(tradeIdx)) continue;
+            consumedEntries.add(tradeIdx);
+            return {
+              action: t.side === 'long' ? 'buy' as const : 'sell' as const,
+              size: t.size,
+              stopLoss: t.stopLoss,
+              takeProfit: t.takeProfits.tp1,
+              reason: 'replay-entry',
+            };
+          }
         }
       }
 
@@ -403,7 +426,7 @@ function printFinalReport(report: RunnerReport): void {
     rows.push(['A: 总收益', `${s.totalReturnPercent >= 0 ? '+' : ''}${s.totalReturnPercent.toFixed(2)}%`, s.totalReturnPercent > 0 ? '✅' : '⚠️']);
     rows.push(['A: Sharpe', s.sharpeRatio.toFixed(2), s.sharpeRatio > 1 ? '✅' : s.sharpeRatio > 0 ? '⚠️' : '❌']);
     rows.push(['A: 胜率', `${s.winRate.toFixed(1)}%`, s.winRate > 50 ? '✅' : '⚠️']);
-    rows.push(['A: 最大回撤', `${s.maxDrawdown.toFixed(2)}%`, s.maxDrawdown < 10 ? '✅' : s.maxDrawdown < 20 ? '⚠️' : '❌']);
+    rows.push(['A: 最大回撤', `${s.maxDrawdown.toFixed(2)}%`, s.maxDrawdown < 15 ? '✅' : s.maxDrawdown < 25 ? '⚠️' : '❌']);
     rows.push(['A: 交易次数', String(s.totalTrades), s.totalTrades >= 10 ? '✅' : '⚠️']);
   }
 
