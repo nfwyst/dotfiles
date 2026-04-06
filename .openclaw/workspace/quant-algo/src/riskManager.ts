@@ -42,9 +42,25 @@ export class RiskManager {
       maxDrawdown: 0,
     };
   }
+
+  /**
+   * BUG 9 FIX: Check and reset daily stats if the date has changed.
+   * This is called at the start of canOpenPosition() to ensure
+   * daily stats are reset before checking limits.
+   */
+  private checkAndResetDailyStats(): void {
+    const today = new Date().toISOString().split('T')[0];
+    if (today !== this.dailyStats.date) {
+      this.dailyStats = this.initDailyStats();
+      this.consecutiveLosses = 0;
+    }
+  }
   
   // 检查是否可以开新仓位
   canOpenPosition(balance: number, currentPosition: Position | null): { allowed: boolean; reason?: string } {
+    // BUG 9 FIX: Reset daily stats before checking limits
+    this.checkAndResetDailyStats();
+
     // 检查是否已有持仓
     if (currentPosition && currentPosition.side !== 'none') {
       return { allowed: false, reason: '已有持仓' };
@@ -158,13 +174,16 @@ export class RiskManager {
     // 考虑杠杆后的实际盈亏
     const leveragedPnl = pnlPercent * position.leverage;
     
-    // 止损检查
-    if (leveragedPnl <= -config.riskManagement.stopLossPercent * 100) {
+    // BUG 3 FIX: Remove * 100 from stop-loss comparison
+    // stopLossPercent is already a fraction (e.g. 0.015 for 1.5%),
+    // and leveragedPnl is also a fraction. Multiplying by 100 made
+    // the threshold 100x too large, so SL would never fire.
+    if (leveragedPnl <= -config.riskManagement.stopLossPercent) {
       return { shouldExit: true, reason: '触发止损' };
     }
     
-    // 止盈检查
-    if (leveragedPnl >= config.riskManagement.takeProfitPercent * 100) {
+    // BUG 3 FIX: Remove * 100 from take-profit comparison
+    if (leveragedPnl >= config.riskManagement.takeProfitPercent) {
       return { shouldExit: true, reason: '触发止盈' };
     }
     
@@ -221,11 +240,7 @@ export class RiskManager {
   // 获取统计信息
   getStats(): DailyStats {
     // 检查是否需要重置（新的一天）
-    const today = new Date().toISOString().split('T')[0];
-    if (today !== this.dailyStats.date) {
-      this.dailyStats = this.initDailyStats();
-      this.consecutiveLosses = 0;
-    }
+    this.checkAndResetDailyStats();
     
     return { ...this.dailyStats };
   }

@@ -479,6 +479,14 @@ export class EventDrivenStrategyLayer {
       } as LocalStrategySignal;
     } catch (error) {
       logger.error('[StrategyLayer] LLM decision failed:', error);
+
+      // FIX BUG 3: Even when LLM fails, synthesize an llmDecision from
+      // the strategy signal so the ExecutionLayer does not reject the
+      // signal at the `if (!signal.llmDecision)` gate.
+      const fallbackAction: 'buy' | 'sell' | 'hold' =
+        strategySignal.type === 'long' ? 'buy' :
+        strategySignal.type === 'short' ? 'sell' : 'hold';
+
       return {
         type: strategySignal.type === 'long' ? 'long' : strategySignal.type === 'short' ? 'short' : 'hold',
         strength: strategySignal.strength,
@@ -487,6 +495,12 @@ export class EventDrivenStrategyLayer {
         takeProfit: strategySignal.takeProfits?.tp1 ?? 0,
         reasoning: ['LLM decision failed, using strategy signal'],
         riskLevel: 'medium',
+        llmDecision: {
+          action: fallbackAction,
+          confidence: strategySignal.confidence,
+          reasoning: 'LLM unavailable — synthetic decision from strategy signal',
+          keyFactors: ['llm_fallback'],
+        },
       } as LocalStrategySignal;
     }
   }
@@ -510,8 +524,40 @@ export class EventDrivenStrategyLayer {
 
   /**
    * 将 LocalStrategySignal 转换为 EnhancedSignal（事件类型）
+   *
+   * FIX BUG 3: Now includes `llmDecision` from the local signal. The
+   * ExecutionLayer checks `if (!signal.llmDecision)` and returns 'hold'
+   * when it is missing. Previously this method always omitted llmDecision,
+   * so locally-generated signals could never open positions. Now we either
+   * propagate the llmDecision from the local signal (set by callLLM), or
+   * synthesize one from the signal's type and confidence when not present.
    */
   private toEnhancedSignalFromLocal(signal: LocalStrategySignal, currentPrice: number): EnhancedSignal {
+    // Build the llmDecision: prefer the one already on the signal,
+    // otherwise synthesize from the signal direction and strength.
+    let llmDecision: LLMDecision | undefined;
+
+    if (signal.llmDecision) {
+      // Propagate the decision from callLLM() or the LLM fallback
+      llmDecision = {
+        action: signal.llmDecision.action,
+        confidence: signal.llmDecision.confidence,
+        reasoning: signal.llmDecision.reasoning,
+        keyFactors: signal.llmDecision.keyFactors ?? [],
+      };
+    } else if (signal.type !== 'hold') {
+      // FIX BUG 3: Synthesize a decision from signal direction + confidence
+      // so the ExecutionLayer gate (`if (!signal.llmDecision)`) passes.
+      llmDecision = {
+        action: signal.type === 'long' ? 'buy' : 'sell',
+        confidence: signal.confidence,
+        reasoning: `Synthetic decision from local signal (strength=${signal.strength})`,
+        keyFactors: ['local_signal'],
+      };
+    }
+    // For 'hold' signals we intentionally leave llmDecision undefined —
+    // the ExecutionLayer will correctly hold without it.
+
     return {
       type: signal.type,
       strength: signal.strength,
@@ -519,8 +565,10 @@ export class EventDrivenStrategyLayer {
       stopLoss: signal.stopLoss ?? 0,
       takeProfit: signal.takeProfit ?? 0,
       riskRewardRatio: signal.riskRewardRatio ?? 0,
+      llmDecision,
     };
   }
+
   /**
    * 创建持有信号
    */

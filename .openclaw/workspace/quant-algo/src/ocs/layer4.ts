@@ -21,10 +21,11 @@ export interface TradeSetup {
 }
 
 export interface Layer4Output {
-  signal: 'open_long' | 'open_short' | 'close_position' | 'hold';
+  signal: 'open_long' | 'open_short' | 'close_position' | 'partial_close' | 'hold';
   setup?: TradeSetup;
   reason: string;
   riskLevel: 'low' | 'medium' | 'high';
+  closePercent?: number;  // BUG 10 FIX: percentage of position to close for partial closes
 }
 
 export class OCSLayer4 {
@@ -145,6 +146,7 @@ export class OCSLayer4 {
   
   /**
    * 检查出场条件
+   * BUG 10 FIX: TP1 and TP2 emit partial_close with closePercent instead of full close_position
    */
   private checkExitConditions(currentPrice: number): Layer4Output {
     if (!this.currentPosition) {
@@ -191,7 +193,7 @@ export class OCSLayer4 {
       };
     }
     
-    // 检查TP2 (平仓25%)
+    // BUG 10 FIX: TP2 emits partial_close with closePercent: 0.25 instead of close_position
     if (!pos.tp2Hit) {
       const tp2Hit = pos.direction === 'long'
         ? currentPrice >= pos.takeProfits.tp2
@@ -200,14 +202,15 @@ export class OCSLayer4 {
       if (tp2Hit) {
         pos.tp2Hit = true;
         return {
-          signal: 'close_position', // 实际应该部分平仓
+          signal: 'partial_close',
+          closePercent: 0.25,
           reason: `TP2止盈触发 @ ${pos.takeProfits.tp2.toFixed(2)}, 平仓25%`,
           riskLevel: 'low',
         };
       }
     }
     
-    // 检查TP1 (平仓50%)
+    // BUG 10 FIX: TP1 emits partial_close with closePercent: 0.5 instead of close_position
     if (!pos.tp1Hit) {
       const tp1Hit = pos.direction === 'long'
         ? currentPrice >= pos.takeProfits.tp1
@@ -216,7 +219,8 @@ export class OCSLayer4 {
       if (tp1Hit) {
         pos.tp1Hit = true;
         return {
-          signal: 'close_position', // 实际应该部分平仓
+          signal: 'partial_close',
+          closePercent: 0.5,
           reason: `TP1止盈触发 @ ${pos.takeProfits.tp1.toFixed(2)}, 平仓50%`,
           riskLevel: 'low',
         };

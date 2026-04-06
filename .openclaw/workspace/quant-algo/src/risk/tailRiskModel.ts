@@ -135,21 +135,35 @@ export class TailRiskModel {
       (n / ((n - 1) * (n - 2))) *
       recent.reduce((s, r) => s + ((r - mean) / std) ** 3, 0);
 
-    // Excess kurtosis (Fisher-corrected)
-    const rawKurt =
-      recent.reduce((s, r) => s + ((r - mean) / std) ** 4, 0) / n;
-    const excessKurtosis = rawKurt - 3;
+    // BUG 4 FIX: Excess kurtosis with Fisher correction (matching skewness).
+    // Guard: need n >= 4 for the correction to be defined.
+    let excessKurtosis: number;
+    if (n < 4) {
+      // Not enough data for Fisher-corrected kurtosis; fall back to biased
+      const rawKurt =
+        recent.reduce((s, r) => s + ((r - mean) / std) ** 4, 0) / n;
+      excessKurtosis = rawKurt - 3;
+    } else {
+      const sumZ4 = recent.reduce((s, r) => s + ((r - mean) / std) ** 4, 0);
+      // Fisher correction formula for excess kurtosis:
+      //   G2 = ((n+1)*n / ((n-1)*(n-2)*(n-3))) * (sumZ4/n) - 3*(n-1)^2 / ((n-2)*(n-3))
+      excessKurtosis =
+        ((n + 1) * n / ((n - 1) * (n - 2) * (n - 3))) * (sumZ4 / n) -
+        (3 * (n - 1) * (n - 1)) / ((n - 2) * (n - 3));
+    }
 
     // ── Normal VaR ────────────────────────────────────────────
-    // z_α for the confidence level (using simple approximation)
-    const zAlpha = this.normalInverseCDF(this.config.confidenceLevel);
-    const normalVaR = -(mean - zAlpha * std);
+    // BUG 1 FIX: Use the LEFT-tail z-value for VaR.
+    // For confidence=0.95, we need the 5th percentile: z(0.05) = -1.645
+    const zLeft = this.normalInverseCDF(1 - this.config.confidenceLevel);
+    const normalVaR = -(mean + zLeft * std);
     // Ensure VaR is non-negative (it represents a loss)
     const clampedNormalVaR = Math.max(0, normalVaR);
 
     // ── Cornish-Fisher VaR ────────────────────────────────────
-    const cfZ = this.cornishFisherQuantile(zAlpha, skewness, excessKurtosis);
-    const cfVaR = -(mean - cfZ * std);
+    // BUG 1 FIX: Apply CF expansion to the left-tail z-value
+    const cfZLeft = this.cornishFisherQuantile(zLeft, skewness, excessKurtosis);
+    const cfVaR = -(mean + cfZLeft * std);
     const clampedCfVaR = Math.max(0, cfVaR);
 
     // ── Tail ratio ────────────────────────────────────────────

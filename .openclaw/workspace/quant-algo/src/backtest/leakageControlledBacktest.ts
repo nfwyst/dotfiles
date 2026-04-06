@@ -19,6 +19,21 @@ import { OHLCV } from '../events/types';
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 const CRYPTO_TRADING_DAYS = 365;
 
+// BUG 15 FIX: Helper to compute bars per day from timeframe string
+function barsPerDay(timeframe: string): number {
+  const match = timeframe.match(/^(\d+)(m|h|d|w)$/i);
+  if (!match) return 288; // default to 5-min bars
+  const value = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case 'm': return (24 * 60) / value;
+    case 'h': return 24 / value;
+    case 'd': return 1;
+    case 'w': return 1 / 7;
+    default: return 288;
+  }
+}
+
 // ==================== 类型定义 ====================
 export interface BacktestConfig {
   symbol: string;
@@ -33,6 +48,9 @@ export interface BacktestConfig {
   warmupPeriod: number;      // 预热期 (多少根 K 线)
   executionDelay: number;    // 执行延迟 (多少根 K 线)
   useNextOpen: boolean;      // 使用下一根 K 线开盘价
+  
+  // BUG 15 FIX: Optional timeframe for bars-per-day calculation
+  timeframe?: string;        // e.g. '5m', '1h', '1d'
 }
 
 export interface BacktestTrade {
@@ -129,6 +147,7 @@ export const DEFAULT_BACKTEST_CONFIG: BacktestConfig = {
   warmupPeriod: 50,   // 50 根 K 线预热
   executionDelay: 1,  // 1 根 K 线延迟
   useNextOpen: true,  // 使用下一根开盘价
+  timeframe: '5m',    // BUG 15 FIX: default timeframe
 };
 
 // ==================== 回测引擎 ====================
@@ -202,12 +221,15 @@ export class LeakageControlledBacktest {
         const currentValue = balance + unrealizedPnl;
         equityCurve.push(currentValue);
         
+        // BUG 13 FIX: Update peakBalance BEFORE computing drawdown
+        peakBalance = Math.max(peakBalance, currentValue);
         const currentDrawdown = peakBalance - currentValue;
         drawdownCurve.push(currentDrawdown / peakBalance);
         maxDrawdown = Math.max(maxDrawdown, currentDrawdown);
-        peakBalance = Math.max(peakBalance, currentValue);
       } else {
         equityCurve.push(balance);
+        // BUG 13 FIX: Update peakBalance BEFORE computing drawdown
+        peakBalance = Math.max(peakBalance, balance);
         drawdownCurve.push(0);
       }
       
@@ -326,7 +348,9 @@ export class LeakageControlledBacktest {
     // 计算指标
     const totalReturn = balance - this.config.initialBalance;
     const totalReturnPercent = totalReturn / this.config.initialBalance;
-    const tradingDays = this.data.length / 288; // 假设 5 分钟 K 线
+    // BUG 15 FIX: Compute bars per day from timeframe config instead of hardcoding 288
+    const bpd = barsPerDay(this.config.timeframe ?? '5m');
+    const tradingDays = this.data.length / bpd;
     // FIX H5: Use CAGR instead of linear extrapolation
     // Old: totalReturnPercent * (365 / tradingDays) — linear, overestimates for long periods
     const finalValue = balance;
@@ -356,18 +380,30 @@ export class LeakageControlledBacktest {
       returns.push((equityCurve[i] - equityCurve[i - 1]) / equityCurve[i - 1]);
     }
     
-    const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const stdReturn = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length);
-    const sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(CRYPTO_TRADING_DAYS * 288) : 0;
+    // BUG 7 FIX: Guard against empty/insufficient equity curve
+    let sharpeRatio = 0;
+    let sortinoRatio = 0;
+    if (returns.length >= 2) {
+      const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+      // BUG 6 FIX: Use sample std (N-1) instead of population std (N) for Sharpe consistency
+      const stdReturn = Math.sqrt(returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / (returns.length - 1));
+      // BUG 15 FIX: Use bpd instead of hardcoded 288
+      sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(CRYPTO_TRADING_DAYS * bpd) : 0;
     
-    // Sortino
-    const negativeReturns = returns.filter(r => r < 0);
-    const downStd = negativeReturns.length > 0 
-      ? Math.sqrt(negativeReturns.reduce((sum, r) => sum + Math.pow(r, 2), 0) / negativeReturns.length)
-      : 0;
-    const sortinoRatio = downStd > 0 ? (avgReturn / downStd) * Math.sqrt(CRYPTO_TRADING_DAYS * 288) : 0;
+      // BUG 14 FIX: Sortino uses ALL observations count (N), not just negative count
+      const negativeReturns = returns.filter(r => r < 0);
+      // Downside deviation: sum of squared negative returns divided by total N (all observations)
+      const downStd = negativeReturns.length > 0 
+        ? Math.sqrt(negativeReturns.reduce((sum, r) => sum + Math.pow(r, 2), 0) / returns.length)
+        : 0;
+      const avgReturnForSortino = returns.reduce((a, b) => a + b, 0) / returns.length;
+      // BUG 15 FIX: Use bpd instead of hardcoded 288
+      sortinoRatio = downStd > 0 ? (avgReturnForSortino / downStd) * Math.sqrt(CRYPTO_TRADING_DAYS * bpd) : 0;
+    }
     
-    const calmarRatio = annualizedReturn / (maxDrawdown / this.config.initialBalance);
+    // BUG 8 FIX: maxDrawdownPercent divides by peakBalance not initialBalance
+    // BUG 9 FIX: Guard against division by zero when maxDrawdown = 0
+    const calmarRatio = maxDrawdown > 0 ? annualizedReturn / (maxDrawdown / peakBalance) : 0;
     
     // 平均持仓时间
     const avgTradeDuration = trades.length > 0
@@ -387,7 +423,8 @@ export class LeakageControlledBacktest {
       totalReturnPercent,
       annualizedReturn,
       maxDrawdown,
-      maxDrawdownPercent: maxDrawdown / this.config.initialBalance,
+      // BUG 8 FIX: Use peakBalance instead of initialBalance for maxDrawdownPercent
+      maxDrawdownPercent: peakBalance > 0 ? maxDrawdown / peakBalance : 0,
       sharpeRatio,
       sortinoRatio,
       calmarRatio,

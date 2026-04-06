@@ -256,10 +256,9 @@ export function fuseSignals(
   const clampedLlmIC = Math.max(0, llmIC);
   const icSum = clampedStratIC + clampedLlmIC;
 
-  // FIX: M5 — If all ICs are non-positive, no source has demonstrated
-  // skill — output neutral signal per Grinold & Kahn: "An IC of zero
-  // implies the forecast has no value."
-  const allICsNegative = icSum === 0 && (strategyICTracker.getObservationCount() >= 5 || llmICTracker.getObservationCount() >= 5);
+  // BUG 20 FIX: Change || to && — allICsNegative should be true only when BOTH trackers
+  // have enough observations AND the sum is zero (i.e., both ICs are non-positive).
+  const allICsNegative = icSum === 0 && (strategyICTracker.getObservationCount() >= 5 && llmICTracker.getObservationCount() >= 5);
 
   if (icSum > 0) {
     // FIX: M5 — Weight signals by their rolling IC
@@ -320,11 +319,12 @@ export function fuseSignals(
     );
     adjustment = `IC-weighted blend (strat=${strategyWeight.toFixed(2)}, llm=${llmWeight.toFixed(2)}) + agreement bonus`;
     
+    // BUG 11 FIX: Use optional chaining for llmSignal.sentiment and llmSignal.riskAssessment
     finalReasoning.push(
       `--- LLM融合分析 ✅ ---`,
       `LLM确认: ${llmAction.toUpperCase()} (置信度${(llmSignal.confidence*100).toFixed(0)}%)`,
-      `市场情绪: ${llmSignal.sentiment}`,
-      `风险评估: ${llmSignal.riskAssessment}`,
+      `市场情绪: ${llmSignal?.sentiment ?? 'neutral'}`,
+      `风险评估: ${llmSignal?.riskAssessment ?? 'medium'}`,
       `仓位建议: ${llmSignal.positionSizing.recommendation}`,
       `建议持仓: ${llmSignal.expectedHolding.min}-${llmSignal.expectedHolding.max}`,
       `--- IC Metrics (Grinold & Kahn) ---`,
@@ -342,12 +342,13 @@ export function fuseSignals(
     finalConfidence = strategySignal.confidence * holdPenalty;
     adjustment = `IC-weighted hold penalty (factor=${holdPenalty.toFixed(2)}, llm_weight=${llmWeight.toFixed(2)})`;
     
+    // BUG 11 FIX: Use optional chaining for llmSignal.sentiment
     finalReasoning.push(
       `--- LLM融合分析 ⚠️ ---`,
       `策略信号: ${strategyAction.toUpperCase()}`,
       `LLM建议: 观望`,
       `原因: ${llmSignal.reasoning[0]}`,
-      `市场情绪: ${llmSignal.sentiment}`,
+      `市场情绪: ${llmSignal?.sentiment ?? 'neutral'}`,
       `建议: 可跟随策略但控制仓位`,
       `--- IC Metrics (Grinold & Kahn) ---`,
       `Strategy IC: ${strategyIC.toFixed(4)} | LLM IC: ${llmIC.toFixed(4)}`,
@@ -364,12 +365,13 @@ export function fuseSignals(
     finalConfidence = strategySignal.confidence * conflictPenalty;
     adjustment = `IC-weighted conflict penalty (factor=${conflictPenalty.toFixed(2)})`;
     
+    // BUG 11 FIX: Use optional chaining for llmSignal.sentiment and llmSignal.riskAssessment
     finalReasoning.push(
       `--- LLM融合分析 ❌ ---`,
       `⚠️ 严重分歧!`,
       `策略信号: ${strategyAction.toUpperCase()}`,
       `LLM分析: ${llmAction.toUpperCase()}`,
-      `市场情绪: ${llmSignal.sentiment}`,
+      `市场情绪: ${llmSignal?.sentiment ?? 'neutral'}`,
       `风险提示: ${llmSignal.warnings[0]}`,
       `建议: 暂停交易或大幅减仓`,
       `--- IC Metrics (Grinold & Kahn) ---`,
@@ -380,13 +382,14 @@ export function fuseSignals(
   }
   
   // 构建最终信号
+  // BUG 21 FIX: Use ?? instead of || for SL price to handle 0 correctly
   const fusedSignal: StrategySignal = {
     ...strategySignal,
     type: finalType,
     confidence: finalConfidence,
     reasoning: finalReasoning,
-    // 如果LLM有更优的SL/TP，可以采纳
-    stopLoss: llmSignal.stopLoss?.price || strategySignal.stopLoss,
+    // BUG 21 FIX: Use ?? so that a stopLoss price of 0 is not treated as falsy
+    stopLoss: llmSignal.stopLoss?.price ?? strategySignal.stopLoss,
     takeProfits: strategySignal.takeProfits || {
       tp1: llmSignal.targets.tp1.price,
       tp2: llmSignal.targets.tp2.price,

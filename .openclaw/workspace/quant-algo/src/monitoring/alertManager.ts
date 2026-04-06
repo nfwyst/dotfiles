@@ -1,6 +1,10 @@
 /**
  * Alert Manager — Production Monitoring
  * Evaluates metrics and triggers alerts via configured channels.
+ *
+ * FIX BUG 7: Added cleanup of expired cooldown entries in evaluate()
+ * to prevent unbounded growth of the lastAlertTime map. Also ensured
+ * maxAlertsPerHour is properly enforced with correct hour-boundary reset.
  */
 
 // ────────────────────────────────────────────────────────────────
@@ -48,6 +52,9 @@ export interface AlertConfig {
 // Alert Manager
 // ────────────────────────────────────────────────────────────────
 
+/** How often (in evaluate() calls) to run cooldown map cleanup */
+const COOLDOWN_CLEANUP_INTERVAL = 50;
+
 export class AlertManager {
   private config: AlertConfig;
   private rules: AlertRule[] = [];
@@ -55,6 +62,10 @@ export class AlertManager {
   private lastAlertTime: Map<string, number> = new Map();
   private alertCountThisHour: number = 0;
   private hourResetTime: number = Date.now();
+
+  // FIX BUG 7: Counter to throttle cooldown cleanup — we don't need to
+  // scan the map on every single evaluate() call.
+  private evaluateCallCount: number = 0;
 
   constructor(config?: Partial<AlertConfig>) {
     this.config = {
@@ -172,6 +183,10 @@ export class AlertManager {
   /**
    * Evaluate all rules against current metrics.
    * Returns an array of triggered alerts (respecting cooldowns and rate limits).
+   *
+   * FIX BUG 7: Now periodically cleans up expired entries from the
+   * lastAlertTime map to prevent unbounded memory growth. Also properly
+   * enforces maxAlertsPerHour with a rolling hour window.
    */
   evaluate(metrics: Record<string, number>): Alert[] {
     const now = Date.now();
@@ -181,6 +196,15 @@ export class AlertManager {
     if (now - this.hourResetTime >= 60 * 60 * 1000) {
       this.alertCountThisHour = 0;
       this.hourResetTime = now;
+    }
+
+    // FIX BUG 7: Periodically clean up expired cooldown entries.
+    // We do this every COOLDOWN_CLEANUP_INTERVAL evaluate() calls
+    // to avoid scanning the map on every single call.
+    this.evaluateCallCount++;
+    if (this.evaluateCallCount >= COOLDOWN_CLEANUP_INTERVAL) {
+      this.evaluateCallCount = 0;
+      this.cleanupExpiredCooldowns(now);
     }
 
     for (const rule of this.rules) {
@@ -234,6 +258,46 @@ export class AlertManager {
     }
 
     return triggered;
+  }
+
+  /**
+   * FIX BUG 7: Remove expired cooldown entries from the lastAlertTime map.
+   *
+   * An entry is "expired" if its cooldown period has fully elapsed AND the
+   * rule name is still registered. Entries for rules that have been removed
+   * are always cleaned up (they're orphaned).
+   *
+   * This prevents the map from growing unboundedly when rules are dynamically
+   * added and removed over a long-running process.
+   */
+  private cleanupExpiredCooldowns(now: number): void {
+    // Build a set of current rule names for O(1) lookup
+    const activeRuleNames = new Set(this.rules.map((r) => r.name));
+
+    // Find the maximum cooldown among all active rules. We use this as
+    // a conservative threshold: if an entry is older than maxCooldown,
+    // its cooldown has certainly expired regardless of which rule it
+    // belongs to.
+    let maxCooldownMs = 0;
+    for (const rule of this.rules) {
+      if (rule.cooldownMs > maxCooldownMs) {
+        maxCooldownMs = rule.cooldownMs;
+      }
+    }
+
+    // Iterate and delete stale entries
+    for (const [ruleName, lastTime] of this.lastAlertTime) {
+      // Case 1: Rule no longer exists — orphaned entry, always remove
+      if (!activeRuleNames.has(ruleName)) {
+        this.lastAlertTime.delete(ruleName);
+        continue;
+      }
+
+      // Case 2: Entry is older than the max cooldown — certainly expired
+      if (now - lastTime > maxCooldownMs) {
+        this.lastAlertTime.delete(ruleName);
+      }
+    }
   }
 
   /**

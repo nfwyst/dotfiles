@@ -140,8 +140,12 @@ export class BayesianKellyManager {
     // Raw Kelly
     const rawKelly = (p * b - q) / b;
     
-    // Confidence factor: sqrt(n / minSample) capped at 1
-    const sampleConfidence = Math.min(1, Math.sqrt(recentTrades.length / this.config.minSampleSize));
+    // BUG 8 FIX: Use effective sample size (weighted wins + weighted losses)
+    // instead of raw trade count for confidence calculation.
+    // The effective N is approximately halfLife / ln(2), but using the
+    // actual weighted counts is more accurate.
+    const effectiveN = stats.wins + stats.losses;
+    const sampleConfidence = Math.min(1, Math.sqrt(effectiveN / this.config.minSampleSize));
     
     // Volatility adjustment: scale down in high-vol regimes
     const vol = realizedVol ?? stats.realizedVol;
@@ -200,20 +204,25 @@ export class BayesianKellyManager {
     let weightedWins = 0, weightedLosses = 0;
     let weightedWinSum = 0, weightedLossSum = 0;
     let totalWeight = 0;
-    const returns: number[] = [];
+    let weightedReturnSum = 0;
+    let weightedReturnSqSum = 0;
     
     for (let i = 0; i < n; i++) {
       const weight = Math.exp(-lambda * (n - 1 - i));
       totalWeight += weight;
-      returns.push(trades[i].returnPct);
       
-      if (trades[i].pnl > 0) {
+      // BUG 9 FIX: pnl=0 trades classified as wins (>= 0) instead of losses
+      if (trades[i].pnl >= 0) {
         weightedWins += weight;
         weightedWinSum += weight * trades[i].returnPct;
       } else {
         weightedLosses += weight;
         weightedLossSum += weight * Math.abs(trades[i].returnPct);
       }
+
+      // BUG 13 FIX: Use same exponential weighting for volatility calculation
+      weightedReturnSum += weight * trades[i].returnPct;
+      weightedReturnSqSum += weight * trades[i].returnPct * trades[i].returnPct;
     }
     
     const wins = weightedWins;
@@ -221,11 +230,14 @@ export class BayesianKellyManager {
     const avgWin = weightedWins > 0 ? weightedWinSum / weightedWins : 0;
     const avgLoss = weightedLosses > 0 ? weightedLossSum / weightedLosses : 0.01;
     
-    // Realized volatility (annualized for crypto: sqrt(365 * 288) for 5-min bars)
-    const mean = returns.reduce((s, r) => s + r, 0) / n;
-    const variance = returns.reduce((s, r) => s + (r - mean) ** 2, 0) / (n - 1);
+    // BUG 13 FIX: Realized volatility using exponentially weighted variance
+    // Weighted mean and weighted variance for annualized vol
+    const weightedMean = totalWeight > 0 ? weightedReturnSum / totalWeight : 0;
+    const weightedVariance = totalWeight > 0
+      ? (weightedReturnSqSum / totalWeight) - (weightedMean * weightedMean)
+      : 0;
     const CRYPTO_PERIODS_PER_YEAR = 365 * 288; // 5-min bars
-    const realizedVol = Math.sqrt(variance * CRYPTO_PERIODS_PER_YEAR);
+    const realizedVol = Math.sqrt(Math.max(0, weightedVariance) * CRYPTO_PERIODS_PER_YEAR);
     
     return { wins, losses, avgWin, avgLoss, realizedVol };
   }
@@ -233,7 +245,8 @@ export class BayesianKellyManager {
   /** Get current statistics summary */
   getStats(): { tradeCount: number; recentWinRate: number; kellyFraction: number } {
     const recent = this.getRecentTrades();
-    const wins = recent.filter(t => t.pnl > 0).length;
+    // BUG 9 FIX: Consistent with the fix above, count pnl >= 0 as wins
+    const wins = recent.filter(t => t.pnl >= 0).length;
     return {
       tradeCount: this.tradeHistory.length,
       recentWinRate: recent.length > 0 ? wins / recent.length : 0,

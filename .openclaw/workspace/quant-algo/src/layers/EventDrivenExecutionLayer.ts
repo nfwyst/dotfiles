@@ -10,6 +10,7 @@ import type { NotificationManager } from '../notifier';
 import type { StateManager } from '../state';
 // FIX H7: Import canonical Position from events/types (single source of truth)
 import type { Position } from '../events/types';
+import type { ExecutionAdapter } from '../feeds/types';
 import { getEventBus } from '../events';
 import {
   EventChannels,
@@ -51,6 +52,11 @@ export class EventDrivenExecutionLayer {
   private stateManager: StateManager;
   private eventBus = getEventBus();
 
+  // FIX BUG 1: Optional execution adapter injected by Runtime.
+  // When set, all order operations route through this adapter instead
+  // of the exchange directly (used for paper / backtest modes).
+  private executionAdapter: ExecutionAdapter | undefined;
+
   // ── Integrated risk modules ────────────────────────────────
   private hmmDetector = new HMMRegimeDetector();
   private tailRisk = new TailRiskModel();
@@ -58,15 +64,21 @@ export class EventDrivenExecutionLayer {
   private hmmWarmedUp: boolean = false;
   private tailRiskWarmedUp: boolean = false;
 
-  // FIX: H7 — Replace isProcessing boolean guard with async event queue.
-  // The old boolean guard silently dropped events during processing, causing
-  // critical signals (stop-loss, position updates) to be permanently lost
-  // in fast markets.
-  private isProcessing: boolean = false;
+  // FIX BUG 4: Replace isProcessing boolean guard with a proper async mutex.
+  // The old pattern had a race condition: after drainEventQueue() saw an
+  // empty queue and returned, but before isProcessing was set to false,
+  // a new event could be pushed to the queue. Then isProcessing becomes
+  // false with an un-drained event sitting in the queue forever.
+  //
+  // The fix uses a lock-chain pattern: each incoming event appends itself
+  // to a promise chain so events are guaranteed to execute sequentially
+  // with no gaps.
   private eventQueue: StrategyLayerCompleteEvent[] = [];
   private maxQueueSize: number;
   private static readonly DEFAULT_MAX_QUEUE_SIZE = 100;
   private static readonly QUEUE_WARNING_THRESHOLD = 0.8; // 80%
+  private processingLock: Promise<void> = Promise.resolve();
+  private isProcessing: boolean = false;
 
   constructor(
     exchange: ExchangeManager,
@@ -86,6 +98,22 @@ export class EventDrivenExecutionLayer {
     this.subscribeToStrategyEvents();
   }
 
+  // ----------------------------------------------------------------
+  // FIX BUG 1: setExecutionAdapter — injected by Runtime
+  // ----------------------------------------------------------------
+
+  /**
+   * Set the execution adapter used for order routing.
+   * When an adapter is set, all order operations (open/close) and
+   * balance/position queries are routed through the adapter instead
+   * of the raw exchange. This enables paper-trading and backtesting
+   * with identical strategy/execution logic.
+   */
+  setExecutionAdapter(adapter: ExecutionAdapter): void {
+    this.executionAdapter = adapter;
+    logger.info(`[ExecutionLayer] ExecutionAdapter set (mode=${adapter.mode})`);
+  }
+
   /**
    * 订阅策略层事件
    */
@@ -101,13 +129,14 @@ export class EventDrivenExecutionLayer {
   /**
    * 处理策略层完成事件
    *
-   * FIX: H7 — Instead of silently discarding events while processing,
-   * we now enqueue them and drain the queue after the current event
-   * completes. This ensures FIFO ordering is maintained and no critical
-   * signals (stop-loss, position updates) are ever lost.
+   * FIX BUG 4: Uses a promise-chain mutex to guarantee strict FIFO
+   * sequential processing with no race-condition gaps. Each incoming
+   * event chains onto the previous processing promise so there is
+   * never a window where isProcessing is false while events remain
+   * in the queue.
    */
-  private async handleStrategyLayerComplete(event: StrategyLayerCompleteEvent): Promise<void> {
-    // FIX: H7 — If already processing, push to queue instead of dropping
+  private handleStrategyLayerComplete(event: StrategyLayerCompleteEvent): void {
+    // Bounded queue: if we're backed up, drop oldest to make room
     if (this.isProcessing) {
       if (this.eventQueue.length >= this.maxQueueSize) {
         logger.error(
@@ -119,7 +148,7 @@ export class EventDrivenExecutionLayer {
       }
       this.eventQueue.push(event);
 
-      // FIX: H7 — Warn when queue is >80% full
+      // Warn when queue is >80% full
       const utilization = this.eventQueue.length / this.maxQueueSize;
       if (utilization > EventDrivenExecutionLayer.QUEUE_WARNING_THRESHOLD) {
         logger.warn(
@@ -135,20 +164,27 @@ export class EventDrivenExecutionLayer {
       return;
     }
 
+    // FIX BUG 4: Mark as processing BEFORE chaining onto the lock.
+    // This prevents a new event from starting a second chain while
+    // the first is still being set up.
     this.isProcessing = true;
 
-    try {
-      await this.processStrategyEvent(event);
-    } finally {
-      // FIX: H7 — Drain the queue after processing completes (FIFO order)
+    // Chain onto the processing lock to guarantee sequential execution.
+    this.processingLock = this.processingLock.then(async () => {
+      try {
+        await this.processStrategyEvent(event);
+      } catch (error) {
+        logger.error('[ExecutionLayer] Error processing strategy event:', error);
+      }
+      // Drain any queued events under the same lock
       await this.drainEventQueue();
       this.isProcessing = false;
-    }
+    });
   }
 
   /**
-   * FIX: H7 — Drain queued events one by one in FIFO order after the
-   * current event finishes processing.
+   * FIX BUG 4: Drain queued events one by one in FIFO order.
+   * Called within the processing lock so no races are possible.
    */
   private async drainEventQueue(): Promise<void> {
     while (this.eventQueue.length > 0) {
@@ -173,17 +209,17 @@ export class EventDrivenExecutionLayer {
 
       const { payload } = event;
       const currentPrice = payload.dataContext.marketData.currentPrice;
-      const balance = await this.exchange.getFullBalance();
+
+      // FIX BUG 1: Route balance/position queries through adapter when set
+      const balance = await this.getBalanceFromSource();
       const position = await this.getFormattedPosition();
 
       // ── Feed OHLCV data to HMM and TailRisk models ─────────
-      // The dataContext carries the full OHLCV array from the DataLayer.
-      // We feed the latest candle to both risk models so they stay current.
       this.feedRiskModels(payload.dataContext.marketData.ohlcv);
 
       const context: ExecutionContext = {
         currentPrice,
-        balance: balance.free,
+        balance,
         position,
         signal: payload.signal,
       };
@@ -220,22 +256,29 @@ export class EventDrivenExecutionLayer {
     }
   }
 
+  // ── FIX BUG 1: Adapter-aware balance/position helpers ─────────
+
+  /**
+   * Get balance from the execution adapter if set, otherwise from the exchange.
+   */
+  private async getBalanceFromSource(): Promise<number> {
+    if (this.executionAdapter) {
+      return this.executionAdapter.getBalance();
+    }
+    const fullBalance = await this.exchange.getFullBalance();
+    return fullBalance.free;
+  }
+
   // ── Risk model data feed ─────────────────────────────────────
 
   /**
    * Feed the latest OHLCV data to HMM and TailRisk models.
-   *
-   * On the first call we batch-initialise both models with the full
-   * historical window so they warm up quickly. On subsequent calls
-   * we only feed the newest candle.
    */
   private feedRiskModels(ohlcv: OHLCV[]): void {
     if (ohlcv.length === 0) return;
 
     try {
-      // ── HMM Regime Detector ───────────────────────────────
       if (!this.hmmWarmedUp && ohlcv.length >= 2) {
-        // First time: batch update with all available candles
         const regimeResult = this.hmmDetector.batchUpdate(ohlcv);
         this.hmmWarmedUp = true;
         logger.info(
@@ -243,7 +286,6 @@ export class EventDrivenExecutionLayer {
           `(trained=${regimeResult.isTrained}, regime=${regimeResult.label})`
         );
       } else if (this.hmmWarmedUp) {
-        // Subsequent calls: feed only the latest candle
         const latestCandle = ohlcv[ohlcv.length - 1];
         this.hmmDetector.update(latestCandle);
       }
@@ -252,9 +294,7 @@ export class EventDrivenExecutionLayer {
     }
 
     try {
-      // ── Tail Risk Model ───────────────────────────────────
       if (!this.tailRiskWarmedUp && ohlcv.length >= 2) {
-        // First time: batch update with all available candles
         this.tailRisk.batchUpdate(ohlcv);
         this.lastClose = ohlcv[ohlcv.length - 1].close;
         this.tailRiskWarmedUp = true;
@@ -262,7 +302,6 @@ export class EventDrivenExecutionLayer {
           `[ExecutionLayer] TailRisk batch initialized with ${ohlcv.length} candles`
         );
       } else if (this.tailRiskWarmedUp) {
-        // Subsequent calls: feed only the latest candle with prevClose
         const latestCandle = ohlcv[ohlcv.length - 1];
         if (this.lastClose > 0) {
           this.tailRisk.update(latestCandle, this.lastClose);
@@ -361,30 +400,26 @@ export class EventDrivenExecutionLayer {
   private async checkEmergencyExit(position: Position | null, currentPrice: number): Promise<boolean> {
     if (!position) return false;
 
-    // 检查是否触发紧急止损
     const pnlPercent = position.side === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
 
-    return pnlPercent < -10; // 超过 10% 亏损触发紧急退出
+    return pnlPercent < -10;
   }
 
   private async managePosition(context: ExecutionContext): Promise<ExecutionResult> {
     const { position, signal, currentPrice, balance } = context;
     if (!position) return this.createHoldResult('No position to manage');
 
-    // 检查止损止盈
     const shouldClose = this.checkStopLossTakeProfit(position, currentPrice);
     if (shouldClose) {
       return this.closePosition(position, 'Stop loss or take profit triggered');
     }
 
-    // 检查信号反转
     if (this.shouldCloseOnSignalReversal(position, signal)) {
       return this.closePosition(position, 'Signal reversal detected');
     }
 
-    // 更新止损止盈
     if (signal.stopLoss && signal.takeProfit) {
       const updateResult = await this.updateStopLossTakeProfit(position, signal);
       if (updateResult) {
@@ -413,26 +448,18 @@ export class EventDrivenExecutionLayer {
     return false;
   }
 
-  /**
-   * FIX H7: Now passes canonical Position fields directly to stateManager.
-   * No more translation from contracts/pnl — state/types uses the same
-   * canonical Position shape from events/types.
-   */
   private async updateStopLossTakeProfit(
     position: Position,
     signal: EnhancedSignal
   ): Promise<ExecutionResult | null> {
-    // 检查是否需要更新
     const slChanged = signal.stopLoss && signal.stopLoss !== position.stopLoss;
     const tpChanged = signal.takeProfit && signal.takeProfit !== position.takeProfit;
 
     if (!slChanged && !tpChanged) return null;
 
-    // 更新持仓信息
     position.stopLoss = signal.stopLoss || position.stopLoss;
     position.takeProfit = signal.takeProfit || position.takeProfit;
 
-    // FIX H7: Pass canonical Position directly — no field translation needed
     this.stateManager.updatePosition({
       side: position.side,
       size: position.size,
@@ -457,8 +484,8 @@ export class EventDrivenExecutionLayer {
   }
 
   /**
-   * FIX H7: Now saves canonical Position fields to state.
-   * No more contracts/pnl translation.
+   * FIX BUG 1 + H7: Routes order execution through the adapter when set,
+   * otherwise falls back to the exchange directly.
    */
   private async openPosition(
     signal: EnhancedSignal,
@@ -475,8 +502,6 @@ export class EventDrivenExecutionLayer {
       );
 
       // ── HMM Regime-based position scaling ───────────────────
-      // Check the current market regime and reduce position size
-      // during high-volatility or crisis regimes.
       try {
         const regime = this.hmmDetector.getCurrentRegime();
         if (regime && regime.isTrained) {
@@ -508,7 +533,6 @@ export class EventDrivenExecutionLayer {
       }
 
       // ── Tail Risk position scaling ──────────────────────────
-      // If the tail risk ratio is elevated, further reduce position size.
       try {
         const riskMetrics = this.tailRisk.getCurrentRisk();
         if (riskMetrics.tailRatio > 2.0) {
@@ -534,35 +558,74 @@ export class EventDrivenExecutionLayer {
       }
 
       let result: ExecutionResult;
+      const symbol = process.env.SYMBOL || 'ETHUSDT';
 
       if (side === 'buy') {
-        const order = await this.exchange.openLong(
-          positionSize,
-          signal.stopLoss,
-          signal.takeProfit
-        );
-        await this.exchange.setLeverage(leverage);
-        result = {
-          success: true,
-          action: 'open_long',
-          message: `Opened long position: ${positionSize} @ ${order.price}`,
-          size: positionSize,
-          price: order.price,
-        };
+        // FIX BUG 1: Route through adapter when set
+        if (this.executionAdapter) {
+          const orderResult = await this.executionAdapter.placeMarketOrder('buy', positionSize, symbol);
+          if (!orderResult.success) {
+            return {
+              success: false,
+              action: 'error',
+              message: `Adapter order failed: ${orderResult.message}`,
+            };
+          }
+          result = {
+            success: true,
+            action: 'open_long',
+            message: `Opened long position: ${positionSize} @ ${orderResult.filledPrice}`,
+            size: orderResult.filledSize ?? positionSize,
+            price: orderResult.filledPrice,
+          };
+        } else {
+          const order = await this.exchange.openLong(
+            positionSize,
+            signal.stopLoss,
+            signal.takeProfit
+          );
+          await this.exchange.setLeverage(leverage);
+          result = {
+            success: true,
+            action: 'open_long',
+            message: `Opened long position: ${positionSize} @ ${order.price}`,
+            size: positionSize,
+            price: order.price,
+          };
+        }
       } else if (side === 'sell') {
-        const order = await this.exchange.openShort(
-          positionSize,
-          signal.stopLoss,
-          signal.takeProfit
-        );
-        await this.exchange.setLeverage(leverage);
-        result = {
-          success: true,
-          action: 'open_short',
-          message: `Opened short position: ${positionSize} @ ${order.price}`,
-          size: positionSize,
-          price: order.price,
-        };
+        // FIX BUG 1: Route through adapter when set
+        if (this.executionAdapter) {
+          const orderResult = await this.executionAdapter.placeMarketOrder('sell', positionSize, symbol);
+          if (!orderResult.success) {
+            return {
+              success: false,
+              action: 'error',
+              message: `Adapter order failed: ${orderResult.message}`,
+            };
+          }
+          result = {
+            success: true,
+            action: 'open_short',
+            message: `Opened short position: ${positionSize} @ ${orderResult.filledPrice}`,
+            size: orderResult.filledSize ?? positionSize,
+            price: orderResult.filledPrice,
+          };
+        } else {
+          const order = await this.exchange.openShort(
+            positionSize,
+            signal.stopLoss,
+            signal.takeProfit
+          );
+          await this.exchange.setLeverage(leverage);
+          result = {
+            success: true,
+            action: 'open_short',
+            message: `Opened short position: ${positionSize} @ ${order.price}`,
+            size: positionSize,
+            price: order.price,
+          };
+        }
       } else {
         return this.createHoldResult('LLM decision is hold');
       }
@@ -575,7 +638,7 @@ export class EventDrivenExecutionLayer {
         leverage
       );
 
-      // FIX H7: Save canonical Position directly — no contracts/pnl translation
+      // FIX H7: Save canonical Position directly
       this.stateManager.updatePosition({
         side: side === 'buy' ? 'long' : 'short',
         size: positionSize,
@@ -600,14 +663,31 @@ export class EventDrivenExecutionLayer {
 
   async closePosition(position: Position, reason: string): Promise<ExecutionResult> {
     try {
-      let order;
       let pnl = 0;
+      let fillPrice: number;
 
       if (position.side === 'long' || position.side === 'short') {
-        order = await this.exchange.closePosition(position.side, position.size);
+        // FIX BUG 1: Route close through adapter when set
+        if (this.executionAdapter) {
+          const closeSide = position.side === 'long' ? 'sell' : 'buy';
+          const symbol = process.env.SYMBOL || 'ETHUSDT';
+          const orderResult = await this.executionAdapter.placeMarketOrder(closeSide, position.size, symbol);
+          if (!orderResult.success) {
+            return {
+              success: false,
+              action: 'error',
+              message: `Adapter close failed: ${orderResult.message}`,
+            };
+          }
+          fillPrice = orderResult.filledPrice ?? 0;
+        } else {
+          const order = await this.exchange.closePosition(position.side, position.size);
+          fillPrice = order.price;
+        }
+
         pnl = position.side === 'long'
-          ? (order.price - position.entryPrice) * position.size
-          : (position.entryPrice - order.price) * position.size;
+          ? (fillPrice - position.entryPrice) * position.size
+          : (position.entryPrice - fillPrice) * position.size;
       } else {
         return this.createHoldResult('No position to close');
       }
@@ -619,14 +699,14 @@ export class EventDrivenExecutionLayer {
         message: `Closed ${position.side} position: ${reason}. PnL: ${pnl.toFixed(2)} USDT`,
         pnl,
         size: position.size,
-        price: order.price,
+        price: fillPrice,
       };
 
       // 发送通知
       await this.notificationManager.notifyClosePosition(
         position.side,
         position.entryPrice,
-        order.price,
+        fillPrice,
         pnl,
         reason
       );
@@ -646,14 +726,16 @@ export class EventDrivenExecutionLayer {
   }
 
   /**
-   * FIX H7: State now stores canonical Position (size, unrealizedPnl, leverage).
-   * No translation needed — just return the state position directly.
+   * FIX BUG 1: Route position queries through adapter when set.
    */
   async getFormattedPosition(): Promise<Position | null> {
+    if (this.executionAdapter) {
+      const symbol = process.env.SYMBOL || 'ETHUSDT';
+      return this.executionAdapter.getPosition(symbol);
+    }
     const state = this.stateManager.getState();
     const statePosition = state.trading.position;
     if (!statePosition) return null;
-    // State position is already canonical Position type — return directly
     return statePosition;
   }
 
@@ -665,7 +747,6 @@ export class EventDrivenExecutionLayer {
     };
   }
 
-  // FIX: H7 — Expose queue size for monitoring / testing
   getQueueSize(): number {
     return this.eventQueue.length;
   }

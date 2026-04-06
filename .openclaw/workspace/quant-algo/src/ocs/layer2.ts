@@ -89,9 +89,13 @@ export class OCSLayer2 {
 
   // OCS 2.0: 配置项
   private useAttentionFusion: boolean = false;  // 默认关闭，使用稳定LMS
+
+  // BUG 12 FIX: Store previous dominant cycle per timeframe instead of shared mutable state
+  private prevDominantCycleByTimeframe: Map<string, number> = new Map();
   
   constructor(useV312: boolean = true, useAttention: boolean = false) {
-    this.lmsWeights = [0.33, 0.33, 0.33];
+    // BUG 1 FIX: Initialize lmsWeights with 4 elements to match 4 signals
+    this.lmsWeights = [0.25, 0.25, 0.25, 0.25];
     this.lmsLearningRate = 0.01;
     this.useAttentionFusion = useAttention;
 
@@ -215,10 +219,10 @@ export class OCSLayer2 {
    * - 震荡市：依赖其他指标
    */
   private calculateEhlersCycle(prices: number[]): Layer2Output['dominantCycle'] & { confirmed: boolean; confirmationCount: number; trendStrength: 'strong' | 'weak' | 'none' } {
-    // 计算三个周期
-    const shortCycle = this.calculateSingleEhlersCycle(prices, 5, 15);    // 短期
-    const mediumCycle = this.calculateSingleEhlersCycle(prices, 15, 40);  // 中期
-    const longCycle = this.calculateSingleEhlersCycle(prices, 40, 100);   // 长期
+    // BUG 12 FIX: Pass unique timeframe keys so each cycle stores its own previous value
+    const shortCycle = this.calculateSingleEhlersCycle(prices, 5, 15, 'short');    // 短期
+    const mediumCycle = this.calculateSingleEhlersCycle(prices, 15, 40, 'medium');  // 中期
+    const longCycle = this.calculateSingleEhlersCycle(prices, 40, 100, 'long');   // 长期
     
     // 三周期投票统计
     const expandingVotes = [shortCycle, mediumCycle, longCycle]
@@ -271,8 +275,9 @@ export class OCSLayer2 {
 
   /**
    * 计算单个 Ehlers 周期
+   * BUG 12 FIX: Accept a timeframeKey so each cycle stores its own previous dominant period
    */
-  private calculateSingleEhlersCycle(prices: number[], minPeriod: number, maxPeriod: number): Layer2Output['dominantCycle'] {
+  private calculateSingleEhlersCycle(prices: number[], minPeriod: number, maxPeriod: number, timeframeKey: string = 'default'): Layer2Output['dominantCycle'] {
     if (prices.length < maxPeriod) {
       return { period: 20, phase: 0, state: 'stable' };
     }
@@ -303,11 +308,12 @@ export class OCSLayer2 {
     const maxPrice = Math.max(...recentPrices);
     const phase = maxPrice === minPrice ? 0 : 2 * ((currentPrice - minPrice) / (maxPrice - minPrice)) - 1;
 
-    const prevPeriod = this.history.dominantCycle || dominantLag;
+    // BUG 12 FIX: Use per-timeframe previous dominant cycle instead of shared state
+    const prevPeriod = this.prevDominantCycleByTimeframe.get(timeframeKey) || dominantLag;
     const state = dominantLag > prevPeriod * 1.1 ? 'expanding' :
                   dominantLag < prevPeriod * 0.9 ? 'contracting' : 'stable';
 
-    this.history.dominantCycle = dominantLag;
+    this.prevDominantCycleByTimeframe.set(timeframeKey, dominantLag);
 
     return {
       period: dominantLag,
@@ -325,7 +331,7 @@ export class OCSLayer2 {
     layer1: Layer1Output,
     cycle: Layer2Output['dominantCycle']
   ): Layer2Output['lms'] {
-    // 输入信号
+    // 输入信号 — 4 signals
     const signals = [
       (layer1.vpm.position - 0.5) * 2,
       layer1.ama.trend === 'up' ? 1 : layer1.ama.trend === 'down' ? -1 : 0,
@@ -364,9 +370,14 @@ export class OCSLayer2 {
     const sumExp = expScores.reduce((a, b) => a + b, 0);
     const attentionWeights = expScores.map(e => e / sumExp);
 
-    // 应用注意力权重更新LMS权重 (保留部分历史权重)
+    // BUG 1 FIX: Update all 4 weights (iterate over all signals, not just lmsWeights.length)
+    // Ensure lmsWeights has the right length
+    while (this.lmsWeights.length < signals.length) {
+      this.lmsWeights.push(1 / signals.length);
+    }
+
     const learningRate = 0.1;
-    for (let i = 0; i < this.lmsWeights.length && i < signals.length; i++) {
+    for (let i = 0; i < signals.length; i++) {
       // 注意力权重 + 历史权重平滑
       const targetWeight = attentionWeights[i];
       this.lmsWeights[i] += learningRate * (targetWeight - this.lmsWeights[i]);
@@ -378,7 +389,7 @@ export class OCSLayer2 {
       this.lmsWeights = this.lmsWeights.map(w => w / weightSum);
     }
 
-    // 计算融合输出
+    // 计算融合输出 — iterate over all 4 signals
     const filteredSignal = signals.reduce((sum, sig, i) => 
       sum + sig * this.lmsWeights[i], 0);
 
@@ -418,16 +429,16 @@ export class OCSLayer2 {
       return { zScore: 0, confidence: 50, isHighConfidence: false, dynamicThreshold: 1.5 };
     }
 
-    const mean = this.history.zScores.reduce((a, b) => a + b, 0) / this.history.zScores.length;
-    const variance = this.history.zScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / this.history.zScores.length;
+    const mean = this.history.zScores.reduce((a: number, b: number) => a + b, 0) / this.history.zScores.length;
+    const variance = this.history.zScores.reduce((sum: number, val: number) => sum + Math.pow(val - mean, 2), 0) / this.history.zScores.length;
     const std = Math.sqrt(variance);
 
     const zScore = std === 0 ? 0 : (signal - mean) / std;
     
     // 动态阈值：使用 85th 分位数
-    const sortedScores = [...this.history.zScores].sort((a, b) => a - b);
+    const sortedScores = [...this.history.zScores].sort((a: number, b: number) => a - b);
     const percentile85Index = Math.floor(sortedScores.length * 0.85);
-    const dynamicThreshold = Math.abs(sortedScores[percentile85Index] - mean) / std;
+    const dynamicThreshold = std === 0 ? 1.5 : Math.abs(sortedScores[percentile85Index] - mean) / std;
     
     // 使用动态阈值计算置信度
     const threshold = dynamicThreshold > 0 ? dynamicThreshold : 1.5;

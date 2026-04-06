@@ -126,14 +126,18 @@ export class DeflatedSharpeCalculator {
     }
 
     // ── Minimum Backtest Length ────────────────────────────────
-    // MinBTL = 1 + (1 - skew*SR + (kurt-1)/4 * SR^2) * (z_α / SR)^2
+    // MinBTL = 1 + (1 - skew*SR + (gamma4-1)/4 * SR^2) * (z_α / SR)^2
+    // where gamma4 = rawKurt = excessKurtosis + 3, so (gamma4-1)/4 = (excessKurtosis+2)/4
     const zAlpha = this.normalInverseCDF(1 - this.config.significanceLevel);
     let minBacktestLength: number;
     if (Math.abs(sr) < 1e-10) {
       minBacktestLength = Infinity;
     } else {
+      // BUG 2 FIX: Changed (excessKurtosis - 1) / 4 to (excessKurtosis + 2) / 4
+      // Paper uses (gamma4 - 1)/4 where gamma4 is raw kurtosis.
+      // Since excessKurtosis = rawKurt - 3, we need (excessKurtosis + 3 - 1)/4 = (excessKurtosis + 2)/4
       const nonNormalityAdj =
-        1 - skewness * sr + ((excessKurtosis - 1) / 4) * sr ** 2;
+        1 - skewness * sr + ((excessKurtosis + 2) / 4) * sr ** 2;
       // Clamp to avoid pathological negative or near-zero values
       const clampedAdj = Math.max(0.1, nonNormalityAdj);
       minBacktestLength = 1 + clampedAdj * (zAlpha / sr) ** 2;
@@ -159,6 +163,7 @@ export class DeflatedSharpeCalculator {
 
   // ── Standard normal CDF ────────────────────────────────────
   // Abramowitz & Stegun approximation (formula 26.2.17)
+  // This approximation is for erf(x), so we feed x/sqrt(2) and use exp(-x^2).
   // Max error: 7.5e-8
 
   private normalCDF(x: number): number {
@@ -173,17 +178,20 @@ export class DeflatedSharpeCalculator {
     const p = 0.3275911;
 
     const sign = x < 0 ? -1 : 1;
-    const absX = Math.abs(x);
+    // BUG 1 FIX: The A&S formula approximates erf(t), so we must feed |x/sqrt(2)|
+    // not raw |x|. And use exp(-t^2) not exp(-t^2/2).
+    const absX = Math.abs(x / Math.SQRT2);
     const t = 1 / (1 + p * absX);
     const t2 = t * t;
     const t3 = t2 * t;
     const t4 = t3 * t;
     const t5 = t4 * t;
 
+    // BUG 1 FIX: Use exp(-absX^2) since absX is already x/sqrt(2)
     const y =
       1 -
       (a1 * t + a2 * t2 + a3 * t3 + a4 * t4 + a5 * t5) *
-        Math.exp((-absX * absX) / 2);
+        Math.exp(-absX * absX);
 
     return 0.5 * (1 + sign * y);
   }
@@ -277,7 +285,8 @@ export class DeflatedSharpeCalculator {
   }
 
   // ── SR standard error adjusted for non-normality ───────────
-  // SE(SR) = sqrt((1 - skew*SR + (kurt-1)/4 * SR^2) / T)
+  // SE(SR) = sqrt((1 - skew*SR + (gamma4-1)/4 * SR^2) / T)
+  // where gamma4 = rawKurt = exKurt + 3, so (gamma4-1)/4 = (exKurt+2)/4
   // From Lo (2002) and Bailey & López de Prado (2014)
 
   private sharpeStdError(
@@ -288,8 +297,10 @@ export class DeflatedSharpeCalculator {
   ): number {
     if (T <= 1) return 0;
 
-    // Non-normality correction factor
-    const correction = 1 - skew * sr + ((exKurt - 1) / 4) * sr * sr;
+    // BUG 2 FIX: Changed (exKurt - 1) / 4 to (exKurt + 2) / 4
+    // Non-normality correction factor using raw kurtosis gamma4 = exKurt + 3
+    // (gamma4 - 1) / 4 = (exKurt + 2) / 4
+    const correction = 1 - skew * sr + ((exKurt + 2) / 4) * sr * sr;
 
     // Clamp to avoid negative variance from extreme skew/kurtosis
     const clampedCorrection = Math.max(0.01, correction);

@@ -278,10 +278,15 @@ const DEFAULT_AUTO_SNAPSHOT_INTERVAL = 60 * 60 * 1000;
  * FIX M1: Factory wires up the three components with dependency injection.
  * No global singleton — callers own the returned `StateManager`.
  *
+ * FIX BUG 2: This function is now async and properly awaits WAL recovery
+ * before returning. Previously the recovery ran in an un-awaited async IIFE,
+ * which meant the StateManager was returned before WAL replay finished.
+ * New operations could race ahead of recovery, causing state corruption.
+ *
  * FIX H7: Applies migratePosition() after loading state from disk to handle
  * legacy snapshots that used the old Position shape (contracts/pnl).
  */
-export function createStateManager(config?: Partial<StateConfig>): StateManager {
+export async function createStateManager(config?: Partial<StateConfig>): Promise<StateManager> {
   const stateDir = config?.stateDir ?? path.join(process.cwd(), 'state');
   const stateFile = path.join(stateDir, 'unified-state.json');
   const snapshotDir = path.join(stateDir, 'snapshots');
@@ -335,16 +340,20 @@ export function createStateManager(config?: Partial<StateConfig>): StateManager 
 
   const manager = new StateManager(store, wal, snap, stateDir);
 
-  // --- WAL recovery ---
-  (async () => {
-    try {
-      const recovered = await wal.recover(store.getState() as UnifiedState);
-      if (recovered !== store.getState()) {
-        store.setState(recovered);
-        manager.saveNow();
-      }
-    } catch { /* best effort */ }
-  })();
+  // --- FIX BUG 2: WAL recovery — now properly awaited ---
+  // Previously this ran inside an un-awaited `(async () => { ... })()`,
+  // which meant the manager was returned before recovery finished,
+  // allowing new operations to race ahead of replay.
+  try {
+    const recovered = await wal.recover(store.getState() as UnifiedState);
+    if (recovered !== store.getState()) {
+      store.setState(recovered);
+      manager.saveNow();
+    }
+  } catch (error) {
+    console.error('WAL recovery failed (best effort):', error);
+    // Continue with current state — this matches the original "best effort" semantics
+  }
 
   // --- Initial snapshot + auto-schedule ---
   snap.createSnapshot(store.getState() as UnifiedState, 'startup');

@@ -52,6 +52,14 @@ export interface Layer1Output {
 
 export class OCSLayer1 {
   private gaussianStructure: GaussianStructure;
+
+  // BUG 17 FIX: Add state persistence for Supertrend
+  private supertrendState: {
+    direction: 'up' | 'down';
+    prevUpperBand: number;
+    prevLowerBand: number;
+    prevClose: number;
+  } | null = null;
   
   constructor() {
     this.gaussianStructure = new GaussianStructure(2.0, 20);
@@ -84,6 +92,7 @@ export class OCSLayer1 {
   /**
    * Volume Price Mean (VPM)
    * 计算市场参与者的平均持仓成本
+   * BUG 16 FIX: Guard against div-by-zero when totalVolume=0 or std=0
    */
   private calculateVPM(prices: number[], volumes: number[]): Layer1Output['vpm'] {
     const period = Math.min(20, prices.length);
@@ -98,6 +107,17 @@ export class OCSLayer1 {
       weightedSum += recentPrices[i] * recentVolumes[i];
     }
     
+    // BUG 16 FIX: Guard against totalVolume === 0
+    if (totalVolume === 0) {
+      const currentPrice = prices[prices.length - 1];
+      return {
+        value: currentPrice,
+        upperBand: currentPrice,
+        lowerBand: currentPrice,
+        position: 0.5,
+      };
+    }
+    
     const mean = weightedSum / totalVolume;
     
     // 计算标准差
@@ -110,6 +130,16 @@ export class OCSLayer1 {
     
     const currentPrice = prices[prices.length - 1];
     
+    // BUG 16 FIX: Guard against std === 0
+    if (std === 0) {
+      return {
+        value: mean,
+        upperBand: mean,
+        lowerBand: mean,
+        position: 0.5,
+      };
+    }
+    
     return {
       value: mean,
       upperBand: mean + 2 * std,
@@ -121,48 +151,60 @@ export class OCSLayer1 {
   /**
    * Ehlers Adaptive Moving Average (AMA)
    * 使用效率比率(ER)动态调整平滑系数
+   * BUG 6 FIX: Correct prevAMA formula
+   * BUG 7 FIX: Recompute ER and sc inside the loop for each bar
    */
   private calculateEhlersAMA(prices: number[]): Layer1Output['ama'] {
     const fastLength = 2;
     const slowLength = 30;
+    const erPeriod = 10;
     
-    if (prices.length < 10) {
+    if (prices.length < erPeriod) {
       return { value: prices[prices.length - 1], trend: 'flat', period: 20 };
     }
     
-    // 计算效率比率 (ER)
-    const change = Math.abs(prices[prices.length - 1] - prices[prices.length - 10]);
-    let volatility = 0;
-    for (let i = prices.length - 9; i < prices.length; i++) {
-      volatility += Math.abs(prices[i] - prices[i - 1]);
-    }
-    
-    const er = volatility === 0 ? 0 : change / volatility;
-    
-    // 计算平滑常数
-    const fastSC = 2 / (fastLength + 1);
-    const slowSC = 2 / (slowLength + 1);
-    const sc = Math.pow(er * (fastSC - slowSC) + slowSC, 2);
-    
-    // 计算AMA
+    // BUG 7 FIX: Compute AMA iteratively with per-bar adaptive smoothing constant
     let ama = prices[0];
+    let prevAma = ama;
+    let lastSC = 0;
+    
     for (let i = 1; i < prices.length; i++) {
+      // Compute ER for this bar (need at least erPeriod bars of history)
+      let sc: number;
+      if (i >= erPeriod) {
+        const change = Math.abs(prices[i] - prices[i - erPeriod]);
+        let volatility = 0;
+        for (let j = i - erPeriod + 1; j <= i; j++) {
+          volatility += Math.abs(prices[j] - prices[j - 1]);
+        }
+        const er = volatility === 0 ? 0 : change / volatility;
+        
+        const fastSC = 2 / (fastLength + 1);
+        const slowSC = 2 / (slowLength + 1);
+        sc = Math.pow(er * (fastSC - slowSC) + slowSC, 2);
+      } else {
+        // Not enough data for ER yet, use slow smoothing
+        sc = Math.pow(2 / (slowLength + 1), 2);
+      }
+      
+      prevAma = ama;
       ama = sc * prices[i] + (1 - sc) * ama;
+      lastSC = sc;
     }
     
-    // 判断趋势
-    const prevAMA = sc * prices[prices.length - 2] + (1 - sc) * (ama - sc * prices[prices.length - 1] + (1 - sc) * ama);
-    const trend = ama > prevAMA * 1.001 ? 'up' : ama < prevAMA * 0.999 ? 'down' : 'flat';
+    // BUG 6 FIX: prevAMA is now correctly tracked as the AMA value from the previous bar
+    const trend = ama > prevAma * 1.001 ? 'up' : ama < prevAma * 0.999 ? 'down' : 'flat';
     
     return {
       value: ama,
       trend,
-      period: Math.round(2 / sc - 1),
+      period: Math.round(2 / (lastSC || 0.01) - 1),
     };
   }
   
   /**
    * Supertrend - 基于ATR的趋势跟踪
+   * BUG 17 FIX: Add state persistence for direction and previous bands
    */
   private calculateSupertrend(highs: number[], lows: number[], closes: number[]): Layer1Output['supertrend'] {
     const period = 10;
@@ -173,20 +215,64 @@ export class OCSLayer1 {
     const lastHigh = highs[highs.length - 1];
     const lastLow = lows[lows.length - 1];
     
-    const basicUpperBand = (lastHigh + lastLow) / 2 + multiplier * atr;
-    const basicLowerBand = (lastHigh + lastLow) / 2 - multiplier * atr;
+    const hl2 = (lastHigh + lastLow) / 2;
+    let basicUpperBand = hl2 + multiplier * atr;
+    let basicLowerBand = hl2 - multiplier * atr;
     
-    // 简化判断
-    const direction = lastClose > basicUpperBand ? 'up' : lastClose < basicLowerBand ? 'down' : 'up';
+    let direction: 'up' | 'down';
     
-    return {
-      value: direction === 'up' ? basicLowerBand : basicUpperBand,
-      direction,
-    };
+    if (this.supertrendState) {
+      // Carry forward bands: only tighten, never widen
+      const finalUpperBand = (basicUpperBand < this.supertrendState.prevUpperBand || this.supertrendState.prevClose > this.supertrendState.prevUpperBand)
+        ? basicUpperBand
+        : this.supertrendState.prevUpperBand;
+      
+      const finalLowerBand = (basicLowerBand > this.supertrendState.prevLowerBand || this.supertrendState.prevClose < this.supertrendState.prevLowerBand)
+        ? basicLowerBand
+        : this.supertrendState.prevLowerBand;
+      
+      // Determine direction based on previous direction and current close vs bands
+      if (this.supertrendState.direction === 'down') {
+        // Was bearish — switch to bullish if close crosses above upper band
+        direction = lastClose > finalUpperBand ? 'up' : 'down';
+      } else {
+        // Was bullish — switch to bearish if close crosses below lower band
+        direction = lastClose < finalLowerBand ? 'down' : 'up';
+      }
+      
+      // Update state
+      this.supertrendState = {
+        direction,
+        prevUpperBand: finalUpperBand,
+        prevLowerBand: finalLowerBand,
+        prevClose: lastClose,
+      };
+      
+      return {
+        value: direction === 'up' ? finalLowerBand : finalUpperBand,
+        direction,
+      };
+    } else {
+      // First call — initialize state
+      direction = lastClose > basicUpperBand ? 'up' : lastClose < basicLowerBand ? 'down' : 'up';
+      
+      this.supertrendState = {
+        direction,
+        prevUpperBand: basicUpperBand,
+        prevLowerBand: basicLowerBand,
+        prevClose: lastClose,
+      };
+      
+      return {
+        value: direction === 'up' ? basicLowerBand : basicUpperBand,
+        direction,
+      };
+    }
   }
   
   /**
    * Stochastics - 动量振荡器
+   * BUG 22 FIX: Guard against highestHigh === lowestLow
    */
   private calculateStochastics(highs: number[], lows: number[], closes: number[]): Layer1Output['stochastics'] {
     const kPeriod = 14;
@@ -200,7 +286,8 @@ export class OCSLayer1 {
     const highestHigh = Math.max(...highs.slice(-kPeriod));
     const currentClose = closes[closes.length - 1];
     
-    const k = ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
+    // BUG 22 FIX: Guard against highestHigh === lowestLow
+    const k = highestHigh === lowestLow ? 50 : ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
     
     // 简化的D值（K的SMA）
     let d = k;
@@ -210,7 +297,9 @@ export class OCSLayer1 {
         const periodLowest = Math.min(...lows.slice(-kPeriod - i, -i || undefined));
         const periodHighest = Math.max(...highs.slice(-kPeriod - i, -i || undefined));
         const periodClose = closes[closes.length - 1 - i];
-        sumK += ((periodClose - periodLowest) / (periodHighest - periodLowest)) * 100;
+        // BUG 22 FIX: Also guard the inner stochastic computation
+        const periodK = periodHighest === periodLowest ? 50 : ((periodClose - periodLowest) / (periodHighest - periodLowest)) * 100;
+        sumK += periodK;
       }
       d = sumK / dPeriod;
     }

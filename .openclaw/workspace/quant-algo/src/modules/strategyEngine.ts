@@ -109,6 +109,8 @@ export class StrategyEngineModule {
 
   /**
    * 添加历史数据
+   * BUG 2 FIX: Pass offset=50 to initializeFromHistory so that
+   * features3D[i] is correctly paired with ohlcv[50 + i]
    */
   addHistoricalData(ohlcv: OHLCV[]) {
     this.ohlcvHistory = ohlcv;
@@ -126,7 +128,8 @@ export class StrategyEngineModule {
         );
         features3D.push(l2.features3D);
       }
-      this.ocsLayer3.initializeFromHistory(ohlcv, features3D);
+      // BUG 2 FIX: features3D[0] corresponds to ohlcv[50], so pass offset=50
+      this.ocsLayer3.initializeFromHistory(ohlcv, features3D, 50);
     }
   }
 

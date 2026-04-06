@@ -18,6 +18,13 @@ vi.mock('../../src/config', () => ({
       minVolatility: 0.002,
       maxVolatility: 0.02,
     },
+    risk: {
+      positionSizing: {
+        kellyFraction: 0.25,
+        maxPositionSize: 0.5,
+        minPositionSize: 0.01,
+      },
+    },
   },
 }));
 
@@ -95,9 +102,17 @@ describe('RiskManager', () => {
       // Record enough losses to exceed 10% of initial balance
       rm.recordTrade(-6);
       rm.recordTrade(-5);
-      const result = rm.canOpenPosition(100, null);
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toContain('日内最大亏损');
+      // Advance time past the cooldown period (5 minutes) so cooldown doesn't
+      // block before the daily-loss check is reached.
+      const realNow = Date.now;
+      Date.now = () => realNow() + 6 * 60 * 1000;
+      try {
+        const result = rm.canOpenPosition(100, null);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('日内最大亏损');
+      } finally {
+        Date.now = realNow;
+      }
     });
 
     it('rejects low balance (< 10 USDT)', () => {
@@ -199,25 +214,28 @@ describe('RiskManager', () => {
     });
 
     it('triggers near liquidation when price is close to liquidation price', () => {
-      // distanceToLiquidation < 0.1 (10%)
-      // liquidationPrice=2700, currentPrice=2750 → distance = 50/2750 = 0.018 < 0.1
+      // With corrected SL logic (no *100 bug), SL triggers at leveragedPnl <= -0.015.
+      // We need a price that does NOT trigger SL but IS near liquidation:
+      //   leveragedPnl = (2996-3000)/3000 * 10 = -0.0133 > -0.015 (no SL)
+      //   distanceToLiquidation = |2996-2970|/2996 = 0.00867 < 0.1 (near liq)
       const pos = {
         side: 'long' as const,
         size: 1,
         entryPrice: 3000,
         leverage: 10,
-        unrealizedPnl: -250,
-        liquidationPrice: 2700,
+        unrealizedPnl: -4,
+        liquidationPrice: 2970,
       };
-      const result = rm.checkEmergencyExit(pos as any, 2750);
+      const result = rm.checkEmergencyExit(pos as any, 2996);
       expect(result.shouldExit).toBe(true);
       expect(result.reason).toContain('爆仓');
     });
 
     it('does not trigger exit for moderate price movement', () => {
-      // Small move that doesn't hit stop loss or liquidation
+      // With corrected SL: leveragedPnl threshold is -0.015 (not -1.5).
+      // Price 2998 → pnl = (2998-3000)/3000*10 = -0.00667 > -0.015 → no exit.
       const pos = { side: 'long' as const, size: 1, entryPrice: 3000, leverage: 10, unrealizedPnl: 0 };
-      const result = rm.checkEmergencyExit(pos as any, 2990);
+      const result = rm.checkEmergencyExit(pos as any, 2998);
       expect(result.shouldExit).toBe(false);
     });
   });

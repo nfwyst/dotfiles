@@ -35,8 +35,8 @@ export class ExchangeManager implements ExecutionAdapter {
   private apiBase: string;
 
   constructor() {
-    this.apiKey = config.exchange.apiKey;
-    this.apiSecret = config.exchange.secret;
+    this.apiKey = process.env.BINANCE_API_KEY || '';
+    this.apiSecret = process.env.BINANCE_API_SECRET || '';
     this.symbol = 'ETHUSDT';
     this.leverage = config.leverage;
     this.apiBase = config.exchange.sandbox ? TESTNET_API_BASE : MAINNET_API_BASE;
@@ -129,7 +129,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 发送签名请求（带熔断保护）
    */
-  private async request(path: string, params: any = {}, method = 'GET') {
+  public async request(path: string, params: any = {}, method = 'GET') {
     const result = await exchangeCircuitBreaker.execute(async () => {
       return await this._doRequest(path, params, method);
     });
@@ -441,36 +441,52 @@ export class ExchangeManager implements ExecutionAdapter {
 
   /**
    * 设置止损止盈订单
+   * BUG 8 FIX: Determine side from position direction (passed as parameter).
+   *            Use this.request() instead of raw fetch() to go through circuit breaker.
+   *            Check API response for errors.
+   * BUG 23 FIX: Use Date.now() for each order separately instead of shared timestamp.
    */
   async setStopLossTakeProfit(
     stopLossPrice: number,
     takeProfitPrice: number,
-    quantity: number
+    quantity: number,
+    positionSide: 'long' | 'short' = 'long'  // BUG 8 FIX: Accept position direction
   ): Promise<any> {
     try {
-      const timestamp = Date.now().toString();
+      // BUG 8 FIX: Determine side from position direction
+      // For a long position, SL/TP close by selling. For short, by buying.
+      const closeSide = positionSide === 'long' ? 'SELL' : 'BUY';
+
+      // BUG 23 FIX: Use separate timestamps for each order
+      // BUG 8 FIX: Use this.request() instead of raw fetch() to go through circuit breaker
+      const slOrder = await this.request('/fapi/v1/order', {
+        symbol: this.symbol,
+        side: closeSide,
+        type: 'STOP_MARKET',
+        stopPrice: stopLossPrice.toFixed(2),
+        closePosition: 'true',
+      }, 'POST');
       
-      // 设置止损单
-      const slQuery = `symbol=${this.symbol}&side=SELL&type=STOP_MARKET&stopPrice=${stopLossPrice.toFixed(2)}&closePosition=true&timestamp=${timestamp}`;
-      const slSig = crypto.createHmac('sha256', this.apiSecret).update(slQuery).digest('hex');
+      // BUG 8 FIX: Check for API errors
+      if (slOrder.code && slOrder.code !== 200) {
+        logger.error(`止损单设置失败: ${slOrder.msg || JSON.stringify(slOrder)}`);
+      }
+
+      // BUG 23 FIX: Separate timestamp (this.request() generates its own timestamp)
+      const tpOrder = await this.request('/fapi/v1/order', {
+        symbol: this.symbol,
+        side: closeSide,
+        type: 'TAKE_PROFIT_MARKET',
+        stopPrice: takeProfitPrice.toFixed(2),
+        closePosition: 'true',
+      }, 'POST');
       
-      const slRes = await fetch(`${this.apiBase}/fapi/v1/order?${slQuery}&signature=${slSig}`, {
-        method: 'POST',
-        headers: { 'X-MBX-APIKEY': this.apiKey }
-      });
-      const slOrder = await slRes.json();
+      // BUG 8 FIX: Check for API errors
+      if (tpOrder.code && tpOrder.code !== 200) {
+        logger.error(`止盈单设置失败: ${tpOrder.msg || JSON.stringify(tpOrder)}`);
+      }
       
-      // 设置止盈单
-      const tpQuery = `symbol=${this.symbol}&side=SELL&type=TAKE_PROFIT_MARKET&stopPrice=${takeProfitPrice.toFixed(2)}&closePosition=true&timestamp=${timestamp}`;
-      const tpSig = crypto.createHmac('sha256', this.apiSecret).update(tpQuery).digest('hex');
-      
-      const tpRes = await fetch(`${this.apiBase}/fapi/v1/order?${tpQuery}&signature=${tpSig}`, {
-        method: 'POST',
-        headers: { 'X-MBX-APIKEY': this.apiKey }
-      });
-      const tpOrder = await tpRes.json();
-      
-      logger.info(`止损止盈已设置: SL=$${stopLossPrice.toFixed(2)} TP=$${takeProfitPrice.toFixed(2)}`);
+      logger.info(`止损止盈已设置: SL=$${stopLossPrice.toFixed(2)} TP=$${takeProfitPrice.toFixed(2)} (${closeSide})`);
       
       return { stopLoss: slOrder, takeProfit: tpOrder };
     } catch (error: any) {
@@ -488,7 +504,7 @@ export class ExchangeManager implements ExecutionAdapter {
     
     // 自动设置止损止盈
     if (stopLoss && takeProfit) {
-      await this.setStopLossTakeProfit(stopLoss, takeProfit, quantity);
+      await this.setStopLossTakeProfit(stopLoss, takeProfit, quantity, 'long');
     }
     
     return order;
@@ -502,8 +518,8 @@ export class ExchangeManager implements ExecutionAdapter {
     logger.info(`开空仓: ${quantity} ETH @ $${order.price}`);
     
     if (stopLoss && takeProfit) {
-      // 空仓的止损止盈方向相反
-      await this.setStopLossTakeProfit(stopLoss, takeProfit, quantity);
+      // BUG 8 FIX: Pass 'short' as position direction
+      await this.setStopLossTakeProfit(stopLoss, takeProfit, quantity, 'short');
     }
     
     return order;

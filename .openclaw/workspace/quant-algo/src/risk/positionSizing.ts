@@ -77,6 +77,17 @@ export function calculatePositionSize(input: PositionSizeInput): PositionSizeRes
     regimeScale,
   } = input;
 
+  // BUG 10 FIX: Guard for currentPrice <= 0 to prevent division by zero / NaN
+  if (currentPrice <= 0) {
+    return {
+      size: 0,
+      notionalValue: 0,
+      riskAmount: 0,
+      leverageUsed: leverage || 1,
+      method: 'simple_fraction',
+    };
+  }
+
   // Hard cap on notional
   const maxNotional = balance * leverage * maxLeverageUtil;
 

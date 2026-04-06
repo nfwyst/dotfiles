@@ -87,6 +87,7 @@ export class MultiTimeframeAggregator {
         candles = this.resample(baseBuffer, tf);
       }
 
+      // BUG 5 FIX (partial): Handle empty resampled candles
       if (candles.length < 2) {
         returns[tfLabel] = 0;
         volatility[tfLabel] = 0;
@@ -135,7 +136,10 @@ export class MultiTimeframeAggregator {
    */
   private resample(candles: OHLCV[], targetMinutes: number): OHLCV[] {
     const ratio = Math.round(targetMinutes / this.config.baseTimeframe);
-    if (ratio <= 1 || candles.length < ratio) return candles;
+
+    // BUG 5 FIX: Return empty array when insufficient candles for even one
+    // complete higher-timeframe bar, instead of returning raw candles.
+    if (ratio <= 1 || candles.length < ratio) return [];
 
     const result: OHLCV[] = [];
 
@@ -157,14 +161,6 @@ export class MultiTimeframeAggregator {
         volume: group.reduce((s, c) => s + c.volume, 0),
       };
       result.push(merged);
-    }
-
-    // If there's a trailing partial group, include it
-    if (startOffset > 0 && candles.length >= ratio) {
-      // The partial group at the beginning is excluded by the loop above
-      // But we may want the latest partial group at the end
-      // Actually the loop above handles complete groups. Let's check if
-      // there are leftover candles at the end
     }
 
     return result;

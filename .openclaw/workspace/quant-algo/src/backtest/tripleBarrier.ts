@@ -159,8 +159,40 @@ export class TripleBarrierLabeler {
     for (let t = entryIdx + 1; t <= lastIdx; t++) {
       const candle = ohlcv[t];
 
+      const upperBreached = candle.high >= upperBarrier;
+      const lowerBreached = candle.low <= lowerBarrier;
+
+      // BUG 5 FIX: When both barriers are breached on the same bar,
+      // resolve based on open price proximity to avoid optimistic bias.
+      // If open is above entry (trending up), award upper; otherwise award lower.
+      if (upperBreached && lowerBreached) {
+        if (candle.open >= entryPrice) {
+          // Open above entry => trending up => award upper (take-profit)
+          const ret = (upperBarrier - entryPrice) / entryPrice;
+          return {
+            entryIdx,
+            exitIdx: t,
+            label: 1,
+            returnAtExit: ret,
+            barrier: 'upper',
+            holdingPeriod: t - entryIdx,
+          };
+        } else {
+          // Open below entry => trending down => award lower (stop-loss)
+          const ret = (lowerBarrier - entryPrice) / entryPrice;
+          return {
+            entryIdx,
+            exitIdx: t,
+            label: -1,
+            returnAtExit: ret,
+            barrier: 'lower',
+            holdingPeriod: t - entryIdx,
+          };
+        }
+      }
+
       // Check upper barrier (take-profit) — use high price
-      if (candle.high >= upperBarrier) {
+      if (upperBreached) {
         const ret = (upperBarrier - entryPrice) / entryPrice;
         return {
           entryIdx,
@@ -173,7 +205,7 @@ export class TripleBarrierLabeler {
       }
 
       // Check lower barrier (stop-loss) — use low price
-      if (candle.low <= lowerBarrier) {
+      if (lowerBreached) {
         const ret = (lowerBarrier - entryPrice) / entryPrice;
         return {
           entryIdx,

@@ -124,6 +124,10 @@ export class HMMRegimeDetector {
   constructor(config?: Partial<RegimeConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
 
+    // BUG 14 FIX: Guard numStates < 3 to prevent division by zero
+    // in buildStateMap which relies on at least 3 states for LOW/HIGH/CRISIS mapping.
+    this.config.numStates = Math.max(this.config.numStates, 3);
+
     const N = this.config.numStates;
 
     // Uniform initial distribution
@@ -189,8 +193,11 @@ export class HMMRegimeDetector {
       return this.getCurrentRegime();
     }
 
-    // Append all candles at once
-    this.rawOhlcv.push(...candles);
+    // BUG 2 FIX: Avoid push(...candles) which causes stack overflow with >65K items.
+    // Use a loop instead of spread operator.
+    for (const c of candles) {
+      this.rawOhlcv.push(c);
+    }
 
     // Trim to rolling window
     if (this.rawOhlcv.length > this.config.rollingWindow + this.config.volLookback + 2) {
@@ -316,7 +323,13 @@ export class HMMRegimeDetector {
       if (prev <= 0 || cur <= 0) {
         logReturns[i] = 0;
       } else {
-        logReturns[i] = Math.log(cur / prev);
+        const lr = Math.log(cur / prev);
+        // BUG 7 FIX (partial): Filter NaN/Infinity from logReturns
+        if (!isFinite(lr)) {
+          logReturns[i] = 0;
+        } else {
+          logReturns[i] = lr;
+        }
       }
     }
 
@@ -350,6 +363,11 @@ export class HMMRegimeDetector {
         volumeChange = 0;
       } else {
         volumeChange = Math.log(curVol / meanVol);
+      }
+
+      // BUG 7 FIX (partial): Skip feature rows containing NaN/Infinity
+      if (!isFinite(logRet) || !isFinite(realizedVol) || !isFinite(volumeChange)) {
+        continue;
       }
 
       features.push([logRet, realizedVol, volumeChange]);
@@ -669,6 +687,10 @@ export class HMMRegimeDetector {
     const D = x.length;
     let logP = 0;
     for (let d = 0; d < D; d++) {
+      // BUG 7 FIX (partial): Return EPS for NaN/Infinity input
+      if (!isFinite(x[d]) || !isFinite(mean[d]) || !isFinite(variance[d])) {
+        return EPS;
+      }
       const v = variance[d] > MIN_VARIANCE ? variance[d] : MIN_VARIANCE;
       const diff = x[d] - mean[d];
       logP += -0.5 * Math.log(2 * Math.PI * v) - (diff * diff) / (2 * v);
@@ -684,6 +706,10 @@ export class HMMRegimeDetector {
     const D = x.length;
     let logP = 0;
     for (let d = 0; d < D; d++) {
+      // BUG 7 FIX (partial): Return a very negative log-prob for NaN/Infinity input
+      if (!isFinite(x[d]) || !isFinite(mean[d]) || !isFinite(variance[d])) {
+        return -700;
+      }
       const v = variance[d] > MIN_VARIANCE ? variance[d] : MIN_VARIANCE;
       const diff = x[d] - mean[d];
       logP += -0.5 * Math.log(2 * Math.PI * v) - (diff * diff) / (2 * v);
@@ -787,6 +813,29 @@ export class HMMRegimeDetector {
           for (let d = 0; d < D; d++) {
             centroids[c][d] = sums[c][d] / counts[c];
           }
+        }
+      }
+
+      // BUG 11 FIX: Detect empty clusters and split the largest cluster
+      for (let c = 0; c < k; c++) {
+        if (counts[c] === 0) {
+          // Find the largest cluster
+          let largestCluster = 0;
+          let largestCount = 0;
+          for (let j = 0; j < k; j++) {
+            if (counts[j] > largestCount) {
+              largestCount = counts[j];
+              largestCluster = j;
+            }
+          }
+          // Split the largest cluster: perturb its centroid slightly
+          for (let d = 0; d < D; d++) {
+            const perturbation = Math.abs(centroids[largestCluster][d]) * 0.1 + 1e-6;
+            centroids[c][d] = centroids[largestCluster][d] + perturbation;
+            centroids[largestCluster][d] = centroids[largestCluster][d] - perturbation;
+          }
+          // Force another iteration since we changed centroids
+          changed = true;
         }
       }
 

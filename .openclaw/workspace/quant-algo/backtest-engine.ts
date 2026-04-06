@@ -25,6 +25,21 @@ import { calculatePositionSize } from './src/risk/positionSizing';
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 const CRYPTO_TRADING_DAYS = 365;
 
+// BUG 15 FIX: Helper to compute bars per day from timeframe string
+function barsPerDay(timeframe: string): number {
+  const match = timeframe.match(/^(\d+)(m|h|d|w)$/i);
+  if (!match) return 288; // default to 5-min bars
+  const value = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case 'm': return (24 * 60) / value;
+    case 'h': return 24 / value;
+    case 'd': return 1;
+    case 'w': return 1 / 7;
+    default: return 288;
+  }
+}
+
 interface BacktestConfig {
   symbol: string;
   timeframe: string;
@@ -89,6 +104,7 @@ class BacktestEngine {
     side: 'long' | 'short' | null;
     entryPrice: number;
     entryTime: number;
+    entryBarIndex: number; // BUG 10 FIX: Store entry bar index directly
     size: number;
     stopLoss: number;
     takeProfits: { tp1: number; tp2: number; tp3: number };
@@ -247,23 +263,29 @@ class BacktestEngine {
     return result;
   }
 
+  // BUG 12 FIX: Seed EMA with SMA of first `period` elements instead of zeros
   private computeEMA(data: number[], period: number): number[] {
     const result: number[] = new Array(data.length).fill(0);
+    if (data.length < period) return result;
     const multiplier = 2 / (period + 1);
+    // Seed with SMA of first `period` elements
     let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    for (let i = 0; i < data.length; i++) {
-      if (i >= period - 1) {
-        ema = (data[i] - ema) * multiplier + ema;
-        result[i] = ema;
-      }
+    result[period - 1] = ema;
+    for (let i = period; i < data.length; i++) {
+      ema = (data[i] - ema) * multiplier + ema;
+      result[i] = ema;
     }
     return result;
   }
 
+  // BUG 4 FIX: RSI seeding loop runs i=1..period (inclusive), smoothing loop
+  // must start at i = period + 1 to avoid double-counting the change at index period.
   private computeRSI(data: number[], period: number): number[] {
     const result: number[] = new Array(data.length).fill(50);
+    if (data.length <= period) return result;
     let gains = 0, losses = 0;
     
+    // Seeding: accumulate changes for i = 1 to period (inclusive)
     for (let i = 1; i <= period; i++) {
       const change = data[i] - data[i - 1];
       if (change > 0) gains += change;
@@ -272,8 +294,13 @@ class BacktestEngine {
     
     let avgGain = gains / period;
     let avgLoss = losses / period;
+
+    // Set the RSI at index `period`
+    if (avgLoss === 0) result[period] = 100;
+    else result[period] = 100 - (100 / (1 + avgGain / avgLoss));
     
-    for (let i = period; i < data.length; i++) {
+    // BUG 4 FIX: Start smoothing at period + 1 instead of period
+    for (let i = period + 1; i < data.length; i++) {
       const change = data[i] - data[i - 1];
       avgGain = (avgGain * (period - 1) + Math.max(0, change)) / period;
       avgLoss = (avgLoss * (period - 1) + Math.max(0, -change)) / period;
@@ -461,15 +488,29 @@ class BacktestEngine {
       ohlcvSlice.length - 1
     );
     
+    // BUG 11 FIX: Compute default SL/TP from ATR if not provided by SLTP calculator
+    const atr = indicators.atr[14];
+    const defaultSL = finalDirection === 'long'
+      ? currentPrice - 2 * atr
+      : currentPrice + 2 * atr;
+    const computedSL = sltp?.stopLoss ?? defaultSL;
+    const computedTP = sltp?.takeProfits ?? {
+      tp1: finalDirection === 'long' ? currentPrice + atr : currentPrice - atr,
+      tp2: finalDirection === 'long' ? currentPrice + 2 * atr : currentPrice - 2 * atr,
+      tp3: finalDirection === 'long' ? currentPrice + 3 * atr : currentPrice - 3 * atr,
+    };
+
+    // BUG 11 FIX: Validate SL/TP are defined and sane before returning signal
+    if (computedSL === undefined || computedSL === null || !isFinite(computedSL)) {
+      console.log(`  ⚠️ Invalid SL computed, skipping signal`);
+      return { type: 'hold', confidence: 0 };
+    }
+
     return {
       type: finalDirection === 'long' ? 'long' : 'short',
       entryPrice: l4.setup.entryPrice,
-      stopLoss: sltp?.stopLoss || (finalDirection === 'long' ? currentPrice - 2 * indicators.atr[14] : currentPrice + 2 * indicators.atr[14]),
-      takeProfits: sltp?.takeProfits || {
-        tp1: finalDirection === 'long' ? currentPrice + indicators.atr[14] : currentPrice - indicators.atr[14],
-        tp2: finalDirection === 'long' ? currentPrice + 2 * indicators.atr[14] : currentPrice - 2 * indicators.atr[14],
-        tp3: finalDirection === 'long' ? currentPrice + 3 * indicators.atr[14] : currentPrice - 3 * indicators.atr[14]
-      },
+      stopLoss: computedSL,
+      takeProfits: computedTP,
       confidence: finalConfidence,
       reason: `Layer4: ${l4.reason}`
     };
@@ -541,6 +582,16 @@ class BacktestEngine {
    */
   private openPosition(signal: StrategySignal, candle: OHLCV, index: number, useOpen: boolean = false): void {
     const { type, entryPrice, stopLoss, takeProfits } = signal;
+
+    // BUG 11 FIX: Validate SL/TP are defined before opening position
+    if (stopLoss === undefined || stopLoss === null || !isFinite(stopLoss)) {
+      console.log(`  ⚠️ Cannot open position: stopLoss is undefined or invalid`);
+      return;
+    }
+    if (!takeProfits || !isFinite(takeProfits.tp1)) {
+      console.log(`  ⚠️ Cannot open position: takeProfits are undefined or invalid`);
+      return;
+    }
     
     // FIX C3: Use bar's open price for next-bar execution, not close
     const basePrice = useOpen ? candle.open : candle.close;
@@ -567,6 +618,7 @@ class BacktestEngine {
       side: type,
       entryPrice: actualEntryPrice,
       entryTime: candle.timestamp,
+      entryBarIndex: index, // BUG 10 FIX: Store entry bar index
       size,
       stopLoss: stopLoss,
       takeProfits: takeProfits!,
@@ -583,7 +635,7 @@ class BacktestEngine {
   private closePosition(candle: OHLCV, reason: string, index: number, overrideExitPrice?: number): void {
     if (!this.position) return;
 
-    const { side, entryPrice, entryTime, size, stopLoss, takeProfits } = this.position;
+    const { side, entryPrice, entryTime, entryBarIndex, size, stopLoss, takeProfits } = this.position;
 
     let exitPrice = candle.close;
     let partialClose = false;
@@ -624,8 +676,9 @@ class BacktestEngine {
     
     // FIX L1: For partial closes, compute PnL on the portion being closed, not full size
     const closeSize = partialClose ? size * 0.5 : size;
+    // BUG 3 FIX: Removed duplicate `const positionValue = psResult.notionalValue;`
+    // psResult doesn't exist in this scope. Compute positionValue from closeSize * actualExitPrice.
     const positionValue = closeSize * actualExitPrice;
-    const positionValue = psResult.notionalValue;
     const fee = positionValue * this.config.feeRate;
 
     // 计算盈亏
@@ -639,6 +692,9 @@ class BacktestEngine {
     const pnlPercent = (pnl / this.balance) * 100;
     this.balance += pnl;
 
+    // BUG 10 FIX: Use stored entryBarIndex instead of findIndex (which can return -1)
+    const holdingBars = index - entryBarIndex;
+
     const trade: Trade = {
       entryTime,
       exitTime: candle.timestamp,
@@ -651,7 +707,7 @@ class BacktestEngine {
       pnl,
       pnlPercent,
       exitReason: reason,
-      holdingBars: index - this.ohlcv.findIndex(c => c.timestamp === entryTime)
+      holdingBars
     };
 
     this.trades.push(trade);
@@ -707,15 +763,24 @@ class BacktestEngine {
     const returns = this.equityCurve.slice(1).map((e, i) => 
       (e - this.equityCurve[i]) / this.equityCurve[i]
     );
-    const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const stdReturn = Math.sqrt(returns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / returns.length);
+
+    // BUG 15 FIX: Compute bars per day from timeframe config instead of hardcoding 288
+    const bpd = barsPerDay(this.config.timeframe);
+
+    const avgReturn = returns.length > 0 ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
+    // BUG 6 FIX: Use sample std (N-1) instead of population std (N) for Sharpe consistency
+    const stdReturn = returns.length > 1
+      ? Math.sqrt(returns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / (returns.length - 1))
+      : 0;
     // FIX H4: Use CRYPTO_TRADING_DAYS (365) instead of 252 for crypto annualization
-    const sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(CRYPTO_TRADING_DAYS * 288) : 0; // 年化
+    // BUG 15 FIX: Use bpd instead of hardcoded 288
+    const sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(CRYPTO_TRADING_DAYS * bpd) : 0; // 年化
 
     const totalReturnPercent = ((this.balance - this.config.initialBalance) / this.config.initialBalance) * 100;
 
     // FIX H5: Use CAGR instead of linear extrapolation
-    const tradingDays = this.ohlcv.length / 288; // 5-min bars per day
+    // BUG 15 FIX: Use bpd instead of hardcoded 288
+    const tradingDays = this.ohlcv.length / bpd;
     const finalValue = this.balance;
     const initialValue = this.config.initialBalance;
     const annualizedReturnPercent = tradingDays > 0

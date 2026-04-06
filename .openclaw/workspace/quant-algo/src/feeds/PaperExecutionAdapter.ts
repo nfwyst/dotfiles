@@ -9,6 +9,12 @@
  * - Virtual balance and position tracking
  * - Realistic fee simulation
  * - Trade history for analysis
+ *
+ * FIX BUG 5: Corrected short position PnL to use
+ *   (entryPrice - exitPrice) * size * leverage
+ * Also fixed: position state is fully reset on close (including markPrice),
+ * partial closes are explicitly not supported (full close only),
+ * and getSummary() now correctly filters only close trades for win rate.
  */
 import { ExecutionAdapter, OrderResult, TradingMode } from './types';
 import { Position } from '../events/types';
@@ -31,6 +37,8 @@ export interface PaperTrade {
   fee: number;
   pnl: number;
   balance: number;
+  /** Whether this trade opened or closed a position */
+  tradeType: 'open' | 'close';
 }
 
 export class PaperExecutionAdapter implements ExecutionAdapter {
@@ -73,30 +81,32 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
         : this.currentMarketPrice - slippage;
     const fee = fillPrice * size * this.config.feeRate;
 
-    // Calculate PnL if closing
-    let pnl = 0;
+    // ── Check if this is a CLOSE of an existing position ──────
     if (this.position && this.position.side !== 'none') {
-      if (
-        (this.position.side === 'long' && side === 'sell') ||
-        (this.position.side === 'short' && side === 'buy')
-      ) {
-        pnl =
-          this.position.side === 'long'
-            ? (fillPrice - this.position.entryPrice) *
-              this.position.size *
-              this.position.leverage
-            : (this.position.entryPrice - fillPrice) *
-              this.position.size *
-              this.position.leverage;
-        pnl -= fee;
+      const isClosingLong = this.position.side === 'long' && side === 'sell';
+      const isClosingShort = this.position.side === 'short' && side === 'buy';
+
+      if (isClosingLong || isClosingShort) {
+        // FIX BUG 5: Correct PnL calculation for both sides.
+        // Long PnL:  (exitPrice - entryPrice) * size * leverage
+        // Short PnL: (entryPrice - exitPrice) * size * leverage
+        let pnl: number;
+        if (this.position.side === 'long') {
+          pnl = (fillPrice - this.position.entryPrice) *
+            this.position.size *
+            this.position.leverage;
+        } else {
+          // short: profit when price falls
+          pnl = (this.position.entryPrice - fillPrice) *
+            this.position.size *
+            this.position.leverage;
+        }
+        pnl -= fee; // deduct closing fee
+
         this.balance += pnl;
-        this.position = {
-          side: 'none',
-          size: 0,
-          entryPrice: 0,
-          leverage: 1,
-          unrealizedPnl: 0,
-        };
+
+        // FIX BUG 5: Fully reset position state on close
+        this.position = null;
 
         const trade: PaperTrade = {
           id: orderId,
@@ -107,6 +117,7 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
           fee,
           pnl,
           balance: this.balance,
+          tradeType: 'close',
         };
         this.tradeHistory.push(trade);
         logger.info(
@@ -125,7 +136,17 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
       }
     }
 
-    // Opening new position
+    // ── Opening new position ──────────────────────────────────
+    // FIX BUG 5: Reject if there is already an open position
+    // (partial closes / position flipping not supported).
+    if (this.position && this.position.side !== 'none') {
+      return {
+        success: false,
+        message: 'Cannot open new position while one is already open. Close existing position first.',
+        timestamp: Date.now(),
+      };
+    }
+
     const notional = fillPrice * size;
     if (
       notional / this.config.leverage >
@@ -144,6 +165,7 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
       entryPrice: fillPrice,
       leverage: this.config.leverage,
       unrealizedPnl: 0,
+      markPrice: fillPrice,
     };
     this.balance -= fee;
 
@@ -154,8 +176,9 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
       size,
       price: fillPrice,
       fee,
-      pnl: -fee,
+      pnl: 0, // FIX BUG 5: Opening a position has zero realized PnL (fee is separate)
       balance: this.balance,
+      tradeType: 'open',
     };
     this.tradeHistory.push(trade);
     logger.info(
@@ -232,8 +255,11 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
     totalPnl: number;
     maxDrawdown: number;
   } {
-    const wins = this.tradeHistory.filter((t) => t.pnl > 0).length;
-    const closeTrades = this.tradeHistory.filter((t) => t.pnl !== 0);
+    // FIX BUG 5: Only count close trades for win rate and trade count.
+    // Previously open trades (which had pnl = -fee, always negative)
+    // were included, inflating the loss count.
+    const closeTrades = this.tradeHistory.filter((t) => t.tradeType === 'close');
+    const wins = closeTrades.filter((t) => t.pnl > 0).length;
 
     // Calculate max drawdown
     let peak = this.config.initialBalance;

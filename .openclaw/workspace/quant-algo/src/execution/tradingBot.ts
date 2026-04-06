@@ -327,17 +327,31 @@ export class TradingBotRuntime {
   
   /**
    * 获取市场数据
+   * BUG 4 FIX: Replace this.exchange.getOHLCV() with this.exchange.fetchOHLCV()
+   * BUG 5 FIX: Use this.exchange.getCurrentPrice() for ticker instead of raw signed request.
+   *            Handle the number[][] return format from fetchOHLCV().
    */
   private async getMarketData(): Promise<any> {
     try {
       const symbol = this.config?.symbol || 'ETHUSDT';
       
-      // 获取 K 线数据
-      const ohlcv = await this.exchange.getOHLCV(symbol, '5m', 100);
+      // BUG 4 & 5 FIX: Use the correct fetchOHLCV method
+      const rawOhlcv = await this.exchange.fetchOHLCV('5m', 100);
       
-      // 获取当前价格
-      const ticker = await (this.exchange as any).request(`/fapi/v1/ticker/price?symbol=${symbol}`);
-      const currentPrice = parseFloat(ticker.price);
+      // BUG 5 FIX: fetchOHLCV returns number[][] with format:
+      // [timestamp, open, high, low, close, volume]
+      // Convert to object format for downstream use
+      const ohlcv = rawOhlcv.map((k: number[]) => ({
+        timestamp: k[0],
+        open: k[1],
+        high: k[2],
+        low: k[3],
+        close: k[4],
+        volume: k[5],
+      }));
+      
+      // BUG 5 FIX: Use getCurrentPrice() instead of raw signed request with malformed URL
+      const currentPrice = await this.exchange.getCurrentPrice();
       
       // 计算 ATR
       const atr = this.calculateATR(ohlcv, 14);

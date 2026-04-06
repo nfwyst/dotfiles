@@ -73,17 +73,18 @@ export class OrderFlowAnalyzer {
    * Returns flow signal even without order book (uses OHLCV proxy).
    */
   update(candle: OHLCV, orderBook?: OrderBook): OrderFlowSignal {
+    // BUG 12 FIX: Push candle volume to history BEFORE computeTFI
+    // so that the volume average used by TFI includes the current candle.
+    this.volumeHistory.push(candle.volume);
+    if (this.volumeHistory.length > this.config.normLookback) {
+      this.volumeHistory = this.volumeHistory.slice(-this.config.normLookback);
+    }
+
     // ── Compute TFI from OHLCV (always available) ─────────────
     const tfi = this.computeTFI(candle);
     this.tfiHistory.push(tfi);
     if (this.tfiHistory.length > this.config.normLookback * 2) {
       this.tfiHistory = this.tfiHistory.slice(-this.config.normLookback * 2);
-    }
-
-    // Track volume for weighting
-    this.volumeHistory.push(candle.volume);
-    if (this.volumeHistory.length > this.config.normLookback) {
-      this.volumeHistory = this.volumeHistory.slice(-this.config.normLookback);
     }
 
     // ── Compute OFI from order book (if available) ────────────
@@ -218,6 +219,8 @@ export class OrderFlowAnalyzer {
     const directionRatio = (candle.close - candle.open) / range;
 
     // Volume component: current volume vs recent average
+    // BUG 12 FIX: volumeHistory already includes current candle's volume
+    // (pushed before this function is called), so the average is up to date.
     const avgVol =
       this.volumeHistory.length > 0
         ? this.volumeHistory.reduce((s, v) => s + v, 0) /

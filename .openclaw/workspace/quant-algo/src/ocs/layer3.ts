@@ -115,15 +115,28 @@ export class OCSLayer3 {
 
   /**
    * 计算 ATR
+   * BUG 18 FIX: Use true range when OHLCV data is available
+   * For the simple prices-only path, use max/min of consecutive closes as proxy
    */
-  private calculateATR(prices: number[], period: number): number {
+  private calculateATR(prices: number[], period: number, highs?: number[], lows?: number[]): number {
     if (prices.length < period + 1) return 0;
 
     let sum = 0;
     for (let i = prices.length - period; i < prices.length; i++) {
-      const high = Math.max(prices[i], prices[i - 1]);
-      const low = Math.min(prices[i], prices[i - 1]);
-      const tr = high - low;
+      let tr: number;
+      if (highs && lows && i < highs.length && i < lows.length && i > 0) {
+        // BUG 18 FIX: Use true range: max(high-low, |high-prevClose|, |low-prevClose|)
+        tr = Math.max(
+          highs[i] - lows[i],
+          Math.abs(highs[i] - prices[i - 1]),
+          Math.abs(lows[i] - prices[i - 1])
+        );
+      } else {
+        // Fallback: use close-to-close as proxy
+        const high = Math.max(prices[i], prices[i - 1]);
+        const low = Math.min(prices[i], prices[i - 1]);
+        tr = high - low;
+      }
       sum += tr;
     }
 
@@ -225,6 +238,9 @@ export class OCSLayer3 {
    * The embargo excludes any pattern whose index falls within the
    * last `EMBARGO_BARS` entries so the classifier cannot use
    * auto-correlated recent samples.
+   *
+   * BUG 19 FIX: When eligible.length === 0, return default hold signal
+   * instead of searching embargoed data.
    */
   private findKNearestNeighborsWithDistance(
     features: [number, number, number],
@@ -235,14 +251,10 @@ export class OCSLayer3 {
 
     const eligible = this.history.slice(0, embargoStart);
 
+    // BUG 19 FIX: When no eligible (non-embargoed) samples exist, return empty
+    // instead of bypassing the embargo and searching all (potentially leaked) data.
     if (eligible.length === 0) {
-      // Not enough non-embargoed history — fall back to full set
-      const distances = this.history.map((pattern) => ({
-        neighbor: pattern,
-        distance: this.euclideanDistance(features, pattern.features),
-      }));
-      distances.sort((a, b) => a.distance - b.distance);
-      return distances.slice(0, this.currentK);
+      return [];
     }
 
     const distances = eligible.map((pattern) => ({
@@ -372,38 +384,19 @@ export class OCSLayer3 {
    * FIX H6: TRIPLE BARRIER LABELING
    * ═══════════════════════════════════════════════════════════
    *
-   * Labels are now derived using the Triple Barrier method from
-   * López de Prado's AFML (Ch. 3). This produces higher-quality
-   * labels than simple past-return sign by accounting for:
-   *   - Take-profit barriers (upper)
-   *   - Stop-loss barriers (lower)
-   *   - Maximum holding period (vertical)
-   *
-   * ANTI LOOK-AHEAD DESIGN:
-   *
-   * A triple barrier label at entry bar `i` has an `exitIdx` that
-   * marks when the barrier was actually hit. We ONLY include this
-   * label as a training sample at bar indices >= exitIdx, meaning
-   * the outcome is fully resolved before the label is used.
-   *
-   * This is stricter than the old past-return approach (which only
-   * looked backward) because triple barriers look forward to find
-   * the exit — but we defer using the label until after the exit.
-   *
-   * Fallback: If ohlcv data lacks high/low fields (close-only) or
-   * the triple barrier produces insufficient labels, we fall back
-   * to the original past-return labeling.
-   *
-   * Combined with the temporal embargo in KNN search, this
-   * eliminates both label-leakage and serial-correlation leakage.
-   * ═══════════════════════════════════════════════════════════
+   * BUG 2 FIX: Accept an `offset` parameter to correct the misalignment
+   * between features3D (which starts at bar `offset`) and ohlcv (which
+   * starts at bar 0). When features3D[i] corresponds to ohlcv[offset + i],
+   * we must use ohlcv[offset + i] for label computation.
    *
    * @param ohlcv Historical OHLCV data
    * @param features3D Pre-computed 3D features
+   * @param offset The bar index in ohlcv where features3D[0] starts (default 0)
    */
   initializeFromHistory(
     ohlcv: any[],
     features3D: [number, number, number][],
+    offset: number = 0,
   ) {
     // FIX H6: Try triple barrier labeling first
     const tripleBarrierLabels = this.computeTripleBarrierLabels(ohlcv);
@@ -419,8 +412,11 @@ export class OCSLayer3 {
         const entryIdx = bl.entryIdx;
         const exitIdx = bl.exitIdx;
 
+        // BUG 2 FIX: Convert entryIdx from ohlcv space to features3D space
+        const featureIdx = entryIdx - offset;
+
         // Ensure we have features for the entry bar
-        if (entryIdx >= features3D.length) continue;
+        if (featureIdx < 0 || featureIdx >= features3D.length) continue;
         if (entryIdx >= ohlcv.length) continue;
 
         // The exitIdx must be within our data range
@@ -430,7 +426,7 @@ export class OCSLayer3 {
         const label = this.mapTripleBarrierLabel(bl.label);
 
         this.history.push({
-          features: features3D[entryIdx],
+          features: features3D[featureIdx],
           futureReturn: bl.returnAtExit, // Actual resolved return
           label,
           // Use exitIdx timestamp — this is when the label becomes
@@ -447,14 +443,19 @@ export class OCSLayer3 {
       // ── Fallback: simple past-return labeling ────────────────
       // Used when OHLCV data lacks high/low or triple barrier
       // produces insufficient labels.
-      for (
-        let i = LABEL_LOOKBACK;
-        i < ohlcv.length && i < features3D.length;
-        i++
-      ) {
+      //
+      // BUG 2 FIX: features3D[i] corresponds to ohlcv[offset + i].
+      // We iterate over features3D indices and use ohlcv[offset + i] for labels.
+      for (let i = 0; i < features3D.length; i++) {
+        const ohlcvIdx = offset + i;
+        
+        // Need LABEL_LOOKBACK bars of history before this bar
+        if (ohlcvIdx < LABEL_LOOKBACK) continue;
+        if (ohlcvIdx >= ohlcv.length) continue;
+
         const pastReturn =
-          (ohlcv[i].close - ohlcv[i - LABEL_LOOKBACK].close) /
-          ohlcv[i - LABEL_LOOKBACK].close;
+          (ohlcv[ohlcvIdx].close - ohlcv[ohlcvIdx - LABEL_LOOKBACK].close) /
+          ohlcv[ohlcvIdx - LABEL_LOOKBACK].close;
 
         let label: 'buy' | 'sell' | 'hold' = 'hold';
         if (pastReturn > 0.005) label = 'buy';
@@ -464,7 +465,7 @@ export class OCSLayer3 {
           features: features3D[i],
           futureReturn: pastReturn, // backward-looking despite legacy field name
           label,
-          timestamp: ohlcv[i].timestamp,
+          timestamp: ohlcv[ohlcvIdx].timestamp,
         });
       }
     }

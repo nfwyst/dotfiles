@@ -3,44 +3,56 @@
  *
  * All RSI calculations in the codebase should delegate here.
  * Two variants:
- *   1. computeRSI      — standard Wilder-style RSI (SMA of gains/losses)
+ *   1. computeRSI      — true Wilder-style RSI (exponential smoothing)
  *   2. computeAdaptiveRSI — adjusts period & thresholds based on volatility/trend
  */
 
 // ──────────────────────────────────────────────────────────
-// 1. Standard RSI
+// 1. Standard RSI (Wilder's smoothing)
 // ──────────────────────────────────────────────────────────
 
 /**
  * Compute a single RSI value from an array of closing prices.
  *
- * Uses the classic Wilder formula:
- *   RS  = avgGain / avgLoss   (SMA over `period`)
+ * Uses the true Wilder formula with exponential smoothing:
+ *   Seed:  avgGain = SMA(gains, period), avgLoss = SMA(losses, period)
+ *   Then:  avgGain = (prevAvgGain * (period - 1) + currentGain) / period
+ *          avgLoss = (prevAvgLoss * (period - 1) + currentLoss) / period
+ *   RS  = avgGain / avgLoss
  *   RSI = 100 - 100 / (1 + RS)
  *
- * @param closes - Array of closing prices (oldest → newest)
+ * @param closes - Array of closing prices (oldest -> newest)
  * @param period - Look-back window (default 14)
  * @returns RSI in [0, 100].  Returns 50 when data is insufficient.
  */
 export function computeRSI(closes: number[], period: number = 14): number {
   if (closes.length < period + 1) return 50;
 
-  let gains = 0;
-  let losses = 0;
-
-  for (let i = closes.length - period; i < closes.length; i++) {
-    const prev = closes[i - 1] ?? 0;
-    const curr = closes[i] ?? 0;
-    const change = curr - prev;
+  // BUG 3 FIX: Implement true Wilder RSI with exponential smoothing.
+  // Seed with SMA over the first `period` changes
+  let seedGain = 0;
+  let seedLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const change = closes[i] - closes[i - 1];
     if (change > 0) {
-      gains += change;
+      seedGain += change;
     } else {
-      losses -= change; // make positive
+      seedLoss -= change; // make positive
     }
   }
 
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
+  let avgGain = seedGain / period;
+  let avgLoss = seedLoss / period;
+
+  // Apply Wilder's exponential smoothing for remaining data points
+  for (let i = period + 1; i < closes.length; i++) {
+    const change = closes[i] - closes[i - 1];
+    const currentGain = change > 0 ? change : 0;
+    const currentLoss = change < 0 ? -change : 0;
+
+    avgGain = (avgGain * (period - 1) + currentGain) / period;
+    avgLoss = (avgLoss * (period - 1) + currentLoss) / period;
+  }
 
   if (avgLoss === 0) return 100;
 
@@ -51,19 +63,64 @@ export function computeRSI(closes: number[], period: number = 14): number {
 /**
  * Compute RSI for every position in the array where enough data exists.
  *
- * @param closes - Array of closing prices (oldest → newest)
+ * BUG 3 FIX: Uses incremental Wilder smoothing — O(n) instead of O(n^2).
+ *
+ * @param closes - Array of closing prices (oldest -> newest)
  * @param period - Look-back window (default 14)
  * @returns Array of RSI values aligned to `closes` (leading entries are 50).
  */
 export function computeRSISeries(closes: number[], period: number = 14): number[] {
-  const result: number[] = [];
-  for (let i = 0; i < closes.length; i++) {
-    if (i < period) {
-      result.push(50);
+  const result: number[] = new Array(closes.length);
+
+  // Fill leading entries with neutral RSI
+  for (let i = 0; i < Math.min(period, closes.length); i++) {
+    result[i] = 50;
+  }
+
+  if (closes.length < period + 1) {
+    return result;
+  }
+
+  // Seed: SMA over the first `period` changes
+  let seedGain = 0;
+  let seedLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const change = closes[i] - closes[i - 1];
+    if (change > 0) {
+      seedGain += change;
     } else {
-      result.push(computeRSI(closes.slice(0, i + 1), period));
+      seedLoss -= change;
     }
   }
+
+  let avgGain = seedGain / period;
+  let avgLoss = seedLoss / period;
+
+  // RSI at index `period` (the first valid RSI)
+  if (avgLoss === 0) {
+    result[period] = 100;
+  } else {
+    const rs = avgGain / avgLoss;
+    result[period] = 100 - 100 / (1 + rs);
+  }
+
+  // Incrementally compute RSI for all subsequent positions
+  for (let i = period + 1; i < closes.length; i++) {
+    const change = closes[i] - closes[i - 1];
+    const currentGain = change > 0 ? change : 0;
+    const currentLoss = change < 0 ? -change : 0;
+
+    avgGain = (avgGain * (period - 1) + currentGain) / period;
+    avgLoss = (avgLoss * (period - 1) + currentLoss) / period;
+
+    if (avgLoss === 0) {
+      result[i] = 100;
+    } else {
+      const rs = avgGain / avgLoss;
+      result[i] = 100 - 100 / (1 + rs);
+    }
+  }
+
   return result;
 }
 
@@ -97,7 +154,7 @@ export interface AdaptiveRSIResult {
  * - In trending markets:  longer period + wider thresholds (reduce whipsaws)
  * - In ranging markets:   shorter period + tighter thresholds (more responsive)
  *
- * @param closes - Array of closing prices (oldest → newest)
+ * @param closes - Array of closing prices (oldest -> newest)
  * @param config - Optional tuning knobs
  * @returns AdaptiveRSIResult with the RSI value, effective period, thresholds,
  *          detected regime, and confidence.
@@ -128,7 +185,7 @@ export function computeAdaptiveRSI(
     };
   }
 
-  // ── Trend strength (direction consistency × magnitude) ──
+  // ── Trend strength (direction consistency x magnitude) ──
   const lookback = Math.min(20, closes.length - 1);
   const changes: number[] = [];
   for (let i = closes.length - lookback; i < closes.length; i++) {

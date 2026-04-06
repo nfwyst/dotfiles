@@ -44,6 +44,9 @@ export interface CostEstimate {
 // Trading Cost Model
 // ────────────────────────────────────────────────────────────────
 
+/** Number of 5-minute bars in a year for crypto (365 * 288). */
+const BARS_PER_YEAR = 365 * 288;
+
 export class TradingCostModel {
   private config: CostConfig;
   private recentVolatility: number = 0;
@@ -63,17 +66,26 @@ export class TradingCostModel {
    *
    * @param orderSize - Notional order size in quote currency (e.g. USDT)
    * @param currentPrice - Current asset price
-   * @param volatility - Current annualized or period volatility
+   * @param volatility - Current volatility (per-bar by default; see isAnnualized)
    * @param expectedReturn - Expected return from the trade (as decimal, e.g. 0.01 = 1%)
+   * @param isAnnualized - If true, volatility is annualized and will be converted
+   *                        to per-bar: perBarVol = vol / sqrt(365 * 288).
+   *                        BUG 6 FIX: Explicit parameter to handle annualized vol.
    */
   estimateCost(
     orderSize: number,
     currentPrice: number,
     volatility: number,
     expectedReturn: number,
+    isAnnualized?: boolean,
   ): CostEstimate {
-    // Store volatility for internal use
-    this.recentVolatility = volatility;
+    // BUG 6 FIX: Convert annualized vol to per-bar vol if flagged
+    const perBarVol = isAnnualized
+      ? volatility / Math.sqrt(BARS_PER_YEAR)
+      : volatility;
+
+    // Store per-bar volatility for internal use
+    this.recentVolatility = perBarVol;
 
     // ── Commission (round-trip = 2x) ──────────────────────────
     const commissionBps = this.config.commissionRate * 2 * 10000; // Convert to bps
@@ -87,7 +99,7 @@ export class TradingCostModel {
 
     // ── Timing cost ───────────────────────────────────────────
     const timingCostBps = this.computeTimingCost(
-      volatility,
+      perBarVol,
       this.config.signalDelayMs,
     );
 
@@ -103,19 +115,19 @@ export class TradingCostModel {
     // an assumed per-bar edge = expectedReturn / typical_holding_bars.
     // If expected return is zero or negative, break-even is infinite.
     let breakEvenBars: number;
-    if (expectedReturn <= 0 || volatility <= 0) {
+    if (expectedReturn <= 0 || perBarVol <= 0) {
       breakEvenBars = Infinity;
     } else {
       // Assume expected return is for a single trade.
       // Break-even = totalCost / (expectedReturn per bar)
       // Rough model: per-bar return ~ expectedReturn / sqrt(holding_period)
-      // Simplified: bars needed ≈ (totalCost / expectedReturn)^2
+      // Simplified: bars needed ~ (totalCost / expectedReturn)^2
       const ratio = totalCostDecimal / expectedReturn;
       if (ratio >= 1) {
         breakEvenBars = Infinity; // Cost exceeds expected return
       } else {
         // Simple linear model: bars = totalCost / per_bar_edge
-        // per_bar_edge ≈ expectedReturn (for a single-bar trade)
+        // per_bar_edge ~ expectedReturn (for a single-bar trade)
         breakEvenBars = Math.ceil(totalCostDecimal / expectedReturn);
         if (breakEvenBars < 1) breakEvenBars = 1;
       }
@@ -132,9 +144,12 @@ export class TradingCostModel {
     };
   }
 
-  /** Update volatility estimate */
-  updateVolatility(vol: number): void {
-    this.recentVolatility = vol;
+  /** Update volatility estimate (per-bar volatility) */
+  updateVolatility(vol: number, isAnnualized?: boolean): void {
+    // BUG 6 FIX: Also handle annualized vol in updateVolatility
+    this.recentVolatility = isAnnualized
+      ? vol / Math.sqrt(BARS_PER_YEAR)
+      : vol;
   }
 
   /**
@@ -164,8 +179,8 @@ export class TradingCostModel {
     // If participation rate is negligible, impact is near zero
     if (participationRate < 1e-8) return 0;
 
-    // Daily volatility in bps (using recent volatility)
-    // If recentVolatility is per-period, assume 288 periods/day for crypto
+    // BUG 6 FIX: Daily volatility in bps using per-bar volatility.
+    // Per-bar vol * sqrt(288 bars/day) = daily vol, then * 10000 for bps.
     const dailyVolBps = this.recentVolatility * Math.sqrt(288) * 10000;
 
     // Almgren-Chriss square-root model
@@ -198,7 +213,8 @@ export class TradingCostModel {
 
     // Expected price movement during delay (random walk model):
     // E[|dP|] = vol_per_bar * sqrt(delayFraction)
-    const volPerBar = volatility; // Assume volatility is per-bar
+    // BUG 6 FIX: volatility parameter here is already per-bar vol
+    const volPerBar = volatility;
     const expectedSlippage = volPerBar * Math.sqrt(delayFraction);
 
     // Convert to bps (round-trip)

@@ -93,6 +93,15 @@ export interface PBOResult {
   logitLambdas: number[];
   /** Fraction of folds where the IS-best strategy under-performed OOS median. */
   degradationRate: number;
+  /**
+   * BUG 16 FIX: Whether the PBO estimate is reliable.
+   * False when numStrategies < 3 (single-strategy shortcut is used).
+   */
+  isPBOReliable: boolean;
+  /**
+   * BUG 16 FIX: Warning message when PBO is not fully reliable.
+   */
+  warning?: string;
 }
 
 /** Configuration for walk-forward validation. */
@@ -340,8 +349,10 @@ export function probabilityOfBacktestOverfitting(
     }
   }
 
-  // Single-strategy shortcut
-  if (S === 1) {
+  // BUG 16 FIX: Single-strategy shortcut is not real PBO.
+  // When numStrategies < 3, we label the result as degradationRate (not real PBO)
+  // and set isPBOReliable = false with a warning.
+  if (S < 3) {
     const folds = variantResults[0].folds;
     let degradedCount = 0;
     const logitLambdas: number[] = [];
@@ -354,11 +365,21 @@ export function probabilityOfBacktestOverfitting(
       logitLambdas.push(logitVal);
     }
 
-    const pbo = degradedCount / folds.length;
-    return { pbo, logitLambdas, degradationRate: pbo };
+    const degradationRate = degradedCount / folds.length;
+    return {
+      // BUG 16 FIX: Use degradationRate as the pbo value but flag it as unreliable
+      pbo: degradationRate,
+      logitLambdas,
+      degradationRate,
+      isPBOReliable: false,
+      warning:
+        `PBO computed with only ${S} strategy variant(s). ` +
+        `True PBO requires >= 3 strategies for meaningful rank-based comparison. ` +
+        `The reported value is a degradationRate (fraction of folds where OOS < IS), not a proper PBO.`,
+    };
   }
 
-  // Multi-strategy case
+  // Multi-strategy case (S >= 3) — real PBO
   const logitLambdas: number[] = [];
   let degradedCount = 0;
 
@@ -392,7 +413,12 @@ export function probabilityOfBacktestOverfitting(
   }
 
   const pbo = degradedCount / nFolds;
-  return { pbo, logitLambdas, degradationRate: pbo };
+  return {
+    pbo,
+    logitLambdas,
+    degradationRate: pbo,
+    isPBOReliable: true,
+  };
 }
 
 // ────────────────────────────────────────────────────────────────

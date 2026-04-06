@@ -216,21 +216,108 @@ export class TechnicalAnalysisModule {
     return computeRSI(data, period);
   }
   
-  private macd(data: number[], fast: number, slow: number, signal: number) {
-    const emaFast = this.ema(data, fast);
-    const emaSlow = this.ema(data, slow);
-    const line = emaFast - emaSlow;
-    // 简化signal计算
-    return { line, signal: line * 0.9, histogram: line * 0.1 };
+  /**
+   * BUG 14 FIX: MACD with proper EMA(signal) of the MACD line series.
+   * Previously: signal = line * 0.9 (constant ratio, not a real signal line).
+   * Now: Compute EMA(fast) and EMA(slow) for every bar to build a MACD line series,
+   *      then compute EMA(signal period) of that MACD line series.
+   */
+  private macd(data: number[], fast: number, slow: number, signalPeriod: number) {
+    if (data.length < slow) {
+      return { line: 0, signal: 0, histogram: 0 };
+    }
+
+    // Build full EMA series for fast and slow
+    const fastMultiplier = 2 / (fast + 1);
+    const slowMultiplier = 2 / (slow + 1);
+
+    // Seed fast EMA with SMA of first `fast` bars
+    let emaFast = 0;
+    for (let i = 0; i < fast; i++) emaFast += data[i];
+    emaFast /= fast;
+
+    // Seed slow EMA with SMA of first `slow` bars
+    let emaSlow = 0;
+    for (let i = 0; i < slow; i++) emaSlow += data[i];
+    emaSlow /= slow;
+
+    // We only have meaningful MACD values starting at index `slow - 1`.
+    // Build the MACD line series from index `slow` onward (fast EMA must
+    // also be updated through those bars).
+
+    // Re-seed fast EMA properly: run it from bar 0 to bar slow-1
+    emaFast = 0;
+    for (let i = 0; i < fast; i++) emaFast += data[i];
+    emaFast /= fast;
+    for (let i = fast; i < slow; i++) {
+      emaFast = (data[i] - emaFast) * fastMultiplier + emaFast;
+    }
+
+    // Now both EMAs are positioned at bar slow-1
+    // macdLine series collects values from bar slow-1 onward
+    const macdLineSeries: number[] = [];
+    macdLineSeries.push(emaFast - emaSlow);
+
+    for (let i = slow; i < data.length; i++) {
+      emaFast = (data[i] - emaFast) * fastMultiplier + emaFast;
+      emaSlow = (data[i] - emaSlow) * slowMultiplier + emaSlow;
+      macdLineSeries.push(emaFast - emaSlow);
+    }
+
+    // Compute signal line as EMA(signalPeriod) of the macdLineSeries
+    const currentLine = macdLineSeries[macdLineSeries.length - 1];
+
+    if (macdLineSeries.length < signalPeriod) {
+      // Not enough MACD values for signal EMA; use SMA as approximation
+      const avg = macdLineSeries.reduce((a, b) => a + b, 0) / macdLineSeries.length;
+      return { line: currentLine, signal: avg, histogram: currentLine - avg };
+    }
+
+    // Seed signal EMA with SMA of first signalPeriod MACD values
+    let signalEma = 0;
+    for (let i = 0; i < signalPeriod; i++) signalEma += macdLineSeries[i];
+    signalEma /= signalPeriod;
+
+    const signalMultiplier = 2 / (signalPeriod + 1);
+    for (let i = signalPeriod; i < macdLineSeries.length; i++) {
+      signalEma = (macdLineSeries[i] - signalEma) * signalMultiplier + signalEma;
+    }
+
+    return { line: currentLine, signal: signalEma, histogram: currentLine - signalEma };
   }
   
+  /**
+   * BUG 15 FIX: Stochastic with proper %D as SMA(dPeriod) of recent %K values.
+   * Previously: %D = SMA of a single-element array [k], which always equals k.
+   * Now: Compute %K for each of the last dPeriod bars, then %D = SMA of those %K values.
+   */
   private stochastic(closes: number[], highs: number[], lows: number[], kPeriod: number, dPeriod: number) {
     if (closes.length < kPeriod) return { k: 50, d: 50 };
-    const low = Math.min(...lows.slice(-kPeriod));
-    const high = Math.max(...highs.slice(-kPeriod));
-    const close = closes[closes.length - 1];
-    const k = high === low ? 50 : ((close - low) / (high - low)) * 100;
-    return { k, d: this.sma([k], dPeriod) || k };
+
+    // Compute %K for the last dPeriod bars (or as many as available)
+    const kValues: number[] = [];
+    const barsAvailable = Math.min(dPeriod, closes.length - kPeriod + 1);
+    
+    for (let offset = barsAvailable - 1; offset >= 0; offset--) {
+      // For bar at index (closes.length - 1 - offset)
+      const endIdx = closes.length - offset;
+      const startIdx = endIdx - kPeriod;
+      
+      const periodLows = lows.slice(startIdx, endIdx);
+      const periodHighs = highs.slice(startIdx, endIdx);
+      
+      const lowestLow = Math.min(...periodLows);
+      const highestHigh = Math.max(...periodHighs);
+      const closeVal = closes[endIdx - 1];
+      
+      const kVal = highestHigh === lowestLow ? 50 : ((closeVal - lowestLow) / (highestHigh - lowestLow)) * 100;
+      kValues.push(kVal);
+    }
+
+    const k = kValues[kValues.length - 1]; // most recent %K
+    const d = kValues.reduce((a, b) => a + b, 0) / kValues.length; // SMA of %K values
+
+    return { k, d };
   }
   
   private cci(highs: number[], lows: number[], closes: number[], period: number) {
@@ -284,24 +371,112 @@ export class TechnicalAnalysisModule {
     return { upper: middle + multiplier * atr, middle, lower: middle - multiplier * atr };
   }
   
-  private adx(highs: number[], lows: number[], closes: number[], period: number) {
-    // 简化版ADX
-    return 25;
+  /**
+   * BUG 13 FIX: Real ADX calculation using Wilder's method.
+   * Previously: hardcoded `return 25`.
+   * Now: Computes True Range, +DM/-DM, Wilder-smoothed DI+/DI-/DX, and ADX.
+   *
+   * Returns { adxValue, diPlusValue, diMinusValue } for internal use.
+   * The public-facing adx/diPlus/diMinus methods delegate to this.
+   */
+  private computeDirectionalMovement(highs: number[], lows: number[], closes: number[], period: number): { adxValue: number; diPlusValue: number; diMinusValue: number } {
+    const len = highs.length;
+    // Need at least 2*period bars for a meaningful ADX
+    if (len < period * 2) {
+      return { adxValue: 25, diPlusValue: 20, diMinusValue: 20 };
+    }
+
+    // Step 1: Compute True Range, +DM, -DM for each bar starting at index 1
+    const trArray: number[] = [];
+    const plusDMArray: number[] = [];
+    const minusDMArray: number[] = [];
+
+    for (let i = 1; i < len; i++) {
+      const tr = Math.max(
+        highs[i] - lows[i],
+        Math.abs(highs[i] - closes[i - 1]),
+        Math.abs(lows[i] - closes[i - 1])
+      );
+      trArray.push(tr);
+
+      const upMove = highs[i] - highs[i - 1];
+      const downMove = lows[i - 1] - lows[i];
+
+      plusDMArray.push(upMove > downMove && upMove > 0 ? upMove : 0);
+      minusDMArray.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    }
+
+    // Step 2: Wilder smoothing — first value is sum of first `period` values
+    // then subsequent values use: smoothed = prev - (prev / period) + current
+    const wilderSmooth = (values: number[], p: number): number[] => {
+      const result: number[] = [];
+      let sum = 0;
+      for (let i = 0; i < p; i++) sum += values[i];
+      result.push(sum);
+      for (let i = p; i < values.length; i++) {
+        const smoothed = result[result.length - 1] - result[result.length - 1] / p + values[i];
+        result.push(smoothed);
+      }
+      return result;
+    };
+
+    const smoothTR = wilderSmooth(trArray, period);
+    const smoothPlusDM = wilderSmooth(plusDMArray, period);
+    const smoothMinusDM = wilderSmooth(minusDMArray, period);
+
+    // Step 3: Compute DI+ and DI- series, then DX
+    const dxArray: number[] = [];
+    let latestDIPlus = 0;
+    let latestDIMinus = 0;
+
+    for (let i = 0; i < smoothTR.length; i++) {
+      const diP = smoothTR[i] === 0 ? 0 : (smoothPlusDM[i] / smoothTR[i]) * 100;
+      const diM = smoothTR[i] === 0 ? 0 : (smoothMinusDM[i] / smoothTR[i]) * 100;
+      const diSum = diP + diM;
+      const dx = diSum === 0 ? 0 : (Math.abs(diP - diM) / diSum) * 100;
+      dxArray.push(dx);
+      latestDIPlus = diP;
+      latestDIMinus = diM;
+    }
+
+    // Step 4: ADX = Wilder-smoothed DX over `period`
+    if (dxArray.length < period) {
+      // Not enough DX values — return latest DI values with approximate ADX
+      const avgDx = dxArray.reduce((a, b) => a + b, 0) / dxArray.length;
+      return { adxValue: avgDx, diPlusValue: latestDIPlus, diMinusValue: latestDIMinus };
+    }
+
+    // First ADX = SMA of first `period` DX values
+    let adx = 0;
+    for (let i = 0; i < period; i++) adx += dxArray[i];
+    adx /= period;
+
+    // Subsequent ADX values use Wilder smoothing
+    for (let i = period; i < dxArray.length; i++) {
+      adx = (adx * (period - 1) + dxArray[i]) / period;
+    }
+
+    return { adxValue: adx, diPlusValue: latestDIPlus, diMinusValue: latestDIMinus };
+  }
+
+  private adx(highs: number[], lows: number[], closes: number[], period: number): number {
+    return this.computeDirectionalMovement(highs, lows, closes, period).adxValue;
   }
   
-  private diPlus(highs: number[], lows: number[], closes: number[], period: number) {
-    return 20;
+  private diPlus(highs: number[], lows: number[], closes: number[], period: number): number {
+    return this.computeDirectionalMovement(highs, lows, closes, period).diPlusValue;
   }
   
-  private diMinus(highs: number[], lows: number[], closes: number[], period: number) {
-    return 20;
+  private diMinus(highs: number[], lows: number[], closes: number[], period: number): number {
+    return this.computeDirectionalMovement(highs, lows, closes, period).diMinusValue;
   }
   
   private supertrend(highs: number[], lows: number[], closes: number[], period: number, multiplier: number) {
     const atr = this.atr(highs, lows, closes, period);
     const close = closes[closes.length - 1];
     const sma = this.sma(closes, period);
-    return { direction: close > sma ? 'up' : 'down', value: close > sma ? close - multiplier * atr : close + multiplier * atr };
+    const direction: 'up' | 'down' = close > sma ? 'up' : 'down';
+    return { direction, value: close > sma ? close - multiplier * atr : close + multiplier * atr };
   }
   
   private obv(closes: number[], volumes: number[]) {
