@@ -50,7 +50,8 @@ function getPhases(): Set<string> {
 function makeConfig(): BacktestConfig {
   const endDate = new Date();
   endDate.setUTCHours(0, 0, 0, 0);
-  const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const days = parseInt(process.env.BT_DAYS || '90', 10);
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
   return {
     symbol:         process.env.BT_SYMBOL    || 'ETHUSDT',
     timeframe:      process.env.BT_TIMEFRAME || '5m',
@@ -238,7 +239,39 @@ interface PhaseCResult {
   durationMs: number;
 }
 
-async function phaseC(phaseAResult: PhaseAResult): Promise<PhaseCResult> {
+
+/**
+ * Estimate bars per day from OHLCV timestamps.
+ */
+function estimateBarsPerDay(ohlcv: OHLCV[]): number {
+  if (ohlcv.length < 2) return 288; // default: 5m bars
+  const totalMs = ohlcv[ohlcv.length - 1].timestamp - ohlcv[0].timestamp;
+  const totalDays = totalMs / (24 * 60 * 60 * 1000);
+  if (totalDays < 0.5) return 288;
+  return Math.round(ohlcv.length / totalDays);
+}
+
+/**
+ * Resample a per-bar equity curve to daily snapshots.
+ * Takes the last equity value of each "day window" (barsPerDay bars).
+ */
+function resampleEquityToDaily(equity: number[], barsPerDay: number): number[] {
+  if (barsPerDay <= 1) return equity;
+  const daily: number[] = [equity[0]]; // start with initial equity
+  for (let i = barsPerDay; i < equity.length; i += barsPerDay) {
+    daily.push(equity[i]);
+  }
+  // Always include the last point
+  if (equity.length > 0 && (equity.length - 1) % barsPerDay !== 0) {
+    daily.push(equity[equity.length - 1]);
+  }
+  return daily;
+}
+
+async function phaseC(
+  phaseAResult: PhaseAResult,
+  ohlcv: OHLCV[],
+): Promise<PhaseCResult> {
   console.log('\n' + '═'.repeat(60));
   console.log('🅲  Phase C — 统计显著性验证 (CPCV / PBO / DSR)');
   console.log('═'.repeat(60));
@@ -250,44 +283,74 @@ async function phaseC(phaseAResult: PhaseAResult): Promise<PhaseCResult> {
     throw new Error('Equity curve too short for statistical validation. Need at least 2 data points.');
   }
 
-  // Convert equity curve → per-period returns (TimeSeriesObservation[])
+  // ── Resample equity curve to DAILY returns ──────────────────
+  // Per-bar returns with sparse trades create extreme kurtosis (99%+ zeros)
+  // which makes MinBTL explode. Daily aggregation gives a return series with
+  // meaningful distributional properties for López de Prado validation.
+
+  const barsPerDay = estimateBarsPerDay(ohlcv);
+  const dailyEquity = resampleEquityToDaily(equity, barsPerDay);
   const observations: TimeSeriesObservation[] = [];
-  for (let i = 1; i < equity.length; i++) {
-    const prev = equity[i - 1];
-    const curr = equity[i];
+  for (let i = 1; i < dailyEquity.length; i++) {
+    const prev = dailyEquity[i - 1];
+    const curr = dailyEquity[i];
     const ret = prev !== 0 ? (curr - prev) / prev : 0;
-    observations.push({
-      timestamp: i, // ordinal index is fine; CPCV only needs ordering
-      value: ret,
-    });
+    observations.push({ timestamp: i, value: ret });
   }
 
-  console.log(`📈 构建 ${observations.length} 个收益观测值 (从 ${equity.length} 个权益点)`);
+  const tradeCount = phaseAResult.result.trades.length;
+  console.log(`📈 权益曲线: ${equity.length} 根K线 → ${dailyEquity.length} 天 → ${observations.length} 个日收益观测值`);
+  console.log(`📊 交易数: ${tradeCount} | 每日K线: ~${barsPerDay}`);
+
+  // Minimum requirements check
+  if (observations.length < 30) {
+    console.log(`\n⚠️  日收益观测值不足 (${observations.length} < 30), 统计验证不可靠`);
+    console.log(`   建议: 增加回测时长至 60+ 天 (BT_DAYS=90)`);
+  }
+  if (tradeCount < 30) {
+    console.log(`\n⚠️  交易次数不足 (${tradeCount} < 30), 统计结论仅供参考`);
+    console.log(`   建议: 增加回测时长或降低策略触发阈值`);
+  }
+
+  // Adaptive nGroups: at least 5 observations per group, minimum 3 groups
+  const maxGroups = Math.floor(observations.length / 5);
+  const nGroups = Math.max(3, Math.min(10, maxGroups));
 
   // Run López de Prado validation suite
   const validation = validateBacktest(observations, {
     cpcv: {
-      nGroups: Math.min(10, Math.floor(observations.length / 20)), // at least 20 obs per group
-      nTestGroups: 2,
+      nGroups,
+      nTestGroups: Math.min(2, Math.floor(nGroups / 2)),
     },
     numTrials: 1,
     dsrSignificanceLevel: 0.05,
-    dsrRequiredThreshold: 1.0,
+    // Use default threshold (0.95) — DSR is a probability ∈ [0,1]
   });
 
   const durationMs = Date.now() - t0;
 
   // Print results
   console.log(`\n📊 Phase C 结果:`);
-  console.log(`   ┌─────────────────────────────────────────┐`);
-  console.log(`   │ Sharpe Ratio:        ${validation.sharpeRatio.toFixed(4).padStart(12)}    │`);
-  console.log(`   │ Deflated Sharpe:     ${validation.deflatedSharpe.toFixed(4).padStart(12)}    │`);
-  console.log(`   │ PBO:                 ${validation.pbo.pbo.toFixed(4).padStart(12)}    │`);
-  console.log(`   │ DSR Significant:     ${String(validation.isStatisticallySignificant).padStart(12)}    │`);
-  console.log(`   │ Min BT Length:       ${String(validation.minBacktestLength).padStart(12)}    │`);
-  console.log(`   │ Meets Min Length:    ${String(validation.meetsMinLength).padStart(12)}    │`);
-  console.log(`   │ Overall Pass:        ${String(validation.overallPass).padStart(12)}    │`);
-  console.log(`   └─────────────────────────────────────────┘`);
+  console.log(`   ┌──────────────────────────────────────────────┐`);
+  console.log(`   │ Sharpe Ratio (日):   ${validation.sharpeRatio.toFixed(4).padStart(12)}         │`);
+  console.log(`   │ Deflated Sharpe:     ${validation.deflatedSharpe.toFixed(4).padStart(12)}         │`);
+  console.log(`   │ PBO:                 ${validation.pbo.pbo.toFixed(4).padStart(12)}         │`);
+  console.log(`   │ DSR Significant:     ${String(validation.isStatisticallySignificant).padStart(12)}         │`);
+  console.log(`   │ Min BT Length (日):  ${String(Math.ceil(validation.minBacktestLength)).padStart(12)}         │`);
+  console.log(`   │ Actual Length (日):  ${String(observations.length).padStart(12)}         │`);
+  console.log(`   │ Meets Min Length:    ${String(validation.meetsMinLength).padStart(12)}         │`);
+  console.log(`   │ CPCV nGroups:        ${String(nGroups).padStart(12)}         │`);
+  console.log(`   │ Overall Pass:        ${String(validation.overallPass).padStart(12)}         │`);
+  console.log(`   └──────────────────────────────────────────────┘`);
+
+  // Diagnostic: show DSR internals for debugging
+  if (validation.dsr) {
+    const dsr = validation.dsr;
+    console.log(`\n🔍 DSR 诊断:`);
+    console.log(`   Per-period SR: ${dsr.sharpeRatio.toFixed(6)} | Skewness: ${dsr.skewness.toFixed(4)} | ExKurtosis: ${dsr.kurtosis.toFixed(4)}`);
+    console.log(`   Actual: ${dsr.actualLength} 日 | MinBTL: ${Math.ceil(dsr.minBacktestLength)} 日`);
+  }
+
   console.log(`⏱  Phase C 耗时: ${(durationMs / 1000).toFixed(1)}s`);
 
   if (validation.overallPass) {
@@ -298,10 +361,15 @@ async function phaseC(phaseAResult: PhaseAResult): Promise<PhaseCResult> {
       console.log(`   - PBO=${validation.pbo.pbo.toFixed(3)} ≥ 0.5 → 过拟合风险较高`);
     }
     if (!validation.isStatisticallySignificant) {
-      console.log(`   - Deflated Sharpe 未达显著性阈值`);
+      console.log(`   - Deflated Sharpe ${validation.deflatedSharpe.toFixed(4)} < 0.95 阈值`);
     }
     if (!validation.meetsMinLength) {
-      console.log(`   - 回测长度不足 (需要 ${validation.minBacktestLength} 个观测值)`);
+      console.log(`   - 日收益序列长度不足: ${observations.length} 日 < 需要 ${Math.ceil(validation.minBacktestLength)} 日`);
+      // Compute how many calendar days are needed
+      const neededDays = Math.ceil(validation.minBacktestLength);
+      if (neededDays < 3650) {
+        console.log(`   - 建议: 设置 BT_DAYS=${neededDays} 重新回测`);
+      }
     }
   }
 
@@ -467,11 +535,11 @@ async function main() {
       console.log('\n⚠️  Phase C 需要 Phase A 的结果, 自动运行 Phase A...');
       phaseAResult = await phaseA(config);
     }
-    if (phaseAResult.result.equityCurve.length < 20) {
-      console.log(`\n⚠️  权益曲线过短 (${phaseAResult.result.equityCurve.length} 点), 跳过 Phase C`);
+    if (phaseAResult.result.equityCurve.length < 50) {
+      console.log(`\n⚠️  权益曲线过短 (${phaseAResult.result.equityCurve.length} 点, < 50), 跳过 Phase C`);
     } else {
       try {
-        phaseCResult = await phaseC(phaseAResult);
+        phaseCResult = await phaseC(phaseAResult, phaseAResult.ohlcv);
       } catch (err: any) {
         console.error(`\n❌ Phase C 失败: ${err.message}`);
       }
