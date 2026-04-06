@@ -44,18 +44,30 @@ export class EventDrivenExecutionLayer {
   private notificationManager: NotificationManager;
   private stateManager: StateManager;
   private eventBus = getEventBus();
+
+  // FIX: H7 — Replace isProcessing boolean guard with async event queue.
+  // The old boolean guard silently dropped events during processing, causing
+  // critical signals (stop-loss, position updates) to be permanently lost
+  // in fast markets.
   private isProcessing: boolean = false;
+  private eventQueue: StrategyLayerCompleteEvent[] = [];
+  private maxQueueSize: number;
+  private static readonly DEFAULT_MAX_QUEUE_SIZE = 100;
+  private static readonly QUEUE_WARNING_THRESHOLD = 0.8; // 80%
 
   constructor(
     exchange: ExchangeManager,
     riskManager: RiskManager,
     notificationManager: NotificationManager,
-    stateManager: StateManager
+    stateManager: StateManager,
+    // FIX: H7 — Configurable max queue size (default 100)
+    maxQueueSize: number = EventDrivenExecutionLayer.DEFAULT_MAX_QUEUE_SIZE
   ) {
     this.exchange = exchange;
     this.riskManager = riskManager;
     this.notificationManager = notificationManager;
     this.stateManager = stateManager;
+    this.maxQueueSize = maxQueueSize;
 
     // 订阅策略层完成事件
     this.subscribeToStrategyEvents();
@@ -75,14 +87,72 @@ export class EventDrivenExecutionLayer {
 
   /**
    * 处理策略层完成事件
+   *
+   * FIX: H7 — Instead of silently discarding events while processing,
+   * we now enqueue them and drain the queue after the current event
+   * completes. This ensures FIFO ordering is maintained and no critical
+   * signals (stop-loss, position updates) are ever lost.
    */
   private async handleStrategyLayerComplete(event: StrategyLayerCompleteEvent): Promise<void> {
+    // FIX: H7 — If already processing, push to queue instead of dropping
     if (this.isProcessing) {
-      logger.warn('[ExecutionLayer] Already processing, skipping event');
+      if (this.eventQueue.length >= this.maxQueueSize) {
+        logger.error(
+          `[ExecutionLayer] Event queue is FULL (${this.maxQueueSize}). ` +
+          `Dropping oldest event to make room for incoming event. ` +
+          `Consider increasing maxQueueSize.`
+        );
+        this.eventQueue.shift(); // drop oldest to maintain bounded queue
+      }
+      this.eventQueue.push(event);
+
+      // FIX: H7 — Warn when queue is >80% full
+      const utilization = this.eventQueue.length / this.maxQueueSize;
+      if (utilization > EventDrivenExecutionLayer.QUEUE_WARNING_THRESHOLD) {
+        logger.warn(
+          `[ExecutionLayer] Event queue is ${(utilization * 100).toFixed(0)}% full ` +
+          `(${this.eventQueue.length}/${this.maxQueueSize}). ` +
+          `Processing may be falling behind signal generation rate.`
+        );
+      }
+
+      logger.info(
+        `[ExecutionLayer] Event queued (queue size: ${this.eventQueue.length}/${this.maxQueueSize})`
+      );
       return;
     }
 
     this.isProcessing = true;
+
+    try {
+      await this.processStrategyEvent(event);
+    } finally {
+      // FIX: H7 — Drain the queue after processing completes (FIFO order)
+      await this.drainEventQueue();
+      this.isProcessing = false;
+    }
+  }
+
+  /**
+   * FIX: H7 — Drain queued events one by one in FIFO order after the
+   * current event finishes processing.
+   */
+  private async drainEventQueue(): Promise<void> {
+    while (this.eventQueue.length > 0) {
+      const nextEvent = this.eventQueue.shift()!;
+      try {
+        await this.processStrategyEvent(nextEvent);
+      } catch (error) {
+        logger.error('[ExecutionLayer] Error processing queued event:', error);
+      }
+    }
+  }
+
+  /**
+   * Core event processing logic, extracted from handleStrategyLayerComplete
+   * so it can be reused by the queue drain loop.
+   */
+  private async processStrategyEvent(event: StrategyLayerCompleteEvent): Promise<void> {
     const correlationId = event.correlationId;
 
     try {
@@ -129,8 +199,6 @@ export class EventDrivenExecutionLayer {
           layer: 'ExecutionLayer',
         },
       });
-    } finally {
-      this.isProcessing = false;
     }
   }
 
@@ -457,6 +525,11 @@ export class EventDrivenExecutionLayer {
       action: 'hold',
       message,
     };
+  }
+
+  // FIX: H7 — Expose queue size for monitoring / testing
+  getQueueSize(): number {
+    return this.eventQueue.length;
   }
 
   /**

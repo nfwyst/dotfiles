@@ -12,9 +12,12 @@ export interface EhlersCycle {
   phase: number;              // 相位
 }
 
+// FIX: M6 — Changed `filtered` from `number` to `number[]` so that callers needing
+// the full filtered series (e.g., calculateEhlersCycle) can index into it, while callers
+// needing only the final scalar value access `filtered[filtered.length - 1]`.
 export interface GaussianSignal {
   value: number;
-  filtered: number;
+  filtered: number[];   // FIX: M6 — was `number`, now `number[]` (array of filtered values)
   noise: number;
   confidence: number;
 }
@@ -35,10 +38,26 @@ export interface GaussianSignal {
  */
 export class OCSAnalyzer {
   // 注意：信号冷却机制已移除，由 LLM 模块控制调用频率
+
+  // FIX: M7 — Memoized state for incremental Ehlers AMA computation.
+  // Stores the last computed AMA value and the number of prices processed,
+  // so each new bar only requires O(1) work instead of O(n) recursive recomputation.
+  private lastAmaValue: number | null = null;
+  private lastAmaPricesLength: number = 0;
+  private lastAmaFastLength: number = 0;
+  private lastAmaSlowLength: number = 0;
   
   /**
    * 1. Ehlers 自适应移动平均线
    * 根据市场周期自动调整平滑系数
+   *
+   * FIX: M7 — Converted from recursive O(n^2) to iterative O(n) with memoization.
+   * The old implementation called itself recursively via:
+   *   `this.calculateEhlersAMA(prices.slice(0, -1), fastLength, slowLength).value`
+   * to compute `prevAMA`, which caused every call to re-iterate the entire price history
+   * from scratch, producing O(n^2) total work. The fix computes AMA iteratively in a
+   * single forward pass, caching the previous AMA value for O(1) incremental updates
+   * when only one new bar is appended.
    */
   calculateEhlersAMA(
     prices: number[],
@@ -67,17 +86,40 @@ export class OCSAnalyzer {
     const slowSC = 2 / (slowLength + 1);
     const sc = Math.pow(er * (fastSC - slowSC) + slowSC, 2);
     
-    // 计算 AMA
-    let ama = prices[0];
-    for (let i = 1; i < prices.length; i++) {
-      ama = ama + sc * (prices[i] - ama);
+    // FIX: M7 — Iterative AMA computation with memoization.
+    // Check if we can do an incremental O(1) update (same params, one new bar appended).
+    let ama: number;
+    let prevAMA: number;
+
+    const canIncrement =
+      this.lastAmaValue !== null &&
+      this.lastAmaFastLength === fastLength &&
+      this.lastAmaSlowLength === slowLength &&
+      prices.length === this.lastAmaPricesLength + 1;
+
+    if (canIncrement) {
+      // FIX: M7 — O(1) incremental update: apply AMA formula to just the new bar
+      prevAMA = this.lastAmaValue!;
+      ama = prevAMA + sc * (prices[prices.length - 1] - prevAMA);
+    } else {
+      // FIX: M7 — Full iterative pass (O(n)), replacing the old recursive approach.
+      // Compute AMA across all bars in a single forward loop, tracking prevAMA.
+      ama = prices[0];
+      prevAMA = ama;
+      for (let i = 1; i < prices.length; i++) {
+        prevAMA = ama;
+        ama = ama + sc * (prices[i] - ama);
+      }
     }
+
+    // FIX: M7 — Cache the computed AMA for next incremental update
+    this.lastAmaValue = ama;
+    this.lastAmaPricesLength = prices.length;
+    this.lastAmaFastLength = fastLength;
+    this.lastAmaSlowLength = slowLength;
     
-    // 确定趋势
-    const prevAMA = prices.length > 1 
-      ? this.calculateEhlersAMA(prices.slice(0, -1), fastLength, slowLength).value
-      : ama;
-    
+    // FIX: M7 — Determine trend using the iteratively tracked prevAMA instead of
+    // a recursive call to this.calculateEhlersAMA(prices.slice(0, -1), ...).
     let trend: 'up' | 'down' | 'flat' = 'flat';
     if (ama > prevAMA * 1.001) trend = 'up';
     else if (ama < prevAMA * 0.999) trend = 'down';
@@ -97,7 +139,8 @@ export class OCSAnalyzer {
       return { dominantCycle: 20, smoothPeriod: 10, phase: 0 };
     }
     
-    // 计算平滑价格
+    // FIX: M6 — calculateGaussian now returns filtered as number[].
+    // Access the full filtered array for cycle period detection.
     const smooth = this.calculateGaussian(prices, 0.5).filtered;
     
     // 计算周期 (简化版 Ehlers 周期测量)
@@ -110,7 +153,7 @@ export class OCSAnalyzer {
       let phaseSum = 0;
       
       for (let i = testPeriod; i < smooth.length; i++) {
-        const real = smooth[i] - smooth[i - testPeriod / 2];
+        const real = smooth[i] - smooth[i - Math.floor(testPeriod / 2)];
         const imag = smooth[i] - smooth[i - testPeriod];
         power += Math.sqrt(real * real + imag * imag);
         phaseSum += Math.atan2(imag, real);
@@ -135,39 +178,53 @@ export class OCSAnalyzer {
   /**
    * 3. 高斯滤波
    * 平滑价格数据，减少噪音
+   *
+   * FIX: M6 — Changed return type so that `filtered` is a `number[]` (array of Gaussian-
+   * filtered values, one per input price) instead of a single scalar. Previously, the
+   * method returned a single filtered scalar, but `calculateEhlersCycle` accessed
+   * `result.filtered[i]` as if it were an array, causing undefined values and broken
+   * cycle detection. Now the method produces a full filtered series using a sliding
+   * Gaussian kernel, and callers needing only the final value use
+   * `filtered[filtered.length - 1]`.
    */
   calculateGaussian(prices: number[], sigma: number = 0.5): GaussianSignal {
     const n = prices.length;
-    if (n === 0) return { value: 0, filtered: 0, noise: 0, confidence: 0 };
+    // FIX: M6 — Return empty array for filtered instead of scalar 0
+    if (n === 0) return { value: 0, filtered: [], noise: 0, confidence: 0 };
     
-    // 计算高斯权重
-    const weights: number[] = [];
-    const center = n - 1;
-    let weightSum = 0;
-    
-    for (let i = 0; i < n; i++) {
-      const x = (i - center) / sigma;
-      const w = Math.exp(-0.5 * x * x);
-      weights.push(w);
-      weightSum += w;
+    // FIX: M6 — Compute a Gaussian-filtered value for each position in the price array.
+    // For each position, apply a Gaussian kernel centered at that position.
+    // The kernel window size is adaptive based on sigma to avoid excessive computation.
+    const kernelRadius = Math.max(1, Math.ceil(sigma * 3));
+    const filteredArray: number[] = [];
+
+    for (let center = 0; center < n; center++) {
+      // Determine the window bounds for this center position
+      const windowStart = Math.max(0, center - kernelRadius);
+      const windowEnd = Math.min(n - 1, center + kernelRadius);
+
+      let weightSum = 0;
+      let filteredVal = 0;
+
+      for (let j = windowStart; j <= windowEnd; j++) {
+        const x = (j - center) / Math.max(sigma, 0.01);
+        const w = Math.exp(-0.5 * x * x);
+        filteredVal += prices[j] * w;
+        weightSum += w;
+      }
+
+      filteredArray.push(weightSum > 0 ? filteredVal / weightSum : prices[center]);
     }
-    
-    // 归一化
-    const normalizedWeights = weights.map(w => w / weightSum);
-    
-    // 计算滤波值
-    let filtered = 0;
-    for (let i = 0; i < n; i++) {
-      filtered += prices[i] * normalizedWeights[i];
-    }
-    
+
+    // FIX: M6 — Compute noise and confidence using the last filtered value
+    const lastFiltered = filteredArray[n - 1];
     const current = prices[n - 1];
-    const noise = Math.abs(current - filtered);
+    const noise = Math.abs(current - lastFiltered);
     const confidence = 1 - Math.min(1, noise / (current * 0.02));
     
     return {
       value: current,
-      filtered,
+      filtered: filteredArray,  // FIX: M6 — now an array
       noise,
       confidence,
     };
@@ -398,9 +455,14 @@ export class OCSAnalyzer {
       reasoning.push(`AMA 下降 (周期: ${ama.period})`);
     }
     
+    // FIX: M6 — gaussian.filtered is now an array; use last element for scalar comparison
+    const lastFilteredValue = gaussian.filtered.length > 0
+      ? gaussian.filtered[gaussian.filtered.length - 1]
+      : currentPrice;
+
     // 高斯滤波置信度
     if (gaussian.confidence > 0.7) {
-      if (currentPrice > gaussian.filtered) {
+      if (currentPrice > lastFilteredValue) {
         buyScore += 15;
         reasoning.push('高斯滤波确认上升');
       } else {

@@ -119,6 +119,13 @@ export class StreamEventBus extends EventEmitter {
   private correlationId: string = '';
   private shutdownRequested: boolean = false;
 
+  // FIX: M2 — Deduplication tracking to prevent duplicate message processing
+  // on retry. Uses a Map<messageEventId, expiryTimestamp> with periodic cleanup.
+  private processedMessageIds: Map<string, number> = new Map();
+  private static readonly DEDUP_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+  private static readonly DEDUP_CLEANUP_INTERVAL_MS = 60 * 1000; // cleanup every 60s
+  private dedupCleanupTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(customConfig?: Partial<StreamEventBusConfig>) {
     super();
     this.config = {
@@ -136,6 +143,54 @@ export class StreamEventBus extends EventEmitter {
     this.setMaxListeners(100);
     this.client = this.createRedisClient();
     this.setupEventHandlers();
+
+    // FIX: M2 — Start periodic dedup cleanup
+    this.dedupCleanupTimer = setInterval(
+      () => this.cleanupProcessedIds(),
+      StreamEventBus.DEDUP_CLEANUP_INTERVAL_MS
+    );
+    // Allow the process to exit even if the timer is still running
+    if (this.dedupCleanupTimer && typeof this.dedupCleanupTimer.unref === 'function') {
+      this.dedupCleanupTimer.unref();
+    }
+  }
+
+  /**
+   * FIX: M2 — Remove expired entries from the deduplication map
+   */
+  private cleanupProcessedIds(): void {
+    const now = Date.now();
+    let cleaned = 0;
+    for (const [id, expiry] of this.processedMessageIds) {
+      if (now >= expiry) {
+        this.processedMessageIds.delete(id);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      logger.debug(`[StreamEventBus] Dedup cleanup: removed ${cleaned} expired entries, ${this.processedMessageIds.size} remaining`);
+    }
+  }
+
+  /**
+   * FIX: M2 — Mark a message event ID as processed with TTL
+   */
+  private markAsProcessed(eventId: string): void {
+    this.processedMessageIds.set(eventId, Date.now() + StreamEventBus.DEDUP_TTL_MS);
+  }
+
+  /**
+   * FIX: M2 — Check if a message event ID was already processed (idempotency check)
+   */
+  private isAlreadyProcessed(eventId: string): boolean {
+    const expiry = this.processedMessageIds.get(eventId);
+    if (expiry === undefined) return false;
+    if (Date.now() >= expiry) {
+      // Expired — treat as not processed
+      this.processedMessageIds.delete(eventId);
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -211,6 +266,14 @@ export class StreamEventBus extends EventEmitter {
    */
   private getDLQKey(channel: EventChannel): string {
     return `${this.dlqPrefix}${channel}`;
+  }
+
+  /**
+   * FIX: M2 — Helper key for retry metadata stored separately from the
+   * main stream, avoiding the XADD-based "update" that created duplicates.
+   */
+  private getRetryMetaKey(channel: EventChannel, messageId: string): string {
+    return `retrymeta:${channel}:${messageId}`;
   }
 
   /**
@@ -405,6 +468,18 @@ export class StreamEventBus extends EventEmitter {
 
   /**
    * 处理单条消息
+   *
+   * FIX: M2 — Removed the XADD call that was used to "update" the delivery
+   * count. That XADD appended a brand-new message to the stream instead of
+   * updating the existing one, causing duplicate messages on every delivery.
+   *
+   * The fix:
+   * 1. Delivery metadata is now tracked in a separate Redis hash key
+   *    (retrymeta:<channel>:<messageId>) instead of being written back to
+   *    the stream via XADD.
+   * 2. An idempotency check (processedMessageIds) prevents the handler from
+   *    being invoked twice for the same logical event, even if the stream
+   *    message is re-delivered.
    */
   private async processMessage(
     channel: EventChannel,
@@ -429,20 +504,27 @@ export class StreamEventBus extends EventEmitter {
     try {
       const event = JSON.parse(messageData.data || '{}') as TradingEvent;
       const retryCount = parseInt(messageData.retryCount || '0', 10);
-      const deliveredCount = parseInt(messageData.deliveredCount || '0', 10) + 1;
 
-      // 更新投递计数
-      await this.client.xadd(
-        streamKey,
-        'MAXLEN',
-        '~',
-        this.config.stream.maxLen,
-        '*',
-        'data',
-        messageData.data ?? '',
-        'retryCount', String(retryCount),
-        'deliveredCount', String(deliveredCount)
-      );
+      // FIX: M2 — Idempotency check at the consumer level.
+      // If this event was already successfully processed, just ACK and skip.
+      const eventId = event.id || messageId;
+      if (this.isAlreadyProcessed(eventId)) {
+        logger.debug(`[StreamEventBus] Skipping duplicate event ${eventId} (messageId=${messageId})`);
+        if (autoAck) {
+          await this.ack(channel, messageId, groupName);
+        }
+        // FIX: M2 — Clean up stale retry metadata for this message
+        await this.client.del(this.getRetryMetaKey(channel, messageId)).catch(() => {});
+        return;
+      }
+
+      // FIX: M2 — Track delivery count in a separate hash key instead of
+      // using XADD which creates duplicates. HINCRBY is atomic and updates
+      // in-place without appending new stream entries.
+      const retryMetaKey = this.getRetryMetaKey(channel, messageId);
+      const deliveredCount = await this.client.hincrby(retryMetaKey, 'deliveredCount', 1);
+      // Set a TTL on the metadata key so it doesn't persist forever
+      await this.client.expire(retryMetaKey, 600); // 10 min TTL
 
       // 执行处理器
       const result = handler(event);
@@ -450,10 +532,16 @@ export class StreamEventBus extends EventEmitter {
         await result;
       }
 
+      // FIX: M2 — Mark event as processed to prevent duplicate handling on re-delivery
+      this.markAsProcessed(eventId);
+
       // 自动确认
       if (autoAck) {
         await this.ack(channel, messageId, groupName);
       }
+
+      // FIX: M2 — Clean up retry metadata after successful processing
+      await this.client.del(retryMetaKey).catch(() => {});
 
       this.emit('message:processed', { channel, messageId, event });
     } catch (err) {
@@ -466,6 +554,15 @@ export class StreamEventBus extends EventEmitter {
 
   /**
    * 处理失败消息
+   *
+   * FIX: M2 — Replaced the XADD-based retry count update with a separate
+   * Redis hash (retrymeta:<channel>:<messageId>). The old code used XADD to
+   * "update" the retry count, which actually appended a brand-new duplicate
+   * message to the stream. Now we:
+   * 1. Store retry count in a Redis hash (HINCRBY is atomic and in-place)
+   * 2. XACK the original message once it exceeds max retries or moves to DLQ
+   * 3. The message stays in the pending list for re-delivery by XCLAIM, no
+   *    new stream entries are created
    */
   private async handleFailedMessage(
     channel: EventChannel,
@@ -474,29 +571,25 @@ export class StreamEventBus extends EventEmitter {
     groupName: string,
     error: unknown
   ): Promise<void> {
-    const streamKey = this.getStreamKey(channel);
-    const retryCount = parseInt(messageData.retryCount || '0', 10) + 1;
+    // FIX: M2 — Read/update retry count from separate hash, not via XADD
+    const retryMetaKey = this.getRetryMetaKey(channel, messageId);
+    const retryCount = await this.client.hincrby(retryMetaKey, 'retryCount', 1);
+    await this.client.hset(retryMetaKey, 'lastError', String(error));
+    await this.client.expire(retryMetaKey, 600); // 10 min TTL
 
     if (retryCount >= this.config.stream.retryCount) {
       // 超过最大重试次数，移至DLQ
       await this.moveToDLQ(channel, messageId, messageData, error);
       await this.ack(channel, messageId, groupName); // 从原流中删除
+      // FIX: M2 — Clean up retry metadata
+      await this.client.del(retryMetaKey).catch(() => {});
       logger.warn(`Message ${messageId} moved to DLQ after ${retryCount} retries`);
     } else {
-      // 更新重试计数（添加新消息，自动生成ID）
-      await this.client.xadd(
-        streamKey,
-        'MAXLEN', '~', this.config.stream.maxLen,
-        '*',
-        'data',
-        messageData.data ?? '',
-        'retryCount', String(retryCount),
-        'deliveredCount',
-        messageData.deliveredCount ?? '0',
-        'lastError', String(error)
-      );
-      
-      logger.debug(`Message ${messageId} retry count updated to ${retryCount}`);
+      // FIX: M2 — Do NOT use XADD here. The message remains in the stream's
+      // pending entries list (PEL) because we have not ACK'd it. XCLAIM in
+      // claimPendingMessages() will re-deliver it after the idle threshold.
+      // The retry count is already persisted in the hash above.
+      logger.debug(`Message ${messageId} retry count updated to ${retryCount} (via hash, no XADD)`);
     }
   }
 
@@ -846,6 +939,13 @@ export class StreamEventBus extends EventEmitter {
     logger.info('Closing Redis Stream EventBus...');
 
     this.shutdownRequested = true;
+
+    // FIX: M2 — Clean up dedup timer on shutdown
+    if (this.dedupCleanupTimer) {
+      clearInterval(this.dedupCleanupTimer);
+      this.dedupCleanupTimer = null;
+    }
+    this.processedMessageIds.clear();
 
     // 停止所有消费者
     Array.from(this.subscriptions.values()).forEach((subscription) => {

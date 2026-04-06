@@ -144,11 +144,22 @@ export class HomodyneDiscriminator {
 
 /**
  * 简化的 Ehlers 主导周期检测（用于兼容）
+ *
+ * FIX: H1 — Ehlers IIR filters are recursive systems that REQUIRE state accumulation
+ * across bars. Per Ehlers "Cybernetic Analysis for Stocks and Futures", the Homodyne
+ * Discriminator needs 20-40 bars of convergence to produce reliable period estimates.
+ * Calling reset() on every detectCycle() invocation destroyed all accumulated IIR filter
+ * state (phase accumulators, smoothed period, filter history), making the discriminator
+ * output essentially meaningless noise. The fix removes the per-call reset() so that
+ * internal state persists across calls. reset() remains as a public method on
+ * HomodyneDiscriminator for explicit re-initialization only (e.g., symbol change).
  */
 export class EhlersCycleDetector {
   private discriminator: HomodyneDiscriminator;
   private periodHistory: number[] = [];
   private readonly maxHistory = 50;
+  // FIX: H1 — Track whether the discriminator has been warmed up with historical data
+  private isWarmedUp: boolean = false;
 
   constructor() {
     this.discriminator = new HomodyneDiscriminator();
@@ -166,10 +177,42 @@ export class EhlersCycleDetector {
       return { dominantCycle: 10, cyclePhase: 0, confidence: 0.5 };
     }
 
-    // 重置并重新计算
-    this.discriminator.reset();
-    
-    // 计算最新周期
+    // FIX: H1 — Removed `this.discriminator.reset()` that was called here every invocation.
+    // Ehlers DSP filters are IIR systems requiring state accumulation across bars.
+    // Per Ehlers "Cybernetic Analysis", the Homodyne Discriminator needs 20-40 bars
+    // of convergence. Resetting on each call prevented any meaningful period detection.
+    // Now: on first call, feed all historical prices for warm-up; on subsequent calls,
+    // feed only the latest bar incrementally, preserving accumulated filter state.
+
+    if (!this.isWarmedUp) {
+      // FIX: H1 — Warm-up phase: feed all historical prices to build IIR filter state
+      for (let i = 1; i < prices.length; i++) {
+        const result = this.discriminator.calculatePeriod(prices[i], prices[i - 1]);
+        // Record periods from bars where filter has had time to partially converge
+        if (i >= Math.min(20, prices.length - 1)) {
+          this.periodHistory.push(result.period);
+          if (this.periodHistory.length > this.maxHistory) {
+            this.periodHistory.shift();
+          }
+        }
+      }
+      this.isWarmedUp = true;
+
+      const state = this.discriminator.getState();
+
+      // Compute smoothed dominant cycle from accumulated history
+      const smoothedCycle = this.periodHistory.length > 5
+        ? this.periodHistory.slice(-5).reduce((a, b) => a + b, 0) / 5
+        : state.period;
+
+      return {
+        dominantCycle: Math.round(smoothedCycle),
+        cyclePhase: state.phase,
+        confidence: this.periodHistory.length >= 20 ? 0.8 : 0.6,
+      };
+    }
+
+    // FIX: H1 — Incremental update: only feed the latest bar, preserving accumulated state
     const lastIdx = prices.length - 1;
     const result = this.discriminator.calculatePeriod(
       prices[lastIdx],

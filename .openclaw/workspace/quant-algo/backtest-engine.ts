@@ -19,8 +19,11 @@ import { OCSLayer2 } from './src/ocs/layer2';
 import { OCSLayer3 } from './src/ocs/layer3';
 import { OCSLayer4 } from './src/ocs/layer4';
 import { OCSEnhanced } from './src/ocs/enhanced';
-import { OCSLayer2 } from './src/ocs/layer2';
-import { OCSLayer3 } from './src/ocs/layer3';
+// FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
+
+// FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
+const CRYPTO_TRADING_DAYS = 365;
+
 interface BacktestConfig {
   symbol: string;
   timeframe: string;
@@ -58,6 +61,7 @@ interface BacktestResult {
     winRate: number;
     totalReturn: number;
     totalReturnPercent: number;
+    annualizedReturnPercent: number; // FIX H5: CAGR
     maxDrawdown: number;
     maxDrawdownPercent: number;
     sharpeRatio: number;
@@ -91,6 +95,9 @@ class BacktestEngine {
     tp2Hit: boolean;
   } | null = null;
   
+  // FIX C3: Pending signal queue for next-bar execution
+  private pendingSignal: { signal: StrategySignal; barIndex: number } | null = null;
+
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
   private ocsLayer2: OCSLayer2;
@@ -280,22 +287,16 @@ class BacktestEngine {
     const emaFast = this.computeEMA(data, fast);
     const emaSlow = this.computeEMA(data, slow);
     const line = emaFast.map((f, i) => f - emaSlow[i]);
-    const signalLine = this.computeEMA(line.filter(l => l !== 0), signal);
-    
-    const signalPadded: number[] = [];
-    let sigIdx = 0;
-    for (let i = 0; i < data.length; i++) {
-      if (line[i] !== 0 && sigIdx < signalLine.length) {
-        signalPadded.push(signalLine[sigIdx++]);
-      } else {
-        signalPadded.push(0);
-      }
-    }
-    
+    // FIX C2: Compute signal EMA directly on the full MACD line to preserve temporal alignment.
+    // The old code used filter(l => l !== 0) which destroyed index correspondence (lookahead bias).
+    const signalLine = this.computeEMA(line, signal);
+
+    // FIX C2: signalLine already has correct length and alignment, no padding needed.
+
     return {
       line,
-      signal: signalPadded,
-      histogram: line.map((l, i) => l - signalPadded[i])
+      signal: signalLine,
+      histogram: line.map((l, i) => l - signalLine[i])
     };
   }
 
@@ -353,6 +354,12 @@ class BacktestEngine {
         this.checkPosition(currentCandle, i);
       }
 
+      // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
+      if (this.pendingSignal && !this.position) {
+        this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
+        this.pendingSignal = null;
+      }
+
       // 如果没有持仓，生成信号
       if (!this.position) {
         const indicators = this.precomputedIndicators.get(i);
@@ -380,7 +387,8 @@ class BacktestEngine {
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
-            this.openPosition(signal, currentCandle, i);
+            // FIX C3: Queue signal for next-bar execution instead of immediate fill
+            this.pendingSignal = { signal, barIndex: i };
           } else {
             console.log(`  ⏭️ 信号被趋势过滤: ${signal.type} 置信度${signal.confidence.toFixed(2)} < ${confidenceThreshold}`);
           }
@@ -475,43 +483,53 @@ class BacktestEngine {
     const { side, entryPrice, stopLoss, takeProfits, tp1Hit, tp2Hit } = this.position;
 
     if (side === 'long') {
-      // 检查止损
+      // FIX H6: Check for gap — if bar opens below SL, fill at open (not SL price)
       if (candle.low <= stopLoss) {
-        this.closePosition(candle, 'stop_loss', index);
+        const gapFillPrice = candle.open < stopLoss ? candle.open : undefined;
+        this.closePosition(candle, 'stop_loss', index, gapFillPrice);
         return;
       }
-      // 检查止盈1
+      // FIX H6: Check for gap — if bar opens above TP1, fill at open (not TP1 price)
       if (!tp1Hit && candle.high >= takeProfits.tp1) {
-        this.closePosition(candle, 'tp1', index);
+        const gapFillPrice = candle.open > takeProfits.tp1 ? candle.open : undefined;
+        this.closePosition(candle, 'tp1', index, gapFillPrice);
         return;
       }
-      // 检查止盈2
+      // FIX H6: Check for gap — if bar opens above TP2, fill at open (not TP2 price)
       if (!tp2Hit && candle.high >= takeProfits.tp2) {
-        this.closePosition(candle, 'tp2', index);
+        const gapFillPrice = candle.open > takeProfits.tp2 ? candle.open : undefined;
+        this.closePosition(candle, 'tp2', index, gapFillPrice);
         return;
       }
-      // 检查止盈3
+      // FIX H6: Check for gap — if bar opens above TP3, fill at open (not TP3 price)
       if (candle.high >= takeProfits.tp3) {
-        this.closePosition(candle, 'tp3', index);
+        const gapFillPrice = candle.open > takeProfits.tp3 ? candle.open : undefined;
+        this.closePosition(candle, 'tp3', index, gapFillPrice);
         return;
       }
     } else if (side === 'short') {
-      // 检查止损
+      // FIX H6: Check for gap — if bar opens above SL, fill at open (not SL price)
       if (candle.high >= stopLoss) {
-        this.closePosition(candle, 'stop_loss', index);
+        const gapFillPrice = candle.open > stopLoss ? candle.open : undefined;
+        this.closePosition(candle, 'stop_loss', index, gapFillPrice);
         return;
       }
-      // 检查止盈
+      // FIX H6: Check for gap — if bar opens below TP1, fill at open (not TP1 price)
       if (!tp1Hit && candle.low <= takeProfits.tp1) {
-        this.closePosition(candle, 'tp1', index);
+        const gapFillPrice = candle.open < takeProfits.tp1 ? candle.open : undefined;
+        this.closePosition(candle, 'tp1', index, gapFillPrice);
         return;
       }
+      // FIX H6: Check for gap — if bar opens below TP2, fill at open (not TP2 price)
       if (!tp2Hit && candle.low <= takeProfits.tp2) {
-        this.closePosition(candle, 'tp2', index);
+        const gapFillPrice = candle.open < takeProfits.tp2 ? candle.open : undefined;
+        this.closePosition(candle, 'tp2', index, gapFillPrice);
         return;
       }
+      // FIX H6: Check for gap — if bar opens below TP3, fill at open (not TP3 price)
       if (candle.low <= takeProfits.tp3) {
-        this.closePosition(candle, 'tp3', index);
+        const gapFillPrice = candle.open < takeProfits.tp3 ? candle.open : undefined;
+        this.closePosition(candle, 'tp3', index, gapFillPrice);
         return;
       }
     }
@@ -520,18 +538,18 @@ class BacktestEngine {
   /**
    * 开仓
    */
-  private openPosition(signal: StrategySignal, candle: OHLCV, index: number): void {
+  private openPosition(signal: StrategySignal, candle: OHLCV, index: number, useOpen: boolean = false): void {
     const { type, entryPrice, stopLoss, takeProfits } = signal;
     
-    // 计算仓位大小
+    // FIX C3: Use bar's open price for next-bar execution, not close
+    const basePrice = useOpen ? candle.open : candle.close;
     const positionValue = this.balance * this.config.positionSize * this.config.leverage;
-    const size = positionValue / candle.close;
+    const size = positionValue / basePrice;
 
-    // 计算滑点和手续费
-    const slippageCost = candle.close * this.config.slippage;
+    const slippageCost = basePrice * this.config.slippage;
     const actualEntryPrice = type === 'long' 
-      ? candle.close + slippageCost 
-      : candle.close - slippageCost;
+      ? basePrice + slippageCost 
+      : basePrice - slippageCost;
     const fee = positionValue * this.config.feeRate;
 
     this.balance -= fee;
@@ -553,7 +571,7 @@ class BacktestEngine {
   /**
    * 平仓
    */
-  private closePosition(candle: OHLCV, reason: string, index: number): void {
+  private closePosition(candle: OHLCV, reason: string, index: number, overrideExitPrice?: number): void {
     if (!this.position) return;
 
     const { side, entryPrice, entryTime, size, stopLoss, takeProfits } = this.position;
@@ -561,8 +579,10 @@ class BacktestEngine {
     let exitPrice = candle.close;
     let partialClose = false;
 
-    // 根据退出原因确定退出价格
-    if (reason === 'stop_loss') {
+    // FIX H6: Use override price if provided (gap fill)
+    if (overrideExitPrice !== undefined) {
+      exitPrice = overrideExitPrice;
+    } else if (reason === 'stop_loss') {
       exitPrice = side === 'long' ? stopLoss : stopLoss;
     } else if (reason === 'tp1') {
       exitPrice = takeProfits.tp1;
@@ -576,21 +596,34 @@ class BacktestEngine {
       exitPrice = takeProfits.tp3;
     }
 
+    // Handle partial close flags for override cases too
+    if (overrideExitPrice !== undefined) {
+      if (reason === 'tp1') {
+        partialClose = true;
+        this.position.tp1Hit = true;
+      } else if (reason === 'tp2') {
+        partialClose = true;
+        this.position.tp2Hit = true;
+      }
+    }
+
     // 计算滑点和手续费
     const slippageCost = exitPrice * this.config.slippage;
     const actualExitPrice = side === 'long'
       ? exitPrice - slippageCost
       : exitPrice + slippageCost;
     
-    const positionValue = size * actualExitPrice;
+    // FIX L1: For partial closes, compute PnL on the portion being closed, not full size
+    const closeSize = partialClose ? size * 0.5 : size;
+    const positionValue = closeSize * actualExitPrice;
     const fee = positionValue * this.config.feeRate;
 
     // 计算盈亏
     let pnl: number;
     if (side === 'long') {
-      pnl = (actualExitPrice - entryPrice) * size - fee;
+      pnl = (actualExitPrice - entryPrice) * closeSize - fee;
     } else {
-      pnl = (entryPrice - actualExitPrice) * size - fee;
+      pnl = (entryPrice - actualExitPrice) * closeSize - fee;
     }
 
     const pnlPercent = (pnl / this.balance) * 100;
@@ -604,7 +637,7 @@ class BacktestEngine {
       exitPrice: actualExitPrice,
       stopLoss,
       takeProfits,
-      size,
+      size: closeSize, // FIX L1: Record actual close size, not full position size
       pnl,
       pnlPercent,
       exitReason: reason,
@@ -666,7 +699,18 @@ class BacktestEngine {
     );
     const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
     const stdReturn = Math.sqrt(returns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / returns.length);
-    const sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(252 * 288) : 0; // 年化
+    // FIX H4: Use CRYPTO_TRADING_DAYS (365) instead of 252 for crypto annualization
+    const sharpeRatio = stdReturn > 0 ? (avgReturn / stdReturn) * Math.sqrt(CRYPTO_TRADING_DAYS * 288) : 0; // 年化
+
+    const totalReturnPercent = ((this.balance - this.config.initialBalance) / this.config.initialBalance) * 100;
+
+    // FIX H5: Use CAGR instead of linear extrapolation
+    const tradingDays = this.ohlcv.length / 288; // 5-min bars per day
+    const finalValue = this.balance;
+    const initialValue = this.config.initialBalance;
+    const annualizedReturnPercent = tradingDays > 0
+      ? (Math.pow(finalValue / initialValue, CRYPTO_TRADING_DAYS / tradingDays) - 1) * 100
+      : 0;
 
     // GT Score
     const gtScore = sharpeRatio * (1 - maxDrawdown / 100) * 10;
@@ -677,7 +721,8 @@ class BacktestEngine {
       losingTrades: losingTrades.length,
       winRate: this.trades.length > 0 ? (winningTrades.length / this.trades.length) * 100 : 0,
       totalReturn: this.balance - this.config.initialBalance,
-      totalReturnPercent: ((this.balance - this.config.initialBalance) / this.config.initialBalance) * 100,
+      totalReturnPercent,
+      annualizedReturnPercent, // FIX H5: CAGR
       maxDrawdown,
       maxDrawdownPercent: maxDrawdown,
       sharpeRatio,
@@ -733,6 +778,7 @@ class BacktestEngine {
     
     console.log(`\n💰 收益统计:`);
     console.log(`   总收益: $${stats.totalReturn.toFixed(2)} (${stats.totalReturnPercent >= 0 ? '+' : ''}${stats.totalReturnPercent.toFixed(2)}%)`);
+    console.log(`   年化收益 (CAGR): ${stats.annualizedReturnPercent >= 0 ? '+' : ''}${stats.annualizedReturnPercent.toFixed(2)}%`);
     console.log(`   最大回撤: ${stats.maxDrawdown.toFixed(2)}%`);
     console.log(`   盈利因子: ${stats.profitFactor.toFixed(2)}`);
     

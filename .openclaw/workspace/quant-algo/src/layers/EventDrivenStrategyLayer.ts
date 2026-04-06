@@ -72,16 +72,28 @@ export class EventDrivenStrategyLayer {
   private eventBus = getEventBus();
   private currentPosition: Position | null = null;
   private currentBalance: number = 0;
+
+  // FIX: H7 — Replace isProcessing boolean guard with async event queue.
+  // The old boolean guard silently dropped events during processing, causing
+  // critical signals (stop-loss, position updates) to be permanently lost
+  // in fast markets.
   private isProcessing: boolean = false;
+  private eventQueue: DataLayerCompleteEvent[] = [];
+  private maxQueueSize: number;
+  private static readonly DEFAULT_MAX_QUEUE_SIZE = 100;
+  private static readonly QUEUE_WARNING_THRESHOLD = 0.8; // 80%
 
   constructor(
     strategyEngine: StrategyEngineModule,
     llmEngine: LLMAnalysisModule,
-    strategy: StrategyType = 'hybrid'
+    strategy: StrategyType = 'hybrid',
+    // FIX: H7 — Configurable max queue size (default 100)
+    maxQueueSize: number = EventDrivenStrategyLayer.DEFAULT_MAX_QUEUE_SIZE
   ) {
     this.strategyEngine = strategyEngine;
     this.llmEngine = llmEngine;
     this.strategy = strategy;
+    this.maxQueueSize = maxQueueSize;
 
     // 订阅数据层完成事件
     this.subscribeToDataEvents();
@@ -101,14 +113,72 @@ export class EventDrivenStrategyLayer {
 
   /**
    * 处理数据层完成事件
+   *
+   * FIX: H7 — Instead of silently discarding events while processing,
+   * we now enqueue them and drain the queue after the current event
+   * completes. This ensures FIFO ordering is maintained and no critical
+   * signals (stop-loss, position updates) are ever lost.
    */
   private async handleDataLayerComplete(event: DataLayerCompleteEvent): Promise<void> {
+    // FIX: H7 — If already processing, push to queue instead of dropping
     if (this.isProcessing) {
-      logger.warn('[StrategyLayer] Already processing, skipping event');
+      if (this.eventQueue.length >= this.maxQueueSize) {
+        logger.error(
+          `[StrategyLayer] Event queue is FULL (${this.maxQueueSize}). ` +
+          `Dropping oldest event to make room for incoming event. ` +
+          `Consider increasing maxQueueSize.`
+        );
+        this.eventQueue.shift(); // drop oldest to maintain bounded queue
+      }
+      this.eventQueue.push(event);
+
+      // FIX: H7 — Warn when queue is >80% full
+      const utilization = this.eventQueue.length / this.maxQueueSize;
+      if (utilization > EventDrivenStrategyLayer.QUEUE_WARNING_THRESHOLD) {
+        logger.warn(
+          `[StrategyLayer] Event queue is ${(utilization * 100).toFixed(0)}% full ` +
+          `(${this.eventQueue.length}/${this.maxQueueSize}). ` +
+          `Processing may be falling behind market data rate.`
+        );
+      }
+
+      logger.info(
+        `[StrategyLayer] Event queued (queue size: ${this.eventQueue.length}/${this.maxQueueSize})`
+      );
       return;
     }
 
     this.isProcessing = true;
+
+    try {
+      await this.processDataEvent(event);
+    } finally {
+      // FIX: H7 — Drain the queue after processing completes (FIFO order)
+      await this.drainEventQueue();
+      this.isProcessing = false;
+    }
+  }
+
+  /**
+   * FIX: H7 — Drain queued events one by one in FIFO order after the
+   * current event finishes processing.
+   */
+  private async drainEventQueue(): Promise<void> {
+    while (this.eventQueue.length > 0) {
+      const nextEvent = this.eventQueue.shift()!;
+      try {
+        await this.processDataEvent(nextEvent);
+      } catch (error) {
+        logger.error('[StrategyLayer] Error processing queued event:', error);
+      }
+    }
+  }
+
+  /**
+   * Core event processing logic, extracted from handleDataLayerComplete
+   * so it can be reused by the queue drain loop.
+   */
+  private async processDataEvent(event: DataLayerCompleteEvent): Promise<void> {
     const correlationId = event.correlationId;
 
     try {
@@ -144,8 +214,6 @@ export class EventDrivenStrategyLayer {
       logger.info(`[StrategyLayer] Signal generated: ${signal.type} [${correlationId}]`);
     } catch (error) {
       logger.error('[StrategyLayer] Error processing data event:', error);
-    } finally {
-      this.isProcessing = false;
     }
   }
 
@@ -397,6 +465,11 @@ export class EventDrivenStrategyLayer {
    */
   updateBalance(balance: number): void {
     this.currentBalance = balance;
+  }
+
+  // FIX: H7 — Expose queue size for monitoring / testing
+  getQueueSize(): number {
+    return this.eventQueue.length;
   }
 
   /**

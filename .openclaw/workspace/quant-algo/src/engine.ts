@@ -33,6 +33,14 @@ export class TradingEngine {
   private currentStopLoss: number | null = null;
   private currentTakeProfit: number | null = null;
 
+  // FIX: H2 — Maintain EMA state across calls for proper recursive computation.
+  // EMA is defined as EMA_t = α * Price_t + (1-α) * EMA_{t-1}, requiring the previous
+  // EMA value to be stored. These fields persist the last-computed EMA values so that
+  // each new bar only requires O(1) incremental computation.
+  private prevEma12: number | null = null;
+  private prevEma26: number | null = null;
+  private emaBarsProcessed: number = 0;
+
   constructor(strategy: StrategyType = 'ocs') {
     validateConfig();
     this.exchange = new ExchangeManager();
@@ -364,6 +372,23 @@ export class TradingEngine {
       return sum / period;
     };
 
+    // FIX: H2 — Proper EMA using recursive formula: EMA_t = α * Price_t + (1-α) * EMA_{t-1}
+    // where α = 2/(N+1). The old code used `SMA * 1.1` which has no mathematical basis
+    // and produces values systematically 10% above the SMA regardless of price action.
+    // A correct EMA weights recent prices exponentially, giving a smoothed indicator that
+    // tracks price momentum. For initialization (first call), SMA is used as the seed value.
+    const ema = (data: number[], period: number): number => {
+      if (data.length === 0) return 0;
+      const alpha = 2 / (period + 1);
+      // Use SMA of first `period` bars as seed, then apply recursive EMA formula
+      const seedEnd = Math.min(period, data.length);
+      let emaValue = data.slice(0, seedEnd).reduce((a, b) => a + b, 0) / seedEnd;
+      for (let i = seedEnd; i < data.length; i++) {
+        emaValue = alpha * data[i] + (1 - alpha) * emaValue;
+      }
+      return emaValue;
+    };
+
     // RSI
     const rsi = (data: number[], period: number) => {
       if (data.length < period + 1) return 50;
@@ -416,9 +441,25 @@ export class TradingEngine {
     };
     const bbStd = stdDev(closes, 20);
 
-    // MACD 简化
-    const ema12 = sma(closes, 12) * 1.1; // 简化近似
-    const ema26 = sma(closes, 26);
+    // FIX: H2 — Replace `sma(closes, 12) * 1.1` with proper EMA recursive formula.
+    // Also maintain EMA state across calls for incremental computation.
+    // For the first call or when data length changes, recompute from scratch and cache.
+    if (this.prevEma12 === null || this.emaBarsProcessed !== closes.length) {
+      // Full recomputation: use SMA as seed, then apply recursive EMA
+      this.prevEma12 = ema(closes, 12);
+      this.prevEma26 = ema(closes, 26);
+      this.emaBarsProcessed = closes.length;
+    } else {
+      // FIX: H2 — Incremental update with latest price using recursive EMA formula
+      const alpha12 = 2 / (12 + 1);
+      const alpha26 = 2 / (26 + 1);
+      this.prevEma12 = alpha12 * currentPrice + (1 - alpha12) * this.prevEma12;
+      this.prevEma26 = alpha26 * currentPrice + (1 - alpha26) * this.prevEma26;
+      this.emaBarsProcessed = closes.length;
+    }
+    const ema12 = this.prevEma12;
+    const ema26 = this.prevEma26!;
+
     const macdLine = ema12 - ema26;
     const macdSignal = sma([macdLine], 9) || macdLine * 0.9;
 
