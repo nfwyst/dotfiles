@@ -1,19 +1,31 @@
-# 依赖目录
+# Dependencies
 node_modules/
 
-# 日志
+# Build output
+dist/
+build/
+
+# Logs
 logs/
 *.log
 
-# 环境配置（包含敏感信息）
+# Environment config (contains secrets)
 config/.env
 
-# 运行时数据
+# Runtime data
 *.pid
 *.seed
 *.pid.lock
 
-# 编辑器
+# Backtest data & reports
+backtest-cache/
+backtest-reports/
+
+# Test artifacts
+coverage/
+test-results.xml
+
+# Editor
 .idea/
 .vscode/
 *.swp
@@ -23,13 +35,3 @@ config/.env
 # OS
 .DS_Store
 Thumbs.db
-
-# 测试覆盖率
-coverage/
-
-# 构建输出
-dist/
-build/
-
-# Lock files
-package-lock.json
