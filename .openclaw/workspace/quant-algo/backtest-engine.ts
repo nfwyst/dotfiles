@@ -124,6 +124,11 @@ export class BacktestEngine {
   private circuitBreakerActive: boolean = false;
   private circuitBreakerCooldownEnd: number = 0;
 
+  // Global drawdown protection — tracks all-time high, never resets
+  private allTimeHighEquity: number = 0;
+  private globalHaltActive: boolean = false;
+  private globalHaltEnd: number = 0;
+
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
   private dailyLossLimit: number = 0.04; // 4% of day's starting equity
   private currentDayStartTs: number = 0;
@@ -163,6 +168,7 @@ export class BacktestEngine {
     this.equity = config.initialBalance;
     // FIX 4: Initialize peakEquity from initial balance
     this.peakEquity = config.initialBalance;
+    this.allTimeHighEquity = config.initialBalance;
     this.strategyEngine = new StrategyEngineModule('ocs');
     this.ta = new TechnicalAnalysisModule();
     this.ocsLayer1 = new OCSLayer1();
@@ -537,7 +543,25 @@ export class BacktestEngine {
       // Compute unrealized equity to detect drawdown with open positions
       const preCheckEquity = this.calculateEquity(currentCandle.close);
       if (preCheckEquity > this.peakEquity) this.peakEquity = preCheckEquity;
+      if (preCheckEquity > this.allTimeHighEquity) this.allTimeHighEquity = preCheckEquity;
       const currentDrawdown = (this.peakEquity - preCheckEquity) / this.peakEquity;
+
+      // ── Global drawdown halt: 18% from all-time high → long pause ──
+      const globalDrawdown = (this.allTimeHighEquity - preCheckEquity) / this.allTimeHighEquity;
+      if (globalDrawdown > 0.18 && !this.globalHaltActive) {
+        this.globalHaltActive = true;
+        this.globalHaltEnd = i + 4000; // Pause for ~14 days
+        if (this.position) {
+          console.log(`  🚨 全局保护: 强制平仓, 从历史最高回撤 ${(globalDrawdown*100).toFixed(1)}%`);
+          this.closePosition(currentCandle, 'global_halt', i);
+        }
+        if (this.pendingSignal) this.pendingSignal = null;
+        console.log(`  🚨 全局保护触发: 回撤 ${(globalDrawdown*100).toFixed(1)}% > 18%, 暂停交易 ~14天`);
+      }
+      if (this.globalHaltActive && i >= this.globalHaltEnd) {
+        this.globalHaltActive = false;
+        console.log(`  🟢 全局保护解除`);
+      }
 
       // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
       if (currentDrawdown > 0.12 && !this.circuitBreakerActive) {
@@ -562,13 +586,13 @@ export class BacktestEngine {
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.globalHaltActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
+      if (!this.position && !this.circuitBreakerActive && !this.globalHaltActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
@@ -717,16 +741,6 @@ export class BacktestEngine {
     if (holdingBars >= 1000) {
       console.log(`  ⏰ 最大持仓时间: ${holdingBars} bars, 强制平仓`);
       this.closePosition(candle, 'max_holding', index);
-      return;
-    }
-
-    // Position-level equity protection: close if unrealized loss > 5% of current balance
-    const unrealizedPnl = this.position.side === 'long'
-      ? (candle.close - this.position.entryPrice) * this.position.size
-      : (this.position.entryPrice - candle.close) * this.position.size;
-    if (unrealizedPnl < 0 && Math.abs(unrealizedPnl) > this.balance * 0.05) {
-      console.log(`  🛡️ 仓位保护: 未实现亏损 $${unrealizedPnl.toFixed(2)} > 余额5%, 强制平仓`);
-      this.closePosition(candle, 'equity_protection', index);
       return;
     }
 
