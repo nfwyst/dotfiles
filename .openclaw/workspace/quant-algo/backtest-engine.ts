@@ -122,6 +122,7 @@ export class BacktestEngine {
   // FIX 2: Max Drawdown Circuit Breaker state
   private peakEquity: number = 0;
   private circuitBreakerActive: boolean = false;
+  private circuitBreakerCooldownEnd: number = 0;
 
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
@@ -513,7 +514,7 @@ export class BacktestEngine {
         // 从预计算数据构建信号
         const signal = this.generateSignalFromPrecomputed(indicators, l2, currentCandle.close, i);
         
-        if (signal && signal.type !== 'hold' && signal.confidence >= 0.6) {
+        if (signal && signal.type !== 'hold' && signal.confidence >= 0.4) {
           const sma20 = indicators.sma[20];
           const sma50 = indicators.sma[50];
           const isTrendUp = sma20 > sma50;
@@ -523,20 +524,9 @@ export class BacktestEngine {
             (signal.type === 'long' && isTrendUp) || 
             (signal.type === 'short' && isTrendDown);
           
-          const confidenceThreshold = isTrendAligned ? 0.5 : 0.8;
+          const confidenceThreshold = isTrendAligned ? 0.4 : 0.6;
           
           if (signal.confidence >= confidenceThreshold) {
-            // FIX 3: Minimum R:R filter — TP1 reward must be at least 1.0x the SL risk
-            if (signal.stopLoss && signal.takeProfits) {
-              const slRisk = Math.abs(signal.entryPrice - signal.stopLoss);
-              const tp1Reward = Math.abs(signal.takeProfits.tp1 - signal.entryPrice);
-              if (slRisk > 0 && tp1Reward / slRisk < 1.0) {
-                console.log(`  ⏭️ R:R过低: TP1/SL = ${(tp1Reward/slRisk).toFixed(2)} < 1.0`);
-                // Don't queue signal — skip this trade
-                continue;
-              }
-            }
-
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
             // FIX C3: Queue signal for next-bar execution instead of immediate fill
             this.pendingSignal = { signal, barIndex: i };
@@ -549,13 +539,18 @@ export class BacktestEngine {
       this.equity = this.calculateEquity(currentCandle.close);
       this.equityCurve.push(this.equity);
 
-      // FIX 2: Circuit breaker — stop new entries if drawdown > 15%, resume when < 10%
+      // Circuit breaker: cooldown-based (not recovery-based, to avoid deadlock)
       if (this.equity > this.peakEquity) this.peakEquity = this.equity;
       const currentDrawdown = (this.peakEquity - this.equity) / this.peakEquity;
-      if (currentDrawdown > 0.15) {
+      if (currentDrawdown > 0.20 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
-      } else if (currentDrawdown < 0.10) {
+        this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
+        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 20%, 暂停交易 ~7天`);
+      }
+      if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
+        this.peakEquity = this.equity; // Reset peak to current equity after cooldown
+        console.log(`  🟢 熔断器解除: 已冷却, 重置基准权益为 $${this.equity.toFixed(2)}`);
       }
     }
 
@@ -656,6 +651,15 @@ export class BacktestEngine {
    */
   private checkPosition(candle: OHLCV, index: number): void {
     if (!this.position) return;
+
+    // Max holding period: close position after 1500 bars (~5 days on 5m)
+    // Prevents capital from being tied up in drifting trades
+    const holdingBars = index - this.position.entryBarIndex;
+    if (holdingBars >= 1500) {
+      console.log(`  ⏰ 最大持仓时间: ${holdingBars} bars, 强制平仓`);
+      this.closePosition(candle, 'max_holding', index);
+      return;
+    }
 
     const { side, entryPrice, stopLoss, takeProfits, tp1Hit, tp2Hit } = this.position;
 
@@ -1052,7 +1056,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.1,   // 10%仓位
+    positionSize: 0.02,  // 2%仓位 (match Layer4's 2% risk-per-trade)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
