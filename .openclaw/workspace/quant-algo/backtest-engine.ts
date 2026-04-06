@@ -150,29 +150,112 @@ class BacktestEngine {
   /**
    * 加载历史数据
    */
-  async loadData(): Promise<void> {
-    const cacheFile = path.join(
+  /**
+   * Build a descriptive cache filename from actual date range.
+   */
+  private getCacheFile(): string {
+    const startStr = this.config.startDate.toISOString().split('T')[0];
+    const endStr   = this.config.endDate.toISOString().split('T')[0];
+    return path.join(
       process.cwd(),
       'backtest-cache',
-      `${this.config.symbol}-${this.config.timeframe}-2025-11-29-2026-02-27.json`
+      `${this.config.symbol}-${this.config.timeframe}-${startStr}-${endStr}.json`
     );
+  }
 
-    if (!fs.existsSync(cacheFile)) {
-      throw new Error(`No cached data found: ${cacheFile}`);
+  /**
+   * Fetch OHLCV from Binance public API (no API key required).
+   * Handles pagination: Binance limits 1500 candles per request.
+   */
+  private async fetchFromBinance(): Promise<OHLCV[]> {
+    const BASE = 'https://fapi.binance.com';
+    const symbol = this.config.symbol;          // e.g. 'ETHUSDT'
+    const interval = this.config.timeframe;     // e.g. '5m'
+    const startTs = this.config.startDate.getTime();
+    const endTs   = this.config.endDate.getTime();
+    const LIMIT   = 1500;
+
+    let allCandles: OHLCV[] = [];
+    let currentStart = startTs;
+
+    console.log(`📡 正在从 Binance 获取 ${symbol} ${interval} 数据 ...`);
+
+    while (currentStart < endTs) {
+      const url = `${BASE}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${currentStart}&endTime=${endTs}&limit=${LIMIT}`;
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        throw new Error(`Binance API error: ${res.status} ${res.statusText}`);
+      }
+
+      const raw: any[] = await res.json();
+      if (raw.length === 0) break;
+
+      for (const k of raw) {
+        allCandles.push({
+          timestamp: k[0],
+          open:   parseFloat(k[1]),
+          high:   parseFloat(k[2]),
+          low:    parseFloat(k[3]),
+          close:  parseFloat(k[4]),
+          volume: parseFloat(k[5]),
+        });
+      }
+
+      // Move past the last candle's open time to avoid duplicates
+      currentStart = raw[raw.length - 1][0] + 1;
+
+      // Rate-limit politeness
+      if (raw.length === LIMIT) {
+        await new Promise(r => setTimeout(r, 200));
+      }
     }
 
-    const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-    this.ohlcv = data.ohlcv || data;
-    
-    // 确保数据按时间排序
+    console.log(`   📥 获取到 ${allCandles.length} 根K线`);
+    return allCandles;
+  }
+
+  /**
+   * Load historical data — reads from cache if available, otherwise
+   * auto-fetches from Binance public API and saves to cache.
+   */
+  async loadData(): Promise<void> {
+    const cacheFile = this.getCacheFile();
+    const cacheDir  = path.dirname(cacheFile);
+
+    if (fs.existsSync(cacheFile)) {
+      // ── Cache hit ──
+      console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
+      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      this.ohlcv = data.ohlcv || data;
+    } else {
+      // ── Cache miss → fetch from Binance ──
+      this.ohlcv = await this.fetchFromBinance();
+
+      // Save to cache for next run
+      if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+      }
+      fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
+      console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
+    }
+
+    // Sort by time
     this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
-    
-    // 过滤日期范围
+
+    // Filter to requested date range (cache may contain wider window)
     const startTs = this.config.startDate.getTime();
-    const endTs = this.config.endDate.getTime();
+    const endTs   = this.config.endDate.getTime();
     this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp >= startTs && c.timestamp <= endTs);
-    
-    console.log(`✅ 加载 ${this.ohlcv.length} 根K线数据`);
+
+    if (this.ohlcv.length === 0) {
+      throw new Error(
+        `No candle data in range ${this.config.startDate.toISOString()} – ${this.config.endDate.toISOString()}. ` +
+        `Delete cache and retry, or check your date range.`
+      );
+    }
+
+    console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]})`);
   }
 
   /**
@@ -874,11 +957,16 @@ class BacktestEngine {
 
 // 主函数
 async function main() {
+  // Default: backtest last 7 days. Override via env or CLI args as needed.
+  const endDate = new Date();
+  endDate.setUTCHours(0, 0, 0, 0);
+  const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
   const config: BacktestConfig = {
-    symbol: 'ETHUSDT',
-    timeframe: '5m',
-    startDate: new Date('2026-02-20'),  // 7天回测
-    endDate: new Date('2026-02-27'),
+    symbol: process.env.BT_SYMBOL   || 'ETHUSDT',
+    timeframe: process.env.BT_TIMEFRAME || '5m',
+    startDate,
+    endDate,
     initialBalance: 10000,
     positionSize: 0.1,   // 10%仓位
     leverage: 1,         // 1倍杠杆
