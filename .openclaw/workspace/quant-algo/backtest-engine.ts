@@ -125,7 +125,7 @@ export class BacktestEngine {
   private circuitBreakerCooldownEnd: number = 0;
 
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
-  private dailyLossLimit: number = 0.03; // 3% of day's starting equity
+  private dailyLossLimit: number = 0.04; // 4% of day's starting equity
   private currentDayStartTs: number = 0;
   private dailyStartEquity: number = 0;
   private dailyLossLimitHit: boolean = false;
@@ -542,7 +542,7 @@ export class BacktestEngine {
       // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
       if (currentDrawdown > 0.12 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
-        this.circuitBreakerCooldownEnd = i + 1000; // Pause for ~3.5 days (1000 × 5min bars)
+        this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
         if (this.position) {
           console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
           this.closePosition(currentCandle, 'circuit_breaker', i);
@@ -1126,7 +1126,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.012,  // 1.2%仓位 (tightened to reduce drawdown)
+    positionSize: 0.010,  // 1.0%仓位 (tightened to reduce drawdown)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
