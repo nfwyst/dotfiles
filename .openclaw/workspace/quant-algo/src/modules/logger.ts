@@ -97,6 +97,7 @@ export class LoggerModule {
     
     // 启动定时刷新
     this.flushInterval = setInterval(() => this.flush(), 1000);
+    this.flushInterval.unref();
     
     // 程序退出时刷新
     process.on('exit', () => this.flush());
