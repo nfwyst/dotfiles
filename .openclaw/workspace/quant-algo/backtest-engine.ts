@@ -268,60 +268,78 @@ export class BacktestEngine {
   }
 
   /**
-   * 预计算所有指标和OCS特征 (性能优化关键)
+   * 预计算所有指标和OCS特征 (性能优化版)
+   * 
+   * Key optimization: Use a fixed sliding window (WINDOW_SIZE bars) instead
+   * of slice(0, i) which grows linearly. This reduces O(n²) to O(n).
+   * 
+   * Layer1 and Layer2 are stateful (LMS weights, Supertrend, z-score history
+   * accumulate across calls), so we still iterate every bar — but each iteration
+   * only copies a fixed-size window instead of the entire history.
    */
   private precomputeAll(): void {
     console.log('\n⚡ 预计算指标和OCS特征...');
     const startPrecompute = Date.now();
     
-    const closes = this.ohlcv.map(c => c.close);
-    const highs = this.ohlcv.map(c => c.high);
-    const lows = this.ohlcv.map(c => c.low);
-    const volumes = this.ohlcv.map(c => c.volume);
+    // Pre-extract full arrays ONCE (avoid .map() inside the loop)
+    const allCloses = this.ohlcv.map(c => c.close);
+    const allHighs = this.ohlcv.map(c => c.high);
+    const allLows = this.ohlcv.map(c => c.low);
+    const allVolumes = this.ohlcv.map(c => c.volume);
     
-    // 预计算技术指标
-    const sma20 = this.computeSMA(closes, 20);
-    const sma50 = this.computeSMA(closes, 50);
-    const sma200 = this.computeSMA(closes, 200);
-    const ema12 = this.computeEMA(closes, 12);
-    const ema26 = this.computeEMA(closes, 26);
-    const ema50 = this.computeEMA(closes, 50);
-    
-    // RSI
-    const rsi14 = this.computeRSI(closes, 14);
-    
-    // MACD
-    const macd = this.computeMACD(closes, 12, 26, 9);
-    
-    // Bollinger
-    const bollinger = this.computeBollinger(closes, 20, 2);
-    
-    // ATR
-    const atr14 = this.computeATR(highs, lows, closes, 14);
-    
-    // 预计算OCS Layer1 和 Layer2
     const lookback = 50;
+    // Fixed window: 300 bars is enough for all indicators (Ehlers needs 100,
+    // AMA benefits from ~200, 300 gives comfortable margin)
+    const WINDOW_SIZE = 300;
+
+    // Progress logging for long runs
+    const totalBars = this.ohlcv.length - lookback;
+    let lastProgressLog = Date.now();
+    
+    // 预计算OCS Layer1 和 Layer2 with sliding window
     for (let i = lookback; i < this.ohlcv.length; i++) {
-      const slice = this.ohlcv.slice(0, i);
+      // Sliding window: take the last WINDOW_SIZE bars up to index i
+      const windowStart = Math.max(0, i - WINDOW_SIZE);
+      const ohlcvWindow = this.ohlcv.slice(windowStart, i);
+      const closesWindow = allCloses.slice(windowStart, i);
+      const volumesWindow = allVolumes.slice(windowStart, i);
       
-      const l1 = this.ocsLayer1.process(slice);
+      const l1 = this.ocsLayer1.process(ohlcvWindow);
+      const l2 = this.ocsLayer2.process(l1, closesWindow, volumesWindow);
+      
       this.precomputedLayer1.push(l1);
-      
-      const l2 = this.ocsLayer2.process(
-        l1,
-        slice.map(s => s.close),
-        slice.map(s => s.volume)
-      );
       this.precomputedLayer2.push(l2);
       this.precomputedFeatures3D.push(l2.features3D);
+
+      // Log progress every 10 seconds
+      const now = Date.now();
+      if (now - lastProgressLog > 10000) {
+        const progress = ((i - lookback) / totalBars * 100).toFixed(1);
+        const elapsed = ((now - startPrecompute) / 1000).toFixed(0);
+        const rate = Math.round((i - lookback) / ((now - startPrecompute) / 1000));
+        const eta = Math.round((totalBars - (i - lookback)) / rate);
+        console.log(`   ⏳ 进度: ${progress}% (${i - lookback}/${totalBars}) | ${elapsed}s | ${rate} bars/s | ETA: ${eta}s`);
+        lastProgressLog = now;
+      }
     }
     
     // FIX P1: Pass full ohlcv with offset=lookback so features3D[i] correctly maps to ohlcv[lookback + i]
     this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D, lookback);
     
+    // 预计算技术指标 (these use the full pre-extracted arrays — already O(n))
+    const sma20 = this.computeSMA(allCloses, 20);
+    const sma50 = this.computeSMA(allCloses, 50);
+    const sma200 = this.computeSMA(allCloses, 200);
+    const ema12 = this.computeEMA(allCloses, 12);
+    const ema26 = this.computeEMA(allCloses, 26);
+    const ema50 = this.computeEMA(allCloses, 50);
+    const rsi14 = this.computeRSI(allCloses, 14);
+    const macd = this.computeMACD(allCloses, 12, 26, 9);
+    const bollinger = this.computeBollinger(allCloses, 20, 2);
+    const atr14 = this.computeATR(allHighs, allLows, allCloses, 14);
+    
     // 存储预计算指标到 Map
     for (let i = 200; i < this.ohlcv.length; i++) {
-      const idx = i - 200;
       this.precomputedIndicators.set(i, {
         sma: { 20: sma20[i], 50: sma50[i], 200: sma200[i] },
         ema: { 12: ema12[i], 26: ema26[i], 50: ema50[i] },
