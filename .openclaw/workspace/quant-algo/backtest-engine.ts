@@ -540,7 +540,7 @@ export class BacktestEngine {
       const currentDrawdown = (this.peakEquity - preCheckEquity) / this.peakEquity;
 
       // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
-      if (currentDrawdown > 0.15 && !this.circuitBreakerActive) {
+      if (currentDrawdown > 0.12 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
         if (this.position) {
@@ -548,7 +548,7 @@ export class BacktestEngine {
           this.closePosition(currentCandle, 'circuit_breaker', i);
         }
         if (this.pendingSignal) this.pendingSignal = null; // Cancel any pending entry
-        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 15%, 暂停交易 ~7天`);
+        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 12%, 暂停交易 ~7天`);
       }
       if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
@@ -1126,7 +1126,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.015,  // 1.5%仓位 (tightened from 2% to reduce drawdown)
+    positionSize: 0.012,  // 1.2%仓位 (tightened to reduce drawdown)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
