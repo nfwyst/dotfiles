@@ -144,7 +144,6 @@ export class BacktestEngine {
   private allHighs: number[] = [];
   private allLows: number[] = [];
   private allVolumes: number[] = [];
-  private allOpens: number[] = [];
 
   private precomputedIndicators: Map<number, TechnicalIndicators> = new Map();
   private precomputedLayer1: any[] = [];
@@ -301,7 +300,6 @@ export class BacktestEngine {
     this.allHighs = this.ohlcv.map(c => c.high);
     this.allLows = this.ohlcv.map(c => c.low);
     this.allVolumes = this.ohlcv.map(c => c.volume);
-    this.allOpens = this.ohlcv.map(c => c.open);
     const allCloses = this.allCloses;
     const allHighs = this.allHighs;
     const allLows = this.allLows;
@@ -622,19 +620,11 @@ export class BacktestEngine {
     const closesForL3 = this.allCloses.slice(l3WinStart, index + 1);
     const l3 = this.ocsLayer3.process(l2Output.features3D, closesForL3);
     
-    // Enhanced 增强 — build lightweight OHLCV window from pre-extracted arrays
-    // 500 bars for CVD convergence (avoids costly object allocation of full history)
+    // Enhanced 增强 — use BOUNDED slice of existing OHLCV array
+    // Array.slice() is a shallow copy (pointers only): 500 × 8B = 4KB per call.
+    // 500 bars (~42 hours on 5m) provides enough CVD/TRIX/Gaussian history.
     const enhWinStart = Math.max(0, index - 500);
-    const enhOhlcvWindow: { open: number; high: number; low: number; close: number; volume: number }[] = [];
-    for (let j = enhWinStart; j <= index; j++) {
-      enhOhlcvWindow.push({
-        open: this.allOpens[j],
-        high: this.allHighs[j],
-        low: this.allLows[j],
-        close: this.allCloses[j],
-        volume: this.allVolumes[j],
-      });
-    }
+    const enhOhlcvWindow = this.ohlcv.slice(enhWinStart, index + 1);
     const enhancedOutput = this.ocsEnhanced.enhance(enhOhlcvWindow, l2Output, l3);
     
     // Layer4 - 最终信号
