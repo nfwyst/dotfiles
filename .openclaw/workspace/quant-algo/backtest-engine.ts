@@ -540,7 +540,7 @@ export class BacktestEngine {
       const currentDrawdown = (this.peakEquity - preCheckEquity) / this.peakEquity;
 
       // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
-      if (currentDrawdown > 0.12 && !this.circuitBreakerActive) {
+      if (currentDrawdown > 0.10 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
         if (this.position) {
@@ -548,7 +548,7 @@ export class BacktestEngine {
           this.closePosition(currentCandle, 'circuit_breaker', i);
         }
         if (this.pendingSignal) this.pendingSignal = null; // Cancel any pending entry
-        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 12%, 暂停交易 ~7天`);
+        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 10%, 暂停交易 ~7天`);
       }
       if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
