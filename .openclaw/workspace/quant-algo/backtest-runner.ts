@@ -58,7 +58,7 @@ function makeConfig(): BacktestConfig {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize:   0.02,  // 2% risk per trade (match Layer4)
+    positionSize:   0.015,  // 1.5% risk per trade (tightened from 2% to reduce drawdown)
     leverage:       1,
     feeRate:        0.0006,
     slippage:       0.0001,

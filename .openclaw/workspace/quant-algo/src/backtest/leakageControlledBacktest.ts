@@ -209,7 +209,7 @@ export class LeakageControlledBacktest {
     let currentDayStartTs = 0;
     let dailyStartBalance = balance;
     let dailyLossLimitHit = false;
-    const dailyLossLimit = 0.05; // 5%
+    const dailyLossLimit = 0.04; // 4%
 
     // Fix 3: Circuit breaker state
     let circuitBreakerActive = false;
@@ -241,7 +241,7 @@ export class LeakageControlledBacktest {
       // Fix 3: Circuit breaker tracking
       if (balance > maxEquitySeen) maxEquitySeen = balance;
       const drawdown = maxEquitySeen > 0 ? (maxEquitySeen - balance) / maxEquitySeen : 0;
-      if (drawdown > 0.20 && !circuitBreakerActive) {
+      if (drawdown > 0.15 && !circuitBreakerActive) {
         circuitBreakerActive = true;
         circuitBreakerBarsLeft = 2000; // ~7 days at 5m
       }

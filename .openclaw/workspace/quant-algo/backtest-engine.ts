@@ -125,10 +125,14 @@ export class BacktestEngine {
   private circuitBreakerCooldownEnd: number = 0;
 
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
-  private dailyLossLimit: number = 0.05; // 5% of day's starting equity
+  private dailyLossLimit: number = 0.04; // 4% of day's starting equity
   private currentDayStartTs: number = 0;
   private dailyStartEquity: number = 0;
   private dailyLossLimitHit: boolean = false;
+
+  // Consecutive loss limiter — pause trading after N consecutive losses
+  private consecutiveLosses: number = 0;
+  private consecutiveLossPauseEnd: number = 0;
 
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
@@ -531,14 +535,14 @@ export class BacktestEngine {
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
       // FIX 2: Also check circuit breaker before executing pending signal
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
       // FIX 2: Add circuit breaker check — don't generate new signals during drawdown
-      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit) {
+      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
@@ -578,10 +582,15 @@ export class BacktestEngine {
       // Circuit breaker: cooldown-based (not recovery-based, to avoid deadlock)
       if (this.equity > this.peakEquity) this.peakEquity = this.equity;
       const currentDrawdown = (this.peakEquity - this.equity) / this.peakEquity;
-      if (currentDrawdown > 0.20 && !this.circuitBreakerActive) {
+      if (currentDrawdown > 0.15 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
-        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 20%, 暂停交易 ~7天`);
+        // Force-close any open position to prevent further drawdown
+        if (this.position) {
+          console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
+          this.closePosition(this.ohlcv[i], 'circuit_breaker', i);
+        }
+        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 15%, 暂停交易 ~7天`);
       }
       if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
@@ -700,7 +709,7 @@ export class BacktestEngine {
     // Max holding period: close position after 1500 bars (~5 days on 5m)
     // Prevents capital from being tied up in drifting trades
     const holdingBars = index - this.position.entryBarIndex;
-    if (holdingBars >= 1500) {
+    if (holdingBars >= 1000) {
       console.log(`  ⏰ 最大持仓时间: ${holdingBars} bars, 强制平仓`);
       this.closePosition(candle, 'max_holding', index);
       return;
@@ -929,6 +938,17 @@ export class BacktestEngine {
 
     this.trades.push(trade);
 
+    // Track consecutive losses for pause mechanism
+    if (pnl < 0) {
+      this.consecutiveLosses++;
+      if (this.consecutiveLosses >= 5) {
+        this.consecutiveLossPauseEnd = index + 500; // Pause ~1.7 days after 5 consecutive losses
+        console.log(`  ⚠️ 连续亏损 ${this.consecutiveLosses} 次, 暂停交易 ~1.7天 (500 bars)`);
+      }
+    } else {
+      this.consecutiveLosses = 0;
+    }
+
     const pnlStr = pnl >= 0 ? `+${pnl.toFixed(2)}` : `${pnl.toFixed(2)}`;
     console.log(`   [${new Date(candle.timestamp).toLocaleString()}] 平仓 ${reason} @ ${actualExitPrice.toFixed(2)} | PnL: ${pnlStr}`);
 
@@ -1101,7 +1121,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.02,  // 2%仓位 (match Layer4's 2% risk-per-trade)
+    positionSize: 0.015,  // 1.5%仓位 (tightened from 2% to reduce drawdown)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
