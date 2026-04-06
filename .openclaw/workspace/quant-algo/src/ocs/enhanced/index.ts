@@ -58,14 +58,14 @@ export class OCSEnhanced {
     ohlcv: { open: number; high: number; low: number; close: number; volume: number }[],
     originalLayer2Output: any,
     originalLayer3Output: any
-  ): OCSV312Output {
+  ): OCSEnhancedOutput {
     const closes = ohlcv.map(d => d.close);
     const volumes = ohlcv.map(d => d.volume);
     
     const gaussianResult = this.gaussian.smooth(closes);
     
     const dominantCycle = originalLayer2Output?.dominantCycle?.period || 20;
-    const elasticVMAData = this.elasticVMA.calculateLatest(volumes, closes, dominantCycle);
+    const elasticVMAData = this.elasticVMA.calculateLatest(closes, volumes, dominantCycle);
     
     const cvdDivergence = this.cvdAnalyzer.detectDivergence(
       closes,

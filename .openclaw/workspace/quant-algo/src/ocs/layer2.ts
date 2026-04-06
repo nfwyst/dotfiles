@@ -21,6 +21,7 @@ import {
   DerivativeFilter,
   ElasticVolumeMA,
 } from './enhanced';
+import { EhlersCycleDetector } from '../ehlersCycle';
 
 export interface Layer2Output {
   // Ehlers Dominant Cycle
@@ -87,6 +88,11 @@ export class OCSLayer2 {
   private derivativeFilter: DerivativeFilter;
   private elasticVolumeMA: ElasticVolumeMA;
 
+  // Ehlers Homodyne Discriminator instances (Fix 2)
+  private ehlersCycleShort: EhlersCycleDetector;
+  private ehlersCycleMedium: EhlersCycleDetector;
+  private ehlersCycleLong: EhlersCycleDetector;
+
   // OCS 2.0: 配置项
   private useAttentionFusion: boolean = false;  // 默认关闭，使用稳定LMS
 
@@ -105,6 +111,11 @@ export class OCSLayer2 {
     this.trixSystem = new TRIXSystem(14, 9);
     this.derivativeFilter = new DerivativeFilter(10, 0.001);
     this.elasticVolumeMA = new ElasticVolumeMA(20);
+
+    // Initialize Ehlers Homodyne Discriminator instances (Fix 2)
+    this.ehlersCycleShort = new EhlersCycleDetector();
+    this.ehlersCycleMedium = new EhlersCycleDetector();
+    this.ehlersCycleLong = new EhlersCycleDetector();
   }
 
   process(
@@ -274,7 +285,7 @@ export class OCSLayer2 {
   }
 
   /**
-   * 计算单个 Ehlers 周期
+   * 计算单个 Ehlers 周期 — using Homodyne Discriminator (Fix 2)
    * BUG 12 FIX: Accept a timeframeKey so each cycle stores its own previous dominant period
    */
   private calculateSingleEhlersCycle(prices: number[], minPeriod: number, maxPeriod: number, timeframeKey: string = 'default'): Layer2Output['dominantCycle'] {
@@ -282,44 +293,35 @@ export class OCSLayer2 {
       return { period: 20, phase: 0, state: 'stable' };
     }
 
-    // Homodyne Discriminator实现
-    const changes = [];
-    for (let i = 1; i < prices.length; i++) {
-      changes.push(prices[i] - prices[i - 1]);
+    // Select the correct Ehlers detector for this timeframe
+    let detector: EhlersCycleDetector;
+    switch (timeframeKey) {
+      case 'short': detector = this.ehlersCycleShort; break;
+      case 'medium': detector = this.ehlersCycleMedium; break;
+      case 'long': detector = this.ehlersCycleLong; break;
+      default: detector = this.ehlersCycleMedium; break;
     }
 
-    const autocorrelations: number[] = [];
-    for (let lag = minPeriod; lag <= maxPeriod; lag++) {
-      let sum = 0;
-      let count = 0;
-      for (let i = lag; i < changes.length; i++) {
-        sum += changes[i] * changes[i - lag];
-        count++;
-      }
-      autocorrelations.push(sum / count);
-    }
+    // Use the Homodyne Discriminator for cycle detection
+    const result = detector.detectCycle(prices);
+    
+    // Clamp the detected period to this timeframe's valid range
+    const period = Math.max(minPeriod, Math.min(maxPeriod, result.dominantCycle));
 
-    const maxAuto = Math.max(...autocorrelations);
-    const dominantLag = autocorrelations.indexOf(maxAuto) + minPeriod;
-
-    const recentPrices = prices.slice(-dominantLag);
+    // Compute phase from recent price position within the detected cycle
+    const recentPrices = prices.slice(-period);
     const currentPrice = prices[prices.length - 1];
     const minPrice = Math.min(...recentPrices);
     const maxPrice = Math.max(...recentPrices);
     const phase = maxPrice === minPrice ? 0 : 2 * ((currentPrice - minPrice) / (maxPrice - minPrice)) - 1;
 
-    // BUG 12 FIX: Use per-timeframe previous dominant cycle instead of shared state
-    const prevPeriod = this.prevDominantCycleByTimeframe.get(timeframeKey) || dominantLag;
-    const state = dominantLag > prevPeriod * 1.1 ? 'expanding' :
-                  dominantLag < prevPeriod * 0.9 ? 'contracting' : 'stable';
+    // Determine cycle state using per-timeframe previous period tracking
+    const prevPeriod = this.prevDominantCycleByTimeframe.get(timeframeKey) || period;
+    const state = period > prevPeriod * 1.1 ? 'expanding' :
+                  period < prevPeriod * 0.9 ? 'contracting' : 'stable';
+    this.prevDominantCycleByTimeframe.set(timeframeKey, period);
 
-    this.prevDominantCycleByTimeframe.set(timeframeKey, dominantLag);
-
-    return {
-      period: dominantLag,
-      phase,
-      state,
-    };
+    return { period, phase, state };
   }
 
   /**
@@ -407,12 +409,95 @@ export class OCSLayer2 {
     };
   }
 
-  // 保留旧的LMS方法作为备用
+  /**
+   * Normalized LMS (NLMS) Adaptive Filter
+   * Per OCS spec: w(n+1) = w(n) + μ · e(n) · x(n) / (‖x‖² + ε)
+   * 
+   * Reference: Widrow & Stearns "Adaptive Signal Processing"
+   * OCS official spec uses LMS for signal convergence, not attention.
+   */
   private applyLMSFilter(
     layer1: Layer1Output,
     cycle: Layer2Output['dominantCycle']
   ): Layer2Output['lms'] {
-    return this.applyAttentionFusion(layer1, cycle);
+    // Extract 4 input signals from Layer1 (normalized to [-1, 1])
+    const signals = [
+      (layer1.vpm.position - 0.5) * 2,            // Price position
+      layer1.ama.trend === 'up' ? 1 : layer1.ama.trend === 'down' ? -1 : 0,  // AMA trend
+      layer1.supertrend.direction === 'up' ? 1 : -1,  // Supertrend
+      (layer1.stochastics.k - 50) / 50,            // Stochastics
+    ];
+
+    // Desired signal: consensus of strong signals weighted by cycle phase
+    // This serves as the "reference" that the filter converges toward
+    const desiredSignal = this.computeDesiredSignal(signals, cycle);
+
+    // Current filter output: y(n) = w^T · x(n)
+    const filterOutput = signals.reduce((sum, sig, i) => sum + sig * this.lmsWeights[i], 0);
+
+    // Error signal: e(n) = d(n) - y(n)
+    const error = desiredSignal - filterOutput;
+
+    // Normalized LMS weight update: w(n+1) = w(n) + μ · e(n) · x(n) / (‖x‖² + ε)
+    const normSq = signals.reduce((sum, s) => sum + s * s, 0);
+    const epsilon = 0.001; // Regularization to prevent division by zero
+    const mu = this.lmsLearningRate; // Step size (0.01)
+
+    for (let i = 0; i < signals.length; i++) {
+      this.lmsWeights[i] += mu * error * signals[i] / (normSq + epsilon);
+    }
+
+    // Compute convergence metric (running average of squared error)
+    if (!this.history.lmsErrors) this.history.lmsErrors = [];
+    this.history.lmsErrors.push(error * error);
+    if (this.history.lmsErrors.length > 50) this.history.lmsErrors.shift();
+    
+    const mse = this.history.lmsErrors.reduce((a: number, b: number) => a + b, 0) / this.history.lmsErrors.length;
+    const convergence = Math.max(0, Math.min(1, 1 - Math.sqrt(mse)));
+
+    // Clamp filtered signal to [-1, 1]
+    const filteredSignal = Math.max(-1, Math.min(1, filterOutput));
+
+    return {
+      filteredSignal,
+      weights: [...this.lmsWeights],
+      convergence,
+      learningRate: mu,
+    };
+  }
+
+  /**
+   * Compute desired/reference signal for NLMS adaptation.
+   * Uses a majority-vote of the input signals, modulated by cycle phase.
+   * This acts as the "teacher signal" that the adaptive filter converges toward.
+   */
+  private computeDesiredSignal(
+    signals: number[],
+    cycle: Layer2Output['dominantCycle']
+  ): number {
+    // Simple consensus: mean of all signals
+    const consensus = signals.reduce((a, b) => a + b, 0) / signals.length;
+    
+    // Modulate by cycle phase: amplify when cycle confirms direction
+    const cycleModulation = cycle.state === 'expanding' ? 1.2 :
+                            cycle.state === 'contracting' ? 0.8 : 1.0;
+    
+    // Apply Fisher Transform for normalization to (-1, 1)
+    const raw = consensus * cycleModulation;
+    const clamped = Math.max(-0.999, Math.min(0.999, raw));
+    
+    return clamped;
+  }
+
+  /**
+   * Fisher Transform: FT = 0.5 * ln((1+x)/(1-x))
+   * Normalizes bounded signals to approximately Gaussian distribution
+   * Reference: John F. Ehlers "Cybernetic Analysis for Stocks and Futures"
+   */
+  private fisherTransform(value: number): number {
+    // Clamp input to (-1, 1) to avoid ln(0) or ln(negative)
+    const clamped = Math.max(-0.999, Math.min(0.999, value));
+    return 0.5 * Math.log((1 + clamped) / (1 - clamped));
   }
 
   /**
@@ -434,6 +519,9 @@ export class OCSLayer2 {
     const std = Math.sqrt(variance);
 
     const zScore = std === 0 ? 0 : (signal - mean) / std;
+
+    // Apply Fisher Transform for better Gaussian normalization
+    const fisherZ = this.fisherTransform(Math.max(-1, Math.min(1, zScore / 3))); // Scale z-score to [-1,1] range
     
     // 动态阈值：使用 85th 分位数
     const sortedScores = [...this.history.zScores].sort((a: number, b: number) => a - b);
@@ -442,12 +530,12 @@ export class OCSLayer2 {
     
     // 使用动态阈值计算置信度
     const threshold = dynamicThreshold > 0 ? dynamicThreshold : 1.5;
-    const confidence = Math.min(100, Math.abs(zScore) / threshold * 86);
+    const confidence = Math.min(100, Math.abs(fisherZ) / threshold * 86);
 
     return {
-      zScore,
+      zScore: fisherZ,  // Return Fisher-transformed z-score
       confidence,
-      isHighConfidence: Math.abs(zScore) > threshold,
+      isHighConfidence: Math.abs(fisherZ) > threshold,
       dynamicThreshold: threshold,
     };
   }

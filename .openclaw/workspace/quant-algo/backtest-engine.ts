@@ -310,9 +310,8 @@ export class BacktestEngine {
       this.precomputedFeatures3D.push(l2.features3D);
     }
     
-    // 初始化 Layer3
-    const ohlcvFromLookback = this.ohlcv.slice(lookback);
-    this.ocsLayer3.initializeFromHistory(ohlcvFromLookback, this.precomputedFeatures3D);
+    // FIX P1: Pass full ohlcv with offset=lookback so features3D[i] correctly maps to ohlcv[lookback + i]
+    this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D, lookback);
     
     // 存储预计算指标到 Map
     for (let i = 200; i < this.ohlcv.length; i++) {
@@ -761,8 +760,17 @@ export class BacktestEngine {
       ? exitPrice - slippageCost
       : exitPrice + slippageCost;
     
-    // FIX L1: For partial closes, compute PnL on the portion being closed, not full size
-    const closeSize = partialClose ? size * 0.5 : size;
+    // FIX P1: Determine partial close size based on exit reason (Layer4 spec)
+    // TP1: close 50% of current position (closePercent: 0.5)
+    // TP2: close 50% of remaining (which is 25% of original)
+    let closeSize: number;
+    if (reason === 'tp1') {
+      closeSize = size * 0.5; // TP1: close 50% of current
+    } else if (reason === 'tp2') {
+      closeSize = size * 0.5; // TP2: close 50% of remaining (which is 25% of original)
+    } else {
+      closeSize = size; // Full close (SL, TP3, end_of_test)
+    }
     // BUG 3 FIX: Removed duplicate `const positionValue = psResult.notionalValue;`
     // psResult doesn't exist in this scope. Compute positionValue from closeSize * actualExitPrice.
     const positionValue = closeSize * actualExitPrice;
@@ -802,9 +810,9 @@ export class BacktestEngine {
     const pnlStr = pnl >= 0 ? `+${pnl.toFixed(2)}` : `${pnl.toFixed(2)}`;
     console.log(`   [${new Date(candle.timestamp).toLocaleString()}] 平仓 ${reason} @ ${actualExitPrice.toFixed(2)} | PnL: ${pnlStr}`);
 
-    // 如果是部分止盈，继续持有剩余仓位
+    // FIX P1: Subtract closed amount instead of halving; handles TP1/TP2 correctly
     if (partialClose) {
-      this.position.size *= 0.5; // 简化处理：每次止盈平掉一半
+      this.position.size -= closeSize;
     } else {
       this.position = null;
     }
