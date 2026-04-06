@@ -11,7 +11,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { TechnicalIndicators, OHLCV, TechnicalAnalysisModule } from './src/modules/technicalAnalysis';
+import { TechnicalIndicators, TechnicalAnalysisModule } from './src/modules/technicalAnalysis';
+import type { OHLCV } from './src/events/types';
 import { StrategyEngineModule, StrategySignal, StrategyContext } from './src/modules/strategyEngine';
 import SLTPCalculator from './src/modules/slTpCalculator';
 import { OCSLayer1 } from './src/ocs/layer1';

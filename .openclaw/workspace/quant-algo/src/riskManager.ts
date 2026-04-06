@@ -3,7 +3,7 @@ import logger from './logger';
 import { Position } from './events/types';
 import { BayesianKellyManager, KellyResult } from './risk/bayesianKelly';
 
-export { Position } from './events/types';
+export type { Position } from './events/types';
 export { KellyResult } from './risk/bayesianKelly';
 import { calculatePositionSize as canonicalPositionSize } from './risk/positionSizing';
 

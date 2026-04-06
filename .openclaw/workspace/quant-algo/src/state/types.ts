@@ -8,7 +8,7 @@ import { Position } from '../events/types';
 
 // Re-export the canonical Position type so that any code importing
 // Position from 'state/types' continues to work seamlessly.
-export { Position } from '../events/types';
+export type { Position } from '../events/types';
 
 // ============================================
 // WAL Types

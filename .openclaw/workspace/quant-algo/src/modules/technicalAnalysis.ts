@@ -6,7 +6,7 @@
 
 import { MicrostructureFeatures, microstructureExtractor } from './microstructure';
 import { OHLCV } from '../events/types';
-export { OHLCV } from '../events/types';
+export type { OHLCV } from '../events/types';
 import { computeRSI } from '../indicators/rsi';
 
 export interface TechnicalIndicators {
