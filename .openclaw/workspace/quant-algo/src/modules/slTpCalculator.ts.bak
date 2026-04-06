@@ -238,9 +238,9 @@ export class SLTPCalculator {
       }
 
       // 计算 TP (基于风险回报比)
-      const tp1Distance = stopDistance * 1.2;   // 1:1.2 R/R (widened from 1:1)
-      const tp2Distance = stopDistance * 1.8;   // 1:1.8 R/R (widened from 1:1.5)
-      const tp3Distance = stopDistance * 2.5;   // 1:2.5 R/R (widened from 1:2)
+      const tp1Distance = stopDistance * 1.0;   // 1:1
+      const tp2Distance = stopDistance * 1.5;   // 1:1.5
+      const tp3Distance = stopDistance * 2.0;   // 1:2
 
       let takeProfits: { tp1: number; tp2: number; tp3: number };
 
@@ -259,18 +259,18 @@ export class SLTPCalculator {
       }
 
       reasoning.push(`风险距离: ${stopDistance.toFixed(2)} (${(stopDistance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP1 1:1.2: ${takeProfits.tp1.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp1Distance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP2 1:1.8: ${takeProfits.tp2.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp2Distance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP3 1:2.5: ${takeProfits.tp3.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp3Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP1 1:1: ${takeProfits.tp1.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp1Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP2 1:1.5: ${takeProfits.tp2.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp2Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP3 1:2: ${takeProfits.tp3.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp3Distance / entryPrice * 100).toFixed(2)}%)`);
 
       return {
         entryPrice,
         stopLoss,
         takeProfits,
         riskRewardRatios: {
-          tp1: 1.2,
-          tp2: 1.8,
-          tp3: 2.5,
+          tp1: 1.0,
+          tp2: 1.5,
+          tp3: 2.0,
         },
         stopDistance,
         timeframe: this.timeframe,
@@ -345,16 +345,16 @@ export class SLTPCalculator {
     if (side === 'long') {
       stopLoss = entryPrice - stopDistance;
       takeProfits = {
-        tp1: entryPrice + stopDistance * 1.2,
-        tp2: entryPrice + stopDistance * 1.8,
-        tp3: entryPrice + stopDistance * 2.5,
+        tp1: entryPrice + stopDistance * 1.0,
+        tp2: entryPrice + stopDistance * 1.5,
+        tp3: entryPrice + stopDistance * 2.0,
       };
     } else {
       stopLoss = entryPrice + stopDistance;
       takeProfits = {
-        tp1: entryPrice - stopDistance * 1.2,
-        tp2: entryPrice - stopDistance * 1.8,
-        tp3: entryPrice - stopDistance * 2.5,
+        tp1: entryPrice - stopDistance * 1.0,
+        tp2: entryPrice - stopDistance * 1.5,
+        tp3: entryPrice - stopDistance * 2.0,
       };
     }
 
@@ -362,7 +362,7 @@ export class SLTPCalculator {
       entryPrice,
       stopLoss,
       takeProfits,
-      riskRewardRatios: { tp1: 1.2, tp2: 1.8, tp3: 2.5 },
+      riskRewardRatios: { tp1: 1.0, tp2: 1.5, tp3: 2.0 },
       stopDistance,
       timeframe: tf,
       swingLevel: { swingHigh: 0, swingLow: 0, swingHighIndex: -1, swingLowIndex: -1 },

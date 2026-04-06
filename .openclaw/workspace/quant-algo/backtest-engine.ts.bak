@@ -138,10 +138,6 @@ export class BacktestEngine {
   private consecutiveLosses: number = 0;
   private consecutiveLossPauseEnd: number = 0;
 
-  // Trade cooldown: prevent re-entry immediately after closing a position
-  private lastCloseBarIndex: number = -999;
-  private tradeCooldownBars: number = 12; // 12 bars = 1 hour on 5m timeframe
-
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
   private ocsLayer2: OCSLayer2;
@@ -574,13 +570,13 @@ export class BacktestEngine {
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars) {
+      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
@@ -590,7 +586,7 @@ export class BacktestEngine {
         
         const signal = this.generateSignalFromPrecomputed(indicators, l2, currentCandle.close, i);
         
-        if (signal && signal.type !== 'hold' && signal.confidence >= 0.5) {  // Raised pre-filter
+        if (signal && signal.type !== 'hold' && signal.confidence >= 0.4) {
           const sma20 = indicators.sma[20];
           const sma50 = indicators.sma[50];
           const isTrendUp = sma20 > sma50;
@@ -600,7 +596,7 @@ export class BacktestEngine {
             (signal.type === 'long' && isTrendUp) || 
             (signal.type === 'short' && isTrendDown);
           
-          const confidenceThreshold = isTrendAligned ? 0.5 : 0.7;  // Raised to filter weak signals
+          const confidenceThreshold = isTrendAligned ? 0.4 : 0.6;
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
@@ -693,9 +689,9 @@ export class BacktestEngine {
       : currentPrice + 2 * atr;
     const computedSL = sltp?.stopLoss ?? defaultSL;
     const computedTP = sltp?.takeProfits ?? {
-      tp1: finalDirection === 'long' ? currentPrice + 2.4 * atr : currentPrice - 2.4 * atr,  // 1.2x risk
-      tp2: finalDirection === 'long' ? currentPrice + 3.6 * atr : currentPrice - 3.6 * atr,  // 1.8x risk
-      tp3: finalDirection === 'long' ? currentPrice + 5.0 * atr : currentPrice - 5.0 * atr,  // 2.5x risk
+      tp1: finalDirection === 'long' ? currentPrice + atr : currentPrice - atr,
+      tp2: finalDirection === 'long' ? currentPrice + 2 * atr : currentPrice - 2 * atr,
+      tp3: finalDirection === 'long' ? currentPrice + 3 * atr : currentPrice - 3 * atr,
     };
 
     // BUG 11 FIX: Validate SL/TP are defined and sane before returning signal
@@ -973,7 +969,6 @@ export class BacktestEngine {
     if (partialClose) {
       this.position.size -= closeSize;
     } else {
-      this.lastCloseBarIndex = index; // Track close bar for trade cooldown
       this.position = null;
     }
   }
