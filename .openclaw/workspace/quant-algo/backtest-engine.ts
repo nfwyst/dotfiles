@@ -560,7 +560,7 @@ export class BacktestEngine {
       if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
         this.peakEquity = this.calculateEquity(currentCandle.close); // Reset peak
-        if (this.cbTriggerCount > 0) this.cbTriggerCount--; // Gradually reduce escalation
+        // cbTriggerCount stays — escalating cooldown persists across CB events
         console.log(`  🟢 熔断器解除: 重置基准权益为 $${this.peakEquity.toFixed(2)}`);
       }
 
@@ -1134,7 +1134,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.012,  // 1.2%仓位 (tightened to reduce drawdown)
+    positionSize: 0.010,  // 1.2%仓位 (tightened to reduce drawdown)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
