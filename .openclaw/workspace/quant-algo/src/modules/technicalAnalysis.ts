@@ -7,6 +7,7 @@
 import { MicrostructureFeatures, microstructureExtractor } from './microstructure';
 import { OHLCV } from '../events/types';
 export { OHLCV } from '../events/types';
+import { computeRSI } from '../indicators/rsi';
 
 export interface TechnicalIndicators {
   timestamp: number;
@@ -210,16 +211,9 @@ export class TechnicalAnalysisModule {
     return ema;
   }
   
+  /** @see computeRSI from indicators/rsi — delegates to canonical impl */
   private rsi(data: number[], period: number): number {
-    if (data.length < period + 1) return 50;
-    let gains = 0, losses = 0;
-    for (let i = data.length - period; i < data.length; i++) {
-      const change = data[i] - data[i - 1];
-      if (change > 0) gains += change;
-      else losses -= change;
-    }
-    const rs = gains / Math.max(losses, 0.001);
-    return 100 - (100 / (1 + rs));
+    return computeRSI(data, period);
   }
   
   private macd(data: number[], fast: number, slow: number, signal: number) {

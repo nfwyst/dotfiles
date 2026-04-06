@@ -5,6 +5,7 @@ import { BayesianKellyManager, KellyResult } from './risk/bayesianKelly';
 
 export { Position } from './events/types';
 export { KellyResult } from './risk/bayesianKelly';
+import { calculatePositionSize as canonicalPositionSize } from './risk/positionSizing';
 
 
 export interface DailyStats {
@@ -100,32 +101,22 @@ export class RiskManager {
       return positionSize;
     }
     
-    // Fall back to original fixed-fraction logic
-    // 风险金额 = 余额 * 每笔风险比例
-    const riskAmount = balance * config.maxRiskPerTrade;
-    
-    // 价格波动 = 入场价 - 止损价
-    const priceMovement = Math.abs(currentPrice - stopLossPrice);
-    
-    // 仓位大小 = 风险金额 / 价格波动
-    let positionSize = riskAmount / priceMovement;
-    
-    // 考虑杠杆后的名义仓位
-    const notionalValue = positionSize * currentPrice;
-    
-    // 限制最大仓位（避免过度杠杆）
-    const maxNotional = balance * config.leverage * 0.5;  // 最多使用 50% 可用杠杆
-    if (notionalValue > maxNotional) {
-      positionSize = maxNotional / currentPrice;
-      logger.warn(`仓位大小已限制为 ${positionSize.toFixed(4)} (名义价值 ${maxNotional.toFixed(2)} USDT)`);
-    }
+    // Fall back to canonical fixed-fractional sizing
+    const result = canonicalPositionSize({
+      balance,
+      currentPrice,
+      stopLossPrice,
+      maxRiskPerTrade: config.maxRiskPerTrade,
+      leverage: config.leverage,
+      maxLeverageUtil: 0.5,
+    });
     
     logger.info(
-      `📐 固定比例定仓 | 方法: fixed | fraction=${config.maxRiskPerTrade} ` +
+      `📐 固定比例定仓 | 方法: ${result.method} | fraction=${config.maxRiskPerTrade} ` +
       `Kelly数据不足 (${kellyResult.confidence.toFixed(0)}% 置信度)`
     );
     
-    return positionSize;
+    return result.size;
   }
   
   // 计算止损价格

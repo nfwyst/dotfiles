@@ -21,6 +21,8 @@ import {
   type EnhancedSignal,
   } from '../events/types';
 import logger from '../logger';
+import { OrderFlowAnalyzer } from '../signals/orderFlowAnalysis';
+import { MultiTimeframeAggregator } from '../signals/multiTimeframe';
 
 // ==================== 类型定义 ====================
 
@@ -72,6 +74,10 @@ export class EventDrivenStrategyLayer {
   private eventBus = getEventBus();
   private currentPosition: Position | null = null;
   private currentBalance: number = 0;
+
+  // ── Integrated signal modules ──────────────────────────────
+  private orderFlowAnalyzer = new OrderFlowAnalyzer();
+  private mtfAggregator = new MultiTimeframeAggregator();
 
   // FIX: H7 — Replace isProcessing boolean guard with async event queue.
   // The old boolean guard silently dropped events during processing, causing
@@ -244,6 +250,91 @@ export class EventDrivenStrategyLayer {
 
     // 4. 生成策略信号（简化版本）
     const strategySignal = this.generateSimpleSignal(context);
+
+    // ── 4a. Order Flow Analysis enhancement ───────────────────
+    // Feed the latest candle to the OrderFlowAnalyzer. It works even
+    // without an order book (falls back to TFI from OHLCV).
+    if (context.recentCandles && context.recentCandles.length > 0) {
+      const latestCandle = context.recentCandles[context.recentCandles.length - 1];
+      const ohlcvCandle = {
+        timestamp: Date.now(),
+        open: latestCandle.open,
+        high: latestCandle.high,
+        low: latestCandle.low,
+        close: latestCandle.close,
+        volume: latestCandle.volume,
+      };
+
+      try {
+        const ofiSignal = this.orderFlowAnalyzer.update(ohlcvCandle);
+
+        // Map OrderFlow direction to signal alignment
+        const ofiAligned =
+          (ofiSignal.direction === 'bullish' && strategySignal.type === 'long') ||
+          (ofiSignal.direction === 'bearish' && strategySignal.type === 'short') ||
+          ofiSignal.direction === 'neutral';
+
+        if (ofiAligned) {
+          // Boost confidence up to 20% when order flow aligns
+          strategySignal.confidence *= (1 + ofiSignal.strength * 0.2);
+        } else {
+          // Reduce confidence up to 30% when order flow opposes
+          strategySignal.confidence *= (1 - ofiSignal.strength * 0.3);
+        }
+
+        logger.info(
+          `[StrategyLayer] OFI signal: direction=${ofiSignal.direction}, ` +
+          `strength=${ofiSignal.strength.toFixed(3)}, aligned=${ofiAligned}`
+        );
+      } catch (error) {
+        logger.warn('[StrategyLayer] OrderFlowAnalyzer update failed, skipping:', error);
+      }
+    }
+
+    // ── 4b. Multi-Timeframe Analysis enhancement ──────────────
+    // Feed the latest candle to the MTF aggregator and use the trend
+    // alignment score to filter counter-trend trades.
+    if (context.recentCandles && context.recentCandles.length > 0) {
+      const latestCandle = context.recentCandles[context.recentCandles.length - 1];
+      const ohlcvCandle = {
+        timestamp: Date.now(),
+        open: latestCandle.open,
+        high: latestCandle.high,
+        low: latestCandle.low,
+        close: latestCandle.close,
+        volume: latestCandle.volume,
+      };
+
+      try {
+        const mtfFeatures = this.mtfAggregator.update(ohlcvCandle);
+
+        // When higher-TF trend alignment is strong, penalize counter-trend trades
+        if (Math.abs(mtfFeatures.trendAlignment) > 0.5) {
+          const aligned =
+            (strategySignal.type === 'long' && mtfFeatures.trendAlignment > 0) ||
+            (strategySignal.type === 'short' && mtfFeatures.trendAlignment < 0);
+
+          if (!aligned && strategySignal.type !== 'hold') {
+            strategySignal.confidence *= 0.5; // halve confidence for counter-trend trades
+            logger.info(
+              `[StrategyLayer] MTF counter-trend penalty applied: ` +
+              `trendAlignment=${mtfFeatures.trendAlignment.toFixed(3)}, ` +
+              `signal=${strategySignal.type}, confidence halved`
+            );
+          }
+        }
+
+        logger.info(
+          `[StrategyLayer] MTF features: trendAlignment=${mtfFeatures.trendAlignment.toFixed(3)}, ` +
+          `dominantTF=${mtfFeatures.dominantTimeframe}`
+        );
+      } catch (error) {
+        logger.warn('[StrategyLayer] MultiTimeframeAggregator update failed, skipping:', error);
+      }
+    }
+
+    // Clamp confidence to [0, 1] after all adjustments
+    strategySignal.confidence = Math.max(0, Math.min(1, strategySignal.confidence));
 
     // 发布策略信号生成事件
     await this.eventBus.publish({

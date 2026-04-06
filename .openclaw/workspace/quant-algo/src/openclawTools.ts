@@ -4,6 +4,8 @@
  * 提供 web_search 等工具调用，供 LLM 决策使用
  */
 
+import { execSync } from 'child_process';
+
 export interface WebSearchResult {
   title: string;
   url: string;
@@ -32,7 +34,6 @@ export async function web_search(
 
   try {
     // 尝试使用 bun 运行 web_search 技能
-    const { execSync } = require('child_process');
     
     // 直接调用 web_search 工具（如果在 OpenClaw 环境中）
     const result = execSync(
@@ -111,7 +112,6 @@ export async function session_status(): Promise<{
   [key: string]: any;
 }> {
   try {
-    const { execSync } = require('child_process');
     const result = execSync('openclaw status --json 2>/dev/null || echo "{}"', {
       encoding: 'utf8',
       timeout: 5000,
@@ -127,7 +127,6 @@ export async function session_status(): Promise<{
  */
 export async function notify_telegram(message: string): Promise<boolean> {
   try {
-    const { execSync } = require('child_process');
     execSync(
       `openclaw notify "${message.replace(/"/g, '\\"')}" 2>/dev/null || true`,
       { timeout: 5000 }

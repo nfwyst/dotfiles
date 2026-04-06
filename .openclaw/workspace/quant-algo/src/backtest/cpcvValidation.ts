@@ -18,7 +18,14 @@
  *   - `combinatorialPurgedCV()` — CPCV with embargo-aware purging
  *   - `probabilityOfBacktestOverfitting()` — PBO from CPCV results
  *   - `walkForwardValidation()` — simpler anchored/rolling walk-forward
+ *
+ * FIX H5: Also integrates the Deflated Sharpe Ratio (DSR) from
+ * deflatedSharpe.ts to correct for multiple-testing bias. The new
+ * `validateBacktest()` function combines PBO + DSR into a single
+ * comprehensive validation result.
  */
+
+import { DeflatedSharpeCalculator, type DSRResult } from './deflatedSharpe';
 
 // ────────────────────────────────────────────────────────────────
 // Constants
@@ -124,6 +131,53 @@ export interface WalkForwardResult {
 }
 
 // ────────────────────────────────────────────────────────────────
+// FIX H5: Combined validation result with PBO + DSR
+// ────────────────────────────────────────────────────────────────
+
+/** Configuration for the combined validation procedure. */
+export interface BacktestValidationConfig {
+  /** CPCV configuration */
+  cpcv?: CPCVConfig;
+  /** Number of strategy variants / parameter combos tested (for DSR) */
+  numTrials?: number;
+  /** DSR significance level (default 0.05) */
+  dsrSignificanceLevel?: number;
+  /** Required DSR to pass (default 0.95) */
+  dsrRequiredThreshold?: number;
+}
+
+/**
+ * FIX H5: Comprehensive validation result combining PBO and DSR.
+ *
+ * This gives a single summary of whether a backtest is:
+ *   1. Likely overfit (PBO)
+ *   2. Statistically significant after correcting for multiple testing (DSR)
+ *   3. Long enough to be trustworthy (MinBTL)
+ */
+export interface BacktestValidationResult {
+  /** CPCV fold results */
+  cpcv: CPCVResult;
+  /** PBO result */
+  pbo: PBOResult;
+  /** Deflated Sharpe Ratio result */
+  dsr: DSRResult;
+
+  // ── Convenience summary fields ────────────────────────────
+  /** Annualized Sharpe Ratio (same metric used for CPCV) */
+  sharpeRatio: number;
+  /** Deflated Sharpe Ratio [0, 1] */
+  deflatedSharpe: number;
+  /** Whether DSR passes the required threshold */
+  isStatisticallySignificant: boolean;
+  /** Minimum backtest length required for significance */
+  minBacktestLength: number;
+  /** Whether the actual data length meets the minimum */
+  meetsMinLength: boolean;
+  /** Overall pass: low PBO AND statistically significant AND meets min length */
+  overallPass: boolean;
+}
+
+// ────────────────────────────────────────────────────────────────
 // Metric helpers
 // ────────────────────────────────────────────────────────────────
 
@@ -178,15 +232,6 @@ function combinations(n: number, k: number): number[][] {
  * selected groups form the test set and the rest form the training
  * set — after purging observations within `embargoSize` of the
  * test boundaries.
- *
- * @param data        Ordered time-series observations.
- * @param nGroups     N — number of contiguous groups (default 10).
- * @param nTestGroups k — groups held out per fold (default 2).
- * @param embargoSize Number of observations purged at each
- *                    train/test boundary (default 1% of data length,
- *                    minimum 1).
- * @param metricFn    Scalar metric computed on an array of values
- *                    (default: annualized Sharpe).
  */
 export function combinatorialPurgedCV(
   data: TimeSeriesObservation[],
@@ -229,16 +274,13 @@ export function combinatorialPurgedCV(
       }
     }
 
-    // Build purge zone: indices within `effectiveEmbargo` of each
-    // test-group boundary that fall OUTSIDE the test set.
+    // Build purge zone
     const purgeSet = new Set<number>();
     for (const gi of testGroupIndices) {
       const { start, end } = groups[gi];
-      // Before the test group
       for (let p = Math.max(0, start - effectiveEmbargo); p < start; p++) {
         if (!testSet.has(p)) purgeSet.add(p);
       }
-      // After the test group
       for (let p = end; p < Math.min(data.length, end + effectiveEmbargo); p++) {
         if (!testSet.has(p)) purgeSet.add(p);
       }
@@ -253,7 +295,6 @@ export function combinatorialPurgedCV(
       } else if (!purgeSet.has(i)) {
         trainValues.push(data[i].value);
       }
-      // else: purged — excluded from both
     }
 
     folds.push({
@@ -280,29 +321,11 @@ export function combinatorialPurgedCV(
 
 /**
  * Probability of Backtest Overfitting (PBO).
- *
- * For each CPCV fold the procedure checks whether the strategy
- * configuration that looked best in-sample also performs above
- * the OOS median.  PBO is the fraction of folds where it does NOT.
- *
- * When multiple strategy variants are evaluated, pass their CPCV
- * results as columns of a matrix (one CPCVResult per variant).
- * For the single-strategy case this simplifies to checking
- * IS vs. OOS degradation across folds.
- *
- * Implements the logit(λ) distribution from Bailey & López de Prado:
- *   λ_c = rank_OOS(s*_IS) / S
- *   where s*_IS is the IS-best strategy in fold c, S is strategy count.
- *   PBO = Pr[ logit(λ) <= 0 ]
- *
- * @param variantResults Array of CPCVResult — one per strategy variant.
- *                       All must share the same fold structure (same
- *                       nGroups / nTestGroups / data).
  */
 export function probabilityOfBacktestOverfitting(
   variantResults: CPCVResult[],
 ): PBOResult {
-  const S = variantResults.length; // number of strategy variants
+  const S = variantResults.length;
 
   if (S === 0) {
     throw new Error('At least one CPCVResult is required.');
@@ -317,9 +340,7 @@ export function probabilityOfBacktestOverfitting(
     }
   }
 
-  // Single-strategy shortcut:
-  // If there is only one strategy, we compute a simpler degradation-based
-  // PBO: fraction of folds where OOS metric < IS metric (i.e., degraded).
+  // Single-strategy shortcut
   if (S === 1) {
     const folds = variantResults[0].folds;
     let degradedCount = 0;
@@ -328,8 +349,7 @@ export function probabilityOfBacktestOverfitting(
     for (const fold of folds) {
       const degraded = fold.outOfSampleMetric < fold.inSampleMetric;
       if (degraded) degradedCount++;
-      // logit: negative when degraded
-      const ratio = degraded ? 0.25 : 0.75; // simplified rank proxy
+      const ratio = degraded ? 0.25 : 0.75;
       const logitVal = Math.log(ratio / (1 - ratio));
       logitLambdas.push(logitVal);
     }
@@ -338,12 +358,11 @@ export function probabilityOfBacktestOverfitting(
     return { pbo, logitLambdas, degradationRate: pbo };
   }
 
-  // Multi-strategy case — full Bailey & López de Prado procedure
+  // Multi-strategy case
   const logitLambdas: number[] = [];
   let degradedCount = 0;
 
   for (let foldIdx = 0; foldIdx < nFolds; foldIdx++) {
-    // Find IS-best strategy for this fold
     let bestIS = -Infinity;
     let bestStrategyIdx = 0;
     const oosMetrics: number[] = [];
@@ -357,20 +376,16 @@ export function probabilityOfBacktestOverfitting(
       }
     }
 
-    // Rank the IS-best strategy's OOS performance among all OOS values
     const bestOOS = oosMetrics[bestStrategyIdx];
     const sortedOOS = [...oosMetrics].sort((a, b) => a - b);
     let rank = sortedOOS.findIndex((v) => v >= bestOOS);
     if (rank === -1) rank = S - 1;
-    // 1-based rank normalised to [0, 1]
     const lambda = (rank + 1) / S;
 
-    // Clamp lambda away from 0 and 1 to keep logit finite
     const lambdaClamped = Math.max(0.001, Math.min(0.999, lambda));
     const logitLambda = Math.log(lambdaClamped / (1 - lambdaClamped));
     logitLambdas.push(logitLambda);
 
-    // Below-median OOS? (lambda <= 0.5 means IS-best is in bottom half OOS)
     if (lambda <= 0.5) {
       degradedCount++;
     }
@@ -386,14 +401,6 @@ export function probabilityOfBacktestOverfitting(
 
 /**
  * Anchored or rolling walk-forward validation.
- *
- * Slides a train/test window through the time series, computing
- * the metric on each pair.  An optional embargo gap separates
- * train and test windows to prevent leakage.
- *
- * @param data   Ordered time-series observations.
- * @param config Walk-forward configuration.
- * @param metricFn Scalar metric (default: annualized Sharpe).
  */
 export function walkForwardValidation(
   data: TimeSeriesObservation[],
@@ -437,12 +444,9 @@ export function walkForwardValidation(
       outOfSampleMetric,
     });
 
-    // Advance window
     if (anchored) {
-      // Anchored: training window grows, start stays fixed
       trainEnd += stepSize;
     } else {
-      // Rolling: both endpoints advance
       trainStart += stepSize;
       trainEnd += stepSize;
     }
@@ -471,5 +475,82 @@ export function walkForwardValidation(
     averageISMetric,
     averageOOSMetric,
     degradation,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────
+// FIX H5: Combined Validation — PBO + DSR
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * Comprehensive backtest validation combining CPCV, PBO, and
+ * Deflated Sharpe Ratio (DSR).
+ *
+ * This is the recommended entry point for validating a single
+ * strategy's backtest results. It:
+ *   1. Runs CPCV to get fold-level IS/OOS metrics
+ *   2. Computes PBO to estimate overfitting probability
+ *   3. Computes DSR to correct the Sharpe ratio for multiple testing
+ *   4. Checks MinBTL (minimum backtest length)
+ *
+ * @param data          Ordered time-series of strategy returns.
+ * @param config        Validation configuration.
+ * @returns             Combined validation result.
+ */
+export function validateBacktest(
+  data: TimeSeriesObservation[],
+  config?: BacktestValidationConfig,
+): BacktestValidationResult {
+  const nGroups = config?.cpcv?.nGroups ?? 10;
+  const nTestGroups = config?.cpcv?.nTestGroups ?? 2;
+  const embargoSize = config?.cpcv?.embargoSize;
+  const metricFn = config?.cpcv?.metricFn ?? defaultSharpe;
+  const numTrials = config?.numTrials ?? 1;
+
+  // 1. Run CPCV
+  const cpcvResult = combinatorialPurgedCV(
+    data,
+    nGroups,
+    nTestGroups,
+    embargoSize,
+    metricFn,
+  );
+
+  // 2. Compute PBO
+  const pboResult = probabilityOfBacktestOverfitting([cpcvResult]);
+
+  // 3. Extract all returns for DSR calculation
+  const allReturns = data.map((d) => d.value);
+
+  // 4. Compute DSR
+  const dsrCalc = new DeflatedSharpeCalculator({
+    significanceLevel: config?.dsrSignificanceLevel,
+    requiredDSR: config?.dsrRequiredThreshold,
+  });
+  const dsrResult = dsrCalc.calculate(allReturns, numTrials);
+
+  // 5. Compute overall Sharpe for convenience (annualized)
+  const sharpeRatio = metricFn(allReturns);
+
+  // 6. Determine overall pass:
+  //    - PBO < 0.5 (less than 50% chance of overfitting)
+  //    - DSR is statistically significant
+  //    - Meets minimum backtest length
+  const overallPass =
+    pboResult.pbo < 0.5 &&
+    dsrResult.isSignificant &&
+    dsrResult.meetsMinLength;
+
+  return {
+    cpcv: cpcvResult,
+    pbo: pboResult,
+    dsr: dsrResult,
+
+    sharpeRatio,
+    deflatedSharpe: dsrResult.deflatedSharpe,
+    isStatisticallySignificant: dsrResult.isSignificant,
+    minBacktestLength: dsrResult.minBacktestLength,
+    meetsMinLength: dsrResult.meetsMinLength,
+    overallPass,
   };
 }

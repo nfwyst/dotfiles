@@ -9,6 +9,7 @@
 
 import { TechnicalIndicators } from './technicalAnalysis';
 import { StrategySignal } from './strategyEngine';
+import fs from 'fs';
 
 export interface LLMMarketContext {
   // 市场概况
@@ -261,7 +262,7 @@ ${recentContext}
       const { execSync } = await import('child_process');
       
       // 使用 oracle CLI - 需要文件参数，使用临时文件
-      const fs = await import('fs');
+      // fs is imported at top level
       const tmpFile = `/tmp/llm-prompt-${Date.now()}.txt`;
       fs.writeFileSync(tmpFile, prompt);
       
@@ -953,7 +954,6 @@ ${recentContext}
    * 检查LLM响应文件（供外部脚本使用）
    */
   checkPendingResponses(): LLMTradingSignal[] {
-    const fs = require('fs');
     const responses: LLMTradingSignal[] = [];
     
     try {

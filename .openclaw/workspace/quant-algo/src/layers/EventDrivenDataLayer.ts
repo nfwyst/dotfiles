@@ -1,6 +1,12 @@
 /**
  * 事件驱动数据层 - Event-Driven Data Layer
  * 发布市场数据、指标、SMC分析等事件
+ *
+ * FIX C1: Added optional DataFeed injection. When a DataFeed is provided
+ * (backtest / paper mode), the layer uses dataFeed.next() to obtain
+ * MarketData instead of calling the internal exchange / MarketDataFetcher.
+ * When no DataFeed is provided (legacy live mode), behaviour is identical
+ * to the original implementation.
  */
 
 import type { ExchangeManager } from '../exchange';
@@ -11,7 +17,7 @@ import { AdaptiveRSI, type AdaptiveRSIResult } from '../adaptiveRSI';
 import { MarketDataFetcher } from '../marketDataFetcher';
 import { getEventBus } from '../events';
 import { EventChannels } from '../events/types';
-  import type {
+import type {
   OHLCV,
   MarketData,
   Indicators,
@@ -24,7 +30,9 @@ import { EventChannels } from '../events/types';
   SMCAnalyzedEvent,
   DataLayerCompleteEvent,
 } from '../events/types';
+import type { DataFeed } from '../feeds/types';
 import logger from '../logger';
+import { computeRSI } from '../indicators/rsi';
 // ==================== 类型定义 ====================
 
 export interface DataLayerResult {
@@ -48,11 +56,17 @@ export class EventDrivenDataLayer {
   private marketDataFetcher: MarketDataFetcher;
   private eventBus = getEventBus();
 
+  // FIX C1: Optional DataFeed for backtest / paper mode
+  private dataFeed: DataFeed | undefined;
+
   constructor(
     exchange: ExchangeManager,
     smcAnalyzer: SMCAnalyzer,
     microstructure: MarketMicrostructure,
-    aiModule: AIModule
+    aiModule: AIModule,
+    // FIX C1: Optional DataFeed parameter — when provided the layer reads
+    // market data from this feed instead of hitting the exchange.
+    dataFeed?: DataFeed,
   ) {
     this.exchange = exchange;
     this.smcAnalyzer = smcAnalyzer;
@@ -60,6 +74,15 @@ export class EventDrivenDataLayer {
     this.aiModule = aiModule;
     this.adaptiveRSI = new AdaptiveRSI();
     this.marketDataFetcher = new MarketDataFetcher();
+    this.dataFeed = dataFeed;
+  }
+
+  // FIX C1: Allow the Runtime to inject a DataFeed after construction.
+  // This is the primary injection path since layers are constructed
+  // externally and the Runtime receives them pre-built.
+  setDataFeed(feed: DataFeed): void {
+    this.dataFeed = feed;
+    logger.info(`[DataLayer] DataFeed injected (mode=${feed.mode})`);
   }
 
   /**
@@ -143,6 +166,96 @@ export class EventDrivenDataLayer {
 
     logger.info(`[DataLayer] Starting data gathering [${correlationId}]`);
 
+    // FIX C1: If a DataFeed is injected, use it to obtain MarketData
+    // instead of calling the exchange / MarketDataFetcher. All downstream
+    // analysis (indicators, SMC, anomaly, risk) still runs on this data.
+    if (this.dataFeed) {
+      const feedData = await this.dataFeed.next();
+      if (!feedData) {
+        logger.warn('[DataLayer] DataFeed exhausted (backtest complete)');
+        // Publish a completion/stop event so the runtime knows to shut down
+        await this.eventBus.publish({
+          channel: EventChannels.SYSTEM_STOPPED,
+          source: 'DataLayer',
+          correlationId,
+          payload: {
+            reason: 'DataFeed exhausted',
+            duration: Date.now() - startTime,
+            finalStats: { totalTrades: 0, winRate: 0, totalPnl: 0 },
+          },
+        });
+        // Return a minimal result — callers should check for the stop event
+        return {
+          marketData: { ohlcv: [], higherTfOhlcv: [], currentPrice: 0 },
+          indicators: this.emptyIndicators(),
+          smcAnalysis: null,
+          microSignal: null,
+          anomaly: null,
+          riskForecast: null,
+        };
+      }
+
+      // Use feedData as the MarketData source, then run indicators / SMC / etc.
+      const marketData = feedData;
+
+      // Publish MARKET_DATA_GATHERED for the feed-sourced data
+      await this.eventBus.publish({
+        channel: EventChannels.MARKET_DATA_GATHERED,
+        source: 'DataLayer',
+        correlationId,
+        payload: {
+          marketData,
+          gatherDuration: Date.now() - startTime,
+        },
+      });
+
+      // 2. 计算指标
+      const indicators = await this.calculateIndicatorsAndEmit(
+        marketData.ohlcv,
+        marketData.currentPrice,
+      );
+
+      // 3. SMC 分析
+      const { smcAnalysis, microSignal } = await this.analyzeSMCAndEmit(
+        marketData.ohlcv,
+        marketData.orderBook,
+      );
+
+      // 4. 异常检测
+      const anomaly = this.detectAnomaly(marketData.ohlcv);
+
+      // 5. 风险预测
+      const riskForecast = this.predictRisk(marketData.ohlcv);
+
+      const totalDuration = Date.now() - startTime;
+
+      const result: DataLayerResult = {
+        marketData,
+        indicators,
+        smcAnalysis,
+        microSignal,
+        anomaly,
+        riskForecast,
+      };
+
+      // 发布数据层完成事件
+      await this.eventBus.publish({
+        channel: EventChannels.DATA_LAYER_COMPLETE,
+        source: 'DataLayer',
+        correlationId,
+        payload: {
+          ...result,
+          totalDuration,
+        },
+      });
+
+      logger.info(`[DataLayer] Data gathering complete (feed) [${totalDuration}ms] [${correlationId}]`);
+
+      return result;
+    }
+
+    // --- Legacy path: no DataFeed, use exchange + MarketDataFetcher ---
+
     // 1. 获取市场数据
     const marketData = await this.fetchMarketDataAndEmit();
 
@@ -213,6 +326,36 @@ export class EventDrivenDataLayer {
       higherTfOhlcv,
       currentPrice,
       orderBook: undefined, // 暂不支持订单簿
+    };
+  }
+
+  /**
+   * FIX C1: Return a zero-valued Indicators object when the feed is exhausted.
+   */
+  private emptyIndicators(): Indicators {
+    return {
+      sma20: 0,
+      sma50: 0,
+      sma200: 0,
+      ema12: 0,
+      ema26: 0,
+      rsi14: 50,
+      adaptiveRSI: { value: 50, period: 14, trend: 'neutral' },
+      macd: { macd: 0, signal: 0, histogram: 0 },
+      atr14: 0,
+      bollinger: { upper: 0, middle: 0, lower: 0 },
+      supertrend: { value: 0, direction: 0 },
+      adx: 25,
+      stochastic: { k: 50, d: 50 },
+      cci: 0,
+      vwap: 0,
+      obv: 0,
+      volumeSma20: 0,
+      trendScore: 50,
+      momentumScore: 50,
+      volumeScore: 50,
+      volatilityScore: 50,
+      overallScore: 50,
     };
   }
 
@@ -373,22 +516,9 @@ export class EventDrivenDataLayer {
     return ema;
   }
 
+  /** @see computeRSI from indicators/rsi — delegates to canonical impl */
   private calculateRSI(closes: number[], period: number): number {
-    if (closes.length < period + 1) return 50;
-    let gains = 0;
-    let losses = 0;
-    for (let i = closes.length - period; i < closes.length; i++) {
-      const prevClose = closes[i - 1] ?? 0;
-      const currClose = closes[i] ?? 0;
-      const change = currClose - prevClose;
-      if (change > 0) gains += change;
-      else losses -= change;
-    }
-    const avgGain = gains / period;
-    const avgLoss = losses / period;
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - 100 / (1 + rs);
+    return computeRSI(closes, period);
   }
 
   private calculateMACD(closes: number[]): { macd: number; signal: number; histogram: number } {

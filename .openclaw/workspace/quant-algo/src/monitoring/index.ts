@@ -50,12 +50,10 @@ export type {
   PerformanceReport,
 } from './performanceTracker';
 
-// 监控仪表板 (新增)
-export { MonitoringDashboard } from './dashboard';
-export type {
-  SystemStatus,
-  SystemAlert,
-} from './dashboard';
+// 监控仪表板 — import directly from './monitoring/dashboard' to avoid circular deps
+// DO NOT re-export here: dashboard -> tradingBot -> exchange -> monitoring/tracing creates a cycle.
+// import { MonitoringDashboard } from './monitoring/dashboard';
+// import type { SystemStatus, SystemAlert } from './monitoring/dashboard';
 
 // 告警管理器
 export {

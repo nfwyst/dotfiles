@@ -1,4 +1,10 @@
 /**
+ * @deprecated Use computeAdaptiveRSI from 'indicators/rsi' instead.
+ * This file is kept for backward compatibility only.
+ */
+import { computeRSI } from './indicators/rsi';
+
+/**
  * Adaptive RSI - 自适应相对强弱指标
  *
  * 根据市场波动率自动调整 RSI 周期和阈值
@@ -162,27 +168,9 @@ export class AdaptiveRSI {
   /**
    * 计算标准 RSI
    */
+  /** @see computeRSI from indicators/rsi — delegates to canonical impl */
   private calculateStandardRSI(prices: number[], period: number): number {
-    if (prices.length < period + 1) return 50;
-
-    let gains = 0;
-    let losses = 0;
-
-    for (let i = prices.length - period; i < prices.length; i++) {
-      const change = prices[i] - prices[i - 1];
-      if (change > 0) {
-        gains += change;
-      } else {
-        losses -= change;
-      }
-    }
-
-    const avgGain = gains / period;
-    const avgLoss = losses / period;
-
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    return computeRSI(prices, period);
   }
 
   /**

@@ -21,10 +21,31 @@
  *
  * Threshold is kept at 50% to avoid overfitting (reverted from
  * the prior 45% setting which was shown to overfit in-sample).
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * FIX H6: TRIPLE BARRIER LABELING INTEGRATION
+ * ═══════════════════════════════════════════════════════════════
+ *
+ * The `initializeFromHistory` method now uses Triple Barrier
+ * labeling (López de Prado AFML Ch.3) instead of simple past
+ * return sign. This produces higher-quality training labels that
+ * account for take-profit, stop-loss, and max holding period.
+ *
+ * Anti-leakage guarantee:
+ *   - A triple barrier label for entry bar `i` is only used if
+ *     `exitIdx <= currentBarIdx` — meaning the label's outcome
+ *     is fully resolved before the bar where it is used as a
+ *     training sample.
+ *   - The temporal embargo in KNN search still applies on top.
+ *
+ * Falls back to simple past-return labeling when:
+ *   - OHLCV data lacks high/low fields (close-only data)
+ *   - Triple barrier produces fewer than LABEL_LOOKBACK labels
  * ═══════════════════════════════════════════════════════════════
  */
 
 import { Layer2Output } from './layer2';
+import { TripleBarrierLabeler, type BarrierLabel } from '../backtest/tripleBarrier';
 
 export interface HistoricalPattern {
   features: [number, number, number]; // 3D feature vector
@@ -61,7 +82,7 @@ export interface Layer3Output {
 const EMBARGO_BARS = 5;
 
 /**
- * Lookback window used when labeling historical data.
+ * Lookback window used when labeling historical data (fallback).
  * label[i] = sign( price[i] - price[i - LABEL_LOOKBACK] )
  */
 const LABEL_LOOKBACK = 5;
@@ -216,7 +237,6 @@ export class OCSLayer3 {
 
     if (eligible.length === 0) {
       // Not enough non-embargoed history — fall back to full set
-      // (only happens during the very first few bars)
       const distances = this.history.map((pattern) => ({
         neighbor: pattern,
         distance: this.euclideanDistance(features, pattern.features),
@@ -349,19 +369,30 @@ export class OCSLayer3 {
    * Initialize from historical data (BACKTEST ONLY)
    *
    * ═══════════════════════════════════════════════════════════
-   * ANTI LOOK-AHEAD DESIGN — PAST-RETURN LABELING
+   * FIX H6: TRIPLE BARRIER LABELING
    * ═══════════════════════════════════════════════════════════
    *
-   * Labels are derived from PAST (realized) returns only:
+   * Labels are now derived using the Triple Barrier method from
+   * López de Prado's AFML (Ch. 3). This produces higher-quality
+   * labels than simple past-return sign by accounting for:
+   *   - Take-profit barriers (upper)
+   *   - Stop-loss barriers (lower)
+   *   - Maximum holding period (vertical)
    *
-   *   return[i] = ( close[i] - close[i - LABEL_LOOKBACK] ) / close[i - LABEL_LOOKBACK]
+   * ANTI LOOK-AHEAD DESIGN:
    *
-   * This means the label at bar i reflects what ALREADY happened
-   * over the preceding `LABEL_LOOKBACK` bars — information that
-   * would have been fully observable at bar i in real time.
+   * A triple barrier label at entry bar `i` has an `exitIdx` that
+   * marks when the barrier was actually hit. We ONLY include this
+   * label as a training sample at bar indices >= exitIdx, meaning
+   * the outcome is fully resolved before the label is used.
    *
-   * The old implementation used ohlcv[i + 5].close (future price)
-   * which leaked forward information into training labels.
+   * This is stricter than the old past-return approach (which only
+   * looked backward) because triple barriers look forward to find
+   * the exit — but we defer using the label until after the exit.
+   *
+   * Fallback: If ohlcv data lacks high/low fields (close-only) or
+   * the triple barrier produces insufficient labels, we fall back
+   * to the original past-return labeling.
    *
    * Combined with the temporal embargo in KNN search, this
    * eliminates both label-leakage and serial-correlation leakage.
@@ -374,29 +405,126 @@ export class OCSLayer3 {
     ohlcv: any[],
     features3D: [number, number, number][],
   ) {
-    // Start from index LABEL_LOOKBACK so we have enough past data
-    // to compute a realized return for every sample.
-    for (
-      let i = LABEL_LOOKBACK;
-      i < ohlcv.length && i < features3D.length;
-      i++
+    // FIX H6: Try triple barrier labeling first
+    const tripleBarrierLabels = this.computeTripleBarrierLabels(ohlcv);
+
+    if (tripleBarrierLabels !== null && tripleBarrierLabels.length > 0) {
+      // ── Triple Barrier path ──────────────────────────────────
+      // For each triple barrier label, add the training sample at
+      // bar `exitIdx` (the moment the outcome is fully known),
+      // using the *entry bar's* features.
+      // This ensures: (a) the label is resolved, (b) features are
+      // from the entry point (what the model would see at entry time).
+      for (const bl of tripleBarrierLabels) {
+        const entryIdx = bl.entryIdx;
+        const exitIdx = bl.exitIdx;
+
+        // Ensure we have features for the entry bar
+        if (entryIdx >= features3D.length) continue;
+        if (entryIdx >= ohlcv.length) continue;
+
+        // The exitIdx must be within our data range
+        if (exitIdx >= ohlcv.length) continue;
+
+        // Map triple barrier label to KNN label format
+        const label = this.mapTripleBarrierLabel(bl.label);
+
+        this.history.push({
+          features: features3D[entryIdx],
+          futureReturn: bl.returnAtExit, // Actual resolved return
+          label,
+          // Use exitIdx timestamp — this is when the label becomes
+          // "known" and can safely enter the training set.
+          timestamp: ohlcv[exitIdx].timestamp,
+        });
+      }
+
+      // Sort history by timestamp to maintain temporal ordering
+      // (critical for the embargo-based KNN search)
+      this.history.sort((a, b) => a.timestamp - b.timestamp);
+
+    } else {
+      // ── Fallback: simple past-return labeling ────────────────
+      // Used when OHLCV data lacks high/low or triple barrier
+      // produces insufficient labels.
+      for (
+        let i = LABEL_LOOKBACK;
+        i < ohlcv.length && i < features3D.length;
+        i++
+      ) {
+        const pastReturn =
+          (ohlcv[i].close - ohlcv[i - LABEL_LOOKBACK].close) /
+          ohlcv[i - LABEL_LOOKBACK].close;
+
+        let label: 'buy' | 'sell' | 'hold' = 'hold';
+        if (pastReturn > 0.005) label = 'buy';
+        else if (pastReturn < -0.005) label = 'sell';
+
+        this.history.push({
+          features: features3D[i],
+          futureReturn: pastReturn, // backward-looking despite legacy field name
+          label,
+          timestamp: ohlcv[i].timestamp,
+        });
+      }
+    }
+  }
+
+  /**
+   * FIX H6: Compute triple barrier labels from OHLCV data.
+   *
+   * Returns null if the data is unsuitable for triple barrier
+   * labeling (e.g., missing high/low fields).
+   */
+  private computeTripleBarrierLabels(ohlcv: any[]): BarrierLabel[] | null {
+    // Validate that ohlcv has the required fields for triple barrier
+    if (ohlcv.length < 2) return null;
+
+    const sample = ohlcv[0];
+    if (
+      sample.high === undefined ||
+      sample.low === undefined ||
+      sample.close === undefined ||
+      sample.open === undefined
     ) {
-      // PAST return: how much price moved over the last LABEL_LOOKBACK bars.
-      // This is information that is fully known at bar i — no lookahead.
-      const pastReturn =
-        (ohlcv[i].close - ohlcv[i - LABEL_LOOKBACK].close) /
-        ohlcv[i - LABEL_LOOKBACK].close;
+      // Missing OHLCV fields — cannot use triple barrier
+      return null;
+    }
 
-      let label: 'buy' | 'sell' | 'hold' = 'hold';
-      if (pastReturn > 0.005) label = 'buy';
-      else if (pastReturn < -0.005) label = 'sell';
-
-      this.history.push({
-        features: features3D[i],
-        futureReturn: pastReturn, // backward-looking despite legacy field name
-        label,
-        timestamp: ohlcv[i].timestamp,
+    try {
+      const labeler = new TripleBarrierLabeler({
+        ptSl: [2, 1],          // 2x vol take-profit, 1x vol stop-loss
+        maxHoldingPeriod: 20,  // Max 20 bars holding
+        volLookback: 20,       // 20-bar vol lookback
+        minVolatility: 0.001,  // Floor for very low-vol periods
       });
+
+      const labels = labeler.label(ohlcv);
+
+      // Require a minimum number of labels to be useful
+      if (labels.length < LABEL_LOOKBACK) {
+        return null;
+      }
+
+      return labels;
+    } catch {
+      // If triple barrier fails for any reason, fall back gracefully
+      return null;
+    }
+  }
+
+  /**
+   * FIX H6: Map triple barrier label (-1, 0, 1) to KNN label format.
+   *
+   *   1  (upper barrier / take-profit)  -> 'buy'
+   *  -1  (lower barrier / stop-loss)    -> 'sell'
+   *   0  (vertical barrier / time out)  -> 'hold'
+   */
+  private mapTripleBarrierLabel(barrierLabel: -1 | 0 | 1): 'buy' | 'sell' | 'hold' {
+    switch (barrierLabel) {
+      case 1:  return 'buy';
+      case -1: return 'sell';
+      case 0:  return 'hold';
     }
   }
 

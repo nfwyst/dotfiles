@@ -14,6 +14,8 @@ import { ExchangeManager } from '../exchange';
 import logger from '../logger';
 import fs from 'fs';
 import path from 'path';
+import { computeRSI } from '../indicators/rsi';
+import { calculatePositionSize } from '../risk/positionSizing';
 
 // ==================== 类型定义 ====================
 
@@ -497,10 +499,18 @@ export class TradingBotRuntime {
   ): Promise<void> {
     if (!this.config) return;
     
-    // 计算仓位大小
-    const maxSize = this.balance * this.config.riskManagement.maxPositionSize;
+    // 计算仓位大小 — delegates to canonical positionSizing
     const leverage = Math.min(this.config.riskManagement.maxLeverage, 50);
-    const positionSize = (maxSize * leverage) / price;
+    const psResult = calculatePositionSize({
+      balance: this.balance,
+      currentPrice: price,
+      stopLossPrice: side === 'buy' ? price - atr * this.config.exitConditions.stopLoss.atrMultiplier
+                                     : price + atr * this.config.exitConditions.stopLoss.atrMultiplier,
+      maxRiskPerTrade: this.config.riskManagement.maxPositionSize,
+      leverage,
+      maxLeverageUtil: 0.5,
+    });
+    const positionSize = psResult.size;
     
     // 计算止损止盈
     const slMultiplier = this.config.exitConditions.stopLoss.atrMultiplier;
@@ -795,22 +805,9 @@ export class TradingBotRuntime {
     return trValues.slice(-period).reduce((a, b) => a + b, 0) / period;
   }
   
+  /** @see computeRSI from indicators/rsi — delegates to canonical impl */
   private calculateRSI(closes: number[], period: number): number {
-    if (closes.length < period + 1) return 50;
-    
-    let gains = 0;
-    let losses = 0;
-    
-    for (let i = closes.length - period; i < closes.length; i++) {
-      const change = closes[i] - closes[i - 1];
-      if (change > 0) gains += change;
-      else losses += Math.abs(change);
-    }
-    
-    if (losses === 0) return 100;
-    
-    const rs = gains / losses;
-    return 100 - (100 / (1 + rs));
+    return computeRSI(closes, period);
   }
   
   private sleep(ms: number): Promise<void> {

@@ -10,6 +10,7 @@ import type {
   StateSnapshot,
   SnapshotInfo,
 } from './types';
+import { migratePosition } from './types';
 
 const DEFAULT_MAX_SNAPSHOTS = 5;
 
@@ -102,7 +103,13 @@ export class SnapshotManager {
     }
   }
 
-  /** Restore the snapshot matching `timestamp` (or the latest one). Returns the state, or null on failure. */
+  /**
+   * Restore the snapshot matching `timestamp` (or the latest one).
+   * Returns the state, or null on failure.
+   *
+   * FIX H7: Applies migratePosition() to handle legacy snapshots that
+   * used the old Position shape (contracts/pnl instead of size/unrealizedPnl).
+   */
   restoreSnapshot(timestamp?: string): UnifiedState | null {
     try {
       const snapshots = this.listSnapshots();
@@ -123,7 +130,18 @@ export class SnapshotManager {
         return null;
       }
 
-      return snapshot.state;
+      // FIX H7: Migrate legacy Position fields in restored state
+      const state = snapshot.state;
+      if (state.trading) {
+        if (state.trading.position) {
+          state.trading.position = migratePosition(state.trading.position);
+        }
+        if ((state.trading as any).lastPosition) {
+          (state.trading as any).lastPosition = migratePosition((state.trading as any).lastPosition);
+        }
+      }
+
+      return state;
     } catch (error) {
       console.error('Failed to restore snapshot:', error);
       return null;

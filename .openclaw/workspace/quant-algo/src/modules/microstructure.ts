@@ -4,7 +4,7 @@
  * 参考: Bieganowski & Ślepaczuk (2026) "Explainable Patterns in Cryptocurrency Microstructure"
  */
 
-import { OHLCV } from './technicalAnalysis';
+import { OHLCV } from '../events/types';
 
 export interface MicrostructureFeatures {
   // 买卖压力（基于影线）

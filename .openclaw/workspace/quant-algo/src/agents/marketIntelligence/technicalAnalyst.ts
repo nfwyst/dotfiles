@@ -22,6 +22,7 @@ import {
 } from './types';
 
 import { TechnicalIndicators } from '../../modules/technicalAnalysis';
+import { computeRSI } from '../../indicators/rsi';
 
 export class TechnicalAnalystAgent implements AnalystAgent {
   readonly name = 'TechnicalAnalyst';
@@ -607,25 +608,9 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     return ema;
   }
   
+  /** @see computeRSI from indicators/rsi — delegates to canonical impl */
   private calculateRSI(closes: number[], period: number): number {
-    if (closes.length < period + 1) return 50;
-    
-    let gains = 0;
-    let losses = 0;
-    
-    for (let i = closes.length - period; i < closes.length; i++) {
-      const change = closes[i] - closes[i - 1];
-      if (change > 0) gains += change;
-      else losses += Math.abs(change);
-    }
-    
-    const avgGain = gains / period;
-    const avgLoss = losses / period;
-    
-    if (avgLoss === 0) return 100;
-    
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    return computeRSI(closes, period);
   }
   
   private calculateMACD(closes: number[]): { macd: number; signal: number; histogram: number } {

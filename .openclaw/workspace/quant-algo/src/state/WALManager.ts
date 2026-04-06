@@ -1,5 +1,8 @@
 // FIX M1: WAL logic extracted from the god object into a focused module.
 // All file I/O for the write-ahead log is isolated here.
+//
+// FIX H7: WAL replay now migrates legacy Position fields (contracts/pnl)
+// to the canonical shape (size/unrealizedPnl/leverage) via migratePosition().
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,6 +15,7 @@ import type {
   WALStats,
   UnifiedState,
 } from './types';
+import { migratePosition } from './types';
 
 /** Default: checkpoint every 1 000 operations */
 const DEFAULT_CHECKPOINT_INTERVAL = 1000;
@@ -145,7 +149,8 @@ export class WALManager {
 
     const cp = this.findLatestCheckpoint(walFiles);
     if (cp) {
-      state = cp.state;
+      // FIX H7: Migrate position fields in checkpoint state
+      state = WALManager.migrateState(cp.state);
       lastValidSequence = cp.sequence;
     }
 
@@ -204,7 +209,8 @@ export class WALManager {
         break;
       case 'updatePosition':
         if (entry.data.position) s.trading.lastPosition = s.trading.position;
-        s.trading.position = entry.data.position;
+        // FIX H7: Migrate legacy position fields during WAL replay
+        s.trading.position = migratePosition(entry.data.position);
         s.trading.lastCheck = Date.now();
         break;
       case 'recordTrade':
@@ -235,6 +241,26 @@ export class WALManager {
     }
 
     s.updatedAt = new Date().toISOString();
+    return s;
+  }
+
+  // ------------------------------------------------------------------
+  // FIX H7: Migrate legacy Position fields in a full state snapshot
+  // ------------------------------------------------------------------
+
+  /**
+   * Migrate a deserialized UnifiedState so any legacy Position
+   * objects (with `contracts`/`pnl` fields) are converted to the
+   * canonical shape (with `size`/`unrealizedPnl`/`leverage`).
+   */
+  static migrateState(state: UnifiedState): UnifiedState {
+    const s = { ...state, trading: { ...state.trading } };
+    if (s.trading.position) {
+      s.trading.position = migratePosition(s.trading.position);
+    }
+    if (s.trading.lastPosition) {
+      s.trading.lastPosition = migratePosition(s.trading.lastPosition);
+    }
     return s;
   }
 

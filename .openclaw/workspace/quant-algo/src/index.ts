@@ -79,13 +79,13 @@ export type {
 // Monitoring
 export {
   PerformanceTracker,
-  MonitoringDashboard,
 } from './monitoring';
+export { MonitoringDashboard } from './monitoring/dashboard';
+export type { SystemStatus } from './monitoring/dashboard';
 
 export type {
   TradeRecord,
   PerformanceReport,
-  SystemStatus,
 } from './monitoring';
 
 // Backtest
@@ -138,7 +138,8 @@ import { MarketIntelligencePipeline } from './agents/marketIntelligence';
 import { CentralTradingAgent } from './agents/centralTradingAgent';
 import { AdaptiveOPRO, FeedbackLoop } from './optimization';
 import { TradingBotRuntime, OrderGenerator } from './execution';
-import { PerformanceTracker, MonitoringDashboard } from './monitoring';
+import { PerformanceTracker } from './monitoring';
+import { MonitoringDashboard } from './monitoring/dashboard';
 
 export interface TradingSystemConfig {
   symbol: string;

@@ -19,6 +19,7 @@ import { OCSLayer2 } from './src/ocs/layer2';
 import { OCSLayer3 } from './src/ocs/layer3';
 import { OCSLayer4 } from './src/ocs/layer4';
 import { OCSEnhanced } from './src/ocs/enhanced';
+import { calculatePositionSize } from './src/risk/positionSizing';
 // FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
 
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
@@ -543,13 +544,21 @@ class BacktestEngine {
     
     // FIX C3: Use bar's open price for next-bar execution, not close
     const basePrice = useOpen ? candle.open : candle.close;
-    const positionValue = this.balance * this.config.positionSize * this.config.leverage;
-    const size = positionValue / basePrice;
+    const psResult = calculatePositionSize({
+      balance: this.balance,
+      currentPrice: basePrice,
+      stopLossPrice: stopLoss ?? 0,
+      maxRiskPerTrade: this.config.positionSize,
+      leverage: this.config.leverage,
+      maxLeverageUtil: 1.0,  // backtest uses full leverage allowance
+    });
+    const size = psResult.size;
 
     const slippageCost = basePrice * this.config.slippage;
     const actualEntryPrice = type === 'long' 
       ? basePrice + slippageCost 
       : basePrice - slippageCost;
+    const positionValue = psResult.notionalValue;
     const fee = positionValue * this.config.feeRate;
 
     this.balance -= fee;
@@ -616,6 +625,7 @@ class BacktestEngine {
     // FIX L1: For partial closes, compute PnL on the portion being closed, not full size
     const closeSize = partialClose ? size * 0.5 : size;
     const positionValue = closeSize * actualExitPrice;
+    const positionValue = psResult.notionalValue;
     const fee = positionValue * this.config.feeRate;
 
     // 计算盈亏

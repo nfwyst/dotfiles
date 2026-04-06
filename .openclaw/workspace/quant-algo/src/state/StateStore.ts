@@ -1,5 +1,8 @@
 // FIX M1: Pure in-memory state container — no file I/O, no singleton.
 // All persistence is handled by WALManager and SnapshotManager.
+//
+// FIX H7: Position type is now the canonical one from events/types.ts
+// (re-exported via ./types). The store accepts the canonical shape.
 
 import type {
   UnifiedState,

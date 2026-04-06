@@ -1,3 +1,9 @@
+/**
+ * @deprecated This module will be moved to `src/ai/AIModule.ts` in a future release.
+ * Import from `src/ai/` instead for LLM client functionality.
+ * This file provides high-level AI features (sentiment, anomaly detection, strategy
+ * recommendation) that wrap the low-level LLMClient in `src/ai/LLMClient.ts`.
+ */
 import { config } from './config';
 import logger from './logger';
 import { aiCircuitBreaker } from './safety/circuitBreakers';

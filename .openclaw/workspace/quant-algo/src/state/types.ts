@@ -1,5 +1,14 @@
 // FIX M1: Extracted all type definitions from the stateManager god object
 // into a dedicated types module. No runtime code lives here.
+//
+// FIX H7: Position type is now re-exported from events/types.ts (canonical
+// source) instead of being duplicated with different field names.
+
+import { Position } from '../events/types';
+
+// Re-export the canonical Position type so that any code importing
+// Position from 'state/types' continues to work seamlessly.
+export { Position } from '../events/types';
 
 // ============================================
 // WAL Types
@@ -50,10 +59,17 @@ export interface WALStats {
 }
 
 // ============================================
-// Domain Types
+// FIX H7: Legacy Position shape for snapshot migration
 // ============================================
 
-export interface Position {
+/**
+ * The old Position shape that may exist in persisted snapshots
+ * and WAL entries written before the H7 unification.
+ *
+ * This interface is ONLY used for migration/deserialization.
+ * All runtime code uses the canonical Position from events/types.
+ */
+export interface LegacyStatePosition {
   side: 'long' | 'short' | 'none';
   contracts: number;
   entryPrice: number;
@@ -61,6 +77,54 @@ export interface Position {
   pnl: number;
   stopLoss?: number;
   takeProfit?: number;
+}
+
+/**
+ * FIX H7: Migrate a legacy state Position (with `contracts`/`pnl`)
+ * to the canonical Position (with `size`/`unrealizedPnl`/`leverage`).
+ *
+ * This is called during:
+ *   - Snapshot restoration
+ *   - WAL replay
+ *   - Initial state load from disk
+ *
+ * If the position already has the canonical fields, it is returned as-is.
+ */
+export function migratePosition(raw: any): Position | null {
+  if (raw === null || raw === undefined) return null;
+
+  // Already canonical (has `size` field) — return as-is
+  if (typeof raw.size === 'number') {
+    return {
+      side: raw.side ?? 'none',
+      size: raw.size,
+      entryPrice: raw.entryPrice ?? 0,
+      leverage: raw.leverage ?? 1,
+      unrealizedPnl: raw.unrealizedPnl ?? 0,
+      markPrice: raw.markPrice,
+      liquidationPrice: raw.liquidationPrice,
+      stopLoss: raw.stopLoss,
+      takeProfit: raw.takeProfit,
+    };
+  }
+
+  // Legacy format (has `contracts` field) — migrate
+  if (typeof raw.contracts === 'number') {
+    return {
+      side: raw.side ?? 'none',
+      size: raw.contracts,            // contracts -> size
+      entryPrice: raw.entryPrice ?? 0,
+      leverage: raw.leverage ?? 1,    // default 1 if missing
+      unrealizedPnl: raw.pnl ?? 0,   // pnl -> unrealizedPnl
+      markPrice: raw.markPrice,
+      liquidationPrice: raw.liquidationPrice,
+      stopLoss: raw.stopLoss,
+      takeProfit: raw.takeProfit,
+    };
+  }
+
+  // Unknown shape — return null rather than corrupt state
+  return null;
 }
 
 // ============================================

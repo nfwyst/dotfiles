@@ -15,7 +15,7 @@ import type {
   StateSnapshot,
   SnapshotInfo,
 } from './types';
-import { createDefaultState } from './types';
+import { createDefaultState, migratePosition } from './types';
 import { StateStore } from './StateStore';
 import { WALManager } from './WALManager';
 import { SnapshotManager } from './SnapshotManager';
@@ -35,7 +35,7 @@ export type {
   StateSnapshot,
   SnapshotInfo,
 };
-export { createDefaultState, StateStore, WALManager, SnapshotManager };
+export { createDefaultState, migratePosition, StateStore, WALManager, SnapshotManager };
 
 // ============================================
 // Composed facade — keeps the external API surface compatible
@@ -277,6 +277,9 @@ const DEFAULT_AUTO_SNAPSHOT_INTERVAL = 60 * 60 * 1000;
 /**
  * FIX M1: Factory wires up the three components with dependency injection.
  * No global singleton — callers own the returned `StateManager`.
+ *
+ * FIX H7: Applies migratePosition() after loading state from disk to handle
+ * legacy snapshots that used the old Position shape (contracts/pnl).
  */
 export function createStateManager(config?: Partial<StateConfig>): StateManager {
   const stateDir = config?.stateDir ?? path.join(process.cwd(), 'state');
@@ -303,6 +306,18 @@ export function createStateManager(config?: Partial<StateConfig>): StateManager 
       };
     }
   } catch { /* fall back to defaults */ }
+
+  // FIX H7: Migrate legacy Position fields after loading from disk
+  if (initialState.trading) {
+    if (initialState.trading.position) {
+      initialState.trading.position = migratePosition(initialState.trading.position);
+    }
+    if ((initialState.trading as any).lastPosition) {
+      (initialState.trading as any).lastPosition = migratePosition(
+        (initialState.trading as any).lastPosition,
+      );
+    }
+  }
 
   // --- Construct components ---
   const store = new StateStore(initialState);

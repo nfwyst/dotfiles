@@ -4,10 +4,12 @@
  */
 
 import type { ExchangeManager } from '../exchange';
-import type { RiskManager, Position } from '../riskManager';
+import type { RiskManager } from '../riskManager';
 import type { NotificationManager } from '../notifier';
 // FIX M1: Import from refactored state module instead of god object
 import type { StateManager } from '../state';
+// FIX H7: Import canonical Position from events/types (single source of truth)
+import type { Position } from '../events/types';
 import { getEventBus } from '../events';
 import {
   EventChannels,
@@ -16,8 +18,11 @@ import {
   type PositionUpdatedEvent,
   type ExecutionLayerCompleteEvent,
   type EnhancedSignal,
+  type OHLCV,
 } from '../events/types';
 import logger from '../logger';
+import { HMMRegimeDetector } from '../risk/hmmRegimeDetector';
+import { TailRiskModel } from '../risk/tailRiskModel';
 
 // ==================== 类型定义 ====================
 
@@ -45,6 +50,13 @@ export class EventDrivenExecutionLayer {
   private notificationManager: NotificationManager;
   private stateManager: StateManager;
   private eventBus = getEventBus();
+
+  // ── Integrated risk modules ────────────────────────────────
+  private hmmDetector = new HMMRegimeDetector();
+  private tailRisk = new TailRiskModel();
+  private lastClose: number = 0; // track previous close for TailRisk return computation
+  private hmmWarmedUp: boolean = false;
+  private tailRiskWarmedUp: boolean = false;
 
   // FIX: H7 — Replace isProcessing boolean guard with async event queue.
   // The old boolean guard silently dropped events during processing, causing
@@ -164,6 +176,11 @@ export class EventDrivenExecutionLayer {
       const balance = await this.exchange.getFullBalance();
       const position = await this.getFormattedPosition();
 
+      // ── Feed OHLCV data to HMM and TailRisk models ─────────
+      // The dataContext carries the full OHLCV array from the DataLayer.
+      // We feed the latest candle to both risk models so they stay current.
+      this.feedRiskModels(payload.dataContext.marketData.ohlcv);
+
       const context: ExecutionContext = {
         currentPrice,
         balance: balance.free,
@@ -200,6 +217,60 @@ export class EventDrivenExecutionLayer {
           layer: 'ExecutionLayer',
         },
       });
+    }
+  }
+
+  // ── Risk model data feed ─────────────────────────────────────
+
+  /**
+   * Feed the latest OHLCV data to HMM and TailRisk models.
+   *
+   * On the first call we batch-initialise both models with the full
+   * historical window so they warm up quickly. On subsequent calls
+   * we only feed the newest candle.
+   */
+  private feedRiskModels(ohlcv: OHLCV[]): void {
+    if (ohlcv.length === 0) return;
+
+    try {
+      // ── HMM Regime Detector ───────────────────────────────
+      if (!this.hmmWarmedUp && ohlcv.length >= 2) {
+        // First time: batch update with all available candles
+        const regimeResult = this.hmmDetector.batchUpdate(ohlcv);
+        this.hmmWarmedUp = true;
+        logger.info(
+          `[ExecutionLayer] HMM batch initialized with ${ohlcv.length} candles ` +
+          `(trained=${regimeResult.isTrained}, regime=${regimeResult.label})`
+        );
+      } else if (this.hmmWarmedUp) {
+        // Subsequent calls: feed only the latest candle
+        const latestCandle = ohlcv[ohlcv.length - 1];
+        this.hmmDetector.update(latestCandle);
+      }
+    } catch (error) {
+      logger.warn('[ExecutionLayer] HMM regime detector feed failed:', error);
+    }
+
+    try {
+      // ── Tail Risk Model ───────────────────────────────────
+      if (!this.tailRiskWarmedUp && ohlcv.length >= 2) {
+        // First time: batch update with all available candles
+        this.tailRisk.batchUpdate(ohlcv);
+        this.lastClose = ohlcv[ohlcv.length - 1].close;
+        this.tailRiskWarmedUp = true;
+        logger.info(
+          `[ExecutionLayer] TailRisk batch initialized with ${ohlcv.length} candles`
+        );
+      } else if (this.tailRiskWarmedUp) {
+        // Subsequent calls: feed only the latest candle with prevClose
+        const latestCandle = ohlcv[ohlcv.length - 1];
+        if (this.lastClose > 0) {
+          this.tailRisk.update(latestCandle, this.lastClose);
+        }
+        this.lastClose = latestCandle.close;
+      }
+    } catch (error) {
+      logger.warn('[ExecutionLayer] TailRisk model feed failed:', error);
     }
   }
 
@@ -342,6 +413,11 @@ export class EventDrivenExecutionLayer {
     return false;
   }
 
+  /**
+   * FIX H7: Now passes canonical Position fields directly to stateManager.
+   * No more translation from contracts/pnl — state/types uses the same
+   * canonical Position shape from events/types.
+   */
   private async updateStopLossTakeProfit(
     position: Position,
     signal: EnhancedSignal
@@ -356,13 +432,14 @@ export class EventDrivenExecutionLayer {
     position.stopLoss = signal.stopLoss || position.stopLoss;
     position.takeProfit = signal.takeProfit || position.takeProfit;
 
-    // 保存状态
+    // FIX H7: Pass canonical Position directly — no field translation needed
     this.stateManager.updatePosition({
       side: position.side,
-      contracts: position.size,
+      size: position.size,
       entryPrice: position.entryPrice,
-      markPrice: position.entryPrice,
-      pnl: position.unrealizedPnl,
+      leverage: position.leverage,
+      unrealizedPnl: position.unrealizedPnl,
+      markPrice: position.markPrice,
       stopLoss: position.stopLoss,
       takeProfit: position.takeProfit,
     });
@@ -379,6 +456,10 @@ export class EventDrivenExecutionLayer {
     };
   }
 
+  /**
+   * FIX H7: Now saves canonical Position fields to state.
+   * No more contracts/pnl translation.
+   */
   private async openPosition(
     signal: EnhancedSignal,
     currentPrice: number,
@@ -387,11 +468,70 @@ export class EventDrivenExecutionLayer {
     try {
       const side = signal.llmDecision?.action || 'hold';
       const leverage = Number(process.env.LEVERAGE) || 5;
-      const positionSize = this.riskManager.calculatePositionSize(
+      let positionSize = this.riskManager.calculatePositionSize(
         balance,
         signal.stopLoss || currentPrice * 0.02,
         currentPrice
       );
+
+      // ── HMM Regime-based position scaling ───────────────────
+      // Check the current market regime and reduce position size
+      // during high-volatility or crisis regimes.
+      try {
+        const regime = this.hmmDetector.getCurrentRegime();
+        if (regime && regime.isTrained) {
+          if (regime.label === 'CRISIS') {
+            logger.warn(
+              `[ExecutionLayer] HMM: CRISIS regime detected (prob=${regime.probabilities[2]?.toFixed(2)}) ` +
+              `-- reducing position by 75%`
+            );
+            positionSize *= 0.25;
+          } else if (regime.label === 'HIGH_VOL') {
+            logger.warn(
+              `[ExecutionLayer] HMM: HIGH_VOL regime detected (prob=${regime.probabilities[1]?.toFixed(2)}) ` +
+              `-- reducing position by 50%`
+            );
+            positionSize *= 0.5;
+          } else {
+            logger.info(
+              `[ExecutionLayer] HMM: LOW_VOL regime (scaling=${regime.positionScaling.toFixed(2)})`
+            );
+          }
+        } else {
+          logger.info(
+            '[ExecutionLayer] HMM regime detector not yet trained ' +
+            `(observations=${regime.observationCount}/${100}) -- using full position size`
+          );
+        }
+      } catch (error) {
+        logger.warn('[ExecutionLayer] HMM regime check failed, proceeding without adjustment:', error);
+      }
+
+      // ── Tail Risk position scaling ──────────────────────────
+      // If the tail risk ratio is elevated, further reduce position size.
+      try {
+        const riskMetrics = this.tailRisk.getCurrentRisk();
+        if (riskMetrics.tailRatio > 2.0) {
+          logger.warn(
+            `[ExecutionLayer] Tail risk elevated (ratio: ${riskMetrics.tailRatio.toFixed(2)}, ` +
+            `cfVaR: ${(riskMetrics.cfVaR * 100).toFixed(2)}%, ` +
+            `ES: ${(riskMetrics.expectedShortfall * 100).toFixed(2)}%) -- cutting size by 50%`
+          );
+          positionSize *= 0.5;
+        } else if (riskMetrics.tailRatio > 1.5) {
+          logger.info(
+            `[ExecutionLayer] Tail risk moderate (ratio: ${riskMetrics.tailRatio.toFixed(2)}) ` +
+            `-- cutting size by 25%`
+          );
+          positionSize *= 0.75;
+        } else {
+          logger.info(
+            `[ExecutionLayer] Tail risk normal (ratio: ${riskMetrics.tailRatio.toFixed(2)})`
+          );
+        }
+      } catch (error) {
+        logger.warn('[ExecutionLayer] TailRisk check failed, proceeding without adjustment:', error);
+      }
 
       let result: ExecutionResult;
 
@@ -435,13 +575,14 @@ export class EventDrivenExecutionLayer {
         leverage
       );
 
-      // 保存状态
+      // FIX H7: Save canonical Position directly — no contracts/pnl translation
       this.stateManager.updatePosition({
         side: side === 'buy' ? 'long' : 'short',
-        contracts: positionSize,
+        size: positionSize,
         entryPrice: result.price!,
-        markPrice: result.price!,
-        pnl: 0,
+        leverage,
+        unrealizedPnl: 0,
+        markPrice: result.price,
         stopLoss: signal.stopLoss,
         takeProfit: signal.takeProfit,
       });
@@ -464,7 +605,7 @@ export class EventDrivenExecutionLayer {
 
       if (position.side === 'long' || position.side === 'short') {
         order = await this.exchange.closePosition(position.side, position.size);
-        pnl = position.side === 'long' 
+        pnl = position.side === 'long'
           ? (order.price - position.entryPrice) * position.size
           : (position.entryPrice - order.price) * position.size;
       } else {
@@ -504,20 +645,16 @@ export class EventDrivenExecutionLayer {
     }
   }
 
+  /**
+   * FIX H7: State now stores canonical Position (size, unrealizedPnl, leverage).
+   * No translation needed — just return the state position directly.
+   */
   async getFormattedPosition(): Promise<Position | null> {
     const state = this.stateManager.getState();
     const statePosition = state.trading.position;
     if (!statePosition) return null;
-    // Convert StateManager Position to RiskManager Position
-    return {
-      side: statePosition.side,
-      size: statePosition.contracts,
-      entryPrice: statePosition.entryPrice,
-      leverage: 1, // Default leverage
-      unrealizedPnl: statePosition.pnl,
-      stopLoss: statePosition.stopLoss,
-      takeProfit: statePosition.takeProfit,
-    };
+    // State position is already canonical Position type — return directly
+    return statePosition;
   }
 
   private createHoldResult(message: string): ExecutionResult {

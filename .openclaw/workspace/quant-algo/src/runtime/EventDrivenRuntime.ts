@@ -17,15 +17,23 @@
  *   instead of the real exchange. When mode = 'backtest', a HistoricalDataFeed
  *   replays stored candles. The three layers (Data, Strategy, Execution) run
  *   identically regardless of mode — only the feed and execution adapter differ.
+ *
+ * FIX C1: The runtime now PASSES dataFeed and executionAdapter to the Data
+ * and Execution layers via their setter methods during start(). Previously
+ * these were stored but never forwarded, so backtest mode still fetched
+ * live data and paper mode still sent real orders.
  */
 
 import { StreamEventBus } from '../events/StreamEventBus';
 import { EventChannels } from '../events/types';
+import type { MarketDataGatheredEvent, ExecutionLayerCompleteEvent } from '../events/types';
 import type { EventDrivenDataLayer } from '../layers/EventDrivenDataLayer';
 import type { EventDrivenStrategyLayer } from '../layers/EventDrivenStrategyLayer';
 import type { EventDrivenExecutionLayer } from '../layers/EventDrivenExecutionLayer';
 import type { StateManager } from '../state';
 import type { DataFeed, ExecutionAdapter, TradingMode } from '../feeds/types';
+import { AlertManager } from '../monitoring/alertManager';
+import type { Alert } from '../monitoring/alertManager';
 import logger from '../logger';
 
 // ==================== Configuration ====================
@@ -97,6 +105,11 @@ export interface RuntimeDeps {
  *   - 'live'     : Real exchange data + real order execution (default)
  *   - 'paper'    : Real exchange data + simulated order execution
  *   - 'backtest' : Historical data replay + simulated order execution
+ *
+ * FIX C1: The runtime now injects dataFeed into the DataLayer and
+ * executionAdapter into the ExecutionLayer during start(). It also
+ * subscribes to MARKET_DATA_GATHERED events to forward price updates
+ * to PaperExecutionAdapter (so simulated fills use accurate prices).
  */
 export class EventDrivenRuntime {
   // --- Components (injected) ---
@@ -109,6 +122,13 @@ export class EventDrivenRuntime {
   // --- DataFeed abstraction (injected, optional) ---
   private dataFeed: DataFeed | undefined;
   private executionAdapter: ExecutionAdapter | undefined;
+
+  // --- AlertManager integration ---
+  private alertManager = new AlertManager();
+  private consecutiveLosses = 0;
+  private lastTradeTimestamp = 0;
+  private peakBalance = 0;
+  private initialBalance = 0;
 
   // --- Config ---
   private readonly healthCheckIntervalMs: number;
@@ -148,8 +168,10 @@ export class EventDrivenRuntime {
    * 1. Event bus  — must be ready before any layer can publish/subscribe
    * 2. State manager is already initialised by its factory
    * 3. DataFeed + ExecutionAdapter initialisation (if injected)
-   * 4. Layers — subscriptions are wired in their constructors
-   * 5. System-started event + health-check timer
+   * 4. FIX C1: Inject dataFeed / executionAdapter into layers
+   * 5. FIX C1: Subscribe to MARKET_DATA_GATHERED for price forwarding
+   * 6. Layers — subscriptions are wired in their constructors
+   * 7. System-started event + health-check timer
    *
    * FIX M1: Deterministic startup order prevents race conditions.
    */
@@ -209,18 +231,54 @@ export class EventDrivenRuntime {
       logger.info('[Runtime] Backtest mode: replaying historical data');
     }
 
-    // 4. Layers are already subscribed (they wire subscriptions in their
+    // 4. FIX C1: Inject dataFeed into DataLayer and executionAdapter into
+    //    ExecutionLayer. This is the CRITICAL step that was missing —
+    //    without it the layers ignore the injected dependencies and fall
+    //    back to their own hardcoded exchange / fetcher instances.
+    if (this.dataFeed) {
+      this.dataLayer.setDataFeed(this.dataFeed);
+      logger.info('[Runtime] DataFeed injected into DataLayer');
+    }
+
+    if (this.executionAdapter) {
+      this.executionLayer.setExecutionAdapter(this.executionAdapter);
+      logger.info('[Runtime] ExecutionAdapter injected into ExecutionLayer');
+    }
+
+    // 5. FIX C1: Subscribe to MARKET_DATA_GATHERED events so we can
+    //    forward price updates to the PaperExecutionAdapter. This keeps
+    //    the adapter's currentMarketPrice in sync for accurate simulated
+    //    fills, slippage, and unrealized PnL calculations.
+    if (this.executionAdapter && 'updatePrice' in this.executionAdapter) {
+      this.eventBus.subscribe<MarketDataGatheredEvent>(
+        EventChannels.MARKET_DATA_GATHERED,
+        (event: MarketDataGatheredEvent) => {
+          const price = event.payload.marketData.currentPrice;
+          if (price > 0 && this.executionAdapter && 'updatePrice' in this.executionAdapter) {
+            (this.executionAdapter as any).updatePrice(price);
+          }
+        },
+      );
+      logger.info('[Runtime] Subscribed to MARKET_DATA_GATHERED for price forwarding to ExecutionAdapter');
+    }
+
+    // 6. Layers are already subscribed (they wire subscriptions in their
     //    constructors via getEventBus()). Log confirmation.
     // FIX M1: Layers self-subscribe; runtime only needs to verify readiness.
     logger.info('[Runtime] DataLayer ready');
     logger.info('[Runtime] StrategyLayer ready (subscribed to DATA_LAYER_COMPLETE)');
     logger.info('[Runtime] ExecutionLayer ready (subscribed to STRATEGY_LAYER_COMPLETE)');
 
-    // 5. Mark running and record start time
+    // 7. AlertManager: register default monitoring rules and subscribe to execution events
+    this.alertManager.registerDefaultRules();
+    this.subscribeToExecutionEvents();
+    logger.info('[Runtime] AlertManager initialized with default rules');
+
+    // 8. Mark running and record start time
     this.isRunning = true;
     this.startedAt = Date.now();
 
-    // 6. Publish system-started event
+    // 9. Publish system-started event
     await this.eventBus.publish({
       channel: EventChannels.SYSTEM_STARTED,
       source: 'System',
@@ -236,10 +294,106 @@ export class EventDrivenRuntime {
       },
     });
 
-    // 7. Start periodic health checks
+    // 10. Start periodic health checks (includes periodic alert evaluation)
     this.startHealthChecks();
 
     logger.info(`[Runtime] Pipeline started successfully in ${modeLabel} mode`);
+  }
+
+  // ----------------------------------------------------------------
+  // AlertManager: Execution event tracking
+  // ----------------------------------------------------------------
+
+  /**
+   * Subscribe to EXECUTION_LAYER_COMPLETE events to track trading metrics
+   * for alert evaluation (consecutive losses, balance drawdown, trade timing).
+   */
+  private subscribeToExecutionEvents(): void {
+    this.eventBus.subscribe<ExecutionLayerCompleteEvent>(
+      EventChannels.EXECUTION_LAYER_COMPLETE,
+      (event: ExecutionLayerCompleteEvent) => {
+        try {
+          const { result } = event.payload;
+          this.lastTradeTimestamp = Date.now();
+
+          // Track consecutive losses
+          if (result.pnl !== undefined && result.pnl < 0) {
+            this.consecutiveLosses++;
+          } else if (result.pnl !== undefined && result.pnl > 0) {
+            this.consecutiveLosses = 0;
+          }
+
+          // Update balance tracking from state manager
+          try {
+            const state = this.stateManager.getState();
+            const currentBalance = (state as any).balance ?? (state as any).trading?.balance ?? 0;
+            if (this.initialBalance === 0 && currentBalance > 0) {
+              this.initialBalance = currentBalance;
+              this.peakBalance = currentBalance;
+            }
+            if (currentBalance > this.peakBalance) {
+              this.peakBalance = currentBalance;
+            }
+          } catch {
+            // State manager may not expose balance directly; metrics will use fallback
+          }
+
+          // Evaluate alerts immediately after each execution event
+          const metrics = this.collectMetrics();
+          const alerts = this.alertManager.evaluate(metrics);
+          for (const alert of alerts) {
+            logger.warn(
+              `[Runtime][Alert] ${alert.severity.toUpperCase()}: ${alert.message} (rule: ${alert.rule})`,
+            );
+          }
+        } catch (err) {
+          logger.error('[Runtime] Error processing execution event for alerts:', err);
+        }
+      },
+    );
+    logger.info('[Runtime] Subscribed to EXECUTION_LAYER_COMPLETE for alert monitoring');
+  }
+
+  /**
+   * Collect current system metrics for alert evaluation.
+   * Returns a flat metrics map consumed by AlertManager.evaluate().
+   */
+  private collectMetrics(): Record<string, number> {
+    let currentBalance = 0;
+    let killSwitchActive = 0;
+
+    try {
+      const state = this.stateManager.getState();
+      currentBalance = (state as any).balance ?? (state as any).trading?.balance ?? 0;
+      killSwitchActive = (state as any).killSwitch?.active ? 1 : 0;
+    } catch {
+      // Fallback: metrics will show zero balance
+    }
+
+    const now = Date.now();
+    const drawdownPct =
+      this.peakBalance > 0
+        ? ((this.peakBalance - currentBalance) / this.peakBalance) * 100
+        : 0;
+
+    const lastTradeAgeHours =
+      this.lastTradeTimestamp > 0
+        ? (now - this.lastTradeTimestamp) / (1000 * 60 * 60)
+        : 0;
+
+    const uptimeSeconds = this.isRunning ? (now - this.startedAt) / 1000 : 0;
+
+    return {
+      drawdown_pct: drawdownPct,
+      current_balance: currentBalance,
+      initial_balance: this.initialBalance,
+      consecutive_losses: this.consecutiveLosses,
+      position_hold_hours: 0, // would need position tracking from ExecutionLayer
+      last_trade_age_hours: lastTradeAgeHours,
+      kill_switch_active: killSwitchActive,
+      latency_seconds: 0, // would need per-cycle timing instrumentation
+      uptime_seconds: uptimeSeconds,
+    };
   }
 
   // ----------------------------------------------------------------
@@ -466,6 +620,19 @@ export class EventDrivenRuntime {
             position: null,
           },
         });
+
+        // Periodic alert evaluation (catch degraded states even without trade events)
+        try {
+          const metrics = this.collectMetrics();
+          const alerts = this.alertManager.evaluate(metrics);
+          for (const alert of alerts) {
+            logger.warn(
+              `[Runtime][Alert] ${alert.severity.toUpperCase()}: ${alert.message} (rule: ${alert.rule})`,
+            );
+          }
+        } catch (alertErr) {
+          logger.error('[Runtime] Periodic alert evaluation failed:', alertErr);
+        }
       } catch (err) {
         logger.error('[Runtime] Health check failed:', err);
       }
@@ -538,6 +705,16 @@ export class EventDrivenRuntime {
   /** The injected ExecutionAdapter, or undefined if none was provided. */
   getExecutionAdapter(): ExecutionAdapter | undefined {
     return this.executionAdapter;
+  }
+
+  /** Access the AlertManager instance for external alert rule registration. */
+  getAlertManager(): AlertManager {
+    return this.alertManager;
+  }
+
+  /** Retrieve recent alerts, optionally filtered by a timestamp threshold. */
+  getRecentAlerts(since?: number): Alert[] {
+    return this.alertManager.getRecentAlerts(since);
   }
 }
 
