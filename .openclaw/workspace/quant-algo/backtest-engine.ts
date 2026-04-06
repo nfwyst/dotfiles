@@ -124,6 +124,12 @@ export class BacktestEngine {
   private circuitBreakerActive: boolean = false;
   private circuitBreakerCooldownEnd: number = 0;
 
+  // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
+  private dailyLossLimit: number = 0.03; // 3% of day's starting equity
+  private currentDayStartTs: number = 0;
+  private dailyStartEquity: number = 0;
+  private dailyLossLimitHit: boolean = false;
+
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
   private ocsLayer2: OCSLayer2;
@@ -488,6 +494,25 @@ export class BacktestEngine {
     for (let i = lookback; i < this.ohlcv.length; i++) {
       const currentCandle = this.ohlcv[i];
 
+      // ── Daily loss limit: reset on new day, check cumulative loss ──
+      const currentDayTs = new Date(currentCandle.timestamp);
+      currentDayTs.setUTCHours(0, 0, 0, 0);
+      const dayStartMs = currentDayTs.getTime();
+      if (dayStartMs !== this.currentDayStartTs) {
+        // New calendar day — reset daily tracking
+        this.currentDayStartTs = dayStartMs;
+        this.dailyStartEquity = this.equity;
+        this.dailyLossLimitHit = false;
+      }
+      // Check if daily loss limit breached
+      if (!this.dailyLossLimitHit && this.dailyStartEquity > 0) {
+        const dailyReturn = (this.equity - this.dailyStartEquity) / this.dailyStartEquity;
+        if (dailyReturn < -this.dailyLossLimit) {
+          this.dailyLossLimitHit = true;
+          console.log(`  🛑 日内止损触发: 当日亏损 ${(dailyReturn * 100).toFixed(2)}% > ${(this.dailyLossLimit * 100).toFixed(1)}% 限制, 暂停开仓至次日`);
+        }
+      }
+
       // 检查当前持仓
       if (this.position) {
         this.checkPosition(currentCandle, i);
@@ -495,14 +520,14 @@ export class BacktestEngine {
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
       // FIX 2: Also check circuit breaker before executing pending signal
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
       // FIX 2: Add circuit breaker check — don't generate new signals during drawdown
-      if (!this.position && !this.circuitBreakerActive) {
+      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
