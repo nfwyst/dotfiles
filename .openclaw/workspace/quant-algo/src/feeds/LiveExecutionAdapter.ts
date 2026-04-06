@@ -1,19 +1,27 @@
 /**
- * Live Execution Adapter - wraps real exchange for order execution.
+ * Live Execution Adapter - wraps ExchangeManager for the unified ExecutionAdapter interface.
+ * 
+ * Since ExchangeManager now implements ExecutionAdapter directly, this class serves as
+ * a thin wrapper that can add additional live-specific behavior (logging, safety checks, etc.)
+ * on top of the core ExchangeManager.
  */
 import { ExecutionAdapter, OrderResult, TradingMode } from './types';
 import { Position } from '../events/types';
+import { ExchangeManager } from '../exchange';
 import { config } from '../config';
 import logger from '../logger';
 
 export class LiveExecutionAdapter implements ExecutionAdapter {
-  readonly mode: TradingMode = 'live';
-  private exchange: any;
+  private exchange: ExchangeManager;
   private symbol: string;
 
-  constructor(exchange: any) {
+  constructor(exchange: ExchangeManager) {
     this.exchange = exchange;
     this.symbol = config.symbol;
+  }
+
+  get mode(): TradingMode {
+    return this.exchange.mode;
   }
 
   async placeMarketOrder(
@@ -21,26 +29,8 @@ export class LiveExecutionAdapter implements ExecutionAdapter {
     size: number,
     symbol: string,
   ): Promise<OrderResult> {
-    try {
-      const order = await this.exchange.createOrder(
-        symbol || this.symbol,
-        'market',
-        side,
-        size,
-      );
-      return {
-        success: true,
-        orderId: order.id,
-        filledPrice: order.average ?? order.price,
-        filledSize: order.filled ?? size,
-        fee: order.fee?.cost ?? 0,
-        message: `Order ${order.id} filled`,
-        timestamp: Date.now(),
-      };
-    } catch (err: any) {
-      logger.error(`[LiveExecution] Market order failed: ${err.message}`);
-      return { success: false, message: err.message, timestamp: Date.now() };
-    }
+    logger.info(`[LiveExecution] Placing market order: ${side} ${size} ${symbol || this.symbol} (mode=${this.mode})`);
+    return this.exchange.placeMarketOrder(side, size, symbol || this.symbol);
   }
 
   async placeLimitOrder(
@@ -49,68 +39,25 @@ export class LiveExecutionAdapter implements ExecutionAdapter {
     price: number,
     symbol: string,
   ): Promise<OrderResult> {
-    try {
-      const order = await this.exchange.createOrder(
-        symbol || this.symbol,
-        'limit',
-        side,
-        size,
-        price,
-      );
-      return {
-        success: true,
-        orderId: order.id,
-        filledPrice: order.average ?? price,
-        filledSize: order.filled ?? 0,
-        fee: order.fee?.cost ?? 0,
-        message: `Limit order ${order.id} placed`,
-        timestamp: Date.now(),
-      };
-    } catch (err: any) {
-      logger.error(`[LiveExecution] Limit order failed: ${err.message}`);
-      return { success: false, message: err.message, timestamp: Date.now() };
-    }
+    logger.info(`[LiveExecution] Placing limit order: ${side} ${size} @ ${price} ${symbol || this.symbol} (mode=${this.mode})`);
+    return this.exchange.placeLimitOrder(side, size, price, symbol || this.symbol);
   }
 
   async cancelOrder(orderId: string): Promise<boolean> {
-    try {
-      await this.exchange.cancelOrder(orderId, this.symbol);
-      return true;
-    } catch (err: any) {
-      logger.error(`[LiveExecution] Cancel failed: ${err.message}`);
-      return false;
-    }
+    logger.info(`[LiveExecution] Cancelling order: ${orderId}`);
+    return this.exchange.cancelOrder(orderId);
   }
 
   async getBalance(): Promise<number> {
-    const balance = await this.exchange.fetchBalance();
-    return balance.total?.USDT ?? balance.free?.USDT ?? 0;
+    return this.exchange.getBalance();
   }
 
   async getPosition(symbol: string): Promise<Position | null> {
-    try {
-      const positions = await this.exchange.fetchPositions([
-        symbol || this.symbol,
-      ]);
-      const pos = positions.find(
-        (p: any) => Math.abs(p.contracts) > 0,
-      );
-      if (!pos) return null;
-      return {
-        side: pos.side === 'long' ? 'long' : 'short',
-        size: Math.abs(pos.contracts),
-        entryPrice: pos.entryPrice ?? 0,
-        leverage: pos.leverage ?? 1,
-        unrealizedPnl: pos.unrealizedPnl ?? 0,
-        markPrice: pos.markPrice,
-        liquidationPrice: pos.liquidationPrice,
-      };
-    } catch {
-      return null;
-    }
+    return this.exchange.getPosition(symbol || this.symbol);
   }
 
   async close(): Promise<void> {
     logger.info('[LiveExecution] Adapter closed');
+    return this.exchange.close();
   }
 }

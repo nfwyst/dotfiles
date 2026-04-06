@@ -161,7 +161,7 @@ export class EventDrivenExecutionLayer {
 
       const { payload } = event;
       const currentPrice = payload.dataContext.marketData.currentPrice;
-      const balance = await this.exchange.getBalance();
+      const balance = await this.exchange.getFullBalance();
       const position = await this.getFormattedPosition();
 
       const context: ExecutionContext = {

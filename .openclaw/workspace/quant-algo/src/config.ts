@@ -417,7 +417,7 @@ export function validateConfig(): void {
   console.log(`   SMC: ${config.smc.enabled ? '启用' : '禁用'}`);
   console.log(`   多时间框架: ${config.multiTimeframe.enabled ? '启用' : '禁用'}`);
   console.log(`   杠杆: ${config.leverage}x`);
-  console.log(`   模拟盘: ${config.exchange.sandbox ? '是' : '否 (实盘!)'}`);
+  console.log(`   交易模式: ${config.exchange.sandbox ? '🟡 Testnet (模拟盘)' : '🔴 MAINNET (实盘!)'}`);
   console.log(`   风控配置: v${riskConfig.version}`);
   console.log(`   指标服务器: ${config.metrics.enabled ? `启用 (端口 ${config.metrics.port})` : '禁用'}`);
   console.log(`   分布式追踪: ${config.tracing.enabled ? `启用 (${config.tracing.endpoint})` : '禁用'}`);

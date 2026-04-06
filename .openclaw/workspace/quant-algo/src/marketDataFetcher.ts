@@ -1,6 +1,8 @@
 /**
  * 市场数据获取模块
- * 从 Binance Demo API 获取公共市场数据（无需 API Key）
+ * 从 Binance 主网获取公共市场数据（无需 API Key）
+ * 
+ * 注意：公共市场数据始终使用主网端点，与 sandbox 模式无关
  */
 
 import {
@@ -9,7 +11,7 @@ import {
 } from './monitoring/tracing';
 import { OHLCV } from './events/types';
 
-const BINANCE_API = 'https://demo-fapi.binance.com';
+const BINANCE_API = 'https://fapi.binance.com';  // Always use mainnet for public market data
 
 export interface MarketData {
   price: number;

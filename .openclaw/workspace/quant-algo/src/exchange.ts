@@ -1,35 +1,130 @@
 /**
- * 交易所管理模块 - 使用Binance Futures Testnet API
+ * 交易所管理模块 - Binance Futures API
+ * 
+ * 支持 Testnet（模拟盘）和 Mainnet（实盘）两种模式，
+ * 通过 config.exchange.sandbox 控制。
  * 
  * 注意: 
- * - 公共数据（价格/K线）从主网获取
- * - 交易操作使用 Testnet API
+ * - 公共数据（价格/K线）始终从主网获取
+ * - 交易操作根据 sandbox 配置选择 Testnet 或 Mainnet
  * 
  * 集成熔断器保护：API 故障时自动熔断，防止级联故障
+ * 实现 ExecutionAdapter 接口，可直接用于统一执行层
  */
 
 import crypto from 'crypto';
 import logger from './logger';
+import { config } from './config';
 import { exchangeCircuitBreaker } from './safety/circuitBreakers';
 import { tracingManager } from './monitoring/tracing';
+import { ExecutionAdapter, OrderResult, TradingMode } from './feeds/types';
+import { Position } from './events/types';
 
-// Testnet 用于交易操作
-const DEMO_API_BASE = 'https://testnet.binancefuture.com';
-// 主网用于公共数据
+// 交易 API 端点
+const TESTNET_API_BASE = 'https://testnet.binancefuture.com';
+const MAINNET_API_BASE = 'https://fapi.binance.com';
+
+// 主网用于公共数据（价格/K线等），始终使用主网获取真实市场数据
 const PUBLIC_API_BASE = 'https://fapi.binance.com';
 
-export class ExchangeManager {
+export class ExchangeManager implements ExecutionAdapter {
   private apiKey: string;
   private apiSecret: string;
   private symbol: string;
   private leverage: number;
+  private apiBase: string;
 
   constructor() {
-    this.apiKey = process.env.BINANCE_API_KEY || '';
-    this.apiSecret = process.env.BINANCE_API_SECRET || '';
+    this.apiKey = config.exchange.apiKey;
+    this.apiSecret = config.exchange.secret;
     this.symbol = 'ETHUSDT';
-    this.leverage = 100;
+    this.leverage = config.leverage;
+    this.apiBase = config.exchange.sandbox ? TESTNET_API_BASE : MAINNET_API_BASE;
   }
+
+  // ==================== ExecutionAdapter 接口实现 ====================
+
+  get mode(): TradingMode {
+    return config.exchange.sandbox ? 'paper' : 'live';
+  }
+
+  get isSandbox(): boolean {
+    return config.exchange.sandbox;
+  }
+
+  async placeMarketOrder(
+    side: 'buy' | 'sell',
+    size: number,
+    symbol: string,
+  ): Promise<OrderResult> {
+    try {
+      const binanceSide = side.toUpperCase() as 'BUY' | 'SELL';
+      const order = await this.createMarketOrder(binanceSide, size);
+      return {
+        success: true,
+        orderId: order.id,
+        filledPrice: order.price,
+        filledSize: order.quantity,
+        fee: 0,
+        message: `Order ${order.id} filled`,
+        timestamp: Date.now(),
+      };
+    } catch (err: any) {
+      logger.error(`[ExchangeManager] Market order failed: ${err.message}`);
+      return { success: false, message: err.message, timestamp: Date.now() };
+    }
+  }
+
+  async placeLimitOrder(
+    _side: 'buy' | 'sell',
+    _size: number,
+    _price: number,
+    _symbol: string,
+  ): Promise<OrderResult> {
+    return {
+      success: false,
+      message: 'Limit orders not yet supported via ExchangeManager',
+      timestamp: Date.now(),
+    };
+  }
+
+  async cancelOrder(_orderId: string): Promise<boolean> {
+    // Stub for now — ExchangeManager doesn't track individual order IDs
+    logger.warn('[ExchangeManager] cancelOrder is a stub, returning true');
+    return true;
+  }
+
+  async getBalance(): Promise<number> {
+    const balance = await this._getBalance();
+    return balance.free;
+  }
+
+  /**
+   * 获取完整余额信息（供内部模块使用，返回 total/free/used）
+   */
+  async getFullBalance(): Promise<{ total: number; free: number; used: number }> {
+    return this._getBalance();
+  }
+
+  async getPosition(symbol?: string): Promise<Position | null> {
+    const pos = await this._getPosition();
+    if (!pos) return null;
+    return {
+      side: pos.side as 'long' | 'short',
+      size: pos.contracts,
+      entryPrice: pos.entryPrice,
+      leverage: pos.leverage,
+      unrealizedPnl: pos.unrealizedPnl,
+      markPrice: pos.markPrice,
+      liquidationPrice: pos.liquidationPrice,
+    };
+  }
+
+  async close(): Promise<void> {
+    logger.info('[ExchangeManager] Adapter closed');
+  }
+
+  // ==================== 内部请求方法 ====================
 
   /**
    * 发送签名请求（带熔断保护）
@@ -54,9 +149,10 @@ export class ExchangeManager {
       ? tracingManager.startSpan('exchange.api_request', {
           attributes: {
             'http.method': method,
-            'http.url': `${DEMO_API_BASE}${path}`,
+            'http.url': `${this.apiBase}${path}`,
             'exchange.endpoint': path,
             'exchange.signed': true,
+            'exchange.sandbox': this.isSandbox,
           },
         })
       : null;
@@ -74,7 +170,7 @@ export class ExchangeManager {
         .update(query)
         .digest('hex');
       
-      const url = `${DEMO_API_BASE}${path}?${query}&signature=${signature}`;
+      const url = `${this.apiBase}${path}?${query}&signature=${signature}`;
       
       const startTime = Date.now();
       const res = await fetch(url, {
@@ -123,7 +219,7 @@ export class ExchangeManager {
   }
 
   /**
-   * 实际执行公共API请求（使用主网获取真实市场数据）
+   * 实际执行公共API请求（始终使用主网获取真实市场数据）
    */
   private async _doRequestPublic(path: string, params: any = {}) {
     const span = tracingManager.isEnabled()
@@ -168,6 +264,9 @@ export class ExchangeManager {
       throw error;
     }
   }
+
+  // ==================== 交易所操作 ====================
+
   /**
    * 测试连接
    */
@@ -177,12 +276,13 @@ export class ExchangeManager {
       const account = await this.request('/fapi/v2/account');
       const balance = parseFloat(account.availableBalance || 0);
       
-      logger.info('✅ Binance Demo Trading 连接成功');
+      logger.info(`Binance ${config.exchange.sandbox ? 'Testnet' : 'MAINNET ⚠️'} 连接成功`);
+      logger.info(`   API Base: ${this.apiBase}`);
       logger.info(`   可用 USDT: ${balance.toFixed(2)}`);
       
       return true;
     } catch (error: any) {
-      logger.error('❌ Binance 连接失败:', error.message);
+      logger.error('Binance 连接失败:', error.message);
       return false;
     }
   }
@@ -198,7 +298,7 @@ export class ExchangeManager {
       }, 'POST');
       
       this.leverage = leverage;
-      logger.info(`✅ 杠杆已设置为 ${leverage}x`);
+      logger.info(`杠杆已设置为 ${leverage}x`);
     } catch (error: any) {
       logger.error('设置杠杆失败:', error.message);
       throw error;
@@ -265,10 +365,11 @@ export class ExchangeManager {
       throw error;
     }
   }
+
   /**
    * 获取账户余额
    */
-  async getBalance(): Promise<{ total: number; free: number; used: number }> {
+  async _getBalance(): Promise<{ total: number; free: number; used: number }> {
     try {
       const account = await this.request('/fapi/v2/account');
       
@@ -284,9 +385,9 @@ export class ExchangeManager {
   }
 
   /**
-   * 获取当前持仓
+   * 获取当前持仓（内部方法，返回原始格式）
    */
-  async getPosition(): Promise<any> {
+  async _getPosition(): Promise<any> {
     try {
       const positions = await this.request('/fapi/v2/positionRisk');
       
@@ -324,7 +425,7 @@ export class ExchangeManager {
         quantity: quantity.toFixed(3),
       }, 'POST');
       
-      logger.info(`🚀 市价单执行: ${side} ${quantity} ETH @ #${order.orderId}`);
+      logger.info(`市价单执行: ${side} ${quantity} ETH @ #${order.orderId}`);
       
       return {
         id: order.orderId.toString(),
@@ -353,7 +454,7 @@ export class ExchangeManager {
       const slQuery = `symbol=${this.symbol}&side=SELL&type=STOP_MARKET&stopPrice=${stopLossPrice.toFixed(2)}&closePosition=true&timestamp=${timestamp}`;
       const slSig = crypto.createHmac('sha256', this.apiSecret).update(slQuery).digest('hex');
       
-      const slRes = await fetch(`${DEMO_API_BASE}/fapi/v1/order?${slQuery}&signature=${slSig}`, {
+      const slRes = await fetch(`${this.apiBase}/fapi/v1/order?${slQuery}&signature=${slSig}`, {
         method: 'POST',
         headers: { 'X-MBX-APIKEY': this.apiKey }
       });
@@ -363,13 +464,13 @@ export class ExchangeManager {
       const tpQuery = `symbol=${this.symbol}&side=SELL&type=TAKE_PROFIT_MARKET&stopPrice=${takeProfitPrice.toFixed(2)}&closePosition=true&timestamp=${timestamp}`;
       const tpSig = crypto.createHmac('sha256', this.apiSecret).update(tpQuery).digest('hex');
       
-      const tpRes = await fetch(`${DEMO_API_BASE}/fapi/v1/order?${tpQuery}&signature=${tpSig}`, {
+      const tpRes = await fetch(`${this.apiBase}/fapi/v1/order?${tpQuery}&signature=${tpSig}`, {
         method: 'POST',
         headers: { 'X-MBX-APIKEY': this.apiKey }
       });
       const tpOrder = await tpRes.json();
       
-      logger.info(`🛡️ 止损止盈已设置: SL=$${stopLossPrice.toFixed(2)} TP=$${takeProfitPrice.toFixed(2)}`);
+      logger.info(`止损止盈已设置: SL=$${stopLossPrice.toFixed(2)} TP=$${takeProfitPrice.toFixed(2)}`);
       
       return { stopLoss: slOrder, takeProfit: tpOrder };
     } catch (error: any) {
@@ -383,7 +484,7 @@ export class ExchangeManager {
    */
   async openLong(quantity: number, stopLoss?: number, takeProfit?: number): Promise<any> {
     const order = await this.createMarketOrder('BUY', quantity);
-    logger.info(`🟢 开多仓: ${quantity} ETH @ $${order.price}`);
+    logger.info(`开多仓: ${quantity} ETH @ $${order.price}`);
     
     // 自动设置止损止盈
     if (stopLoss && takeProfit) {
@@ -398,7 +499,7 @@ export class ExchangeManager {
    */
   async openShort(quantity: number, stopLoss?: number, takeProfit?: number): Promise<any> {
     const order = await this.createMarketOrder('SELL', quantity);
-    logger.info(`🔴 开空仓: ${quantity} ETH @ $${order.price}`);
+    logger.info(`开空仓: ${quantity} ETH @ $${order.price}`);
     
     if (stopLoss && takeProfit) {
       // 空仓的止损止盈方向相反
@@ -414,7 +515,7 @@ export class ExchangeManager {
   async closePosition(side: 'long' | 'short', quantity: number): Promise<any> {
     const closeSide = side === 'long' ? 'SELL' : 'BUY';
     const order = await this.createMarketOrder(closeSide, quantity);
-    logger.info(`📤 平仓: ${side} ${quantity} ETH @ $${order.price}`);
+    logger.info(`平仓: ${side} ${quantity} ETH @ $${order.price}`);
     return order;
   }
 
