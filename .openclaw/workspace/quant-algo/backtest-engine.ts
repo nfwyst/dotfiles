@@ -125,7 +125,7 @@ export class BacktestEngine {
   private circuitBreakerCooldownEnd: number = 0;
 
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
-  private dailyLossLimit: number = 0.03; // 3% of day's starting equity
+  private dailyLossLimit: number = 0.05; // 5% of day's starting equity
   private currentDayStartTs: number = 0;
   private dailyStartEquity: number = 0;
   private dailyLossLimitHit: boolean = false;
@@ -598,10 +598,14 @@ export class BacktestEngine {
     index: number
   ): StrategySignal | null {
 
-    // FIX: Use fixed 300-bar sliding window instead of slice(0, index+1)
-    // The old code created a growing array for every bar (O(n²) memory),
-    // causing OOM kills on 105K-bar datasets.
-    const SIGNAL_WINDOW = 300;
+    // FIX: Use 5000-bar sliding window instead of slice(0, index+1).
+    // The old code grew a full-history OHLCV copy per bar (OOM risk at 105K bars).
+    // 5000 bars (~17 days on 5m) provides enough history for:
+    //   - CVD cumulative volume delta divergence detection
+    //   - Gaussian/TRIX smoother convergence
+    //   - Layer3 volatility (only needs 14 bars)
+    //   - SLTP swing levels (only needs 48 bars)
+    const SIGNAL_WINDOW = 5000;
     const winStart = Math.max(0, index - SIGNAL_WINDOW);
     const ohlcvWindow = this.ohlcv.slice(winStart, index + 1);
     const closePrices = ohlcvWindow.map(h => h.close);
@@ -632,7 +636,7 @@ export class BacktestEngine {
       ? l3.confidence / 100
       : enhancedOutput.combinedSignal.confidence / 100;
     
-    // 使用 SLTPCalculator (only needs recent S/R levels, 300 bars sufficient)
+    // 使用 SLTPCalculator (S/R levels from 5000-bar window)
     const highs = ohlcvWindow.map(h => h.high);
     const lows = ohlcvWindow.map(h => h.low);
     
