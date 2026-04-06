@@ -720,6 +720,16 @@ export class BacktestEngine {
       return;
     }
 
+    // Position-level equity protection: close if unrealized loss > 5% of current balance
+    const unrealizedPnl = this.position.side === 'long'
+      ? (candle.close - this.position.entryPrice) * this.position.size
+      : (this.position.entryPrice - candle.close) * this.position.size;
+    if (unrealizedPnl < 0 && Math.abs(unrealizedPnl) > this.balance * 0.05) {
+      console.log(`  🛡️ 仓位保护: 未实现亏损 $${unrealizedPnl.toFixed(2)} > 余额5%, 强制平仓`);
+      this.closePosition(candle, 'equity_protection', index);
+      return;
+    }
+
     const { side, entryPrice, stopLoss, takeProfits, tp1Hit, tp2Hit } = this.position;
 
     if (side === 'long') {
@@ -1126,7 +1136,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.010,  // 1.0%仓位 (tightened to reduce drawdown)
+    positionSize: 0.012,  // 1.2%仓位 (tightened to reduce drawdown)
     leverage: 1,         // 1倍杠杆
     feeRate: 0.0006,     // 0.06% 手续费
     slippage: 0.0001     // 0.01% 滑点
