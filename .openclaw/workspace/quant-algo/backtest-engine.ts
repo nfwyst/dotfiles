@@ -524,34 +524,58 @@ export class BacktestEngine {
         const dailyReturn = (this.equity - this.dailyStartEquity) / this.dailyStartEquity;
         if (dailyReturn < -this.dailyLossLimit) {
           this.dailyLossLimitHit = true;
+          // Force-close on daily loss limit breach to prevent further damage
+          if (this.position) {
+            console.log(`  🛑 日内止损: 强制平仓`);
+            this.closePosition(currentCandle, 'daily_loss_limit', i);
+          }
           console.log(`  🛑 日内止损触发: 当日亏损 ${(dailyReturn * 100).toFixed(2)}% > ${(this.dailyLossLimit * 100).toFixed(1)}% 限制, 暂停开仓至次日`);
         }
       }
 
-      // 检查当前持仓
+      // ── Circuit breaker: check FIRST before position management ──
+      // Compute unrealized equity to detect drawdown with open positions
+      const preCheckEquity = this.calculateEquity(currentCandle.close);
+      if (preCheckEquity > this.peakEquity) this.peakEquity = preCheckEquity;
+      const currentDrawdown = (this.peakEquity - preCheckEquity) / this.peakEquity;
+
+      // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
+      if (currentDrawdown > 0.15 && !this.circuitBreakerActive) {
+        this.circuitBreakerActive = true;
+        this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
+        if (this.position) {
+          console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
+          this.closePosition(currentCandle, 'circuit_breaker', i);
+        }
+        if (this.pendingSignal) this.pendingSignal = null; // Cancel any pending entry
+        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 15%, 暂停交易 ~7天`);
+      }
+      if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
+        this.circuitBreakerActive = false;
+        this.peakEquity = this.calculateEquity(currentCandle.close); // Reset peak
+        console.log(`  🟢 熔断器解除: 已冷却, 重置基准权益为 $${this.peakEquity.toFixed(2)}`);
+      }
+
+      // 检查当前持仓 (SL/TP checks)
       if (this.position) {
         this.checkPosition(currentCandle, i);
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      // FIX 2: Also check circuit breaker before executing pending signal
       if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      // FIX 2: Add circuit breaker check — don't generate new signals during drawdown
       if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
-        // 使用预计算的OCS特征生成信号
         const ocsIndex = i - ocsLookback;
         const l1 = this.precomputedLayer1[ocsIndex];
         const l2 = this.precomputedLayer2[ocsIndex];
         
-        // 从预计算数据构建信号
         const signal = this.generateSignalFromPrecomputed(indicators, l2, currentCandle.close, i);
         
         if (signal && signal.type !== 'hold' && signal.confidence >= 0.4) {
@@ -568,35 +592,16 @@ export class BacktestEngine {
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
-            // FIX C3: Queue signal for next-bar execution instead of immediate fill
             this.pendingSignal = { signal, barIndex: i };
           } else {
             console.log(`  ⏭️ 信号被趋势过滤: ${signal.type} 置信度${signal.confidence.toFixed(2)} < ${confidenceThreshold}`);
           }
         }
       }
-      // 记录权益曲线
+
+      // 记录权益曲线 (after all position changes for this bar)
       this.equity = this.calculateEquity(currentCandle.close);
       this.equityCurve.push(this.equity);
-
-      // Circuit breaker: cooldown-based (not recovery-based, to avoid deadlock)
-      if (this.equity > this.peakEquity) this.peakEquity = this.equity;
-      const currentDrawdown = (this.peakEquity - this.equity) / this.peakEquity;
-      if (currentDrawdown > 0.15 && !this.circuitBreakerActive) {
-        this.circuitBreakerActive = true;
-        this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
-        // Force-close any open position to prevent further drawdown
-        if (this.position) {
-          console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
-          this.closePosition(this.ohlcv[i], 'circuit_breaker', i);
-        }
-        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 15%, 暂停交易 ~7天`);
-      }
-      if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
-        this.circuitBreakerActive = false;
-        this.peakEquity = this.equity; // Reset peak to current equity after cooldown
-        console.log(`  🟢 熔断器解除: 已冷却, 重置基准权益为 $${this.equity.toFixed(2)}`);
-      }
     }
 
     // 平掉最后的持仓
