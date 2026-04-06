@@ -19,7 +19,7 @@ import {
 } from './types';
 
 import { TechnicalReport } from '../marketIntelligence/types';
-import { getLLMClient } from './llmClient';
+import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
 
@@ -82,15 +82,7 @@ export class TrendAgent implements DecisionAgent {
    * LLM 模式分析
    */
   private async analyzeWithLLM(technical: TechnicalReport, currentPrice: number): Promise<AgentOutput> {
-    const llm = getLLMClient();
-    
-    if (!llm.isAvailable()) {
-      return {
-        success: false,
-        error: 'DeepSeek API not available',
-      };
-    }
-    
+    const llm = LLMClient.getInstance();
     const systemPrompt = `你是一个专业的趋势分析专家。
 你的任务是分析市场数据并判断趋势方向和强度。
 
@@ -118,17 +110,33 @@ export class TrendAgent implements DecisionAgent {
 
 请综合分析以上数据，输出趋势判断。`;
 
-    const result = await llm.chat(systemPrompt, userPrompt, true);
-    
-    if (!result.success || !result.content) {
+    let resultContent: string;
+    try {
+      const llmResp = await llm.chat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        responseFormat: { type: 'json_object' },
+        temperature: 0.3,
+      });
+      resultContent = llmResp.content;
+    } catch (llmError: any) {
       return {
         success: false,
-        error: result.error || 'Empty response',
+        error: llmError.message || 'LLM call failed',
+      };
+    }
+
+    if (!resultContent) {
+      return {
+        success: false,
+        error: 'Empty response',
       };
     }
     
     try {
-      const parsed = JSON.parse(result.content);
+      const parsed = JSON.parse(resultContent);
       
       // 确定建议行动
       const suggestedAction = this.determineActionFromLLM(parsed);

@@ -17,10 +17,6 @@ export type {
   DataFetchLabelNames,
 } from './MetricsCollector.js';
 
-// 指标服务器
-export { MetricsServer, getMetricsServer, resetMetricsServer } from './metricsServer.js';
-export type { MetricsServerConfig } from './metricsServer.js';
-
 // 分布式追踪
 export {
   TracingManager,

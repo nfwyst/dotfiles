@@ -14,7 +14,7 @@ import path from 'path';
 import Redis from 'ioredis';
 import logger from '../logger';
 import { config } from '../config';
-import { metricsCollector } from '../monitoring/index.js';
+import { metricsCollector } from '../monitoring';
 
 // ==================== 类型定义 ====================
 

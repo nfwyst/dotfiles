@@ -20,7 +20,7 @@ import {
 } from './types';
 
 import { TechnicalReport } from '../marketIntelligence/types';
-import { getLLMClient } from './llmClient';
+import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
 
@@ -91,15 +91,7 @@ export class EntryAgent implements DecisionAgent {
    * LLM 模式分析
    */
   private async analyzeWithLLM(technical: TechnicalReport, currentPrice: number): Promise<AgentOutput> {
-    const llm = getLLMClient();
-    
-    if (!llm.isAvailable()) {
-      return {
-        success: false,
-        error: 'DeepSeek API not available',
-      };
-    }
-    
+    const llm = LLMClient.getInstance();
     const systemPrompt = `你是一个专业的入场时机分析专家。
 你的任务是判断当前是否是好的入场点。
 
@@ -125,17 +117,33 @@ export class EntryAgent implements DecisionAgent {
 
 请综合分析，判断是否应该入场。如果 RSI 在 30-55 且趋势向上，可以考虑做多；如果 RSI >= 85，可以考虑做空。`;
 
-    const result = await llm.chat(systemPrompt, userPrompt, true);
-    
-    if (!result.success || !result.content) {
+    let resultContent: string;
+    try {
+      const llmResp = await llm.chat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        responseFormat: { type: 'json_object' },
+        temperature: 0.3,
+      });
+      resultContent = llmResp.content;
+    } catch (llmError: any) {
       return {
         success: false,
-        error: result.error || 'Empty response',
+        error: llmError.message || 'LLM call failed',
+      };
+    }
+
+    if (!resultContent) {
+      return {
+        success: false,
+        error: 'Empty response',
       };
     }
     
     try {
-      const parsed = JSON.parse(result.content);
+      const parsed = JSON.parse(resultContent);
       
       const output: EntryAgentOutput = {
         agentName: 'EntryAgent',

@@ -13,7 +13,7 @@ import AIModule from '../ai';
 import AdaptiveRSI from '../adaptiveRSI';
 import { config } from '../config';
 import logger from '../logger';
-import { metricsCollector } from '../monitoring/index.js';
+import { metricsCollector } from '../monitoring';
 export interface OHLCV {
   timestamp: number;
   open: number;

@@ -13,8 +13,6 @@ import OCSLayer4 from '../ocs/layer4';
 import SLTPCalculator from './slTpCalculator';
 import OCSEnhanced from '../ocs/enhanced/index';
 // OCS 2.0 新增导入
-import { marketStateAdaptor, MarketState } from './marketStateAdaptor';
-import { gatedLayerFusion } from './gatedLayerFusion';
 import { sacExecutionAgent, State as SACState } from '../ocs/sacExecutionAgent';
 
 export type StrategyType = 'ocs';

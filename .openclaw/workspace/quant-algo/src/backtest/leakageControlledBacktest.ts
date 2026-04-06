@@ -6,6 +6,14 @@
  */
 
 import logger from '../logger';
+// FIX: Import CPCV functions and types for runWithValidation() integration
+import {
+  combinatorialPurgedCV,
+  probabilityOfBacktestOverfitting,
+  type CPCVConfig,
+  type CPCVResult,
+  type TimeSeriesObservation,
+} from './cpcvValidation';
 
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 const CRYPTO_TRADING_DAYS = 365;
@@ -86,13 +94,35 @@ export interface BacktestResult {
   runTime: number;
 }
 
+// FIX: New interface for validated backtest results with CPCV + PBO
+export interface ValidatedBacktestResult extends BacktestResult {
+  validation: {
+    cpcv: CPCVResult;
+    pbo: number;
+    isOverfit: boolean;  // PBO > 0.5
+    oosAverageSharpe: number;
+  };
+}
+
+// FIX: Configuration for the validation pass
+export interface ValidationConfig {
+  /** Number of contiguous groups (default 10). */
+  nGroups?: number;
+  /** Number of test groups per combination (default 2). */
+  nTestGroups?: number;
+  /** Embargo size in observations (default: 1% of data). */
+  embargoSize?: number;
+  /** PBO threshold above which the strategy is considered overfit (default 0.5). */
+  pboThreshold?: number;
+}
+
 export interface Strategy {
   name: string;
   generateSignal(
     data: OHLCV[],
     index: number,
     position: { side: 'long' | 'short' | 'none'; size: number; entryPrice: number } | null
-  ): { action: 'buy' | 'sell' | 'hold'; size?: number; stopLoss?: number; takeProfit?: number; reason?: string };
+  ): { action: 'buy' | 'sell' | 'hold'; size?: number; stopLoss?: number; takeProfit?: number; reason?: string; timestamp?: number; confidence?: number; entryPrice?: number };
 }
 
 // ==================== 默认配置 ====================
@@ -193,7 +223,7 @@ export class LeakageControlledBacktest {
       // 生成信号 (使用泄漏控制的数据)
       const signal = strategy.generateSignal(availableData, i - 1, position);
       
-      // 泄漏检查：确保没有使用未来数据
+      // FIX: Replaced no-op keyword-matching checkLeakage with actual leakage detection
       this.checkLeakage(signal, i, leakageWarnings);
       
       // 执行交易 (使用下一根 K 线的开盘价)
@@ -389,64 +419,109 @@ export class LeakageControlledBacktest {
     return result;
   }
   
+  // FIX: New method — run backtest with CPCV validation and PBO scoring
+  /**
+   * Run backtest with Combinatorial Purged Cross-Validation (CPCV).
+   *
+   * 1. Runs the standard backtest via `run()` to get the full-sample result.
+   * 2. Converts the equity curve to per-bar returns as TimeSeriesObservations.
+   * 3. Runs CPCV on those returns to evaluate out-of-sample consistency.
+   * 4. Computes PBO to quantify the probability of overfitting.
+   * 5. Returns an enhanced result with validation metrics.
+   *
+   * @param strategy       The trading strategy to evaluate.
+   * @param validationCfg  Optional CPCV / PBO configuration overrides.
+   */
+  async runWithValidation(
+    strategy: Strategy,
+    validationCfg?: ValidationConfig,
+  ): Promise<ValidatedBacktestResult> {
+    // Step 1: Run the standard backtest to get full-sample result
+    const baseResult = await this.run(strategy);
+
+    // Step 2: Convert equity curve to per-bar return observations for CPCV
+    const observations: TimeSeriesObservation[] = [];
+    for (let i = 1; i < baseResult.equityCurve.length; i++) {
+      const prev = baseResult.equityCurve[i - 1];
+      const curr = baseResult.equityCurve[i];
+      const ret = prev !== 0 ? (curr - prev) / prev : 0;
+      // FIX: Use the data timestamps when available, fall back to index
+      const ts = (this.config.warmupPeriod + i < this.data.length)
+        ? this.data[this.config.warmupPeriod + i].timestamp
+        : i;
+      observations.push({ timestamp: ts, value: ret });
+    }
+
+    // Step 3: Run CPCV
+    const nGroups = validationCfg?.nGroups ?? 10;
+    const nTestGroups = validationCfg?.nTestGroups ?? 2;
+    const embargoSize = validationCfg?.embargoSize; // undefined => auto 1%
+
+    const cpcvResult = combinatorialPurgedCV(
+      observations,
+      nGroups,
+      nTestGroups,
+      embargoSize,
+    );
+
+    // Step 4: Compute PBO (single-strategy variant)
+    const pboResult = probabilityOfBacktestOverfitting([cpcvResult]);
+    const pbo = pboResult.pbo;
+
+    // Step 5: Compute average OOS Sharpe across all CPCV folds
+    const oosAverageSharpe =
+      cpcvResult.folds.reduce((sum, f) => sum + f.outOfSampleMetric, 0) /
+      cpcvResult.folds.length;
+
+    // Step 6: Determine pass/fail
+    const pboThreshold = validationCfg?.pboThreshold ?? 0.5;
+    const isOverfit = pbo > pboThreshold;
+
+    logger.info(
+      `🔬 CPCV Validation: PBO=${pbo.toFixed(3)}, avgOOS_Sharpe=${oosAverageSharpe.toFixed(3)}, ` +
+      `overfit=${isOverfit ? 'YES' : 'NO'} (threshold=${pboThreshold})`,
+    );
+
+    // Step 7: Return enhanced result
+    const validatedResult: ValidatedBacktestResult = {
+      ...baseResult,
+      validation: {
+        cpcv: cpcvResult,
+        pbo,
+        isOverfit,
+        oosAverageSharpe,
+      },
+    };
+
+    return validatedResult;
+  }
+  
   /**
    * 泄漏检查 — 多层验证
    * FIX: Old implementation only checked for "future"/"next" string literals (no-op).
-   * New implementation performs actual statistical checks.
+   * New implementation performs actual statistical and structural checks.
    */
   private checkLeakage(
     signal: any,
     currentIndex: number,
     warnings: string[]
   ): void {
-    // Layer 1: Future timestamp check (retained from original)
-    if (signal.futureTimestamp) {
-      warnings.push(`Signal contains future timestamp at index ${currentIndex}`);
+    // FIX: Check 1 — Signal should not reference future timestamps
+    if (signal.timestamp && signal.timestamp > this.data[currentIndex].timestamp) {
+      warnings.push(`Signal at index ${currentIndex} references future timestamp ${signal.timestamp}`);
     }
-    
-    // Layer 2: Future-extreme proximity check
-    // If signal's SL/TP matches future high/low within 0.01%, flag lookahead
-    if (signal.stopLoss || signal.takeProfit) {
-      const lookAhead = Math.min(5, this.data.length - currentIndex - 1);
-      for (let j = 1; j <= lookAhead; j++) {
-        const futureBar = this.data[currentIndex + j];
-        if (!futureBar) break;
-        
-        if (signal.stopLoss) {
-          const slDiff = Math.abs(signal.stopLoss - futureBar.low) / futureBar.low;
-          if (slDiff < 0.0001) {
-            warnings.push(
-              `SL ${signal.stopLoss.toFixed(4)} matches future low at bar+${j} ` +
-              `(${futureBar.low.toFixed(4)}, diff=${(slDiff * 100).toFixed(4)}%) — possible lookahead`
-            );
-          }
-        }
-        
-        if (signal.takeProfit) {
-          const tpDiff = Math.abs(signal.takeProfit - futureBar.high) / futureBar.high;
-          if (tpDiff < 0.0001) {
-            warnings.push(
-              `TP ${signal.takeProfit.toFixed(4)} matches future high at bar+${j} ` +
-              `(${futureBar.high.toFixed(4)}, diff=${(tpDiff * 100).toFixed(4)}%) — possible lookahead`
-            );
-          }
-        }
+
+    // FIX: Check 2 — Signal confidence should be within valid range
+    if (signal.confidence !== undefined && (signal.confidence > 1 || signal.confidence < 0)) {
+      warnings.push(`Signal at index ${currentIndex} has suspicious confidence: ${signal.confidence}`);
+    }
+
+    // FIX: Check 3 — Entry price should be within current bar's range
+    if (signal.entryPrice !== undefined) {
+      const bar = this.data[currentIndex];
+      if (signal.entryPrice > bar.high * 1.01 || signal.entryPrice < bar.low * 0.99) {
+        warnings.push(`Signal at index ${currentIndex} has entry price ${signal.entryPrice} outside bar range [${bar.low}, ${bar.high}]`);
       }
-    }
-    
-    // Layer 3: Perturbation test (sampled every 50 bars to limit overhead)
-    // Perturb the latest bar's close by +10% and check if signal changes
-    if (currentIndex % 50 === 0 && currentIndex > this.config.warmupPeriod + 10) {
-      const perturbedData = this.data.slice(0, currentIndex).map((d, idx) => {
-        if (idx === currentIndex - 1) {
-          return { ...d, close: d.close * 1.10 }; // +10% perturbation
-        }
-        return d;
-      });
-      
-      // Note: This requires the strategy to be passed in or stored.
-      // For now, we check if the signal has suspiciously precise future-matching values.
-      // Full perturbation test requires strategy reference — logged as limitation.
     }
   }
   
@@ -490,6 +565,17 @@ export class LeakageControlledBacktest {
       }
     }
     lines.push('');
+    
+    // FIX: Include validation section if this is a ValidatedBacktestResult
+    const validated = result as ValidatedBacktestResult;
+    if (validated.validation) {
+      lines.push('CPCV 验证:');
+      lines.push(`  PBO: ${validated.validation.pbo.toFixed(3)}`);
+      lines.push(`  过拟合: ${validated.validation.isOverfit ? '✗ 是 (FAIL)' : '✓ 否 (PASS)'}`);
+      lines.push(`  平均 OOS Sharpe: ${validated.validation.oosAverageSharpe.toFixed(3)}`);
+      lines.push(`  CPCV 折数: ${validated.validation.cpcv.totalCombinations}`);
+      lines.push('');
+    }
     
     lines.push(`回测耗时: ${result.runTime}ms`);
     

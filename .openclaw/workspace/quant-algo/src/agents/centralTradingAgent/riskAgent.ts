@@ -20,7 +20,7 @@ import {
 } from './types';
 
 import { TechnicalReport } from '../marketIntelligence/types';
-import { getLLMClient } from './llmClient';
+import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
 
@@ -87,15 +87,7 @@ export class RiskAgent implements DecisionAgent {
     balance: number,
     riskParameters: any
   ): Promise<AgentOutput> {
-    const llm = getLLMClient();
-    
-    if (!llm.isAvailable()) {
-      return {
-        success: false,
-        error: 'DeepSeek API not available',
-      };
-    }
-    
+    const llm = LLMClient.getInstance();
     const systemPrompt = `你是一个专业的风险评估专家。
 你的任务是评估当前交易风险并设置止损止盈。
 
@@ -134,17 +126,33 @@ export class RiskAgent implements DecisionAgent {
 
 请综合评估风险，给出建议。`;
 
-    const result = await llm.chat(systemPrompt, userPrompt, true);
-    
-    if (!result.success || !result.content) {
+    let resultContent: string;
+    try {
+      const llmResp = await llm.chat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        responseFormat: { type: 'json_object' },
+        temperature: 0.3,
+      });
+      resultContent = llmResp.content;
+    } catch (llmError: any) {
       return {
         success: false,
-        error: result.error || 'Empty response',
+        error: llmError.message || 'LLM call failed',
+      };
+    }
+
+    if (!resultContent) {
+      return {
+        success: false,
+        error: 'Empty response',
       };
     }
     
     try {
-      const parsed = JSON.parse(result.content);
+      const parsed = JSON.parse(resultContent);
       
       // 计算止损止盈价格
       // 止损止盈百分比（不计算具体价格，由 OrderGenerator 根据方向计算）

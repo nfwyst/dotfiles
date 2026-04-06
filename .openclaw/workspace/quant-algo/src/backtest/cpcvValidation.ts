@@ -21,6 +21,13 @@
  */
 
 // ────────────────────────────────────────────────────────────────
+// Constants
+// ────────────────────────────────────────────────────────────────
+
+// FIX: Crypto markets trade 365 days/year, not 252 (equity markets)
+const CRYPTO_TRADING_DAYS = 365;
+
+// ────────────────────────────────────────────────────────────────
 // Types
 // ────────────────────────────────────────────────────────────────
 
@@ -30,6 +37,18 @@ export interface TimeSeriesObservation {
   timestamp: number;
   /** The strategy return (or any scalar metric) for this bar. */
   value: number;
+}
+
+/** Configuration for CPCV. */
+export interface CPCVConfig {
+  /** Number of contiguous groups to split the series into (default 10). */
+  nGroups?: number;
+  /** Number of test groups per combination (default 2). */
+  nTestGroups?: number;
+  /** Number of observations purged at each train/test boundary. */
+  embargoSize?: number;
+  /** Scalar metric computed on an array of values (default: annualized Sharpe). */
+  metricFn?: (values: number[]) => number;
 }
 
 /** Result of a single CPCV fold. */
@@ -109,8 +128,8 @@ export interface WalkForwardResult {
 // ────────────────────────────────────────────────────────────────
 
 /**
- * Default metric: annualized Sharpe ratio (assuming daily returns,
- * 252 trading days).  Callers can supply their own `metricFn`.
+ * Default metric: annualized Sharpe ratio for crypto markets.
+ * FIX: Changed from 252 (equity) to CRYPTO_TRADING_DAYS (365).
  */
 function defaultSharpe(returns: number[]): number {
   if (returns.length < 2) return 0;
@@ -119,7 +138,8 @@ function defaultSharpe(returns: number[]): number {
     returns.reduce((s, r) => s + (r - mean) ** 2, 0) / (returns.length - 1);
   const std = Math.sqrt(variance);
   if (std === 0) return 0;
-  return (mean / std) * Math.sqrt(252);
+  // FIX: Use CRYPTO_TRADING_DAYS instead of hardcoded 252
+  return (mean / std) * Math.sqrt(CRYPTO_TRADING_DAYS);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -326,12 +346,10 @@ export function probabilityOfBacktestOverfitting(
     // Find IS-best strategy for this fold
     let bestIS = -Infinity;
     let bestStrategyIdx = 0;
-    const isMetrics: number[] = [];
     const oosMetrics: number[] = [];
 
     for (let s = 0; s < S; s++) {
       const fold = variantResults[s].folds[foldIdx];
-      isMetrics.push(fold.inSampleMetric);
       oosMetrics.push(fold.outOfSampleMetric);
       if (fold.inSampleMetric > bestIS) {
         bestIS = fold.inSampleMetric;

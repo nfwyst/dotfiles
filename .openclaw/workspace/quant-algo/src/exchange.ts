@@ -11,10 +11,7 @@
 import crypto from 'crypto';
 import logger from './logger';
 import { exchangeCircuitBreaker } from './safety/circuitBreakers';
-import {
-  tracingManager,
-  getTraceContextForLogging,
-} from './monitoring/tracing';
+import { tracingManager } from './monitoring/tracing';
 
 // Testnet 用于交易操作
 const DEMO_API_BASE = 'https://testnet.binancefuture.com';

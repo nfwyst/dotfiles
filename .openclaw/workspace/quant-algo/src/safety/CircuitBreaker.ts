@@ -14,7 +14,7 @@
  */
 
 import logger from '../logger';
-import { metricsCollector } from '../monitoring/index.js';
+import { metricsCollector } from '../monitoring';
 
 // ==================== 类型定义 ====================
 

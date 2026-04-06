@@ -3,7 +3,7 @@
  * 核心机制：缓存、并发控制、强制刷新、智能重试、降级
  */
 
-import { TechnicalIndicators } from './technicalAnalysis';
+import { TechnicalIndicators } from './modules/technicalAnalysis';
 import logger from './logger';
 import { llmClient, llmConfigManager, LLMProvider } from './ai/index';
 
