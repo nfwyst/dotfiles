@@ -163,14 +163,34 @@ function aggregateTradesIntoPositions(trades: Trade[]): AggregatedPosition[] {
  * matching bar timestamps, then compare P&L to detect any
  * data-leakage or execution divergence.
  */
-function buildReplayStrategy(trades: Trade[], name = 'OCS-Replay'): Strategy {
+function buildReplayStrategy(trades: Trade[], ohlcv: OHLCV[], name = 'OCS-Replay'): Strategy {
   // FIX: Aggregate partial-close trades into full positions for LCB compatibility.
   // Without this, LCB closes 100% at the first partial-close signal (e.g. TP1),
   // causing systematic P&L divergence (was 23.71%).
   const positions = aggregateTradesIntoPositions(trades);
   console.log(`   📦 聚合 ${trades.length} 笔交易 → ${positions.length} 个完整仓位`);
 
+  // Fix 2: Compute bar period from OHLCV data to shift timestamps
+  // Phase A records entryTime at the execution bar (bar i+1).
+  // LCB calls generateSignal(data, j-1, pos) and executes at j + executionDelay.
+  // With executionDelay=1, execution is at j+1. If we match entryTime at j-1,
+  // execution lands at j+1 = (entryBar) + 2 — a 2-bar offset.
+  // Shifting timestamps back by one barPeriod makes the match happen one bar earlier,
+  // so execution at j+1 = entryBar (correct alignment with Phase A).
+  let barPeriodMs = 300000; // default 5m = 300000ms
+  if (ohlcv.length >= 2) {
+    // Use median of first 10 bar intervals for robustness
+    const intervals: number[] = [];
+    for (let k = 1; k < Math.min(ohlcv.length, 11); k++) {
+      intervals.push(ohlcv[k].timestamp - ohlcv[k - 1].timestamp);
+    }
+    intervals.sort((a, b) => a - b);
+    barPeriodMs = intervals[Math.floor(intervals.length / 2)];
+  }
+  console.log(`   ⏱  Bar period: ${barPeriodMs}ms (${barPeriodMs / 60000}min) — shifting replay timestamps by -1 bar`);
+
   // Build maps: timestamp → position[] (multiple positions can share same timestamp)
+  // Fix 2: Shift entry/exit timestamps back by one barPeriodMs
   const positionsByEntry = new Map<number, AggregatedPosition[]>();
   const positionsByExit = new Map<number, AggregatedPosition[]>();
   const consumedEntries = new Set<number>(); // index in positions array
@@ -178,10 +198,14 @@ function buildReplayStrategy(trades: Trade[], name = 'OCS-Replay'): Strategy {
 
   for (let i = 0; i < positions.length; i++) {
     const p = positions[i];
-    if (!positionsByEntry.has(p.entryTime)) positionsByEntry.set(p.entryTime, []);
-    positionsByEntry.get(p.entryTime)!.push(p);
-    if (!positionsByExit.has(p.exitTime)) positionsByExit.set(p.exitTime, []);
-    positionsByExit.get(p.exitTime)!.push(p);
+    // Fix 2: Use shifted timestamps (one bar earlier) so LCB's +1 executionDelay
+    // lands on the correct Phase A execution bar
+    const shiftedEntry = p.entryTime - barPeriodMs;
+    const shiftedExit = p.exitTime - barPeriodMs;
+    if (!positionsByEntry.has(shiftedEntry)) positionsByEntry.set(shiftedEntry, []);
+    positionsByEntry.get(shiftedEntry)!.push(p);
+    if (!positionsByExit.has(shiftedExit)) positionsByExit.set(shiftedExit, []);
+    positionsByExit.get(shiftedExit)!.push(p);
   }
 
   return {
@@ -272,7 +296,7 @@ async function phaseB(config: BacktestConfig, phaseAResult: PhaseAResult): Promi
   lcb.loadData(phaseAResult.ohlcv);
 
   // Build replay strategy from Phase A trades
-  const replayStrategy = buildReplayStrategy(phaseAResult.result.trades);
+  const replayStrategy = buildReplayStrategy(phaseAResult.result.trades, phaseAResult.ohlcv);
 
   // Run through leakage-controlled framework
   const lcbResult = await lcb.run(replayStrategy);

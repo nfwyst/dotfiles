@@ -205,12 +205,51 @@ export class LeakageControlledBacktest {
     let maxConsecutiveWins = 0;
     let maxConsecutiveLosses = 0;
     
+    // Fix 3: Daily loss limit state
+    let currentDayStartTs = 0;
+    let dailyStartBalance = balance;
+    let dailyLossLimitHit = false;
+    const dailyLossLimit = 0.05; // 5%
+
+    // Fix 3: Circuit breaker state
+    let circuitBreakerActive = false;
+    let circuitBreakerBarsLeft = 0;
+    let maxEquitySeen = balance;
+
     // 回测循环
     for (let i = this.config.warmupPeriod; i < this.data.length - this.config.executionDelay; i++) {
       // 关键泄漏控制：只使用 i 之前的数据
       const availableData = this.data.slice(0, i);
       const currentCandle = this.data[i];
       
+      // Fix 3: Daily loss limit tracking
+      const dayTs = new Date(currentCandle.timestamp);
+      dayTs.setUTCHours(0, 0, 0, 0);
+      const dayStartMs = dayTs.getTime();
+      if (dayStartMs !== currentDayStartTs) {
+        currentDayStartTs = dayStartMs;
+        dailyStartBalance = balance;
+        dailyLossLimitHit = false;
+      }
+      if (!dailyLossLimitHit && dailyStartBalance > 0) {
+        const dailyReturn = (balance - dailyStartBalance) / dailyStartBalance;
+        if (dailyReturn < -dailyLossLimit) {
+          dailyLossLimitHit = true;
+        }
+      }
+
+      // Fix 3: Circuit breaker tracking
+      if (balance > maxEquitySeen) maxEquitySeen = balance;
+      const drawdown = maxEquitySeen > 0 ? (maxEquitySeen - balance) / maxEquitySeen : 0;
+      if (drawdown > 0.20 && !circuitBreakerActive) {
+        circuitBreakerActive = true;
+        circuitBreakerBarsLeft = 2000; // ~7 days at 5m
+      }
+      if (circuitBreakerActive) {
+        circuitBreakerBarsLeft--;
+        if (circuitBreakerBarsLeft <= 0) circuitBreakerActive = false;
+      }
+
       // 更新持仓价值
       if (position.side !== 'none') {
         const markPrice = currentCandle.close;
@@ -252,9 +291,11 @@ export class LeakageControlledBacktest {
         : executionPrice * (1 - this.config.slippage);
       
       // 执行
-      if (signal.action === 'buy' && position.side === 'none') {
+      if (signal.action === 'buy' && position.side === 'none' && !dailyLossLimitHit && !circuitBreakerActive) {
         // 开多
-        const size = (balance * this.config.leverage) / slippageAdjustedPrice;
+        const size = signal.size && signal.size > 0
+          ? signal.size
+          : (balance * this.config.leverage) / slippageAdjustedPrice;
         const fees = size * slippageAdjustedPrice * this.config.feeRate;
         
         position = {
@@ -265,9 +306,11 @@ export class LeakageControlledBacktest {
         entryIndex = i;
         balance -= fees;
         
-      } else if (signal.action === 'sell' && position.side === 'none') {
+      } else if (signal.action === 'sell' && position.side === 'none' && !dailyLossLimitHit && !circuitBreakerActive) {
         // 开空
-        const size = (balance * this.config.leverage) / slippageAdjustedPrice;
+        const size = signal.size && signal.size > 0
+          ? signal.size
+          : (balance * this.config.leverage) / slippageAdjustedPrice;
         const fees = size * slippageAdjustedPrice * this.config.feeRate;
         
         position = {
