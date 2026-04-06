@@ -124,10 +124,9 @@ export class BacktestEngine {
   private circuitBreakerActive: boolean = false;
   private circuitBreakerCooldownEnd: number = 0;
 
-  // Global drawdown protection — tracks all-time high, never resets
-  private allTimeHighEquity: number = 0;
-  private globalHaltActive: boolean = false;
-  private globalHaltEnd: number = 0;
+  // Drawdown-adaptive position scaling: reduce size after CB events
+  private drawdownScaleFactor: number = 1.0;
+  private cbTriggerCount: number = 0;
 
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
   private dailyLossLimit: number = 0.04; // 4% of day's starting equity
@@ -168,7 +167,7 @@ export class BacktestEngine {
     this.equity = config.initialBalance;
     // FIX 4: Initialize peakEquity from initial balance
     this.peakEquity = config.initialBalance;
-    this.allTimeHighEquity = config.initialBalance;
+    this.drawdownScaleFactor = 1.0;
     this.strategyEngine = new StrategyEngineModule('ocs');
     this.ta = new TechnicalAnalysisModule();
     this.ocsLayer1 = new OCSLayer1();
@@ -543,41 +542,34 @@ export class BacktestEngine {
       // Compute unrealized equity to detect drawdown with open positions
       const preCheckEquity = this.calculateEquity(currentCandle.close);
       if (preCheckEquity > this.peakEquity) this.peakEquity = preCheckEquity;
-      if (preCheckEquity > this.allTimeHighEquity) this.allTimeHighEquity = preCheckEquity;
       const currentDrawdown = (this.peakEquity - preCheckEquity) / this.peakEquity;
-
-      // ── Global drawdown halt: 18% from all-time high → long pause ──
-      const globalDrawdown = (this.allTimeHighEquity - preCheckEquity) / this.allTimeHighEquity;
-      if (globalDrawdown > 0.18 && !this.globalHaltActive) {
-        this.globalHaltActive = true;
-        this.globalHaltEnd = i + 4000; // Pause for ~14 days
-        if (this.position) {
-          console.log(`  🚨 全局保护: 强制平仓, 从历史最高回撤 ${(globalDrawdown*100).toFixed(1)}%`);
-          this.closePosition(currentCandle, 'global_halt', i);
-        }
-        if (this.pendingSignal) this.pendingSignal = null;
-        console.log(`  🚨 全局保护触发: 回撤 ${(globalDrawdown*100).toFixed(1)}% > 18%, 暂停交易 ~14天`);
-      }
-      if (this.globalHaltActive && i >= this.globalHaltEnd) {
-        this.globalHaltActive = false;
-        console.log(`  🟢 全局保护解除`);
-      }
 
       // Trigger circuit breaker at 15% drawdown — force-close IMMEDIATELY
       if (currentDrawdown > 0.12 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.circuitBreakerCooldownEnd = i + 2000; // Pause for ~7 days (2000 × 5min bars)
+        this.cbTriggerCount++;
+        // Reduce position size after each CB trigger: 1.0 → 0.5 → 0.25 → 0.25
+        this.drawdownScaleFactor = Math.max(0.25, Math.pow(0.5, this.cbTriggerCount));
         if (this.position) {
           console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
           this.closePosition(currentCandle, 'circuit_breaker', i);
         }
-        if (this.pendingSignal) this.pendingSignal = null; // Cancel any pending entry
-        console.log(`  🔴 熔断器触发: 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 12%, 暂停交易 ~7天`);
+        if (this.pendingSignal) this.pendingSignal = null;
+        console.log(`  🔴 熔断器触发 (#${this.cbTriggerCount}): 回撤 ${(currentDrawdown * 100).toFixed(1)}% > 12%, 暂停交易 ~7天, 仓位缩减至 ${(this.drawdownScaleFactor * 100).toFixed(0)}%`);
       }
       if (this.circuitBreakerActive && i >= this.circuitBreakerCooldownEnd) {
         this.circuitBreakerActive = false;
         this.peakEquity = this.calculateEquity(currentCandle.close); // Reset peak
-        console.log(`  🟢 熔断器解除: 已冷却, 重置基准权益为 $${this.peakEquity.toFixed(2)}`);
+        console.log(`  🟢 熔断器解除: 仓位缩放 ${(this.drawdownScaleFactor * 100).toFixed(0)}%, 重置基准权益为 $${this.peakEquity.toFixed(2)}`);
+      }
+      // Gradually restore position scaling as equity recovers
+      if (!this.circuitBreakerActive && this.drawdownScaleFactor < 1.0 && currentDrawdown <= 0) {
+        this.drawdownScaleFactor = Math.min(1.0, this.drawdownScaleFactor * 1.5);
+        if (this.drawdownScaleFactor >= 0.99) {
+          this.drawdownScaleFactor = 1.0;
+          this.cbTriggerCount = 0;
+        }
       }
 
       // 检查当前持仓 (SL/TP checks)
@@ -586,13 +578,13 @@ export class BacktestEngine {
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.globalHaltActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      if (!this.position && !this.circuitBreakerActive && !this.globalHaltActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
+      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
@@ -841,11 +833,12 @@ export class BacktestEngine {
     
     // FIX C3: Use bar's open price for next-bar execution, not close
     const basePrice = useOpen ? candle.open : candle.close;
+    const scaledRisk = this.config.positionSize * this.drawdownScaleFactor;
     const psResult = calculatePositionSize({
       balance: this.balance,
       currentPrice: basePrice,
       stopLossPrice: stopLoss ?? 0,
-      maxRiskPerTrade: this.config.positionSize,
+      maxRiskPerTrade: scaledRisk,
       leverage: this.config.leverage,
       maxLeverageUtil: 1.0,  // backtest uses full leverage allowance
     });
