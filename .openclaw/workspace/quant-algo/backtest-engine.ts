@@ -24,7 +24,7 @@ import { calculatePositionSize } from './src/risk/positionSizing';
 // FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
 
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
-const CRYPTO_TRADING_DAYS = 365;
+export const CRYPTO_TRADING_DAYS = 365;
 
 // BUG 15 FIX: Helper to compute bars per day from timeframe string
 function barsPerDay(timeframe: string): number {
@@ -41,7 +41,7 @@ function barsPerDay(timeframe: string): number {
   }
 }
 
-interface BacktestConfig {
+export interface BacktestConfig {
   symbol: string;
   timeframe: string;
   startDate: Date;
@@ -53,7 +53,7 @@ interface BacktestConfig {
   slippage: number;      // 滑点
 }
 
-interface Trade {
+export interface Trade {
   entryTime: number;
   exitTime: number;
   side: 'long' | 'short';
@@ -68,7 +68,7 @@ interface Trade {
   holdingBars: number;
 }
 
-interface BacktestResult {
+export interface BacktestResult {
   config: BacktestConfig;
   trades: Trade[];
   stats: {
@@ -94,9 +94,12 @@ interface BacktestResult {
   drawdownCurve: number[];
 }
 
-class BacktestEngine {
+export class BacktestEngine {
   private config: BacktestConfig;
   private ohlcv: OHLCV[] = [];
+
+  /** Expose loaded OHLCV data for external consumers (e.g. Phase B/C) */
+  getOhlcv(): OHLCV[] { return this.ohlcv; }
   private balance: number = 0;
   private equity: number = 0;
   private equityCurve: number[] = [];
@@ -956,7 +959,7 @@ class BacktestEngine {
 }
 
 // 主函数
-async function main() {
+export async function main() {
   // Default: backtest last 7 days. Override via env or CLI args as needed.
   const endDate = new Date();
   endDate.setUTCHours(0, 0, 0, 0);
@@ -987,4 +990,6 @@ async function main() {
   }
 }
 
-main();
+// Run only when executed directly (not imported)
+const isMain = process.argv[1] && (process.argv[1].endsWith("backtest-engine.ts") || process.argv[1].endsWith("backtest-engine"));
+if (isMain) { main(); }

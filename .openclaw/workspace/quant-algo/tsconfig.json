@@ -20,7 +20,8 @@
   "include": [
     "src/**/*.ts",
     "backtest-engine.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "backtest-runner.ts"
   ],
   "exclude": [
     "node_modules",

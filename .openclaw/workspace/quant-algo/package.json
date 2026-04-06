@@ -13,30 +13,33 @@
     "start": "tsx src/index.ts",
     "start:live": "TRADING_MODE=live tsx src/index.ts",
     "start:paper": "TRADING_MODE=paper tsx src/index.ts",
-    "backtest": "tsx backtest-engine.ts",
+    "backtest": "tsx backtest-runner.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --reporter=junit --outputFile=test-results.xml",
     "clean": "rm -rf dist coverage backtest-reports/*.json",
-    "prepare-data": "echo '⚠️  Place OHLCV JSON files in backtest-cache/ (see README.md)'"
+    "prepare-data": "echo '⚠️  Place OHLCV JSON files in backtest-cache/ (see README.md)'",
+    "backtest:fast": "BT_PHASE=A tsx backtest-runner.ts",
+    "backtest:verify": "BT_PHASE=AB tsx backtest-runner.ts",
+    "backtest:engine": "tsx backtest-engine.ts"
   },
   "dependencies": {
-    "dotenv": "^16.4.0",
-    "ioredis": "^5.4.0",
-    "prom-client": "^15.1.0",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/sdk-node": "^0.52.0",
-    "@opentelemetry/sdk-trace-base": "^1.25.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.52.0",
     "@opentelemetry/resources": "^1.25.0",
-    "@opentelemetry/semantic-conventions": "^1.25.0"
+    "@opentelemetry/sdk-node": "^0.52.0",
+    "@opentelemetry/sdk-trace-base": "^1.25.0",
+    "@opentelemetry/semantic-conventions": "^1.25.0",
+    "dotenv": "^16.4.0",
+    "ioredis": "^5.4.0",
+    "prom-client": "^15.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "tsx": "^4.19.0",
-    "vitest": "^1.6.0",
+    "@types/node": "^20.14.0",
     "@vitest/coverage-v8": "^1.6.0",
-    "@types/node": "^20.14.0"
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.0"
   }
 }
