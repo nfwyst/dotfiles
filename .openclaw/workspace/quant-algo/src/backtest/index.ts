@@ -25,3 +25,15 @@ export {
   type WalkForwardConfig,
   type WalkForwardResult,
 } from './cpcvValidation';
+
+export {
+  DeflatedSharpeCalculator,
+  type DSRConfig,
+  type DSRResult,
+} from './deflatedSharpe';
+
+export {
+  TripleBarrierLabeler,
+  type TripleBarrierConfig,
+  type BarrierLabel,
+} from './tripleBarrier';

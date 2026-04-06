@@ -1,7 +1,10 @@
 import { config } from './config';
 import logger from './logger';
 import { Position } from './events/types';
+import { BayesianKellyManager, KellyResult } from './risk/bayesianKelly';
+
 export { Position } from './events/types';
+export { KellyResult } from './risk/bayesianKelly';
 
 
 export interface DailyStats {
@@ -17,9 +20,15 @@ export class RiskManager {
   private dailyStats: DailyStats;
   private lastTradeTime: Date | null = null;
   private consecutiveLosses: number = 0;
+  private kelly: BayesianKellyManager;
   
   constructor() {
     this.dailyStats = this.initDailyStats();
+    this.kelly = new BayesianKellyManager({
+      kellyFraction: config.risk.positionSizing.kellyFraction,
+      maxPositionFraction: config.risk.positionSizing.maxPositionSize,
+      minPositionFraction: config.risk.positionSizing.minPositionSize,
+    });
   }
   
   private initDailyStats(): DailyStats {
@@ -65,8 +74,33 @@ export class RiskManager {
     return { allowed: true };
   }
   
-  // 计算仓位大小
-  calculatePositionSize(balance: number, currentPrice: number, stopLossPrice: number): number {
+  // 计算仓位大小 — delegates to Bayesian Kelly when sufficient data is available
+  calculatePositionSize(balance: number, currentPrice: number, stopLossPrice: number, signalStrength?: number): number {
+    // Try Bayesian Kelly first
+    const kellyResult = this.kelly.calculatePositionSize(balance, currentPrice, signalStrength);
+    
+    if (kellyResult.method === 'kelly') {
+      // Kelly has enough data — use its position size
+      const notionalValue = kellyResult.positionSize * currentPrice;
+      const maxNotional = balance * config.leverage * 0.5;
+      
+      let positionSize = kellyResult.positionSize;
+      if (notionalValue > maxNotional) {
+        positionSize = maxNotional / currentPrice;
+        logger.warn(`Kelly仓位已限制为 ${positionSize.toFixed(4)} (名义价值 ${maxNotional.toFixed(2)} USDT)`);
+      }
+      
+      logger.info(
+        `📐 Kelly定仓 | 方法: ${kellyResult.method} | raw=${kellyResult.rawKelly.toFixed(4)} ` +
+        `scaled=${kellyResult.scaledKelly.toFixed(4)} frac=${kellyResult.positionFraction.toFixed(4)} ` +
+        `winRate=${(kellyResult.winRate * 100).toFixed(1)}% payoff=${kellyResult.payoffRatio.toFixed(2)} ` +
+        `confidence=${(kellyResult.confidence * 100).toFixed(1)}%`
+      );
+      
+      return positionSize;
+    }
+    
+    // Fall back to original fixed-fraction logic
     // 风险金额 = 余额 * 每笔风险比例
     const riskAmount = balance * config.maxRiskPerTrade;
     
@@ -85,6 +119,11 @@ export class RiskManager {
       positionSize = maxNotional / currentPrice;
       logger.warn(`仓位大小已限制为 ${positionSize.toFixed(4)} (名义价值 ${maxNotional.toFixed(2)} USDT)`);
     }
+    
+    logger.info(
+      `📐 固定比例定仓 | 方法: fixed | fraction=${config.maxRiskPerTrade} ` +
+      `Kelly数据不足 (${kellyResult.confidence.toFixed(0)}% 置信度)`
+    );
     
     return positionSize;
   }
@@ -150,7 +189,7 @@ export class RiskManager {
   }
   
   // 记录交易结果
-  recordTrade(pnl: number): void {
+  recordTrade(pnl: number, balance?: number): void {
     this.dailyStats.trades++;
     this.dailyStats.totalPnl += pnl;
     
@@ -164,12 +203,28 @@ export class RiskManager {
     
     this.lastTradeTime = new Date();
     
+    // Feed the trade into Bayesian Kelly tracker
+    const effectiveBalance = balance ?? config.initialBalance;
+    this.kelly.recordTrade({
+      pnl,
+      returnPct: pnl / effectiveBalance,
+      timestamp: Date.now(),
+    });
+    
     logger.info(`📊 交易记录 | PnL: ${pnl.toFixed(2)} USDT | 今日总盈亏: ${this.dailyStats.totalPnl.toFixed(2)} USDT`);
     
     // 如果连续亏损，增加冷却时间
     if (this.consecutiveLosses >= 3) {
       logger.warn(`⚠️ 连续亏损 ${this.consecutiveLosses} 次，进入冷却模式`);
     }
+  }
+  
+  /**
+   * Expose the Bayesian Kelly calculation for external inspection.
+   * Returns the full KellyResult without any leverage clamping.
+   */
+  getKellyResult(equity: number, price: number, signalStrength?: number, realizedVol?: number): KellyResult {
+    return this.kelly.calculatePositionSize(equity, price, signalStrength, realizedVol);
   }
   
   // 获取统计信息
@@ -187,6 +242,7 @@ export class RiskManager {
   // 格式化统计输出
   formatStats(): string {
     const stats = this.getStats();
+    const kellyStats = this.kelly.getStats();
     const winRate = stats.trades > 0 ? (stats.wins / stats.trades * 100).toFixed(1) : '0.0';
     
     return `
@@ -196,6 +252,11 @@ export class RiskManager {
 盈利: ${stats.wins} | 亏损: ${stats.losses}
 胜率: ${winRate}%
 总盈亏: ${stats.totalPnl >= 0 ? '+' : ''}${stats.totalPnl.toFixed(2)} USDT
+━━━━━━━━━━━━━━━━━━━━━
+Kelly统计
+  总交易数: ${kellyStats.tradeCount}
+  近期胜率: ${(kellyStats.recentWinRate * 100).toFixed(1)}%
+  Kelly比例: ${kellyStats.kellyFraction}
 ━━━━━━━━━━━━━━━━━━━━━
     `.trim();
   }

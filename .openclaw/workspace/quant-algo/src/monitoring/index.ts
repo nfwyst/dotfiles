@@ -1,9 +1,10 @@
 /**
  * 监控模块导出
- * 
+ *
  * 提供 Prometheus 兼容的指标收集和暴露功能
  * 提供 OpenTelemetry 分布式追踪功能
  * 提供性能追踪和监控仪表板
+ * 提供生产环境告警管理
  */
 
 // 指标收集器
@@ -55,3 +56,15 @@ export type {
   SystemStatus,
   SystemAlert,
 } from './dashboard';
+
+// 告警管理器
+export {
+  AlertManager,
+  AlertSeverity,
+  AlertChannel,
+} from './alertManager';
+export type {
+  AlertRule,
+  Alert,
+  AlertConfig,
+} from './alertManager';

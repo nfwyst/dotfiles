@@ -10,6 +10,13 @@
  *                                                                   StateManager
  *
  * FIX M1: Single orchestration point for all event-driven components.
+ *
+ * DataFeed Abstraction:
+ *   The runtime now accepts an optional TradingMode and injectable DataFeed /
+ *   ExecutionAdapter. When mode = 'paper', PaperExecutionAdapter is used
+ *   instead of the real exchange. When mode = 'backtest', a HistoricalDataFeed
+ *   replays stored candles. The three layers (Data, Strategy, Execution) run
+ *   identically regardless of mode — only the feed and execution adapter differ.
  */
 
 import { StreamEventBus } from '../events/StreamEventBus';
@@ -18,6 +25,7 @@ import type { EventDrivenDataLayer } from '../layers/EventDrivenDataLayer';
 import type { EventDrivenStrategyLayer } from '../layers/EventDrivenStrategyLayer';
 import type { EventDrivenExecutionLayer } from '../layers/EventDrivenExecutionLayer';
 import type { StateManager } from '../state';
+import type { DataFeed, ExecutionAdapter, TradingMode } from '../feeds/types';
 import logger from '../logger';
 
 // ==================== Configuration ====================
@@ -28,6 +36,9 @@ export interface RuntimeConfig {
 
   /** Graceful shutdown timeout in milliseconds (default: 10 000) */
   shutdownTimeoutMs?: number;
+
+  /** Trading mode: 'backtest' | 'paper' | 'live' (default: 'live') */
+  mode?: TradingMode;
 }
 
 // ==================== Health types ====================
@@ -41,6 +52,7 @@ export interface ComponentHealth {
 export interface RuntimeHealth {
   running: boolean;
   uptime: number;
+  mode: TradingMode;
   components: {
     eventBus: ComponentHealth;
     dataLayer: ComponentHealth;
@@ -59,6 +71,17 @@ export interface RuntimeDeps {
   executionLayer: EventDrivenExecutionLayer;
   stateManager: StateManager;
   config?: RuntimeConfig;
+
+  /** Injectable data feed — when provided the runtime uses this instead of the
+   *  data layer's own exchange-backed fetcher. Required for 'backtest' mode,
+   *  optional for 'paper' (defaults to LiveDataFeed) and 'live'. */
+  dataFeed?: DataFeed;
+
+  /** Injectable execution adapter — when provided the runtime routes order
+   *  execution through this adapter. Required for 'paper' mode (should be
+   *  PaperExecutionAdapter), ignored in 'backtest' (uses backtest engine),
+   *  optional in 'live' (defaults to real exchange). */
+  executionAdapter?: ExecutionAdapter;
 }
 
 // ==================== Runtime ====================
@@ -69,6 +92,11 @@ export interface RuntimeDeps {
  * Layers are constructed externally (their dependencies are domain-specific)
  * and injected here. The runtime owns startup ordering, health monitoring,
  * signal-handler registration, and graceful shutdown.
+ *
+ * The runtime now supports three trading modes via the DataFeed abstraction:
+ *   - 'live'     : Real exchange data + real order execution (default)
+ *   - 'paper'    : Real exchange data + simulated order execution
+ *   - 'backtest' : Historical data replay + simulated order execution
  */
 export class EventDrivenRuntime {
   // --- Components (injected) ---
@@ -78,9 +106,14 @@ export class EventDrivenRuntime {
   private executionLayer: EventDrivenExecutionLayer;
   private stateManager: StateManager;
 
+  // --- DataFeed abstraction (injected, optional) ---
+  private dataFeed: DataFeed | undefined;
+  private executionAdapter: ExecutionAdapter | undefined;
+
   // --- Config ---
   private readonly healthCheckIntervalMs: number;
   private readonly shutdownTimeoutMs: number;
+  private readonly mode: TradingMode;
 
   // --- Lifecycle state ---
   private isRunning = false;
@@ -99,6 +132,11 @@ export class EventDrivenRuntime {
 
     this.healthCheckIntervalMs = deps.config?.healthCheckIntervalMs ?? 30_000;
     this.shutdownTimeoutMs = deps.config?.shutdownTimeoutMs ?? 10_000;
+    this.mode = deps.config?.mode ?? 'live';
+
+    // Store injectable feeds / adapters
+    this.dataFeed = deps.dataFeed;
+    this.executionAdapter = deps.executionAdapter;
   }
 
   // ----------------------------------------------------------------
@@ -109,8 +147,9 @@ export class EventDrivenRuntime {
    * Start all components in the correct order:
    * 1. Event bus  — must be ready before any layer can publish/subscribe
    * 2. State manager is already initialised by its factory
-   * 3. Layers — subscriptions are wired in their constructors
-   * 4. System-started event + health-check timer
+   * 3. DataFeed + ExecutionAdapter initialisation (if injected)
+   * 4. Layers — subscriptions are wired in their constructors
+   * 5. System-started event + health-check timer
    *
    * FIX M1: Deterministic startup order prevents race conditions.
    */
@@ -120,7 +159,11 @@ export class EventDrivenRuntime {
       return;
     }
 
-    logger.info('[Runtime] Starting event-driven trading pipeline...');
+    // Log mode prominently
+    const modeLabel = this.mode.toUpperCase();
+    logger.info('========================================');
+    logger.info(`[Runtime] Starting in ${modeLabel} TRADING mode`);
+    logger.info('========================================');
 
     // 1. Wait for the event bus connection
     // FIX M1: Block until Redis is reachable so layers don't publish into the void.
@@ -136,18 +179,48 @@ export class EventDrivenRuntime {
     //    Nothing extra needed here, but we log for traceability.
     logger.info('[Runtime] State manager ready');
 
-    // 3. Layers are already subscribed (they wire subscriptions in their
+    // 3. Initialize DataFeed and ExecutionAdapter if provided
+    if (this.dataFeed) {
+      await this.dataFeed.initialize();
+      logger.info(`[Runtime] DataFeed initialized (mode=${this.dataFeed.mode})`);
+    }
+
+    if (this.executionAdapter) {
+      logger.info(`[Runtime] ExecutionAdapter injected (mode=${this.executionAdapter.mode})`);
+    }
+
+    if (this.mode === 'paper') {
+      if (!this.executionAdapter) {
+        logger.warn(
+          '[Runtime] Paper mode without ExecutionAdapter — orders will still hit the real exchange! ' +
+          'Inject a PaperExecutionAdapter for simulated execution.',
+        );
+      } else {
+        logger.info('[Runtime] Paper mode: orders routed through PaperExecutionAdapter');
+      }
+    }
+
+    if (this.mode === 'backtest') {
+      if (!this.dataFeed) {
+        throw new Error(
+          '[Runtime] Backtest mode requires a DataFeed (HistoricalDataFeed). None was injected.',
+        );
+      }
+      logger.info('[Runtime] Backtest mode: replaying historical data');
+    }
+
+    // 4. Layers are already subscribed (they wire subscriptions in their
     //    constructors via getEventBus()). Log confirmation.
     // FIX M1: Layers self-subscribe; runtime only needs to verify readiness.
     logger.info('[Runtime] DataLayer ready');
     logger.info('[Runtime] StrategyLayer ready (subscribed to DATA_LAYER_COMPLETE)');
     logger.info('[Runtime] ExecutionLayer ready (subscribed to STRATEGY_LAYER_COMPLETE)');
 
-    // 4. Mark running and record start time
+    // 5. Mark running and record start time
     this.isRunning = true;
     this.startedAt = Date.now();
 
-    // 5. Publish system-started event
+    // 6. Publish system-started event
     await this.eventBus.publish({
       channel: EventChannels.SYSTEM_STARTED,
       source: 'System',
@@ -159,13 +232,14 @@ export class EventDrivenRuntime {
           leverage: Number(process.env.LEVERAGE) || 5,
         },
         balance: 0, // actual balance fetched by layers on demand
+        mode: this.mode,
       },
     });
 
-    // 6. Start periodic health checks
+    // 7. Start periodic health checks
     this.startHealthChecks();
 
-    logger.info('[Runtime] Pipeline started successfully');
+    logger.info(`[Runtime] Pipeline started successfully in ${modeLabel} mode`);
   }
 
   // ----------------------------------------------------------------
@@ -175,10 +249,11 @@ export class EventDrivenRuntime {
   /**
    * Graceful shutdown sequence:
    * 1. Stop health-check timer
-   * 2. Unsubscribe layers (stop accepting new events)
-   * 3. Publish system-stopped event
-   * 4. Save state snapshot
-   * 5. Close event bus connection
+   * 2. Close DataFeed and ExecutionAdapter
+   * 3. Unsubscribe layers (stop accepting new events)
+   * 4. Publish system-stopped event
+   * 5. Save state snapshot
+   * 6. Close event bus connection
    *
    * FIX M1: Bounded shutdown timeout prevents indefinite hangs.
    */
@@ -197,7 +272,26 @@ export class EventDrivenRuntime {
       // 1. Stop health checks
       this.stopHealthChecks();
 
-      // 2. Unsubscribe layers in reverse pipeline order
+      // 2. Close DataFeed and ExecutionAdapter
+      if (this.dataFeed) {
+        try {
+          await this.dataFeed.close();
+          logger.info('[Runtime] DataFeed closed');
+        } catch (err) {
+          logger.error('[Runtime] DataFeed close failed:', err);
+        }
+      }
+
+      if (this.executionAdapter) {
+        try {
+          await this.executionAdapter.close();
+          logger.info('[Runtime] ExecutionAdapter closed');
+        } catch (err) {
+          logger.error('[Runtime] ExecutionAdapter close failed:', err);
+        }
+      }
+
+      // 3. Unsubscribe layers in reverse pipeline order
       // FIX M1: Reverse-order teardown ensures downstream consumers
       // finish before upstream producers stop feeding them.
       try {
@@ -214,7 +308,7 @@ export class EventDrivenRuntime {
         logger.error('[Runtime] StrategyLayer unsubscribe failed:', err);
       }
 
-      // 3. Publish system-stopped event (best-effort)
+      // 4. Publish system-stopped event (best-effort)
       try {
         const uptime = Date.now() - this.startedAt;
         const state = this.stateManager.getState();
@@ -236,7 +330,7 @@ export class EventDrivenRuntime {
         logger.error('[Runtime] Failed to publish system-stopped event:', err);
       }
 
-      // 4. Persist state
+      // 5. Persist state
       // FIX M1: Critical save + snapshot guarantees no data loss on shutdown.
       try {
         this.stateManager.createSnapshot('shutdown');
@@ -246,7 +340,7 @@ export class EventDrivenRuntime {
         logger.error('[Runtime] State save failed:', err);
       }
 
-      // 5. Close state manager (WAL checkpoint + auto-snapshot stop)
+      // 6. Close state manager (WAL checkpoint + auto-snapshot stop)
       try {
         await this.stateManager.close();
         logger.info('[Runtime] State manager closed');
@@ -254,7 +348,7 @@ export class EventDrivenRuntime {
         logger.error('[Runtime] State manager close failed:', err);
       }
 
-      // 6. Close event bus
+      // 7. Close event bus
       try {
         await this.eventBus.close();
         logger.info('[Runtime] Event bus closed');
@@ -320,20 +414,23 @@ export class EventDrivenRuntime {
     return {
       running: this.isRunning,
       uptime,
+      mode: this.mode,
       components: {
         eventBus: eventBusHealth,
         dataLayer: { healthy: this.isRunning },
         strategyLayer: {
           healthy: this.isRunning && strategyQueueSize < 50,
-          error: strategyQueueSize >= 50
-            ? `Queue backpressure: ${strategyQueueSize} pending`
-            : undefined,
+          error:
+            strategyQueueSize >= 50
+              ? `Queue backpressure: ${strategyQueueSize} pending`
+              : undefined,
         },
         executionLayer: {
           healthy: this.isRunning && executionQueueSize < 50,
-          error: executionQueueSize >= 50
-            ? `Queue backpressure: ${executionQueueSize} pending`
-            : undefined,
+          error:
+            executionQueueSize >= 50
+              ? `Queue backpressure: ${executionQueueSize} pending`
+              : undefined,
         },
         stateManager: stateHealth,
       },
@@ -345,7 +442,9 @@ export class EventDrivenRuntime {
     this.healthCheckTimer = setInterval(async () => {
       try {
         const health = await this.getHealth();
-        const allHealthy = Object.values(health.components).every((c) => c.healthy);
+        const allHealthy = Object.values(health.components).every(
+          (c) => c.healthy,
+        );
 
         if (!allHealthy) {
           const unhealthy = Object.entries(health.components)
@@ -424,6 +523,21 @@ export class EventDrivenRuntime {
   /** Milliseconds since start(), or 0 if not running. */
   getUptime(): number {
     return this.isRunning ? Date.now() - this.startedAt : 0;
+  }
+
+  /** The trading mode this runtime was started with. */
+  getMode(): TradingMode {
+    return this.mode;
+  }
+
+  /** The injected DataFeed, or undefined if none was provided. */
+  getDataFeed(): DataFeed | undefined {
+    return this.dataFeed;
+  }
+
+  /** The injected ExecutionAdapter, or undefined if none was provided. */
+  getExecutionAdapter(): ExecutionAdapter | undefined {
+    return this.executionAdapter;
   }
 }
 
