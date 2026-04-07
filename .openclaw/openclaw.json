@@ -14,12 +14,12 @@
         "model": "qwen3-embedding:8b"
       },
       "models": {
-        "kimi-coding/k2p5": {
+        "kimi/k2p5": {
           "alias": "Kimi"
         }
       },
       "model": {
-        "primary": "kimi-coding/k2p5"
+        "primary": "kimi/k2p5"
       }
     }
   },
@@ -85,7 +85,7 @@
           }
         ]
       },
-      "kimi-coding": {
+      "kimi": {
         "baseUrl": "https://api.kimi.com/coding/",
         "api": "anthropic-messages",
         "models": [
@@ -155,14 +155,14 @@
     }
   },
   "wizard": {
-    "lastRunAt": "2026-04-07T18:18:50.270Z",
+    "lastRunAt": "2026-04-07T18:47:25.404Z",
     "lastRunVersion": "2026.4.5",
     "lastRunCommand": "onboard",
     "lastRunMode": "local"
   },
   "meta": {
     "lastTouchedVersion": "2026.4.5",
-    "lastTouchedAt": "2026-04-07T18:18:50.350Z"
+    "lastTouchedAt": "2026-04-07T18:47:25.461Z"
   },
   "mcp": {
     "servers": {
