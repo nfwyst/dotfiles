@@ -220,3 +220,6 @@ git config --global merge.tool nvimdiff
 
 # 禁用 zsh 邮件检查功能
 unset MAILCHECK
+
+# OpenClaw Completion
+source "~/.openclaw/completions/openclaw.zsh"

@@ -9,17 +9,17 @@
   "agents": {
     "defaults": {
       "workspace": "/Users/malisheng/.openclaw/workspace",
+      "memorySearch": {
+        "provider": "ollama",
+        "model": "qwen3-embedding:8b"
+      },
       "models": {
-        "moonshot/kimi-for-coding": {
+        "kimi-coding/k2p5": {
           "alias": "Kimi"
         }
       },
       "model": {
-        "primary": "moonshot/kimi-for-coding"
-      },
-      "memorySearch": {
-        "provider": "ollama",
-        "model": "qwen3-embedding:8b"
+        "primary": "kimi-coding/k2p5"
       }
     }
   },
@@ -55,6 +55,11 @@
   },
   "tools": {
     "profile": "full",
+    "exec": {
+      "host": "gateway",
+      "security": "full",
+      "ask": "off"
+    },
     "web": {
       "search": {
         "provider": "exa",
@@ -65,16 +70,6 @@
   "models": {
     "mode": "merge",
     "providers": {
-      "moonshot": {
-        "baseUrl": "https://api.kimi.com/coding",
-        "api": "anthropic-messages",
-        "models": [
-          {
-            "id": "kimi-for-coding",
-            "name": "Kimi For Coding"
-          }
-        ]
-      },
       "ollama": {
         "baseUrl": "http://localhost:11434",
         "api": "ollama",
@@ -89,14 +84,26 @@
             }
           }
         ]
-      }
-    }
-  },
-  "auth": {
-    "profiles": {
-      "moonshot:default": {
-        "provider": "moonshot",
-        "mode": "api_key"
+      },
+      "kimi-coding": {
+        "baseUrl": "https://api.kimi.com/coding/",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "k2p5",
+            "name": "Kimi k2.5",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 32768
+          }
+        ]
       }
     }
   },
@@ -125,6 +132,9 @@
             }
           }
         }
+      },
+      "kimi": {
+        "enabled": true
       }
     }
   },
@@ -137,25 +147,36 @@
         },
         "startup-notify": {
           "enabled": true
+        },
+        "boot-md": {
+          "enabled": true
         }
       }
     }
   },
   "wizard": {
-    "lastRunAt": "2026-04-04T08:17:14.854Z",
-    "lastRunVersion": "2026.4.2",
+    "lastRunAt": "2026-04-07T18:18:50.270Z",
+    "lastRunVersion": "2026.4.5",
     "lastRunCommand": "onboard",
     "lastRunMode": "local"
   },
   "meta": {
-    "lastTouchedVersion": "2026.4.2",
-    "lastTouchedAt": "2026-04-08T01:47:55.000Z"
+    "lastTouchedVersion": "2026.4.5",
+    "lastTouchedAt": "2026-04-07T18:18:50.350Z"
   },
   "mcp": {
     "servers": {
       "paper-search-mcp": {
         "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
         "connectionTimeoutMs": 120000
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "kimi:default": {
+        "provider": "kimi",
+        "mode": "api_key"
       }
     }
   }

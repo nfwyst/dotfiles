@@ -51,9 +51,12 @@ tests/
 .openclaw/memory
 .openclaw/workspace/BOOTSTRAP.md
 .openclaw/workspace/HEARTBEAT.md
+.openclaw/workspace/AGENTS.md
 .openclaw/workspace/IDENTITY.md
 .openclaw/workspace/SOUL.md
 .openclaw/workspace/TOOLS.md
 .openclaw/workspace/USER.md
 .openclaw/workspace/memory/
-
+.openclaw/completions/
+.openclaw/flows/
+.openclaw/workspace/.openclaw/workspace-state.json
