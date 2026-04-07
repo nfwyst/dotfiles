@@ -35,10 +35,110 @@ export interface DerivativeData {
   reasoning: string[];
 }
 
+/**
+ * Fixed-size circular buffer with running sum/sumSq for O(1) z-score normalization
+ */
+class CircularZScoreBuffer {
+  private buffer: number[];
+  private head: number = 0;
+  private count: number = 0;
+  private capacity: number;
+  private sum: number = 0;
+  private sumSq: number = 0;
+
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.buffer = new Array(capacity).fill(0);
+  }
+
+  push(value: number): void {
+    if (this.count >= this.capacity) {
+      // Remove outgoing value
+      const outgoing = this.buffer[this.head];
+      this.sum -= outgoing;
+      this.sumSq -= outgoing * outgoing;
+    } else {
+      this.count++;
+    }
+    this.buffer[this.head] = value;
+    this.sum += value;
+    this.sumSq += value * value;
+    this.head = (this.head + 1) % this.capacity;
+  }
+
+  /**
+   * Compute z-score of the given value against the buffer's distribution
+   */
+  zScore(value: number): number {
+    if (this.count === 0) return 0;
+    const mean = this.sum / this.count;
+    const variance = this.sumSq / this.count - mean * mean;
+    const std = Math.sqrt(Math.max(0, variance));
+    return std === 0 ? 0 : (value - mean) / std;
+  }
+
+  reset(): void {
+    this.head = 0;
+    this.count = 0;
+    this.sum = 0;
+    this.sumSq = 0;
+    this.buffer.fill(0);
+  }
+}
+
+/**
+ * Fixed-size circular buffer with running sum for O(1) SMA
+ */
+class CircularSMABuffer {
+  private buffer: number[];
+  private head: number = 0;
+  private count: number = 0;
+  private capacity: number;
+  private sum: number = 0;
+
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.buffer = new Array(capacity).fill(0);
+  }
+
+  push(value: number): number {
+    if (this.count >= this.capacity) {
+      const outgoing = this.buffer[this.head];
+      this.sum -= outgoing;
+    } else {
+      this.count++;
+    }
+    this.buffer[this.head] = value;
+    this.sum += value;
+    this.head = (this.head + 1) % this.capacity;
+    return this.count > 0 ? this.sum / this.count : value;
+  }
+
+  reset(): void {
+    this.head = 0;
+    this.count = 0;
+    this.sum = 0;
+    this.buffer.fill(0);
+  }
+}
+
 export class DerivativeFilter {
   private velocityPeriod: number;
   private accelerationPeriod: number;
   private significantMoveThreshold: number;
+
+  // ── Incremental state ──
+  private prevPrice: number = 0;
+  private prevVelocity: number = 0;
+  private incBarCount: number = 0;
+  private velocityZBuffer: CircularZScoreBuffer;
+  private accelZBuffer: CircularZScoreBuffer;
+  private velocitySMABuffer: CircularSMABuffer;
+  private accelSMABuffer: CircularSMABuffer;
+
+  // ── Cached result for getTradingAdvice / calculate double-call fix ──
+  private cachedPrices: number[] | null = null;
+  private cachedResult: DerivativeData[] | null = null;
 
   constructor(
     velocityPeriod: number = 10,
@@ -48,6 +148,136 @@ export class DerivativeFilter {
     this.velocityPeriod = velocityPeriod;
     this.accelerationPeriod = accelerationPeriod;
     this.significantMoveThreshold = significantThreshold;
+
+    this.velocityZBuffer = new CircularZScoreBuffer(Math.max(1, Math.floor(velocityPeriod)));
+    this.accelZBuffer = new CircularZScoreBuffer(Math.max(1, Math.floor(accelerationPeriod)));
+    this.velocitySMABuffer = new CircularSMABuffer(Math.max(1, Math.floor(velocityPeriod)));
+    this.accelSMABuffer = new CircularSMABuffer(Math.max(1, Math.floor(accelerationPeriod)));
+  }
+
+  /**
+   * Reset incremental state
+   */
+  reset(): void {
+    this.prevPrice = 0;
+    this.prevVelocity = 0;
+    this.incBarCount = 0;
+    this.velocityZBuffer.reset();
+    this.accelZBuffer.reset();
+    this.velocitySMABuffer.reset();
+    this.accelSMABuffer.reset();
+    this.cachedPrices = null;
+    this.cachedResult = null;
+  }
+
+  /**
+   * Incremental O(1) update for a single new price bar.
+   * Returns the DerivativeData for the latest bar.
+   */
+  updateBar(price: number): DerivativeData {
+    this.incBarCount++;
+
+    // ── Velocity (first derivative) ──
+    let velocity: number;
+    if (this.incBarCount === 1) {
+      velocity = 0;
+    } else {
+      velocity = price - this.prevPrice;
+    }
+
+    // ── Acceleration (second derivative) ──
+    let acceleration: number;
+    if (this.incBarCount <= 2) {
+      acceleration = 0;
+    } else {
+      acceleration = velocity - this.prevVelocity;
+    }
+
+    // ── Z-score normalization (O(1) via circular buffer) ──
+    this.velocityZBuffer.push(velocity);
+    this.accelZBuffer.push(acceleration);
+    const v = this.velocityZBuffer.zScore(velocity);
+    const a = this.accelZBuffer.zScore(acceleration);
+
+    // ── SMA (O(1) via circular buffer) ──
+    const vMA = this.velocitySMABuffer.push(v);
+    const aMA = this.accelSMABuffer.push(a);
+
+    // ── Trend state ──
+    let trendState: DerivativeData['trendState'] = 'neutral';
+    const reasoning: string[] = [];
+
+    if (vMA > 0.5 && aMA > 0) {
+      trendState = 'strong_up';
+      reasoning.push(`强劲上涨趋势: 速度(${vMA.toFixed(2)})和加速度(${aMA.toFixed(2)})均为正`);
+    } else if (vMA > 0.5 && aMA < 0) {
+      trendState = 'weakening_up';
+      reasoning.push(`上涨动能减弱: 速度为正但加速度转负`);
+    } else if (vMA < -0.5 && aMA < 0) {
+      trendState = 'strong_down';
+      reasoning.push(`强劲下跌趋势: 速度和加速度均为负`);
+    } else if (vMA < -0.5 && aMA > 0) {
+      trendState = 'weakening_down';
+      reasoning.push(`下跌动能减弱: 速度为负但加速度转正`);
+    } else {
+      reasoning.push(`趋势中性: 速度和加速度无明显方向`);
+    }
+
+    const isSignificantMove = Math.abs(v) > this.significantMoveThreshold;
+    if (isSignificantMove) {
+      reasoning.push(`显著价格变动: Z-Score = ${v.toFixed(2)}`);
+    }
+
+    const strength = Math.min(100, (Math.abs(vMA) + Math.abs(aMA)) * 25);
+
+    // Update state
+    this.prevPrice = price;
+    this.prevVelocity = velocity;
+
+    return {
+      price,
+      velocity: v,
+      velocityMA: vMA,
+      acceleration: a,
+      accelerationMA: aMA,
+      trendState,
+      strength,
+      isSignificantMove,
+      reasoning,
+    };
+  }
+
+  /**
+   * Generate trading advice from incrementally-updated DerivativeData (O(1)).
+   */
+  getTradingAdviceFromData(current: DerivativeData): {
+    action: 'buy' | 'sell' | 'hold' | 'exit';
+    confidence: number;
+    reasoning: string[];
+  } {
+    const reasoning = [...current.reasoning];
+
+    if (current.trendState === 'strong_up') {
+      reasoning.push('强劲上涨趋势，建议持仓或加仓');
+      return { action: 'buy', confidence: current.strength, reasoning };
+    }
+
+    if (current.trendState === 'strong_down') {
+      reasoning.push('强劲下跌趋势，建议空仓或做空');
+      return { action: 'sell', confidence: current.strength, reasoning };
+    }
+
+    if (current.trendState === 'weakening_up') {
+      reasoning.push('上涨动能减弱，考虑部分止盈');
+      return { action: 'exit', confidence: 60, reasoning };
+    }
+
+    if (current.trendState === 'weakening_down') {
+      reasoning.push('下跌动能减弱，可能即将反弹');
+      return { action: 'hold', confidence: 50, reasoning };
+    }
+
+    return { action: 'hold', confidence: 30, reasoning: ['趋势不明确，建议观望'] };
   }
 
   /**
@@ -118,21 +348,29 @@ export class DerivativeFilter {
   }
 
   /**
-   * 计算导数过滤器
+   * 计算导数过滤器 (with caching to avoid double-call)
    */
   calculate(prices: number[]): DerivativeData[] {
+    // Cache check: if same prices array reference or same content, return cached
+    if (this.cachedResult && this.cachedPrices === prices) {
+      return this.cachedResult;
+    }
+
     if (prices.length < this.velocityPeriod + this.accelerationPeriod) {
-      return prices.map(price => ({
+      const result = prices.map(price => ({
         price,
         velocity: 0,
         velocityMA: 0,
         acceleration: 0,
         accelerationMA: 0,
-        trendState: 'neutral',
+        trendState: 'neutral' as const,
         strength: 0,
         isSignificantMove: false,
         reasoning: ['数据不足'],
       }));
+      this.cachedPrices = prices;
+      this.cachedResult = result;
+      return result;
     }
 
     // 1. 计算速度和加速度
@@ -199,6 +437,8 @@ export class DerivativeFilter {
       });
     }
     
+    this.cachedPrices = prices;
+    this.cachedResult = result;
     return result;
   }
 
@@ -248,7 +488,7 @@ export class DerivativeFilter {
   }
 
   /**
-   * 获取交易建议
+   * 获取交易建议 (uses cache from calculate to avoid double computation)
    */
   getTradingAdvice(prices: number[]): {
     action: 'buy' | 'sell' | 'hold' | 'exit';

@@ -30,9 +30,160 @@ export class CVDAnalyzer {
   private minDivergenceStrength: number;
   private cvdHistory: number[] = [];
 
+  // ── Incremental state ──
+  private cumulativeCVD: number = 0;
+  private incBarCount: number = 0;
+  // Circular buffer of last lookbackPeriod (price, cvd) pairs
+  private priceBuffer: number[];
+  private cvdBuffer: number[];
+  private bufferHead: number = 0;
+  private bufferCount: number = 0;
+  private prevCVD: number = 0;
+
   constructor(lookbackPeriod: number = 20, minStrength: number = 60) {
     this.lookbackPeriod = lookbackPeriod;
     this.minDivergenceStrength = minStrength;
+    this.priceBuffer = new Array(lookbackPeriod + 1).fill(0);
+    this.cvdBuffer = new Array(lookbackPeriod + 1).fill(0);
+  }
+
+  /**
+   * Reset incremental state
+   */
+  reset(): void {
+    this.cumulativeCVD = 0;
+    this.incBarCount = 0;
+    this.bufferHead = 0;
+    this.bufferCount = 0;
+    this.prevCVD = 0;
+    this.priceBuffer.fill(0);
+    this.cvdBuffer.fill(0);
+    this.cvdHistory = [];
+  }
+
+  /**
+   * Incremental O(1) update for a single new candle.
+   * Computes delta, updates running CVD, and detects divergence
+   * using a circular buffer instead of rebuilding the full array.
+   */
+  updateBar(candle: { open: number; high: number; low: number; close: number; volume: number }): {
+    cvdData: CVDData;
+    divergence: CVDDivergence;
+  } {
+    this.incBarCount++;
+
+    // Compute delta for this candle
+    const delta = this.calculateDelta(candle.open, candle.high, candle.low, candle.close, candle.volume);
+    this.prevCVD = this.cumulativeCVD;
+    this.cumulativeCVD += delta;
+
+    const cvdData: CVDData = {
+      cvd: this.cumulativeCVD,
+      delta,
+      bullish: delta > 0,
+      bearish: delta < 0,
+    };
+
+    // Push into circular buffer
+    const capacity = this.lookbackPeriod + 1;
+    this.priceBuffer[this.bufferHead] = candle.close;
+    this.cvdBuffer[this.bufferHead] = this.cumulativeCVD;
+    this.bufferHead = (this.bufferHead + 1) % capacity;
+    if (this.bufferCount < capacity) this.bufferCount++;
+
+    // Detect divergence using circular buffer
+    const divergence = this.detectDivergenceIncremental(candle.close, this.cumulativeCVD);
+
+    return { cvdData, divergence };
+  }
+
+  /**
+   * Detect divergence using the circular buffer contents (O(lookbackPeriod)).
+   */
+  private detectDivergenceIncremental(currentPrice: number, currentCVD: number): CVDDivergence {
+    if (this.bufferCount < 3) {
+      return { type: 'none', strength: 0, priceExtreme: 0, cvdExtreme: 0, barIndex: this.incBarCount - 1, confirmation: false, reasoning: ['无背离信号'] };
+    }
+
+    const capacity = this.lookbackPeriod + 1;
+    let priceMin = Infinity, priceMax = -Infinity;
+    let cvdMin = Infinity, cvdMax = -Infinity;
+
+    // Scan the circular buffer
+    const start = (this.bufferHead - this.bufferCount + capacity) % capacity;
+    for (let k = 0; k < this.bufferCount; k++) {
+      const idx = (start + k) % capacity;
+      const p = this.priceBuffer[idx];
+      const c = this.cvdBuffer[idx];
+      if (p < priceMin) priceMin = p;
+      if (p > priceMax) priceMax = p;
+      if (c < cvdMin) cvdMin = c;
+      if (c > cvdMax) cvdMax = c;
+    }
+
+    // Bullish divergence: price near low, CVD not near low
+    let bullishDivergence = false;
+    let bullishStrength = 0;
+
+    if (currentPrice <= priceMin * 1.01 && currentCVD > cvdMin * 1.1) {
+      const priceDrop = (priceMax - currentPrice) / priceMax;
+      const cvdRise = (currentCVD - cvdMin) / Math.abs(cvdMin || 1);
+      bullishStrength = Math.min(100, (cvdRise / Math.max(0.01, priceDrop)) * 50);
+      bullishDivergence = bullishStrength >= this.minDivergenceStrength;
+    }
+
+    // Bearish divergence: price near high, CVD not near high
+    let bearishDivergence = false;
+    let bearishStrength = 0;
+
+    if (currentPrice >= priceMax * 0.99 && currentCVD < cvdMax * 0.9) {
+      const priceRise = (currentPrice - priceMin) / (priceMin || 1);
+      const cvdDrop = (cvdMax - currentCVD) / Math.abs(cvdMax || 1);
+      bearishStrength = Math.min(100, (cvdDrop / Math.max(0.01, priceRise)) * 50);
+      bearishDivergence = bearishStrength >= this.minDivergenceStrength;
+    }
+
+    if (bullishDivergence && bullishStrength > bearishStrength) {
+      return {
+        type: 'bullish',
+        strength: bullishStrength,
+        priceExtreme: priceMin,
+        cvdExtreme: cvdMin,
+        barIndex: this.incBarCount - 1,
+        confirmation: currentCVD > this.prevCVD,
+        reasoning: [
+          `看涨背离: 价格接近低点 ${priceMin.toFixed(2)}`,
+          `CVD未创新低: ${currentCVD.toFixed(0)} > ${cvdMin.toFixed(0)}`,
+          `背离强度: ${bullishStrength.toFixed(1)}%`,
+          '卖压减弱，可能即将反弹'
+        ],
+      };
+    } else if (bearishDivergence) {
+      return {
+        type: 'bearish',
+        strength: bearishStrength,
+        priceExtreme: priceMax,
+        cvdExtreme: cvdMax,
+        barIndex: this.incBarCount - 1,
+        confirmation: currentCVD < this.prevCVD,
+        reasoning: [
+          `看跌背离: 价格接近高点 ${priceMax.toFixed(2)}`,
+          `CVD未创新高: ${currentCVD.toFixed(0)} < ${cvdMax.toFixed(0)}`,
+          `背离强度: ${bearishStrength.toFixed(1)}%`,
+          '买压减弱，可能即将回调'
+        ],
+      };
+    }
+
+    return {
+      type: 'none',
+      strength: 0,
+      priceExtreme: 0,
+      cvdExtreme: 0,
+      barIndex: this.incBarCount - 1,
+      confirmation: false,
+      reasoning: ['无背离信号'],
+    };
   }
 
   /**

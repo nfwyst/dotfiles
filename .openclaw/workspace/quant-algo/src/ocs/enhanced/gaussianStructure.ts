@@ -18,6 +18,13 @@ export class GaussianStructure {
   private defaultSigma: number;
   private defaultWindowSize: number;
 
+  // Pre-computed kernel weights (computed once per sigma/window combination)
+  private cachedKernelKey: string = '';
+  private cachedNormalizedWeights: number[] = [];
+  private cachedWeightSum: number = 0;
+  private cachedActualWindow: number = 0;
+  private cachedHalfWindow: number = 0;
+
   constructor(sigma: number = 2.0, windowSize: number = 20) {
     this.defaultSigma = sigma;
     this.defaultWindowSize = windowSize;
@@ -29,6 +36,68 @@ export class GaussianStructure {
    */
   private gaussianKernel(x: number, sigma: number): number {
     return Math.exp(-(x * x) / (2 * sigma * sigma));
+  }
+
+  /**
+   * Ensure kernel weights are computed and cached for the given params.
+   */
+  private ensureKernel(actualWindow: number, sigma: number): void {
+    const key = `${actualWindow}:${sigma}`;
+    if (this.cachedKernelKey === key) return;
+
+    const halfWindow = Math.floor(actualWindow / 2);
+    const weights: number[] = [];
+    let weightSum = 0;
+
+    for (let i = 0; i < actualWindow; i++) {
+      const x = i - halfWindow;
+      const weight = this.gaussianKernel(x, sigma);
+      weights.push(weight);
+      weightSum += weight;
+    }
+
+    this.cachedNormalizedWeights = weights.map(w => w / weightSum);
+    this.cachedWeightSum = weightSum;
+    this.cachedActualWindow = actualWindow;
+    this.cachedHalfWindow = halfWindow;
+    this.cachedKernelKey = key;
+  }
+
+  /**
+   * Compute the Gaussian-smoothed value at ONLY the last position of data.
+   * O(kernelSize) instead of O(n * kernelSize).
+   * 
+   * This produces the same result as smooth(data).value but without
+   * computing all intermediate positions.
+   */
+  smoothLast(data: number[], windowSize?: number, sigma?: number): number {
+    const size = windowSize || this.defaultWindowSize;
+    const sig = sigma || this.defaultSigma;
+    const actualWindow = Math.min(size, data.length);
+
+    this.ensureKernel(actualWindow, sig);
+
+    const halfWindow = this.cachedHalfWindow;
+    const normalizedWeights = this.cachedNormalizedWeights;
+    const weightSum = this.cachedWeightSum;
+    const i = data.length - 1; // last position
+
+    let smoothed = 0;
+    let currentWeightSum = 0;
+
+    for (let j = 0; j < actualWindow; j++) {
+      const dataIndex = i - halfWindow + j;
+      if (dataIndex >= 0 && dataIndex < data.length) {
+        smoothed += data[dataIndex] * normalizedWeights[j];
+        currentWeightSum += normalizedWeights[j];
+      }
+    }
+
+    // Edge handling (same as original smooth())
+    if (currentWeightSum > 0) {
+      return smoothed / currentWeightSum * weightSum;
+    }
+    return data[i];
   }
 
   /**
@@ -44,21 +113,12 @@ export class GaussianStructure {
     
     // 确保窗口不超过数据长度
     const actualWindow = Math.min(size, data.length);
-    const halfWindow = Math.floor(actualWindow / 2);
-    
-    const weights: number[] = [];
-    let weightSum = 0;
-    
-    // 计算高斯权重
-    for (let i = 0; i < actualWindow; i++) {
-      const x = i - halfWindow; // 中心化
-      const weight = this.gaussianKernel(x, sig);
-      weights.push(weight);
-      weightSum += weight;
-    }
-    
-    // 归一化权重
-    const normalizedWeights = weights.map(w => w / weightSum);
+
+    this.ensureKernel(actualWindow, sig);
+
+    const halfWindow = this.cachedHalfWindow;
+    const normalizedWeights = this.cachedNormalizedWeights;
+    const weightSum = this.cachedWeightSum;
     
     // 应用高斯平滑
     const smoothedValues: number[] = [];

@@ -149,6 +149,8 @@ export class BacktestEngine {
   private ocsLayer4: OCSLayer4;
   private ocsEnhanced: OCSEnhanced;
   private sltpCalculator: SLTPCalculator;
+  private enhancedWarmedUp: boolean = false;
+  private latestEnhancedOutput: any = null;
   
   // 预计算数据存储
   // Pre-extracted arrays (computed once in precomputeAll, reused in signal generation)
@@ -388,6 +390,11 @@ export class BacktestEngine {
       });
     }
     
+    // ── Warmup Enhanced incremental processors with first 500 bars ──
+    const enhWarmupEnd = Math.min(200, this.ohlcv.length); // warmup = lookback bars only
+    this.ocsEnhanced.warmup(this.ohlcv.slice(0, enhWarmupEnd));
+    this.enhancedWarmedUp = true;
+    console.log(`   ✅ Enhanced 增量处理器预热完成 (${enhWarmupEnd} bars)`);
     console.log(`   ✅ 预计算完成 (${((Date.now() - startPrecompute) / 1000).toFixed(1)}秒)`);
   }
 
@@ -516,6 +523,11 @@ export class BacktestEngine {
 
     for (let i = lookback; i < this.ohlcv.length; i++) {
       const currentCandle = this.ohlcv[i];
+
+      // ── Incremental Enhanced update: feed EVERY bar to maintain state ──
+      if (this.enhancedWarmedUp) {
+        this.ocsEnhanced.feedBar(currentCandle);
+      }
 
       // ── Daily loss limit: reset on new day, check cumulative loss ──
       const currentDayTs = new Date(currentCandle.timestamp);
@@ -646,12 +658,10 @@ export class BacktestEngine {
     const closesForL3 = this.allCloses.slice(l3WinStart, index + 1);
     const l3 = this.ocsLayer3.process(l2Output.features3D, closesForL3);
     
-    // Enhanced 增强 — use BOUNDED slice of existing OHLCV array
-    // Array.slice() is a shallow copy (pointers only): 500 × 8B = 4KB per call.
-    // 500 bars (~42 hours on 5m) provides enough CVD/TRIX/Gaussian history.
-    const enhWinStart = Math.max(0, index - 500);
-    const enhOhlcvWindow = this.ohlcv.slice(enhWinStart, index + 1);
-    const enhancedOutput = this.ocsEnhanced.enhance(enhOhlcvWindow, l2Output, l3);
+    // Enhanced 增强 — O(1) read from pre-fed incremental state (feedBar called in main loop)
+    const enhancedOutput = this.enhancedWarmedUp
+      ? this.ocsEnhanced.getEnhancedOutput(l3)
+      : this.ocsEnhanced.enhance(this.ohlcv.slice(Math.max(0, index - 500), index + 1), l2Output, l3);
     
     // Layer4 - 最终信号
     const l4 = this.ocsLayer4.process(

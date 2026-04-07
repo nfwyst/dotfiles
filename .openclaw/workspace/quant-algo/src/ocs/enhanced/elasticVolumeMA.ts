@@ -19,8 +19,136 @@ export class ElasticVolumeMA {
   private lookbackPeriod: number;
   private dominantCycle: number = 20;
 
+  // ── Incremental state ──
+  private incBarCount: number = 0;
+  // Circular buffers for price, volume (max lookbackPeriod)
+  private priceRing: number[];
+  private volumeRing: number[];
+  private ringHead: number = 0;
+  private ringCount: number = 0;
+  // Running stats for normalization (over lookbackPeriod)
+  private volSum: number = 0;
+  private volSumSq: number = 0;
+  // Previous EVMA for trend detection
+  private prevEVMA: number = 0;
+
   constructor(lookbackPeriod: number = 50) {
     this.lookbackPeriod = lookbackPeriod;
+    // Allocate ring buffers at max size
+    this.priceRing = new Array(lookbackPeriod).fill(0);
+    this.volumeRing = new Array(lookbackPeriod).fill(0);
+  }
+
+  /**
+   * Reset incremental state
+   */
+  reset(): void {
+    this.incBarCount = 0;
+    this.ringHead = 0;
+    this.ringCount = 0;
+    this.volSum = 0;
+    this.volSumSq = 0;
+    this.prevEVMA = 0;
+    this.priceRing.fill(0);
+    this.volumeRing.fill(0);
+  }
+
+  /**
+   * Incremental O(dominantCycle) update for a single new bar.
+   * Instead of slicing full arrays, maintains circular buffers
+   * and running statistics.
+   */
+  updateBar(price: number, volume: number): ElasticVMAData {
+    this.incBarCount++;
+    const period = this.dominantCycle;
+
+    // ── Push into ring buffer ──
+    const capacity = this.lookbackPeriod;
+    if (this.ringCount >= capacity) {
+      // Remove outgoing value from running stats
+      const outVol = this.volumeRing[this.ringHead];
+      this.volSum -= outVol;
+      this.volSumSq -= outVol * outVol;
+    } else {
+      this.ringCount++;
+    }
+    this.priceRing[this.ringHead] = price;
+    this.volumeRing[this.ringHead] = volume;
+    this.volSum += volume;
+    this.volSumSq += volume * volume;
+    this.ringHead = (this.ringHead + 1) % capacity;
+
+    // Not enough data
+    if (this.ringCount < period) {
+      return {
+        value: volume,
+        normalized: 0,
+        elasticity: 0,
+        relativeStrength: 0,
+        trend: 'neutral',
+      };
+    }
+
+    // ── Compute EVMA over last `period` entries in ring ──
+    // Walk backward from most recent entry
+    let weightedSum = 0;
+    let weightSum = 0;
+    let prevP = 0;
+
+    for (let j = 0; j < period; j++) {
+      // Index into ring: most recent is at (ringHead - 1), going backward
+      const idx = (this.ringHead - 1 - j + capacity * 2) % capacity;
+      const v = this.volumeRing[idx];
+      const p = this.priceRing[idx];
+      const posInWindow = period - j; // 1..period (1 = oldest in window, period = newest)
+      const timeWeight = posInWindow / period;
+
+      let trendWeight = 1;
+      if (j < period - 1) {
+        const nextIdx = (this.ringHead - 2 - j + capacity * 2) % capacity;
+        const prevPrice = this.priceRing[nextIdx];
+        if (prevPrice !== 0) {
+          const priceChange = (p - prevPrice) / prevPrice;
+          trendWeight = 1 + priceChange * 5;
+        }
+      }
+
+      const weight = timeWeight * Math.max(0.5, trendWeight);
+      weightedSum += v * weight;
+      weightSum += weight;
+    }
+
+    const evma = weightSum > 0 ? weightedSum / weightSum : volume;
+
+    // ── Normalization using running stats ──
+    const meanVolume = this.ringCount > 0 ? this.volSum / this.ringCount : volume;
+    const variance = this.ringCount > 0 ? (this.volSumSq / this.ringCount - meanVolume * meanVolume) : 0;
+    const stdVolume = Math.sqrt(Math.max(0, variance));
+
+    const normalized = stdVolume === 0
+      ? 0
+      : Math.max(-1, Math.min(1, (volume - meanVolume) / (stdVolume * 2)));
+
+    // ── Elasticity ──
+    const elasticity = meanVolume === 0 ? 0 : (volume / meanVolume - 1);
+    const relativeStrength = elasticity * 100;
+
+    // ── Trend ──
+    let trend: ElasticVMAData['trend'] = 'neutral';
+    if (this.incBarCount > period && this.prevEVMA > 0) {
+      if (evma > this.prevEVMA * 1.1) trend = 'expanding';
+      else if (evma < this.prevEVMA * 0.9) trend = 'contracting';
+    }
+
+    this.prevEVMA = evma;
+
+    return {
+      value: evma,
+      normalized,
+      elasticity,
+      relativeStrength,
+      trend,
+    };
   }
 
   /**
