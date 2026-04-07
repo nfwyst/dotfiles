@@ -102,8 +102,17 @@ export class OCSLayer3 {
 
   /**
    * 计算市场波动率 (基于ATR百分比)
+   *
+   * If a precomputed ATR value is available (from BacktestEngine's
+   * precomputed indicators), pass it as `precomputedATR` to skip
+   * the O(n) ATR calculation entirely.
    */
-  private calculateVolatility(prices: number[]): number {
+  private calculateVolatility(prices: number[], precomputedATR?: number): number {
+    if (precomputedATR !== undefined && precomputedATR > 0) {
+      const currentPrice = prices[prices.length - 1];
+      return precomputedATR / currentPrice;
+    }
+
     if (prices.length < 20) return 0.02; // 默认中等波动
 
     // 计算 14 周期 ATR
@@ -160,9 +169,18 @@ export class OCSLayer3 {
 
   // ─── main entry point ────────────────────────────────────────
 
-  process(features3D: [number, number, number], prices: number[]): Layer3Output {
+  /**
+   * Process features and produce a KNN-based signal.
+   *
+   * @param features3D  3D feature vector for current bar
+   * @param prices      Close prices (used only when precomputedATR is not provided)
+   * @param precomputedATR  Optional precomputed ATR(14) value — when provided,
+   *                        skips internal ATR calculation and the `prices` array
+   *                        only needs the last element (current price).
+   */
+  process(features3D: [number, number, number], prices: number[], precomputedATR?: number): Layer3Output {
     // 1. 根据波动率自适应调整 K
-    const volatility = this.calculateVolatility(prices);
+    const volatility = this.calculateVolatility(prices, precomputedATR);
     this.currentK = this.adaptK(volatility);
 
     // 2. 如果历史数据不足，返回hold
@@ -235,6 +253,12 @@ export class OCSLayer3 {
   /**
    * 查找K个最近邻居（带距离 + temporal embargo）
    *
+   * PERF: Uses a fixed-size top-K buffer with insertion sort instead of
+   * allocating a full distances array + sort + slice. For K=5 and N=1000,
+   * this eliminates ~1000 object allocations and a full O(N log N) sort
+   * per call, replacing them with O(N) distance computations and O(K)
+   * insertion sorts (effectively free for K<=7).
+   *
    * The embargo excludes any pattern whose index falls within the
    * last `EMBARGO_BARS` entries so the classifier cannot use
    * auto-correlated recent samples.
@@ -249,22 +273,44 @@ export class OCSLayer3 {
     // Determine the embargo cutoff: exclude the last EMBARGO_BARS entries
     const embargoStart = Math.max(0, this.history.length - EMBARGO_BARS);
 
-    const eligible = this.history.slice(0, embargoStart);
-
     // BUG 19 FIX: When no eligible (non-embargoed) samples exist, return empty
     // instead of bypassing the embargo and searching all (potentially leaked) data.
-    if (eligible.length === 0) {
+    if (embargoStart === 0) {
       return [];
     }
 
-    const distances = eligible.map((pattern) => ({
-      neighbor: pattern,
-      distance: this.euclideanDistance(features, pattern.features),
-    }));
+    const K = this.currentK;
+    const topK: Array<{ neighbor: HistoricalPattern; distance: number }> = [];
+    let maxDist = Infinity;
 
-    distances.sort((a, b) => a.distance - b.distance);
+    // Iterate directly with index bound — no array.slice() copy
+    for (let i = 0; i < embargoStart; i++) {
+      const h = this.history[i];
+      const d = this.euclideanDistance(features, h.features);
 
-    return distances.slice(0, this.currentK);
+      if (topK.length < K) {
+        // Buffer not full yet — always insert
+        topK.push({ neighbor: h, distance: d });
+        if (topK.length === K) {
+          // Buffer just filled — sort once and set maxDist threshold
+          topK.sort((a, b) => a.distance - b.distance);
+          maxDist = topK[K - 1].distance;
+        }
+      } else if (d < maxDist) {
+        // Replace the worst (last) element and re-sort
+        // Re-sorting 5-7 elements is effectively free (~10-20 comparisons)
+        topK[K - 1] = { neighbor: h, distance: d };
+        topK.sort((a, b) => a.distance - b.distance);
+        maxDist = topK[K - 1].distance;
+      }
+    }
+
+    // If we collected fewer than K items, sort them
+    if (topK.length > 0 && topK.length < K) {
+      topK.sort((a, b) => a.distance - b.distance);
+    }
+
+    return topK;
   }
 
   /**

@@ -647,16 +647,16 @@ export class BacktestEngine {
     index: number
   ): StrategySignal | null {
 
-    // FIX: Use pre-extracted number arrays instead of OHLCV slice.
-    // OHLCV objects are ~100+ bytes each; number arrays are 8 bytes/element.
-    // For 90K iterations × 5000 elements, this reduces allocation from
-    // 45GB (OHLCV) to ~3.6GB (numbers), well within GC capacity.
-    
-    // Layer3 only needs prices for calculateVolatility (14-bar ATR).
-    // Use 300-bar window — avoids O(n²) from slice(0, index+1).
-    const l3WinStart = Math.max(0, index - 300);
-    const closesForL3 = this.allCloses.slice(l3WinStart, index + 1);
-    const l3 = this.ocsLayer3.process(l2Output.features3D, closesForL3);
+    // PERF: Layer3.process() only needs prices for calculateVolatility() which
+    // computes ATR(14). Since we already have precomputed ATR in indicators,
+    // pass it directly to skip the internal ATR calculation entirely.
+    // This eliminates the 300-element allCloses.slice() per bar (~90K allocations
+    // over a 365-day backtest).
+    //
+    // We still pass a minimal 1-element array with the current price because
+    // calculateVolatility needs prices[prices.length-1] for ATR% = ATR/price.
+    const atrPrecomputed = indicators.atr[14];
+    const l3 = this.ocsLayer3.process(l2Output.features3D, [currentPrice], atrPrecomputed);
     
     // Enhanced 增强 — O(1) read from pre-fed incremental state (feedBar called in main loop)
     const enhancedOutput = this.enhancedWarmedUp
