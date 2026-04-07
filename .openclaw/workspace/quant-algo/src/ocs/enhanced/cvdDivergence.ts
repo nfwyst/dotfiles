@@ -33,9 +33,9 @@ export class CVDAnalyzer {
   // ── Incremental state ──
   private cumulativeCVD: number = 0;
   private incBarCount: number = 0;
-  // Circular buffer of last lookbackPeriod (price, cvd) pairs
+  // Circular buffer of last lookbackPeriod (price, delta) pairs
   private priceBuffer: number[];
-  private cvdBuffer: number[];
+  private deltaBuffer: number[];      // store per-bar delta, NOT absolute CVD
   private bufferHead: number = 0;
   private bufferCount: number = 0;
   private prevCVD: number = 0;
@@ -44,7 +44,7 @@ export class CVDAnalyzer {
     this.lookbackPeriod = lookbackPeriod;
     this.minDivergenceStrength = minStrength;
     this.priceBuffer = new Array(lookbackPeriod + 1).fill(0);
-    this.cvdBuffer = new Array(lookbackPeriod + 1).fill(0);
+    this.deltaBuffer = new Array(lookbackPeriod + 1).fill(0);
   }
 
   /**
@@ -57,7 +57,7 @@ export class CVDAnalyzer {
     this.bufferCount = 0;
     this.prevCVD = 0;
     this.priceBuffer.fill(0);
-    this.cvdBuffer.fill(0);
+    this.deltaBuffer.fill(0);
     this.cvdHistory = [];
   }
 
@@ -84,10 +84,10 @@ export class CVDAnalyzer {
       bearish: delta < 0,
     };
 
-    // Push into circular buffer
+    // Push into circular buffer – store DELTA (not absolute CVD)
     const capacity = this.lookbackPeriod + 1;
     this.priceBuffer[this.bufferHead] = candle.close;
-    this.cvdBuffer[this.bufferHead] = this.cumulativeCVD;
+    this.deltaBuffer[this.bufferHead] = delta;
     this.bufferHead = (this.bufferHead + 1) % capacity;
     if (this.bufferCount < capacity) this.bufferCount++;
 
@@ -99,6 +99,9 @@ export class CVDAnalyzer {
 
   /**
    * Detect divergence using the circular buffer contents (O(lookbackPeriod)).
+   * Recomputes LOCAL cumulative CVD over just the buffer entries so that the
+   * divergence window matches the array version's behavior (CVD starting from 0
+   * at the beginning of the window).
    */
   private detectDivergenceIncremental(currentPrice: number, currentCVD: number): CVDDivergence {
     if (this.bufferCount < 3) {
@@ -106,28 +109,41 @@ export class CVDAnalyzer {
     }
 
     const capacity = this.lookbackPeriod + 1;
+
+    // Recompute local CVD from the buffer's delta entries
+    let localCVD = 0;
     let priceMin = Infinity, priceMax = -Infinity;
     let cvdMin = Infinity, cvdMax = -Infinity;
+    let localCurrentCVD = 0;
+    let localPrevCVD = 0;
 
-    // Scan the circular buffer
     const start = (this.bufferHead - this.bufferCount + capacity) % capacity;
     for (let k = 0; k < this.bufferCount; k++) {
       const idx = (start + k) % capacity;
       const p = this.priceBuffer[idx];
-      const c = this.cvdBuffer[idx];
+      const d = this.deltaBuffer[idx];
+      localCVD += d;
+
       if (p < priceMin) priceMin = p;
       if (p > priceMax) priceMax = p;
-      if (c < cvdMin) cvdMin = c;
-      if (c > cvdMax) cvdMax = c;
+      if (localCVD < cvdMin) cvdMin = localCVD;
+      if (localCVD > cvdMax) cvdMax = localCVD;
+
+      if (k === this.bufferCount - 1) {
+        localCurrentCVD = localCVD;
+      }
+      if (k === this.bufferCount - 2) {
+        localPrevCVD = localCVD;
+      }
     }
 
     // Bullish divergence: price near low, CVD not near low
     let bullishDivergence = false;
     let bullishStrength = 0;
 
-    if (currentPrice <= priceMin * 1.01 && currentCVD > cvdMin * 1.1) {
+    if (currentPrice <= priceMin * 1.01 && localCurrentCVD > cvdMin * 1.1) {
       const priceDrop = (priceMax - currentPrice) / priceMax;
-      const cvdRise = (currentCVD - cvdMin) / Math.abs(cvdMin || 1);
+      const cvdRise = (localCurrentCVD - cvdMin) / Math.abs(cvdMin || 1);
       bullishStrength = Math.min(100, (cvdRise / Math.max(0.01, priceDrop)) * 50);
       bullishDivergence = bullishStrength >= this.minDivergenceStrength;
     }
@@ -136,9 +152,9 @@ export class CVDAnalyzer {
     let bearishDivergence = false;
     let bearishStrength = 0;
 
-    if (currentPrice >= priceMax * 0.99 && currentCVD < cvdMax * 0.9) {
+    if (currentPrice >= priceMax * 0.99 && localCurrentCVD < cvdMax * 0.9) {
       const priceRise = (currentPrice - priceMin) / (priceMin || 1);
-      const cvdDrop = (cvdMax - currentCVD) / Math.abs(cvdMax || 1);
+      const cvdDrop = (cvdMax - localCurrentCVD) / Math.abs(cvdMax || 1);
       bearishStrength = Math.min(100, (cvdDrop / Math.max(0.01, priceRise)) * 50);
       bearishDivergence = bearishStrength >= this.minDivergenceStrength;
     }
@@ -150,10 +166,10 @@ export class CVDAnalyzer {
         priceExtreme: priceMin,
         cvdExtreme: cvdMin,
         barIndex: this.incBarCount - 1,
-        confirmation: currentCVD > this.prevCVD,
+        confirmation: localCurrentCVD > localPrevCVD,
         reasoning: [
           `看涨背离: 价格接近低点 ${priceMin.toFixed(2)}`,
-          `CVD未创新低: ${currentCVD.toFixed(0)} > ${cvdMin.toFixed(0)}`,
+          `CVD未创新低: ${localCurrentCVD.toFixed(0)} > ${cvdMin.toFixed(0)}`,
           `背离强度: ${bullishStrength.toFixed(1)}%`,
           '卖压减弱，可能即将反弹'
         ],
@@ -165,10 +181,10 @@ export class CVDAnalyzer {
         priceExtreme: priceMax,
         cvdExtreme: cvdMax,
         barIndex: this.incBarCount - 1,
-        confirmation: currentCVD < this.prevCVD,
+        confirmation: localCurrentCVD < localPrevCVD,
         reasoning: [
           `看跌背离: 价格接近高点 ${priceMax.toFixed(2)}`,
-          `CVD未创新高: ${currentCVD.toFixed(0)} < ${cvdMax.toFixed(0)}`,
+          `CVD未创新高: ${localCurrentCVD.toFixed(0)} < ${cvdMax.toFixed(0)}`,
           `背离强度: ${bearishStrength.toFixed(1)}%`,
           '买压减弱，可能即将回调'
         ],

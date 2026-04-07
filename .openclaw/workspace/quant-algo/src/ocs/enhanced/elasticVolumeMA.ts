@@ -35,8 +35,8 @@ export class ElasticVolumeMA {
   constructor(lookbackPeriod: number = 50) {
     this.lookbackPeriod = lookbackPeriod;
     // Allocate ring buffers at max size
-    this.priceRing = new Array(lookbackPeriod).fill(0);
-    this.volumeRing = new Array(lookbackPeriod).fill(0);
+    this.priceRing = new Array(lookbackPeriod + 1).fill(0);
+    this.volumeRing = new Array(lookbackPeriod + 1).fill(0);
   }
 
   /**
@@ -63,7 +63,7 @@ export class ElasticVolumeMA {
     const period = this.dominantCycle;
 
     // ── Push into ring buffer ──
-    const capacity = this.lookbackPeriod;
+    const capacity = this.lookbackPeriod + 1;
     if (this.ringCount >= capacity) {
       // Remove outgoing value from running stats
       const outVol = this.volumeRing[this.ringHead];
