@@ -3,29 +3,35 @@
 # 用法: bash fix-openclaw-doctor.sh
 set -euo pipefail
 
-echo "=== 1/4 修复 doctor 自动迁移项 ==="
+echo "=== 1/5 修复 doctor 自动迁移项 ==="
 openclaw doctor --fix
 
 echo ""
-echo "=== 2/4 清理缺失 transcript 的 session ==="
+echo "=== 2/5 清理缺失 transcript 的 session ==="
 openclaw sessions cleanup \
   --store "/Users/malisheng/.openclaw/agents/main/sessions/sessions.json" \
   --enforce --fix-missing
 
 echo ""
-echo "=== 3/4 重建 shell completion 缓存 ==="
+echo "=== 3/5 重建 shell completion 缓存 ==="
 openclaw completion --write-state
 
 echo ""
-echo "=== 4/4 验证环境变量 ==="
-if grep -q "KIMI_API_KEY" ~/.openclaw/.env 2>/dev/null; then
-  echo "✅ KIMI_API_KEY 已设置"
+echo "=== 4/5 设置 MOONSHOT_API_KEY（复用 Kimi Coding 密钥） ==="
+ENV_FILE="$HOME/.openclaw/.env"
+if grep -q "^MOONSHOT_API_KEY=" "$ENV_FILE" 2>/dev/null; then
+  echo "✅ MOONSHOT_API_KEY 已设置"
+elif grep -q "^KIMI_API_KEY=" "$ENV_FILE" 2>/dev/null; then
+  KIMI_KEY=$(grep "^KIMI_API_KEY=" "$ENV_FILE" | head -1 | cut -d= -f2-)
+  echo "MOONSHOT_API_KEY=$KIMI_KEY" >> "$ENV_FILE"
+  echo "✅ 已将 KIMI_API_KEY 的值复制为 MOONSHOT_API_KEY"
 else
-  echo "⚠️  KIMI_API_KEY 未在 ~/.openclaw/.env 中找到"
-  echo "   请添加: KIMI_API_KEY=sk-kimi-你的密钥"
+  echo "⚠️  未找到 KIMI_API_KEY，请手动添加到 $ENV_FILE:"
+  echo "   MOONSHOT_API_KEY=sk-kimi-你的密钥"
 fi
 
 echo ""
-echo "=== 完成! 请重启 OpenClaw ==="
-echo "运行: openclaw restart"
-echo "然后在 Telegram 中发送 /new 开始新会话测试"
+echo "=== 5/5 重启 OpenClaw ==="
+openclaw restart
+echo ""
+echo "✅ 完成！请在 Telegram 中发送 /new 开始新会话测试"
