@@ -33,6 +33,7 @@ foo.*
 data
 AGENTS.md
 !.config/opencode/AGENTS.md
+!.openclaw/workspace/AGENTS.md
 .todo.md
 nvm
 test/
@@ -48,7 +49,6 @@ tests/
 .openclaw/telegram
 .openclaw/exec-approvals.json
 .openclaw/memory
-.openclaw/workspace/AGENTS.md
 .openclaw/workspace/BOOTSTRAP.md
 .openclaw/workspace/HEARTBEAT.md
 .openclaw/workspace/IDENTITY.md
