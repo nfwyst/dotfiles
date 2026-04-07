@@ -140,7 +140,7 @@ export class BacktestEngine {
 
   // Trade cooldown: prevent re-entry immediately after closing a position
   private lastCloseBarIndex: number = -999;
-  private tradeCooldownBars: number = 12; // 12 bars = 1 hour on 5m timeframe
+  private tradeCooldownBars: number = 18; // 18 bars = 1.5 hours on 5m timeframe (reduce churn)
 
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
@@ -600,7 +600,7 @@ export class BacktestEngine {
             (signal.type === 'long' && isTrendUp) || 
             (signal.type === 'short' && isTrendDown);
           
-          const confidenceThreshold = isTrendAligned ? 0.5 : 0.7;  // Raised to filter weak signals
+          const confidenceThreshold = isTrendAligned ? 0.52 : 0.75;  // Tightened: filter marginal signals
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
@@ -701,6 +701,17 @@ export class BacktestEngine {
     // BUG 11 FIX: Validate SL/TP are defined and sane before returning signal
     if (computedSL === undefined || computedSL === null || !isFinite(computedSL)) {
       console.log(`  ⚠️ Invalid SL computed, skipping signal`);
+      return { type: 'hold', confidence: 0 };
+    }
+
+    // Minimum reward-to-cost filter: skip trades where TP1 is too close to entry
+    // relative to round-trip transaction costs (2x fees + 2x slippage).
+    // This filters out thin-edge trades that erode Sharpe.
+    const entryP = l4.setup.entryPrice;
+    const tp1Distance = Math.abs(computedTP.tp1 - entryP);
+    const roundTripCost = entryP * (2 * this.config.feeRate + 2 * this.config.slippage);
+    if (tp1Distance < 2.0 * roundTripCost) {
+      console.log(`  ⏭️ 奖励/成本过低: TP1距离 ${tp1Distance.toFixed(2)} < 2x成本 ${(2 * roundTripCost).toFixed(2)}, 跳过`);
       return { type: 'hold', confidence: 0 };
     }
 

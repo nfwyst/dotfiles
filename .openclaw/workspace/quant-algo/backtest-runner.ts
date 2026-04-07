@@ -60,7 +60,7 @@ function makeConfig(): BacktestConfig {
     initialBalance: 10000,
     positionSize:   0.010,  // 1.0% risk per trade (tightened further to reduce drawdown)
     leverage:       1,
-    feeRate:        0.0006,
+    feeRate:        0.0004,  // 0.04% — aligned with Binance futures maker/taker
     slippage:       0.0001,
   };
 }
