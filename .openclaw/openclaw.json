@@ -10,12 +10,12 @@
     "defaults": {
       "workspace": "/Users/malisheng/.openclaw/workspace",
       "models": {
-        "moonshot/kimi-k2.5": {
+        "kimi-coding/k2p5": {
           "alias": "Kimi"
         }
       },
       "model": {
-        "primary": "moonshot/kimi-k2.5"
+        "primary": "kimi-coding/k2p5"
       },
       "memorySearch": {
         "provider": "ollama",
@@ -84,8 +84,8 @@
   },
   "auth": {
     "profiles": {
-      "moonshot:default": {
-        "provider": "moonshot",
+      "kimi-coding:default": {
+        "provider": "kimi-coding",
         "mode": "api_key"
       }
     }
@@ -139,7 +139,7 @@
   },
   "meta": {
     "lastTouchedVersion": "2026.4.2",
-    "lastTouchedAt": "2026-04-05T15:37:05.775Z"
+    "lastTouchedAt": "2026-04-08T01:31:33.000Z"
   },
   "mcp": {
     "servers": {
