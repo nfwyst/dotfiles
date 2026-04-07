@@ -270,6 +270,9 @@ export class CVDAnalyzer {
     const lookback = Math.min(this.lookbackPeriod, currentIndex);
     const recentPrices = prices.slice(currentIndex - lookback, currentIndex + 1);
     const recentCVD = cvdData.slice(currentIndex - lookback, currentIndex + 1).map(d => d.cvd);
+
+    // Use local index within sliced arrays (not the global currentIndex)
+    const lastIdx = recentPrices.length - 1;
     
     // 找价格极值
     const priceMin = Math.min(...recentPrices);
@@ -285,11 +288,11 @@ export class CVDAnalyzer {
     let bullishDivergence = false;
     let bullishStrength = 0;
     
-    if (prices[currentIndex] <= priceMin * 1.01 && // 当前价格接近最低点
-        recentCVD[currentIndex] > cvdMin * 1.1) {     // 但CVD显著高于最低
+    if (recentPrices[lastIdx] <= priceMin * 1.01 && // 当前价格接近最低点
+        recentCVD[lastIdx] > cvdMin * 1.1) {           // 但CVD显著高于最低
       
-      const priceDrop = (priceMax - prices[currentIndex]) / priceMax;
-      const cvdRise = (recentCVD[currentIndex] - cvdMin) / Math.abs(cvdMin);
+      const priceDrop = (priceMax - recentPrices[lastIdx]) / priceMax;
+      const cvdRise = (recentCVD[lastIdx] - cvdMin) / Math.abs(cvdMin || 1);
       
       bullishStrength = Math.min(100, (cvdRise / Math.max(0.01, priceDrop)) * 50);
       bullishDivergence = bullishStrength >= this.minDivergenceStrength;
@@ -299,11 +302,11 @@ export class CVDAnalyzer {
     let bearishDivergence = false;
     let bearishStrength = 0;
     
-    if (prices[currentIndex] >= priceMax * 0.99 && // 当前价格接近最高点
-        recentCVD[currentIndex] < cvdMax * 0.9) {     // 但CVD显著低于最高
+    if (recentPrices[lastIdx] >= priceMax * 0.99 && // 当前价格接近最高点
+        recentCVD[lastIdx] < cvdMax * 0.9) {           // 但CVD显著低于最高
       
-      const priceRise = (prices[currentIndex] - priceMin) / priceMin;
-      const cvdDrop = (cvdMax - recentCVD[currentIndex]) / Math.abs(cvdMax);
+      const priceRise = (recentPrices[lastIdx] - priceMin) / (priceMin || 1);
+      const cvdDrop = (cvdMax - recentCVD[lastIdx]) / Math.abs(cvdMax || 1);
       
       bearishStrength = Math.min(100, (cvdDrop / Math.max(0.01, priceRise)) * 50);
       bearishDivergence = bearishStrength >= this.minDivergenceStrength;
@@ -319,10 +322,10 @@ export class CVDAnalyzer {
         priceExtreme: priceMin,
         cvdExtreme: cvdMin,
         barIndex: currentIndex,
-        confirmation: recentCVD[currentIndex] > recentCVD[currentIndex - 1],
+        confirmation: lastIdx > 0 && recentCVD[lastIdx] > recentCVD[lastIdx - 1],
         reasoning: [
           `看涨背离: 价格接近低点 ${priceMin.toFixed(2)}`,
-          `CVD未创新低: ${recentCVD[currentIndex].toFixed(0)} > ${cvdMin.toFixed(0)}`,
+          `CVD未创新低: ${recentCVD[lastIdx].toFixed(0)} > ${cvdMin.toFixed(0)}`,
           `背离强度: ${bullishStrength.toFixed(1)}%`,
           '卖压减弱，可能即将反弹'
         ],
@@ -334,10 +337,10 @@ export class CVDAnalyzer {
         priceExtreme: priceMax,
         cvdExtreme: cvdMax,
         barIndex: currentIndex,
-        confirmation: recentCVD[currentIndex] < recentCVD[currentIndex - 1],
+        confirmation: lastIdx > 0 && recentCVD[lastIdx] < recentCVD[lastIdx - 1],
         reasoning: [
           `看跌背离: 价格接近高点 ${priceMax.toFixed(2)}`,
-          `CVD未创新高: ${recentCVD[currentIndex].toFixed(0)} < ${cvdMax.toFixed(0)}`,
+          `CVD未创新高: ${recentCVD[lastIdx].toFixed(0)} < ${cvdMax.toFixed(0)}`,
           `背离强度: ${bearishStrength.toFixed(1)}%`,
           '买压减弱，可能即将回调'
         ],
