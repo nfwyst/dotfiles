@@ -35,3 +35,7 @@ test-results.xml
 # OS
 .DS_Store
 Thumbs.db
+*.txt
+debug*.ts
+diagnostic*.ts
+package-lock.json
