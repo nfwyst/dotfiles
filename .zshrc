@@ -26,9 +26,6 @@ function proxy () {
   export no_proxy="127.0.0.1,localhost,apple.com"
 }
 
-# init proxy
-proxy
-
 # Download Zinit, if it's not there yet
 if [ ! -d "$ZINIT_HOME" ]; then
   mkdir -p "$(dirname "$ZINIT_HOME")"
