@@ -655,7 +655,7 @@ export class BacktestEngine {
             (signal.type === 'long' && isTrendUp) || 
             (signal.type === 'short' && isTrendDown);
           
-          const confidenceThreshold = isTrendAligned ? 0.52 : 0.75;  // Tightened: filter marginal signals
+          const confidenceThreshold = isTrendAligned ? 0.58 : 0.78;  // Tightened: filter marginal signals
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
