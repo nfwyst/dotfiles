@@ -1,18 +1,13 @@
 /**
- * @deprecated This module will be moved to `src/ai/AIModule.ts` in a future release.
- * Import from `src/ai/` instead for LLM client functionality.
- * This file provides high-level AI features (sentiment, anomaly detection, strategy
- * recommendation) that wrap the low-level LLMClient in `src/ai/LLMClient.ts`.
- */
-import { config } from './config';
-import logger from './logger';
-import { aiCircuitBreaker } from './safety/circuitBreakers';
+import { config } from '../config';
+import logger from '../logger';
+import { aiCircuitBreaker } from '../safety/circuitBreakers';
 import {
   tracingManager,
   getTraceContextForLogging,
-} from './monitoring/tracing';
-import { llmClient, llmConfigManager } from './ai/index';
-import type { LLMProvider } from './ai/index';
+} from '../monitoring/tracing';
+import { llmClient, llmConfigManager } from './index';
+import type { LLMProvider } from './index';
 export interface SentimentResult {
   score: number;        // -1 到 1
   confidence: number;   // 0 到 1

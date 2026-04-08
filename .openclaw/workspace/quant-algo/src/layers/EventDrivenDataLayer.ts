@@ -12,8 +12,8 @@
 import type { ExchangeManager } from '../exchange';
 import type { SMCAnalyzer } from '../smc';
 import type { MarketMicrostructure } from '../marketMicro';
-import type { AIModule, AnomalyDetection } from '../ai';
-import { AdaptiveRSI, type AdaptiveRSIResult } from '../adaptiveRSI';
+import type { AIModule, AnomalyDetection } from '../ai/AIModule';
+import { computeAdaptiveRSI, type AdaptiveRSIResult } from '../indicators/rsi';
 import { MarketDataFetcher } from '../marketDataFetcher';
 import { getEventBus } from '../events';
 import { EventChannels } from '../events/types';
@@ -52,7 +52,6 @@ export class EventDrivenDataLayer {
   private smcAnalyzer: SMCAnalyzer;
   private microstructure: MarketMicrostructure;
   private aiModule: AIModule;
-  private adaptiveRSI: AdaptiveRSI;
   private marketDataFetcher: MarketDataFetcher;
   private eventBus = getEventBus();
 
@@ -72,7 +71,6 @@ export class EventDrivenDataLayer {
     this.smcAnalyzer = smcAnalyzer;
     this.microstructure = microstructure;
     this.aiModule = aiModule;
-    this.adaptiveRSI = new AdaptiveRSI();
     this.marketDataFetcher = new MarketDataFetcher();
     this.dataFeed = dataFeed;
   }
@@ -372,7 +370,7 @@ export class EventDrivenDataLayer {
     const ema12 = this.calculateEMA(closes, 12);
     const ema26 = this.calculateEMA(closes, 26);
     const rsi14 = this.calculateRSI(closes, 14);
-    const adaptiveRSIValue = this.adaptiveRSI.calculate(closes);
+    const adaptiveRSIValue = computeAdaptiveRSI(closes);
     const macd = this.calculateMACD(closes);
     const atr14 = this.calculateATR(highs, lows, closes, 14);
     const bollinger = this.calculateBollinger(closes, 20);

@@ -127,6 +127,9 @@ export interface TradeRecord {
 }
 
 // ==================== TradingBotRuntime ====================
+// TODO: Migrate all usages of TradingBotRuntime to EventDrivenRuntime
+// and remove this class. Active consumers: src/index.ts, src/monitoring/dashboard.ts,
+// src/optimization/feedbackLoop.ts, src/execution/index.ts, src/execution/orderGenerator.ts
 
 /**
  * @deprecated 请使用 EventDrivenRuntime 代替。
