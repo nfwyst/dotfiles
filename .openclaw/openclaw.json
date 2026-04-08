@@ -125,7 +125,9 @@
       "groups": {
         "*": {
           "requireMention": true,
-          "allowFrom": []
+          "allowFrom": [
+            "*"
+          ]
         }
       }
     }
