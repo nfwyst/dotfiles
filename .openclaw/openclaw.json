@@ -20,9 +20,6 @@
       },
       "model": {
         "primary": "kimi/k2p5"
-      },
-      "sandbox": {
-        "mode": "all"
       }
     }
   },
@@ -61,7 +58,7 @@
     "exec": {
       "host": "gateway",
       "security": "allowlist",
-      "ask": "always"
+      "ask": "off"
     },
     "web": {
       "search": {
@@ -70,7 +67,7 @@
       }
     },
     "fs": {
-      "workspaceOnly": true
+      "workspaceOnly": false
     }
   },
   "models": {
@@ -122,7 +119,9 @@
     "telegram": {
       "enabled": true,
       "dmPolicy": "pairing",
-      "allowFrom": [],
+      "allowFrom": [
+        "*"
+      ],
       "groups": {
         "*": {
           "requireMention": true,
