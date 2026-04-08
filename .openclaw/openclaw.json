@@ -20,6 +20,9 @@
       },
       "model": {
         "primary": "kimi/k2p5"
+      },
+      "sandbox": {
+        "mode": "all"
       }
     }
   },
@@ -36,7 +39,7 @@
       "resetOnExit": false
     },
     "controlUi": {
-      "allowInsecureAuth": true
+      "allowInsecureAuth": false
     },
     "nodes": {
       "denyCommands": [
@@ -57,14 +60,17 @@
     "profile": "full",
     "exec": {
       "host": "gateway",
-      "security": "full",
-      "ask": "off"
+      "security": "allowlist",
+      "ask": "always"
     },
     "web": {
       "search": {
         "provider": "exa",
         "enabled": true
       }
+    },
+    "fs": {
+      "workspaceOnly": true
     }
   },
   "models": {
@@ -77,7 +83,9 @@
           {
             "id": "qwen3-embedding:8b",
             "name": "Qwen3 Embedding",
-            "input": ["text"],
+            "input": [
+              "text"
+            ],
             "cost": {
               "input": 0,
               "output": 0
@@ -93,7 +101,10 @@
             "id": "k2p5",
             "name": "Kimi k2.5",
             "reasoning": true,
-            "input": ["text", "image"],
+            "input": [
+              "text",
+              "image"
+            ],
             "cost": {
               "input": 0,
               "output": 0,
@@ -110,11 +121,12 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "open",
-      "allowFrom": ["*"],
+      "dmPolicy": "pairing",
+      "allowFrom": [],
       "groups": {
         "*": {
-          "requireMention": true
+          "requireMention": true,
+          "allowFrom": []
         }
       }
     }
