@@ -77,10 +77,15 @@ export interface Layer2Output {
   };
 }
 
+/** Internal history buffers for LMS convergence and Z-Score confidence tracking. */
+interface Layer2History {
+  lmsErrors: number[];
+  zScores: number[];
+}
 export class OCSLayer2 {
   private lmsWeights: number[];
   private lmsLearningRate: number;
-  private history: any = {};
+  private history: Layer2History = { lmsErrors: [], zScores: [] };
   private readonly config: Layer2Config;
 
   // v312组件
@@ -479,11 +484,10 @@ export class OCSLayer2 {
     }
 
     // Compute convergence metric (running average of squared error)
-    if (!this.history.lmsErrors) this.history.lmsErrors = [];
     this.history.lmsErrors.push(error * error);
     if (this.history.lmsErrors.length > 50) this.history.lmsErrors.shift();
     
-    const mse = this.history.lmsErrors.reduce((a: number, b: number) => a + b, 0) / this.history.lmsErrors.length;
+    const mse = this.history.lmsErrors.reduce((a, b) => a + b, 0) / this.history.lmsErrors.length;
     const convergence = Math.max(0, Math.min(1, 1 - Math.sqrt(mse)));
 
     // Clamp filtered signal to [-1, 1]
@@ -532,7 +536,6 @@ export class OCSLayer2 {
   private calculateZScoreConfidence(signal: number): Layer2Output['confidence'] {
     const cfg = this.config.zScore;
 
-    if (!this.history.zScores) this.history.zScores = [];
     this.history.zScores.push(signal);
     if (this.history.zScores.length > cfg.windowSize) this.history.zScores.shift();
 
@@ -540,8 +543,8 @@ export class OCSLayer2 {
       return { zScore: 0, confidence: 50, isHighConfidence: false, dynamicThreshold: cfg.defaultThreshold };
     }
 
-    const mean = this.history.zScores.reduce((a: number, b: number) => a + b, 0) / this.history.zScores.length;
-    const variance = this.history.zScores.reduce((sum: number, val: number) => sum + Math.pow(val - mean, 2), 0) / this.history.zScores.length;
+    const mean = this.history.zScores.reduce((a, b) => a + b, 0) / this.history.zScores.length;
+    const variance = this.history.zScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / this.history.zScores.length;
     const std = Math.sqrt(variance);
 
     const zScore = std === 0 ? 0 : (signal - mean) / std;
@@ -550,7 +553,7 @@ export class OCSLayer2 {
     const fisherZ = this.fisherTransform(Math.max(-1, Math.min(1, zScore / 3)));
     
     // 动态阈值：使用配置的分位数
-    const sortedScores = [...this.history.zScores].sort((a: number, b: number) => a - b);
+    const sortedScores = [...this.history.zScores].sort((a, b) => a - b);
     const percentileIndex = Math.floor(sortedScores.length * cfg.percentile);
     const dynamicThreshold = std === 0 ? cfg.defaultThreshold : Math.abs(sortedScores[percentileIndex] - mean) / std;
     

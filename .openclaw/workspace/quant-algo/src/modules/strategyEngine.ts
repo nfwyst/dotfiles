@@ -13,7 +13,7 @@ import OCSLayer4 from '../ocs/layer4';
 import SLTPCalculator from './slTpCalculator';
 import OCSEnhanced from '../ocs/enhanced/index';
 // OCS 2.0 新增导入
-import { sacExecutionAgent, State as SACState } from '../ocs/sacExecutionAgent';
+import { sacExecutionAgent, State as SACState } from '../ocs/linearPolicyAgent';
 
 export type StrategyType = 'ocs';
 

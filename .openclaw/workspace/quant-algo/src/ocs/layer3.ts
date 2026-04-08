@@ -45,6 +45,7 @@
  */
 
 import { Layer2Output } from './layer2';
+import type { OHLCV } from '../events/types';
 import { TripleBarrierLabeler, type BarrierLabel } from '../backtest/tripleBarrier';
 import { type Layer3Config, DEFAULT_OCS_CONFIG } from '../config/ocsConfig';
 
@@ -398,7 +399,7 @@ export class OCSLayer3 {
    * we must use ohlcv[offset + i] for label computation.
    */
   initializeFromHistory(
-    ohlcv: any[],
+    ohlcv: OHLCV[],
     features3D: [number, number, number][],
     offset: number = 0,
   ) {
@@ -468,7 +469,7 @@ export class OCSLayer3 {
   /**
    * FIX H6: Compute triple barrier labels from OHLCV data.
    */
-  private computeTripleBarrierLabels(ohlcv: any[]): BarrierLabel[] | null {
+  private computeTripleBarrierLabels(ohlcv: OHLCV[]): BarrierLabel[] | null {
     if (ohlcv.length < 2) return null;
 
     const sample = ohlcv[0];

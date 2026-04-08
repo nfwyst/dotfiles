@@ -24,6 +24,9 @@ import {
 import logger from '../logger';
 import { HMMRegimeDetector } from '../risk/hmmRegimeDetector';
 import { TailRiskModel } from '../risk/tailRiskModel';
+import { RiskGuardChain } from '../risk/RiskGuardChain';
+import { CircuitBreakerGuard, DailyLossLimitGuard } from '../risk/guards';
+import type { TradingContext } from '../risk/types';
 
 // ==================== 类型定义 ====================
 
@@ -64,6 +67,14 @@ export class EventDrivenExecutionLayer {
   private hmmWarmedUp: boolean = false;
   private tailRiskWarmedUp: boolean = false;
 
+  // ── S3 FIX: RiskGuardChain with CircuitBreaker + DailyLossLimit ──
+  private riskGuardChain: RiskGuardChain;
+  private dailyPnl: number = 0;
+  private peakBalance: number = 0;
+  private barsSinceLastTrade: number = 0;
+  private barsSinceEntry: number = 0;
+  private consecutiveLosses: number = 0;
+
   // FIX BUG 4: Replace isProcessing boolean guard with a proper async mutex.
   // The old pattern had a race condition: after drainEventQueue() saw an
   // empty queue and returned, but before isProcessing was set to false,
@@ -94,6 +105,11 @@ export class EventDrivenExecutionLayer {
     this.stateManager = stateManager;
     this.maxQueueSize = maxQueueSize;
 
+
+    // S3 FIX: Initialize RiskGuardChain with basic guards
+    this.riskGuardChain = new RiskGuardChain()
+      .addGuard(new CircuitBreakerGuard(10, 1500, 4000))  // 10% drawdown threshold
+      .addGuard(new DailyLossLimitGuard(4));               // 4% daily loss limit
     // 订阅策略层完成事件
     this.subscribeToStrategyEvents();
   }
@@ -351,6 +367,25 @@ export class EventDrivenExecutionLayer {
       return this.createHoldResult('No LLM decision available');
     }
 
+
+    // S3 FIX: Evaluate RiskGuardChain before opening new position
+    const riskContext: TradingContext = {
+      currentPrice,
+      entryPrice: position?.entryPrice ?? currentPrice,
+      balance,
+      unrealizedPnl: position?.unrealizedPnl ?? 0,
+      dailyPnl: this.dailyPnl,
+      dailyTrades: 0,
+      consecutiveLosses: this.consecutiveLosses,
+      barsSinceEntry: this.barsSinceEntry,
+      barsSinceLastTrade: this.barsSinceLastTrade,
+      peakBalance: this.peakBalance > 0 ? this.peakBalance : balance,
+      currentDrawdownPercent: this.peakBalance > 0 ? ((this.peakBalance - balance) / this.peakBalance) * 100 : 0,
+    };
+    const riskDecision = this.riskGuardChain.evaluate(riskContext);
+    if (riskDecision.action === 'reject') {
+      return this.createHoldResult(`Risk guard rejected: ${riskDecision.reason}`);
+    }
     // 6. 开新仓
     const result = await this.openPosition(signal, currentPrice, balance);
     await this.emitOrderExecuted(result, correlationId);

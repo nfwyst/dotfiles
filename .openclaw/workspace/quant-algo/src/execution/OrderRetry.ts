@@ -729,9 +729,9 @@ export class OrderRetryManager {
           timestamp: Date.now(),
         };
       }
-    } catch (unexpectedError: any) {
-      span?.recordException(unexpectedError);
-      span?.setStatus({ code: 2, message: unexpectedError.message });
+    } catch (unexpectedError: unknown) {
+      span?.recordException(unexpectedError instanceof Error ? unexpectedError : new Error(String(unexpectedError)));
+      span?.setStatus({ code: 2, message: unexpectedError instanceof Error ? unexpectedError.message : String(unexpectedError) });
       span?.end();
       throw unexpectedError;
     }

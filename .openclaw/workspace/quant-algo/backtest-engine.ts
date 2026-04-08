@@ -22,6 +22,9 @@ import { OCSLayer4 } from './src/ocs/layer4';
 import { OCSEnhanced } from './src/ocs/enhanced';
 import { calculatePositionSize } from './src/risk/positionSizing';
 import { TradingCostConfig, DEFAULT_TRADING_COSTS, getTotalCostBps } from './src/config/tradingCosts';
+import { RiskGuardChain } from './src/risk/RiskGuardChain';
+import { CircuitBreakerGuard, DailyLossLimitGuard, CooldownGuard, ConsecutiveLossGuard } from './src/risk/guards';
+import type { TradingContext } from './src/risk/types';
 // FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
 
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
@@ -143,6 +146,9 @@ export class BacktestEngine {
   private consecutiveLosses: number = 0;
   private consecutiveLossPauseEnd: number = 0;
 
+  // S3 FIX: RiskGuardChain — structured risk evaluation
+  private riskGuardChain: RiskGuardChain;
+
   // Trade cooldown: prevent re-entry immediately after closing a position
   private lastCloseBarIndex: number = -999;
   private tradeCooldownBars: number = 18; // 18 bars = 1.5 hours on 5m timeframe (reduce churn)
@@ -205,6 +211,13 @@ export class BacktestEngine {
     this.ocsLayer4 = new OCSLayer4();
     this.ocsEnhanced = new OCSEnhanced();
     this.sltpCalculator = new SLTPCalculator();
+
+    // S3 FIX: Initialize RiskGuardChain with guards matching hardcoded thresholds
+    this.riskGuardChain = new RiskGuardChain()
+      .addGuard(new CircuitBreakerGuard(10, 1500, 4000))   // 10% drawdown, escalating cooldown
+      .addGuard(new DailyLossLimitGuard(4))                 // 4% daily loss limit
+      .addGuard(new CooldownGuard(this.tradeCooldownBars))  // trade cooldown
+      .addGuard(new ConsecutiveLossGuard(5, 1000));          // 5 consecutive losses, 1000 bar pause
   }
 
   /** Get the resolved trading cost config */

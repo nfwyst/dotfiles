@@ -136,8 +136,8 @@ export class SnapshotManager {
         if (state.trading.position) {
           state.trading.position = migratePosition(state.trading.position);
         }
-        if ((state.trading as any).lastPosition) {
-          (state.trading as any).lastPosition = migratePosition((state.trading as any).lastPosition);
+        if (state.trading.lastPosition) {
+          state.trading.lastPosition = migratePosition(state.trading.lastPosition);
         }
       }
 

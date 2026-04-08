@@ -121,10 +121,10 @@ export class TrendAgent implements DecisionAgent {
         temperature: 0.3,
       });
       resultContent = llmResp.content;
-    } catch (llmError: any) {
+    } catch (llmError: unknown) {
       return {
         success: false,
-        error: llmError.message || 'LLM call failed',
+        error: llmError instanceof Error ? llmError.message : 'LLM call failed',
       };
     }
 
@@ -164,10 +164,10 @@ export class TrendAgent implements DecisionAgent {
         processingTimeMs: 0,
       };
       
-    } catch (parseError: any) {
+    } catch (parseError: unknown) {
       return {
         success: false,
-        error: `JSON parse error: ${parseError.message}`,
+        error: `JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
       };
     }
   }
