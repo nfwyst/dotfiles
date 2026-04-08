@@ -47,12 +47,13 @@ export class HomodyneDiscriminator {
   }
 
   /**
-   * Compute adaptive smoothing alpha based on detected cycle period.
-   * Instead of fixed α=0.07, use α = 2/(period+1) clamped to [0.02, 0.15].
+   * Fixed smoothing alpha = 0.07 (Ehlers original).
+   * Note: Adaptive alpha (2/(period+1)) was tested but increases
+   * regime-sensitivity across CPCV folds, degrading PBO. Fixed alpha
+   * is regime-invariant and preserves fold-to-fold consistency.
    */
   private adaptiveAlpha(): number {
-    const alpha = 2 / (this.smoothPeriod + 1);
-    return Math.max(0.02, Math.min(0.15, alpha));
+    return 0.07;
   }
 
   /**
