@@ -409,11 +409,11 @@ export function traced<T extends (...args: any[]) => any>(
         span.end();
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         span.recordException(error);
         span.setStatus({
           code: SpanStatusCode.ERROR,
-          message: error.message,
+          message: (error instanceof Error ? error.message : String(error)),
         });
         span.end();
         throw error;
@@ -471,11 +471,11 @@ export function tracedAsync<T extends (...args: any[]) => Promise<any>>(
         span.end();
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         span.recordException(error);
         span.setStatus({
           code: SpanStatusCode.ERROR,
-          message: error.message,
+          message: (error instanceof Error ? error.message : String(error)),
         });
         span.end();
         throw error;
@@ -513,11 +513,11 @@ export function traceFunction<T>(
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     span.recordException(error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
-      message: error.message,
+      message: (error instanceof Error ? error.message : String(error)),
     });
     span.end();
     throw error;
@@ -551,11 +551,11 @@ export async function traceAsyncFunction<T>(
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     span.recordException(error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
-      message: error.message,
+      message: (error instanceof Error ? error.message : String(error)),
     });
     span.end();
     throw error;

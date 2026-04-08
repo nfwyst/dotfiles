@@ -52,9 +52,9 @@ export class MarketDataFetcher {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -104,9 +104,9 @@ export class MarketDataFetcher {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -153,9 +153,9 @@ export class MarketDataFetcher {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -189,10 +189,10 @@ export class MarketDataFetcher {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
-      console.error(`获取市场数据失败: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`获取市场数据失败: ${(error instanceof Error ? error.message : String(error))}`);
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -204,9 +204,9 @@ export class MarketDataFetcher {
     for (let i = 0; i < this.retryCount; i++) {
       try {
         return await fn();
-      } catch (error: any) {
+      } catch (error: unknown) {
         lastError = error;
-        console.warn(`请求失败 (尝试 ${i + 1}/${this.retryCount}): ${error.message}`);
+        console.warn(`请求失败 (尝试 ${i + 1}/${this.retryCount}): ${(error instanceof Error ? error.message : String(error))}`);
         
         if (i < this.retryCount - 1) {
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));

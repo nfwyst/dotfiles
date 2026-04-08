@@ -124,11 +124,11 @@ export class TechnicalAnalystAgent implements AnalystAgent {
         processingTimeMs: Date.now() - startTime,
       };
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.errorCount++;
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         processingTimeMs: Date.now() - startTime,
       };
     }

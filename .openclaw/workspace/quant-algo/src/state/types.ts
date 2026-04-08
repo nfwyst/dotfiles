@@ -5,6 +5,9 @@
 // source) instead of being duplicated with different field names.
 
 import { Position } from '../events/types';
+import type { LLMTradingSignal } from '../modules/llmAnalysis';
+import type { StrategySignal } from '../modules/strategyEngine';
+import type { OCSEnhancedOutput } from '../ocs/enhanced/index';
 
 // Re-export the canonical Position type so that any code importing
 // Position from 'state/types' continues to work seamlessly.
@@ -147,7 +150,7 @@ export interface UnifiedState {
   };
 
   llm: {
-    lastDecision: any | null;
+    lastDecision: LLMTradingSignal | null;
     lastDecisionTime: number;
     lastDecisionPrice: number;
     thinking: string | null;
@@ -161,9 +164,9 @@ export interface UnifiedState {
   };
 
   strategy: {
-    lastSignal: any | null;
+    lastSignal: StrategySignal | null;
     lastSignalTime: number;
-    strategyOutput: any | null;
+    strategyOutput: OCSEnhancedOutput | null;
   };
 
   daemon: {

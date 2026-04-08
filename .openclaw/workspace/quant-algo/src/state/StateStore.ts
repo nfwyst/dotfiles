@@ -8,6 +8,9 @@ import type {
   UnifiedState,
   Position,
 } from './types';
+import type { LLMTradingSignal } from '../modules/llmAnalysis';
+import type { StrategySignal } from '../modules/strategyEngine';
+import type { OCSEnhancedOutput } from '../ocs/enhanced/index';
 import { createDefaultState } from './types';
 
 /**
@@ -74,7 +77,7 @@ export class StateStore {
     return this.state.llm;
   }
 
-  updateLLM(decision: any, price: number): void {
+  updateLLM(decision: LLMTradingSignal, price: number): void {
     this.state.llm.lastDecision = decision;
     this.state.llm.lastDecisionTime = Date.now();
     this.state.llm.lastDecisionPrice = price;
@@ -117,7 +120,7 @@ export class StateStore {
     return this.state.strategy;
   }
 
-  updateStrategy(signal: any, output?: any): void {
+  updateStrategy(signal: StrategySignal, output?: OCSEnhancedOutput): void {
     this.state.strategy.lastSignal = signal;
     this.state.strategy.lastSignalTime = Date.now();
     if (output !== undefined) {

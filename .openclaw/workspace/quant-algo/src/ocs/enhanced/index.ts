@@ -14,6 +14,8 @@ import CVDAnalyzer, { CVDDivergence } from './cvdDivergence';
 import TRIXSystem, { TRIXData } from './trixSystem';
 import DerivativeFilter, { DerivativeData } from './derivativeFilter';
 import ElasticVolumeMA, { ElasticVMAData } from './elasticVolumeMA';
+import type { Layer2Output } from '../layer2';
+import type { Layer3Output } from '../layer3';
 
 export interface OCSEnhancedOutput {
   layer1Enhanced: {
@@ -175,7 +177,7 @@ export class OCSEnhanced {
    * This is O(1) — just combines cached values.
    */
   getEnhancedOutput(
-    originalLayer3Output: any
+    originalLayer3Output: Layer3Output
   ): OCSEnhancedOutput {
     const trixSignal = this.lastTrixSignal || { action: 'hold' as const, confidence: 30, reasoning: ['TRIX warming up'] };
     const derivativeAdvice = this.lastDerivativeAdvice || { action: 'hold' as const, confidence: 30, reasoning: ['Derivative warming up'] };
@@ -206,7 +208,7 @@ export class OCSEnhanced {
       layer4Enhanced: {
         derivativeAdvice: derivativeAdvice.action,
         derivativeConfidence: derivativeAdvice.confidence,
-        isSignificantMove: (derivativeData as any).isSignificantMove || false,
+        isSignificantMove: 'isSignificantMove' in derivativeData ? (derivativeData as DerivativeData).isSignificantMove : false,
       },
       combinedSignal: combined,
     };
@@ -218,8 +220,8 @@ export class OCSEnhanced {
    */
   enhanceIncremental(
     candle: { open: number; high: number; low: number; close: number; volume: number },
-    originalLayer2Output: any,
-    originalLayer3Output: any
+    originalLayer2Output: Layer2Output,
+    originalLayer3Output: Layer3Output
   ): OCSEnhancedOutput {
     const dominantCycle = originalLayer2Output?.dominantCycle?.period || 20;
     this.feedBar(candle, dominantCycle);
@@ -231,8 +233,8 @@ export class OCSEnhanced {
    */
   enhance(
     ohlcv: { open: number; high: number; low: number; close: number; volume: number }[],
-    originalLayer2Output: any,
-    originalLayer3Output: any
+    originalLayer2Output: Layer2Output,
+    originalLayer3Output: Layer3Output
   ): OCSEnhancedOutput {
     const closes = ohlcv.map(d => d.close);
     const volumes = ohlcv.map(d => d.volume);
@@ -284,11 +286,11 @@ export class OCSEnhanced {
   }
 
   private combineSignals(
-    originalLayer3: any,
-    trixSignal: any,
-    derivativeAdvice: any,
+    originalLayer3: Layer3Output,
+    trixSignal: { action: 'buy' | 'sell' | 'hold'; confidence: number; reasoning: string[] },
+    derivativeAdvice: { action: 'buy' | 'sell' | 'hold' | 'exit'; confidence: number; reasoning: string[] },
     cvdDivergence: CVDDivergence | null,
-    derivativeData: any
+    derivativeData: DerivativeData | { isSignificantMove: boolean }
   ): { action: 'buy' | 'sell' | 'hold'; confidence: number; reasoning: string[] } {
     const votes = { buy: 0, sell: 0, hold: 0 };
     const confidenceScores = { buy: 0, sell: 0 };

@@ -217,7 +217,7 @@ export class LLMClient {
       try {
         const response = await this.executeRequest(options, config, timeout);
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
         lastError = error;
         
         // 判断是否可重试
@@ -287,12 +287,12 @@ export class LLMClient {
       this.recordTokenUsage(llmResponse, config);
       
       return llmResponse;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
       timer();
       
       // 记录错误
-      metricsCollector.recordError('llm', error.name || 'unknown', 'medium');
+      metricsCollector.recordError('llm', (error instanceof Error ? error.name : 'Unknown') || 'unknown', 'medium');
       
       throw error;
     }

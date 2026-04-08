@@ -3,7 +3,8 @@
  * 订阅数据层事件，发布策略信号事件
  */
 
-import type { StrategyEngineModule, StrategySignal } from '../modules/strategyEngine';
+import type { StrategyEngineModule, StrategySignal, StrategyContext as OCSStrategyContext } from '../modules/strategyEngine';
+import type { TechnicalIndicators } from '../modules/technicalAnalysis';
 import type { LLMAnalysisModule } from '../modules/llmAnalysis';
 import type { Position } from '../riskManager';
 import { getEventBus } from '../events';
@@ -89,6 +90,9 @@ export class EventDrivenStrategyLayer {
   private static readonly DEFAULT_MAX_QUEUE_SIZE = 100;
   private static readonly QUEUE_WARNING_THRESHOLD = 0.8; // 80%
 
+  // OCS 管道所需的最小历史数据条数（Layer3 需要 >50）
+  private static readonly OCS_MIN_HISTORY_LENGTH = 60;
+
   constructor(
     strategyEngine: StrategyEngineModule,
     llmEngine: LLMAnalysisModule,
@@ -101,7 +105,7 @@ export class EventDrivenStrategyLayer {
     this.strategy = strategy;
     this.maxQueueSize = maxQueueSize;
 
-    // 订阅数据层完成事件
+    // 订阅数据层事件
     this.subscribeToDataEvents();
   }
 
@@ -248,8 +252,30 @@ export class EventDrivenStrategyLayer {
     })) || [];
     this.strategyEngine.addHistoricalData(ohlcvData);
 
-    // 4. 生成策略信号（简化版本）
-    const strategySignal = this.generateSimpleSignal(context);
+    // 4. 生成策略信号 — 优先使用 OCS Layer1-4 管道，降级到简化信号
+    let strategySignal: StrategySignal;
+    let signalSource: 'OCS' | 'SimpleSignal';
+
+    try {
+      strategySignal = this.tryGenerateOCSSignal(context);
+      signalSource = 'OCS';
+      logger.info(
+        `[StrategyLayer] [OCS] OCS pipeline signal generated: ` +
+        `type=${strategySignal.type}, confidence=${strategySignal.confidence.toFixed(3)}, ` +
+        `strategy=${strategySignal.strategy}`
+      );
+    } catch (ocsError) {
+      // OCS 管道失败，降级到简化 SMA/RSI 信号
+      logger.warn(
+        `[StrategyLayer] [Fallback] OCS pipeline failed, falling back to SimpleSignal: ${ocsError}`
+      );
+      strategySignal = this.generateSimpleSignal(context);
+      signalSource = 'SimpleSignal';
+      logger.info(
+        `[StrategyLayer] [SimpleSignal] Fallback signal generated: ` +
+        `type=${strategySignal.type}, confidence=${strategySignal.confidence.toFixed(3)}`
+      );
+    }
 
     // ── 4a. Order Flow Analysis enhancement ───────────────────
     // Feed the latest candle to the OrderFlowAnalyzer. It works even
@@ -356,14 +382,149 @@ export class EventDrivenStrategyLayer {
       return this.createHoldSignal('Strategy signal is hold', context);
     }
 
-    // 6. 调用 LLM 进行最终决策
+    // 6. 调用 LLM 进行最终决策（作为 OCS 信号的确认层）
     const enhancedSignal = await this.callLLM(strategySignal, context);
+
+    // 标记信号来源，便于日志追踪
+    enhancedSignal.source = signalSource;
 
     return enhancedSignal;
   }
 
+  // ==================== OCS 管道信号生成 ====================
+
   /**
-   * 生成简单策略信号
+   * 尝试通过 OCS Layer1-4 管道生成信号。
+   *
+   * 前置条件检查:
+   * - strategyEngine 必须已初始化
+   * - 历史数据必须 >= OCS_MIN_HISTORY_LENGTH (60 bars)
+   *
+   * 如果前置条件不满足或 OCS 管道抛出异常，调用方应降级到 generateSimpleSignal()。
+   */
+  private tryGenerateOCSSignal(context: StrategyContext): StrategySignal {
+    // 前置条件: strategyEngine 必须存在
+    if (!this.strategyEngine) {
+      throw new Error('strategyEngine is not initialized');
+    }
+
+    // 前置条件: 历史数据充足（OCS Layer3 KNN 需要 >50 条初始化）
+    if (
+      !context.recentCandles ||
+      context.recentCandles.length < EventDrivenStrategyLayer.OCS_MIN_HISTORY_LENGTH
+    ) {
+      throw new Error(
+        `Insufficient OHLCV history for OCS pipeline: ` +
+        `got ${context.recentCandles?.length ?? 0}, need >= ${EventDrivenStrategyLayer.OCS_MIN_HISTORY_LENGTH}`
+      );
+    }
+
+    // 构建 OCS StrategyContext（适配类型差异）
+    const ocsContext = this.buildOCSStrategyContext(context);
+
+    // 调用策略引擎的 OCS 管道
+    const ocsSignal = this.strategyEngine.generateSignal(ocsContext);
+
+    logger.info(
+      `[StrategyLayer] [OCS] Layer1-4 pipeline result: ` +
+      `type=${ocsSignal.type}, strategy=${ocsSignal.strategy}, ` +
+      `strength=${ocsSignal.strength}, confidence=${ocsSignal.confidence.toFixed(3)}, ` +
+      `reasoning=[${ocsSignal.reasoning.join(' | ')}]`
+    );
+
+    return ocsSignal;
+  }
+
+  /**
+   * 从事件驱动层的 StrategyContext 构建 OCS StrategyContext。
+   *
+   * strategyEngine.generateSignal() 接收的 StrategyContext 需要
+   * TechnicalIndicators（完整类型）。OCS 管道实际只使用：
+   *   - indicators.atr[14]
+   *   - indicators.microstructure
+   * 其余字段用 Indicators（简化事件类型）中的对应值填充。
+   */
+  private buildOCSStrategyContext(context: StrategyContext): OCSStrategyContext {
+    const ind = context.indicators;
+
+    // 构建最小可用的 TechnicalIndicators 对象
+    // OCS pipeline 实际仅读取 indicators.atr[14] 和 indicators.microstructure
+    const technicalIndicators: TechnicalIndicators = {
+      timestamp: Date.now(),
+      timeframe: '5m',
+      symbol: '',
+      currentPrice: context.currentPrice,
+      priceChange24h: 0,
+      priceChangePercent24h: 0,
+      sma: { 5: 0, 10: 0, 20: ind.sma20, 50: ind.sma50, 200: ind.sma200 },
+      ema: { 12: ind.ema12, 26: ind.ema26, 50: 0 },
+      adx: ind.adx,
+      diPlus: 0,
+      diMinus: 0,
+      supertrend: {
+        direction: ind.supertrend.direction > 0 ? 'up' : 'down',
+        value: ind.supertrend.value,
+      },
+      rsi: { 6: 0, 14: ind.rsi14, 24: 0 },
+      macd: {
+        line: ind.macd.macd,
+        signal: ind.macd.signal,
+        histogram: ind.macd.histogram,
+      },
+      stochastic: { k: ind.stochastic.k, d: ind.stochastic.d },
+      cci: ind.cci,
+      williamsR: 0,
+      atr: { 14: ind.atr14, 20: 0 },
+      bollinger: {
+        upper: ind.bollinger.upper,
+        middle: ind.bollinger.middle,
+        lower: ind.bollinger.lower,
+        bandwidth: 0,
+        percentB: 0,
+      },
+      keltner: { upper: 0, middle: 0, lower: 0 },
+      obv: ind.obv,
+      vwap: ind.vwap,
+      volumeSma: { 10: 0, 20: ind.volumeSma20 },
+      volumeRatio: 0,
+      microstructure: {
+        buyingPressure: context.microSignal?.direction === 'bullish' ? context.microSignal.score / 100 :
+                        context.microSignal?.direction === 'bearish' ? -(context.microSignal.score / 100) : 0,
+        volumeImbalance: 0,
+        volatilityClustering: 0,
+        priceImpact: 0,
+        flowToxicity: 0,
+        effectiveSpread: 0,
+      },
+      scores: {
+        trend: ind.trendScore,
+        momentum: ind.momentumScore,
+        volatility: ind.volatilityScore,
+        volume: ind.volumeScore,
+        overall: ind.overallScore,
+      },
+      signals: {
+        goldenCross: ind.sma20 > ind.sma50,
+        deathCross: ind.sma20 < ind.sma50,
+        overbought: ind.rsi14 > 70,
+        oversold: ind.rsi14 < 30,
+        trendReversal: null,
+      },
+    };
+
+    return {
+      indicators: technicalIndicators,
+      multiTimeframeIndicators: {},
+      currentPrice: context.currentPrice,
+      balance: context.balance,
+      hasPosition: context.position !== null && context.position.side !== 'none',
+      currentPosition: context.position,
+      marketContext: `price=${context.currentPrice}`,
+    };
+  }
+
+  /**
+   * 生成简单策略信号（降级方案：SMA20/SMA50 交叉 + RSI）
    */
   private generateSimpleSignal(context: StrategyContext): StrategySignal {
     const { indicators, currentPrice } = context;

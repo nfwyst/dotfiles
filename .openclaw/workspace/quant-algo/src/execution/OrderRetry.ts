@@ -416,20 +416,20 @@ export class RetryQueue {
         this.onRetrySuccess(request.orderId, result);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 记录失败
       const record: RetryRecord = {
         attempt: retryCount + 1,
         timestamp: Date.now(),
         delay,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
       };
 
       item.history.push(record);
       item.retryCount = retryCount + 1;
       item.nextRetryAt = Date.now() + this.strategy.calculateDelay(retryCount + 1);
 
-      logger.warn(`⚠️ 订单 ${request.orderId} 重试失败 | 剩余重试: ${this.strategy.getRemainingRetries(retryCount + 1)} | 错误: ${error.message}`);
+      logger.warn(`⚠️ 订单 ${request.orderId} 重试失败 | 剩余重试: ${this.strategy.getRemainingRetries(retryCount + 1)} | 错误: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
 
@@ -694,18 +694,18 @@ export class OrderRetryManager {
         span?.end();
         return orderResult;
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 首次失败，加入重试队列
-        logger.warn(`⚠️ 订单 ${orderId} 首次执行失败: ${error.message}，准备重试`, getTraceContextForLogging());
+        logger.warn(`⚠️ 订单 ${orderId} 首次执行失败: ${(error instanceof Error ? error.message : String(error))}，准备重试`, getTraceContextForLogging());
 
         span?.recordException(error);
-        span?.addEvent('order.first_attempt_failed', { error: error.message });
+        span?.addEvent('order.first_attempt_failed', { error: (error instanceof Error ? error.message : String(error)) });
 
         const record: RetryRecord = {
           attempt: 0,
           timestamp: Date.now(),
           delay: 0,
-          error: error.message,
+          error: (error instanceof Error ? error.message : String(error)),
         };
 
         this.tracker.addRetryRecord(orderId, record);
@@ -725,7 +725,7 @@ export class OrderRetryManager {
           status: OrderStatus.RETRYING,
           success: false,
           retryCount: 0,
-          lastError: error.message,
+          lastError: (error instanceof Error ? error.message : String(error)),
           timestamp: Date.now(),
         };
       }

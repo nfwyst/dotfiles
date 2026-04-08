@@ -16,6 +16,9 @@ import logger from '../logger';
 import { llmClient } from '../ai/LLMClient';
 import type { LLMProvider } from '../ai/LLMConfigManager';
 
+
+const ANNUAL_TRADING_DAYS = 365; // crypto markets run 24/7
+
 /**
  * ### 因子定义
  */
@@ -631,7 +634,7 @@ TYPE: [momentum/value/volatility/sentiment]
 
   /**
    * ### 计算夏普比率 (给定一组收益)
-   * FIX C5: Annualized Sharpe = mean(returns) / std(returns) * sqrt(252).
+   * FIX C5: Annualized Sharpe = mean(returns) / std(returns) * sqrt(ANNUAL_TRADING_DAYS).
    * Only uses finite values.
    */
   private computeSharpeRatio(returns: number[]): number {
@@ -643,8 +646,8 @@ TYPE: [momentum/value/volatility/sentiment]
     const std = Math.sqrt(variance);
     if (std === 0) return 0;
 
-    // Annualize: assume daily bars, 252 trading days
-    return (mean / std) * Math.sqrt(252);
+    // Annualize: assume daily bars, 365 days (crypto 24/7)
+    return (mean / std) * Math.sqrt(ANNUAL_TRADING_DAYS);
   }
 
   /**
@@ -765,10 +768,10 @@ TYPE: [momentum/value/volatility/sentiment]
       0.2 * (1 - turnoverPenalty);
 
     // --- Derive remaining evaluation metrics from real data ---
-    const icir = ic !== 0 ? ic * Math.sqrt(252) : 0;
+    const icir = ic !== 0 ? ic * Math.sqrt(ANNUAL_TRADING_DAYS) : 0;
     const validOOSReturns = strategyReturnsOOS.filter(r => isFinite(r));
     const annualizedReturn = validOOSReturns.length > 0
-      ? (validOOSReturns.reduce((a, b) => a + b, 0) / validOOSReturns.length) * 252
+      ? (validOOSReturns.reduce((a, b) => a + b, 0) / validOOSReturns.length) * ANNUAL_TRADING_DAYS
       : 0;
 
     // Max drawdown on OOS cumulative returns

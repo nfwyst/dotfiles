@@ -42,7 +42,7 @@ export interface CircuitBreakerConfig {
   /** 是否启用降级响应（默认 true） */
   enableFallback: boolean;
   /** 熔断时返回的降级数据（可选） */
-  fallbackValue?: any;
+  fallbackValue?: unknown;
 }
 
 /**
@@ -208,7 +208,7 @@ export class CircuitBreaker {
         state: this.state,
         duration: Date.now() - startTime,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.onFailure(error);
       
       // 尝试降级
@@ -221,7 +221,7 @@ export class CircuitBreaker {
       
       return {
         success: false,
-        error: error?.message || String(error),
+        error: error instanceof Error ? error.message : String(error),
         isFallback: false,
         state: this.state,
         duration: Date.now() - startTime,
@@ -289,8 +289,8 @@ export class CircuitBreaker {
           state: this.state,
           duration: Date.now() - startTime,
         };
-      } catch (error: any) {
-        logger.warn(`[CircuitBreaker:${this.config.name}] 降级函数执行失败:`, error?.message);
+      } catch (error: unknown) {
+        logger.warn(`[CircuitBreaker:${this.config.name}] 降级函数执行失败:`, error instanceof Error ? error.message : String(error));
       }
     }
 
@@ -334,10 +334,10 @@ export class CircuitBreaker {
   /**
    * 失败回调
    */
-  private onFailure(error: any): void {
+  private onFailure(error: unknown): void {
     this.totalCalls++;
     this.failureCount++;
-    this.lastFailureReason = error?.message || String(error);
+    this.lastFailureReason = error instanceof Error ? error.message : String(error);
     this.lastFailureTime = Date.now();
 
     if (this.state === 'HALF_OPEN') {

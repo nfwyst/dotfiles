@@ -22,6 +22,7 @@ import {
   tracingManager,
   getTraceContextForLogging,
 } from '../monitoring/tracing';
+import { parseTradingEvent } from './validation';
 // ==================== 事件总线配置 ====================
 
 export interface EventBusConfig {
@@ -174,7 +175,11 @@ export class RedisEventBus extends EventEmitter {
    */
   private handleMessage(channel: EventChannel, message: string): void {
     try {
-      const event = JSON.parse(message) as TradingEvent;
+      const event = parseTradingEvent(message);
+      if (!event) {
+        logger.warn(\`[EventValidation] Dropping invalid event on channel \${channel}\`);
+        return;
+      }
 
       // 记录事件历史
       this.addToHistory(event);
@@ -280,9 +285,9 @@ export class RedisEventBus extends EventEmitter {
       span?.end();
       
       logger.debug(`Published event: ${event.channel} [${event.correlationId}]`, getTraceContextForLogging());
-    } catch (err: any) {
+    } catch (err: unknown) {
       span?.recordException(err);
-      span?.setStatus({ code: 2, message: err.message });
+      span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       logger.error(`Failed to publish event on ${event.channel}:`, err);
       throw err;
@@ -316,9 +321,9 @@ export class RedisEventBus extends EventEmitter {
       this.subscriptions.get(channel)!.add(handler as EventHandler);
       span?.setStatus({ code: 0 });
       span?.end();
-    } catch (err: any) {
+    } catch (err: unknown) {
       span?.recordException(err);
-      span?.setStatus({ code: 2, message: err.message });
+      span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       throw err;
     }

@@ -255,7 +255,7 @@ export class EventDrivenRuntime {
         (event: MarketDataGatheredEvent) => {
           const price = event.payload.marketData.currentPrice;
           if (price > 0 && this.executionAdapter && 'updatePrice' in this.executionAdapter) {
-            (this.executionAdapter as any).updatePrice(price);
+            this.executionAdapter.updatePrice!(price);
           }
         },
       );
@@ -326,7 +326,7 @@ export class EventDrivenRuntime {
           // Update balance tracking from state manager
           try {
             const state = this.stateManager.getState();
-            const currentBalance = (state as any).balance ?? (state as any).trading?.balance ?? 0;
+            const currentBalance = state.trading?.balance ?? 0;
             if (this.initialBalance === 0 && currentBalance > 0) {
               this.initialBalance = currentBalance;
               this.peakBalance = currentBalance;
@@ -364,8 +364,8 @@ export class EventDrivenRuntime {
 
     try {
       const state = this.stateManager.getState();
-      currentBalance = (state as any).balance ?? (state as any).trading?.balance ?? 0;
-      killSwitchActive = (state as any).killSwitch?.active ? 1 : 0;
+      currentBalance = state.trading?.balance ?? 0;
+      killSwitchActive = 'killSwitch' in state && (state as Record<string, unknown>).killSwitch != null ? 1 : 0;
     } catch {
       // Fallback: metrics will show zero balance
     }

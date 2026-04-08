@@ -5,6 +5,7 @@
  */
 
 import { Layer3Output } from './layer3';
+import { type Layer4Config, DEFAULT_OCS_CONFIG } from '../config/ocsConfig';
 
 export interface TradeSetup {
   direction: 'long' | 'short';
@@ -38,7 +39,18 @@ export class OCSLayer4 {
     stopLoss: number;
     takeProfits: { tp1: number; tp2: number; tp3: number };
   } | null = null;
+
+  private readonly config: Layer4Config;
   
+  constructor(config?: Partial<Layer4Config>) {
+    this.config = { ...DEFAULT_OCS_CONFIG.layer4 } as Layer4Config;
+    if (config) {
+      if (config.stopLoss) this.config.stopLoss = { ...this.config.stopLoss, ...config.stopLoss };
+      if (config.takeProfit) this.config.takeProfit = { ...this.config.takeProfit, ...config.takeProfit };
+      if (config.positionSizing) this.config.positionSizing = { ...this.config.positionSizing, ...config.positionSizing };
+    }
+  }
+
   process(
     layer3Signal: Layer3Output,
     currentPrice: number,
@@ -88,18 +100,20 @@ export class OCSLayer4 {
     balance: number
   ): Layer4Output {
     const direction = layer3Signal.signal === 'buy' ? 'long' : 'short';
+    const { atrMultiplier } = this.config.stopLoss;
+    const { tp1RR, tp2RR, tp3RR, tp1ClosePercent } = this.config.takeProfit;
+    const { riskPercent } = this.config.positionSizing;
     
     // 计算止损 (基于ATR)
-    const stopDistance = atr14 * 1.5;
+    const stopDistance = atr14 * atrMultiplier;
     const stopLoss = direction === 'long'
       ? entryPrice - stopDistance
       : entryPrice + stopDistance;
     
     // 计算止盈 (金字塔结构)
-    // TP1: 1.5x R/R, TP2: 2.5x R/R, TP3: 4x R/R
-    const tp1Distance = stopDistance * 1.5;
-    const tp2Distance = stopDistance * 2.5;
-    const tp3Distance = stopDistance * 4;
+    const tp1Distance = stopDistance * tp1RR;
+    const tp2Distance = stopDistance * tp2RR;
+    const tp3Distance = stopDistance * tp3RR;
     
     const takeProfits = direction === 'long'
       ? {
@@ -113,8 +127,8 @@ export class OCSLayer4 {
           tp3: entryPrice - tp3Distance,
         };
     
-    // 计算仓位 ( risking 2% of balance )
-    const riskAmount = balance * 0.02;
+    // 计算仓位 (risking configured % of balance)
+    const riskAmount = balance * riskPercent;
     const positionSize = riskAmount / stopDistance;
     
     // 保存当前持仓设置
@@ -136,7 +150,7 @@ export class OCSLayer4 {
         stopLoss,
         takeProfits,
         positionSize,
-        riskRewardRatio: 4, // 最大R/R
+        riskRewardRatio: tp3RR,
         expectedReturn: tp3Distance / entryPrice * 100,
       },
       reason: `KNN信号: ${layer3Signal.signal}, 置信度: ${layer3Signal.confidence.toFixed(1)}%`,
@@ -154,6 +168,7 @@ export class OCSLayer4 {
     }
     
     const pos = this.currentPosition;
+    const { tp1ClosePercent, tp2ClosePercent } = this.config.takeProfit;
     
     // 检查止损
     const stopHit = pos.direction === 'long'
@@ -193,7 +208,7 @@ export class OCSLayer4 {
       };
     }
     
-    // BUG 10 FIX: TP2 emits partial_close with closePercent: 0.25 instead of close_position
+    // BUG 10 FIX: TP2 emits partial_close with closePercent from config
     if (!pos.tp2Hit) {
       const tp2Hit = pos.direction === 'long'
         ? currentPrice >= pos.takeProfits.tp2
@@ -203,14 +218,14 @@ export class OCSLayer4 {
         pos.tp2Hit = true;
         return {
           signal: 'partial_close',
-          closePercent: 0.25,
-          reason: `TP2止盈触发 @ ${pos.takeProfits.tp2.toFixed(2)}, 平仓25%`,
+          closePercent: tp2ClosePercent,
+          reason: `TP2止盈触发 @ ${pos.takeProfits.tp2.toFixed(2)}, 平仓${(tp2ClosePercent * 100).toFixed(0)}%`,
           riskLevel: 'low',
         };
       }
     }
     
-    // BUG 10 FIX: TP1 emits partial_close with closePercent: 0.5 instead of close_position
+    // BUG 10 FIX: TP1 emits partial_close with closePercent from config
     if (!pos.tp1Hit) {
       const tp1Hit = pos.direction === 'long'
         ? currentPrice >= pos.takeProfits.tp1
@@ -220,8 +235,8 @@ export class OCSLayer4 {
         pos.tp1Hit = true;
         return {
           signal: 'partial_close',
-          closePercent: 0.5,
-          reason: `TP1止盈触发 @ ${pos.takeProfits.tp1.toFixed(2)}, 平仓50%`,
+          closePercent: tp1ClosePercent,
+          reason: `TP1止盈触发 @ ${pos.takeProfits.tp1.toFixed(2)}, 平仓${(tp1ClosePercent * 100).toFixed(0)}%`,
           riskLevel: 'low',
         };
       }

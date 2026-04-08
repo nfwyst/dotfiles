@@ -1,0 +1,96 @@
+{
+  "layer1": {
+    "vpm": {
+      "lookback": 20,
+      "bandMultiplier": 2
+    },
+    "ama": {
+      "erPeriod": 10,
+      "fastLength": 2,
+      "slowLength": 30,
+      "trendThreshold": 0.001
+    },
+    "supertrend": {
+      "period": 10,
+      "multiplier": 3
+    },
+    "stochastics": {
+      "kPeriod": 14,
+      "dPeriod": 3,
+      "oversoldThreshold": 20,
+      "overboughtThreshold": 80
+    },
+    "atr": {
+      "period": 14
+    },
+    "gaussian": {
+      "sigma": 2.0,
+      "windowSize": 20
+    }
+  },
+  "layer2": {
+    "ehlersCycle": {
+      "short": { "minPeriod": 5, "maxPeriod": 15 },
+      "medium": { "minPeriod": 15, "maxPeriod": 40 },
+      "long": { "minPeriod": 40, "maxPeriod": 100 },
+      "stateChangeThreshold": 0.1
+    },
+    "lms": {
+      "learningRate": 0.01,
+      "initialWeights": [0.25, 0.25, 0.25, 0.25],
+      "epsilon": 0.001
+    },
+    "zScore": {
+      "windowSize": 100,
+      "minSamples": 20,
+      "percentile": 0.85,
+      "defaultThreshold": 1.5,
+      "confidenceScale": 86
+    },
+    "v312": {
+      "gaussian": { "sigma": 2.0, "windowSize": 20 },
+      "cvd": { "lookbackPeriod": 20, "minStrength": 60 },
+      "trix": { "period": 14, "signalPeriod": 9 },
+      "derivative": { "velocityPeriod": 10, "accelerationPeriod": 0.001 },
+      "elasticVolume": { "lookbackPeriod": 20 }
+    }
+  },
+  "layer3": {
+    "knn": {
+      "defaultK": 5,
+      "maxHistory": 1000,
+      "embargoBars": 5,
+      "labelLookback": 5,
+      "signalThreshold": 50,
+      "labelThreshold": 0.005
+    },
+    "adaptiveK": {
+      "highVolatilityThreshold": 0.03,
+      "lowVolatilityThreshold": 0.01,
+      "highVolK": 3,
+      "lowVolK": 7,
+      "normalK": 5
+    },
+    "tripleBarrier": {
+      "ptSl": [2, 1],
+      "maxHoldingPeriod": 20,
+      "volLookback": 20,
+      "minVolatility": 0.001
+    }
+  },
+  "layer4": {
+    "stopLoss": {
+      "atrMultiplier": 1.5
+    },
+    "takeProfit": {
+      "tp1RR": 1.5,
+      "tp2RR": 2.5,
+      "tp3RR": 4.0,
+      "tp1ClosePercent": 0.50,
+      "tp2ClosePercent": 0.25
+    },
+    "positionSizing": {
+      "riskPercent": 0.02
+    }
+  }
+}

@@ -5,6 +5,8 @@
  * 基于 Expert Teams 论文
  */
 
+import type { TechnicalReport, SentimentReport, OnChainReport } from '../marketIntelligence/types';
+
 // ==================== 基础类型 ====================
 
 export type ActionType = 'buy' | 'sell' | 'hold';
@@ -184,9 +186,9 @@ export interface DecisionAgent {
 export interface DecisionContext {
   // 市场情报报告
   marketIntelligence: {
-    technical: any;
-    sentiment?: any;
-    onChain?: any;
+    technical: TechnicalReport;
+    sentiment?: SentimentReport;
+    onChain?: OnChainReport;
   };
   
   // 当前状态
@@ -208,15 +210,15 @@ export interface DecisionContext {
   };
   
   // 其他 Agent 输出 (用于协调)
-  otherAgentOutputs?: Map<string, any>;
+  otherAgentOutputs?: Map<string, AgentOutput>;
 }
 
 /**
  * Agent 输出基础
  */
-export interface AgentOutput {
+export interface AgentOutput<T = unknown> {
   success: boolean;
-  data?: any;
+  data?: T;
   error?: string;
   processingTimeMs: number;
 }

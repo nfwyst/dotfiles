@@ -46,6 +46,7 @@
 
 import { Layer2Output } from './layer2';
 import { TripleBarrierLabeler, type BarrierLabel } from '../backtest/tripleBarrier';
+import { type Layer3Config, DEFAULT_OCS_CONFIG } from '../config/ocsConfig';
 
 export interface HistoricalPattern {
   features: [number, number, number]; // 3D feature vector
@@ -73,39 +74,29 @@ export interface Layer3Output {
   reasoning: string[];
 }
 
-/**
- * Number of recent bars excluded from KNN neighbor search.
- * Prevents serial-correlation leakage — the classifier should not
- * peek at patterns whose outcomes are still unfolding or that are
- * auto-correlated with the current bar.
- */
-const EMBARGO_BARS = 5;
-
-/**
- * Lookback window used when labeling historical data (fallback).
- * label[i] = sign( price[i] - price[i - LABEL_LOOKBACK] )
- */
-const LABEL_LOOKBACK = 5;
-
 export class OCSLayer3 {
   private history: HistoricalPattern[];
   private readonly MAX_HISTORY: number;
   private currentK: number;
+  private readonly config: Layer3Config;
 
-  constructor() {
+  constructor(config?: Partial<Layer3Config>) {
+    this.config = { ...DEFAULT_OCS_CONFIG.layer3 } as Layer3Config;
+    if (config) {
+      if (config.knn) this.config.knn = { ...this.config.knn, ...config.knn };
+      if (config.adaptiveK) this.config.adaptiveK = { ...this.config.adaptiveK, ...config.adaptiveK };
+      if (config.tripleBarrier) this.config.tripleBarrier = { ...this.config.tripleBarrier, ...config.tripleBarrier };
+    }
+
     this.history = [];
-    this.currentK = 5; // 默认 K 值
-    this.MAX_HISTORY = 1000;
+    this.currentK = this.config.knn.defaultK;
+    this.MAX_HISTORY = this.config.knn.maxHistory;
   }
 
   // ─── volatility helpers ──────────────────────────────────────
 
   /**
    * 计算市场波动率 (基于ATR百分比)
-   *
-   * If a precomputed ATR value is available (from BacktestEngine's
-   * precomputed indicators), pass it as `precomputedATR` to skip
-   * the O(n) ATR calculation entirely.
    */
   private calculateVolatility(prices: number[], precomputedATR?: number): number {
     if (precomputedATR !== undefined && precomputedATR > 0) {
@@ -125,7 +116,6 @@ export class OCSLayer3 {
   /**
    * 计算 ATR
    * BUG 18 FIX: Use true range when OHLCV data is available
-   * For the simple prices-only path, use max/min of consecutive closes as proxy
    */
   private calculateATR(prices: number[], period: number, highs?: number[], lows?: number[]): number {
     if (prices.length < period + 1) return 0;
@@ -154,29 +144,21 @@ export class OCSLayer3 {
 
   /**
    * 根据波动率自适应调整 K 值
-   * 高波动: K=3 (减少噪声干扰)
-   * 低波动: K=7 (提高稳定性)
-   * 正常: K=5
    */
   private adaptK(volatility: number): number {
-    if (volatility > 0.03) {
-      return 3; // 高波动，使用小 K 减少噪声
-    } else if (volatility < 0.01) {
-      return 7; // 低波动，使用大 K 提高稳定性
+    const { highVolatilityThreshold, lowVolatilityThreshold, highVolK, lowVolK, normalK } = this.config.adaptiveK;
+    if (volatility > highVolatilityThreshold) {
+      return highVolK;
+    } else if (volatility < lowVolatilityThreshold) {
+      return lowVolK;
     }
-    return 5; // 正常波动
+    return normalK;
   }
 
   // ─── main entry point ────────────────────────────────────────
 
   /**
    * Process features and produce a KNN-based signal.
-   *
-   * @param features3D  3D feature vector for current bar
-   * @param prices      Close prices (used only when precomputedATR is not provided)
-   * @param precomputedATR  Optional precomputed ATR(14) value — when provided,
-   *                        skips internal ATR calculation and the `prices` array
-   *                        only needs the last element (current price).
    */
   process(features3D: [number, number, number], prices: number[], precomputedATR?: number): Layer3Output {
     // 1. 根据波动率自适应调整 K
@@ -218,14 +200,15 @@ export class OCSLayer3 {
     const buyConfidence = (weightedVotes.buy / totalWeight) * 100;
     const sellConfidence = (weightedVotes.sell / totalWeight) * 100;
 
-    // 6. 确定信号 — threshold 50% (reverted from 45% to prevent overfitting)
+    // 6. 确定信号 — threshold from config
+    const threshold = this.config.knn.signalThreshold;
     let signal: 'buy' | 'sell' | 'hold' = 'hold';
     let confidence = 0;
 
-    if (buyConfidence >= 50 && buyConfidence > sellConfidence) {
+    if (buyConfidence >= threshold && buyConfidence > sellConfidence) {
       signal = 'buy';
       confidence = buyConfidence;
-    } else if (sellConfidence >= 50 && sellConfidence > buyConfidence) {
+    } else if (sellConfidence >= threshold && sellConfidence > buyConfidence) {
       signal = 'sell';
       confidence = sellConfidence;
     }
@@ -253,16 +236,6 @@ export class OCSLayer3 {
   /**
    * 查找K个最近邻居（带距离 + temporal embargo）
    *
-   * PERF: Uses a fixed-size top-K buffer with insertion sort instead of
-   * allocating a full distances array + sort + slice. For K=5 and N=1000,
-   * this eliminates ~1000 object allocations and a full O(N log N) sort
-   * per call, replacing them with O(N) distance computations and O(K)
-   * insertion sorts (effectively free for K<=7).
-   *
-   * The embargo excludes any pattern whose index falls within the
-   * last `EMBARGO_BARS` entries so the classifier cannot use
-   * auto-correlated recent samples.
-   *
    * BUG 19 FIX: When eligible.length === 0, return default hold signal
    * instead of searching embargoed data.
    */
@@ -271,10 +244,10 @@ export class OCSLayer3 {
     currentTimestamp: number,
   ): { neighbor: HistoricalPattern; distance: number }[] {
     // Determine the embargo cutoff: exclude the last EMBARGO_BARS entries
-    const embargoStart = Math.max(0, this.history.length - EMBARGO_BARS);
+    const embargoBars = this.config.knn.embargoBars;
+    const embargoStart = Math.max(0, this.history.length - embargoBars);
 
     // BUG 19 FIX: When no eligible (non-embargoed) samples exist, return empty
-    // instead of bypassing the embargo and searching all (potentially leaked) data.
     if (embargoStart === 0) {
       return [];
     }
@@ -292,13 +265,10 @@ export class OCSLayer3 {
         // Buffer not full yet — always insert
         topK.push({ neighbor: h, distance: d });
         if (topK.length === K) {
-          // Buffer just filled — sort once and set maxDist threshold
           topK.sort((a, b) => a.distance - b.distance);
           maxDist = topK[K - 1].distance;
         }
       } else if (d < maxDist) {
-        // Replace the worst (last) element and re-sort
-        // Re-sorting 5-7 elements is effectively free (~10-20 comparisons)
         topK[K - 1] = { neighbor: h, distance: d };
         topK.sort((a, b) => a.distance - b.distance);
         maxDist = topK[K - 1].distance;
@@ -342,7 +312,8 @@ export class OCSLayer3 {
 
     // 添加自适应K信息
     const volLevel =
-      volatility > 0.03 ? '高' : volatility < 0.01 ? '低' : '正常';
+      volatility > this.config.adaptiveK.highVolatilityThreshold ? '高' :
+      volatility < this.config.adaptiveK.lowVolatilityThreshold ? '低' : '正常';
     reasons.push(
       `自适应KNN: K=${k} (${volLevel}波动率 ${(volatility * 100).toFixed(2)}%)`,
     );
@@ -384,16 +355,6 @@ export class OCSLayer3 {
    *
    * ANTI LOOK-AHEAD BIAS: This method should ONLY be called AFTER
    * a position is closed, using the actual entry and exit prices.
-   *
-   * DO NOT call this method before or during a trade — that would
-   * introduce look-ahead bias by using information not yet available.
-   *
-   * Recommended: Use PatternRecorder in ExecutionLayer to automate this.
-   *
-   * @param features Feature vector at trade open time
-   * @param entryPrice Actual entry price
-   * @param exitPrice Actual exit price (only known after close)
-   * @param side Trade direction
    */
   updateHistory(
     features: [number, number, number],
@@ -406,9 +367,10 @@ export class OCSLayer3 {
         ? (exitPrice - entryPrice) / entryPrice
         : (entryPrice - exitPrice) / entryPrice;
 
+    const labelThreshold = this.config.knn.labelThreshold;
     let label: 'buy' | 'sell' | 'hold' = 'hold';
-    if (realizedReturn > 0.005) label = 'buy';
-    else if (realizedReturn < -0.005) label = 'sell';
+    if (realizedReturn > labelThreshold) label = 'buy';
+    else if (realizedReturn < -labelThreshold) label = 'sell';
 
     this.history.push({
       features,
@@ -434,10 +396,6 @@ export class OCSLayer3 {
    * between features3D (which starts at bar `offset`) and ohlcv (which
    * starts at bar 0). When features3D[i] corresponds to ohlcv[offset + i],
    * we must use ohlcv[offset + i] for label computation.
-   *
-   * @param ohlcv Historical OHLCV data
-   * @param features3D Pre-computed 3D features
-   * @param offset The bar index in ohlcv where features3D[0] starts (default 0)
    */
   initializeFromHistory(
     ohlcv: any[],
@@ -449,11 +407,6 @@ export class OCSLayer3 {
 
     if (tripleBarrierLabels !== null && tripleBarrierLabels.length > 0) {
       // ── Triple Barrier path ──────────────────────────────────
-      // For each triple barrier label, add the training sample at
-      // bar `exitIdx` (the moment the outcome is fully known),
-      // using the *entry bar's* features.
-      // This ensures: (a) the label is resolved, (b) features are
-      // from the entry point (what the model would see at entry time).
       for (const bl of tripleBarrierLabels) {
         const entryIdx = bl.entryIdx;
         const exitIdx = bl.exitIdx;
@@ -473,25 +426,20 @@ export class OCSLayer3 {
 
         this.history.push({
           features: features3D[featureIdx],
-          futureReturn: bl.returnAtExit, // Actual resolved return
+          futureReturn: bl.returnAtExit,
           label,
-          // Use exitIdx timestamp — this is when the label becomes
-          // "known" and can safely enter the training set.
           timestamp: ohlcv[exitIdx].timestamp,
         });
       }
 
       // Sort history by timestamp to maintain temporal ordering
-      // (critical for the embargo-based KNN search)
       this.history.sort((a, b) => a.timestamp - b.timestamp);
 
     } else {
       // ── Fallback: simple past-return labeling ────────────────
-      // Used when OHLCV data lacks high/low or triple barrier
-      // produces insufficient labels.
-      //
-      // BUG 2 FIX: features3D[i] corresponds to ohlcv[offset + i].
-      // We iterate over features3D indices and use ohlcv[offset + i] for labels.
+      const LABEL_LOOKBACK = this.config.knn.labelLookback;
+      const labelThreshold = this.config.knn.labelThreshold;
+
       for (let i = 0; i < features3D.length; i++) {
         const ohlcvIdx = offset + i;
         
@@ -504,12 +452,12 @@ export class OCSLayer3 {
           ohlcv[ohlcvIdx - LABEL_LOOKBACK].close;
 
         let label: 'buy' | 'sell' | 'hold' = 'hold';
-        if (pastReturn > 0.005) label = 'buy';
-        else if (pastReturn < -0.005) label = 'sell';
+        if (pastReturn > labelThreshold) label = 'buy';
+        else if (pastReturn < -labelThreshold) label = 'sell';
 
         this.history.push({
           features: features3D[i],
-          futureReturn: pastReturn, // backward-looking despite legacy field name
+          futureReturn: pastReturn,
           label,
           timestamp: ohlcv[ohlcvIdx].timestamp,
         });
@@ -519,12 +467,8 @@ export class OCSLayer3 {
 
   /**
    * FIX H6: Compute triple barrier labels from OHLCV data.
-   *
-   * Returns null if the data is unsuitable for triple barrier
-   * labeling (e.g., missing high/low fields).
    */
   private computeTripleBarrierLabels(ohlcv: any[]): BarrierLabel[] | null {
-    // Validate that ohlcv has the required fields for triple barrier
     if (ohlcv.length < 2) return null;
 
     const sample = ohlcv[0];
@@ -534,38 +478,33 @@ export class OCSLayer3 {
       sample.close === undefined ||
       sample.open === undefined
     ) {
-      // Missing OHLCV fields — cannot use triple barrier
       return null;
     }
 
     try {
+      const tbConfig = this.config.tripleBarrier;
       const labeler = new TripleBarrierLabeler({
-        ptSl: [2, 1],          // 2x vol take-profit, 1x vol stop-loss
-        maxHoldingPeriod: 20,  // Max 20 bars holding
-        volLookback: 20,       // 20-bar vol lookback
-        minVolatility: 0.001,  // Floor for very low-vol periods
+        ptSl: tbConfig.ptSl,
+        maxHoldingPeriod: tbConfig.maxHoldingPeriod,
+        volLookback: tbConfig.volLookback,
+        minVolatility: tbConfig.minVolatility,
       });
 
       const labels = labeler.label(ohlcv);
 
       // Require a minimum number of labels to be useful
-      if (labels.length < LABEL_LOOKBACK) {
+      if (labels.length < this.config.knn.labelLookback) {
         return null;
       }
 
       return labels;
     } catch {
-      // If triple barrier fails for any reason, fall back gracefully
       return null;
     }
   }
 
   /**
    * FIX H6: Map triple barrier label (-1, 0, 1) to KNN label format.
-   *
-   *   1  (upper barrier / take-profit)  -> 'buy'
-   *  -1  (lower barrier / stop-loss)    -> 'sell'
-   *   0  (vertical barrier / time out)  -> 'hold'
    */
   private mapTripleBarrierLabel(barrierLabel: -1 | 0 | 1): 'buy' | 'sell' | 'hold' {
     switch (barrierLabel) {

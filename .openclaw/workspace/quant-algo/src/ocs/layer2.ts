@@ -22,6 +22,7 @@ import {
   ElasticVolumeMA,
 } from './enhanced';
 import { EhlersCycleDetector } from '../ehlersCycle';
+import { type Layer2Config, DEFAULT_OCS_CONFIG } from '../config/ocsConfig';
 
 export interface Layer2Output {
   // Ehlers Dominant Cycle
@@ -80,6 +81,7 @@ export class OCSLayer2 {
   private lmsWeights: number[];
   private lmsLearningRate: number;
   private history: any = {};
+  private readonly config: Layer2Config;
 
   // v312组件
   private gaussianStructure: GaussianStructure;
@@ -99,18 +101,53 @@ export class OCSLayer2 {
   // BUG 12 FIX: Store previous dominant cycle per timeframe instead of shared mutable state
   private prevDominantCycleByTimeframe: Map<string, number> = new Map();
   
-  constructor(useV312: boolean = true, useAttention: boolean = false) {
+  constructor(useV312: boolean = true, useAttention: boolean = false, config?: Partial<Layer2Config>) {
+    // Deep-merge config with defaults
+    this.config = { ...DEFAULT_OCS_CONFIG.layer2 } as Layer2Config;
+    if (config) {
+      if (config.ehlersCycle) {
+        this.config.ehlersCycle = { ...this.config.ehlersCycle, ...config.ehlersCycle };
+        if (config.ehlersCycle.short) this.config.ehlersCycle.short = { ...this.config.ehlersCycle.short, ...config.ehlersCycle.short };
+        if (config.ehlersCycle.medium) this.config.ehlersCycle.medium = { ...this.config.ehlersCycle.medium, ...config.ehlersCycle.medium };
+        if (config.ehlersCycle.long) this.config.ehlersCycle.long = { ...this.config.ehlersCycle.long, ...config.ehlersCycle.long };
+      }
+      if (config.lms) this.config.lms = { ...this.config.lms, ...config.lms };
+      if (config.zScore) this.config.zScore = { ...this.config.zScore, ...config.zScore };
+      if (config.v312) {
+        this.config.v312 = { ...this.config.v312, ...config.v312 };
+        if (config.v312.gaussian) this.config.v312.gaussian = { ...this.config.v312.gaussian, ...config.v312.gaussian };
+        if (config.v312.cvd) this.config.v312.cvd = { ...this.config.v312.cvd, ...config.v312.cvd };
+        if (config.v312.trix) this.config.v312.trix = { ...this.config.v312.trix, ...config.v312.trix };
+        if (config.v312.derivative) this.config.v312.derivative = { ...this.config.v312.derivative, ...config.v312.derivative };
+        if (config.v312.elasticVolume) this.config.v312.elasticVolume = { ...this.config.v312.elasticVolume, ...config.v312.elasticVolume };
+      }
+    }
+
     // BUG 1 FIX: Initialize lmsWeights with 4 elements to match 4 signals
-    this.lmsWeights = [0.25, 0.25, 0.25, 0.25];
-    this.lmsLearningRate = 0.01;
+    this.lmsWeights = [...this.config.lms.initialWeights];
+    this.lmsLearningRate = this.config.lms.learningRate;
     this.useAttentionFusion = useAttention;
 
-    // 初始化v312组件
-    this.gaussianStructure = new GaussianStructure(2.0, 20);
-    this.cvdAnalyzer = new CVDAnalyzer(20, 60);
-    this.trixSystem = new TRIXSystem(14, 9);
-    this.derivativeFilter = new DerivativeFilter(10, 0.001);
-    this.elasticVolumeMA = new ElasticVolumeMA(20);
+    // 初始化v312组件 — use config values
+    this.gaussianStructure = new GaussianStructure(
+      this.config.v312.gaussian.sigma,
+      this.config.v312.gaussian.windowSize,
+    );
+    this.cvdAnalyzer = new CVDAnalyzer(
+      this.config.v312.cvd.lookbackPeriod,
+      this.config.v312.cvd.minStrength,
+    );
+    this.trixSystem = new TRIXSystem(
+      this.config.v312.trix.period,
+      this.config.v312.trix.signalPeriod,
+    );
+    this.derivativeFilter = new DerivativeFilter(
+      this.config.v312.derivative.velocityPeriod,
+      this.config.v312.derivative.accelerationPeriod,
+    );
+    this.elasticVolumeMA = new ElasticVolumeMA(
+      this.config.v312.elasticVolume.lookbackPeriod,
+    );
 
     // Initialize Ehlers Homodyne Discriminator instances (Fix 2)
     this.ehlersCycleShort = new EhlersCycleDetector();
@@ -224,16 +261,13 @@ export class OCSLayer2 {
 
   /**
    * Ehlers Dominant Cycle with Flexible Period Confirmation (高频交易优化版)
-   * 使用更灵活的周期确认策略：
-   * - 强趋势：至少2个周期一致（高置信度）
-   * - 弱趋势：至少1个周期有明确信号（提高交易频率）
-   * - 震荡市：依赖其他指标
    */
   private calculateEhlersCycle(prices: number[]): Layer2Output['dominantCycle'] & { confirmed: boolean; confirmationCount: number; trendStrength: 'strong' | 'weak' | 'none' } {
+    const cfg = this.config.ehlersCycle;
     // BUG 12 FIX: Pass unique timeframe keys so each cycle stores its own previous value
-    const shortCycle = this.calculateSingleEhlersCycle(prices, 5, 15, 'short');    // 短期
-    const mediumCycle = this.calculateSingleEhlersCycle(prices, 15, 40, 'medium');  // 中期
-    const longCycle = this.calculateSingleEhlersCycle(prices, 40, 100, 'long');   // 长期
+    const shortCycle = this.calculateSingleEhlersCycle(prices, cfg.short.minPeriod, cfg.short.maxPeriod, 'short');
+    const mediumCycle = this.calculateSingleEhlersCycle(prices, cfg.medium.minPeriod, cfg.medium.maxPeriod, 'medium');
+    const longCycle = this.calculateSingleEhlersCycle(prices, cfg.long.minPeriod, cfg.long.maxPeriod, 'long');
     
     // 三周期投票统计
     const expandingVotes = [shortCycle, mediumCycle, longCycle]
@@ -317,8 +351,9 @@ export class OCSLayer2 {
 
     // Determine cycle state using per-timeframe previous period tracking
     const prevPeriod = this.prevDominantCycleByTimeframe.get(timeframeKey) || period;
-    const state = period > prevPeriod * 1.1 ? 'expanding' :
-                  period < prevPeriod * 0.9 ? 'contracting' : 'stable';
+    const threshold = 1 + this.config.ehlersCycle.stateChangeThreshold;
+    const state = period > prevPeriod * threshold ? 'expanding' :
+                  period < prevPeriod * (2 - threshold) ? 'contracting' : 'stable';
     this.prevDominantCycleByTimeframe.set(timeframeKey, period);
 
     return { period, phase, state };
@@ -412,9 +447,6 @@ export class OCSLayer2 {
   /**
    * Normalized LMS (NLMS) Adaptive Filter
    * Per OCS spec: w(n+1) = w(n) + μ · e(n) · x(n) / (‖x‖² + ε)
-   * 
-   * Reference: Widrow & Stearns "Adaptive Signal Processing"
-   * OCS official spec uses LMS for signal convergence, not attention.
    */
   private applyLMSFilter(
     layer1: Layer1Output,
@@ -429,7 +461,6 @@ export class OCSLayer2 {
     ];
 
     // Desired signal: consensus of strong signals weighted by cycle phase
-    // This serves as the "reference" that the filter converges toward
     const desiredSignal = this.computeDesiredSignal(signals, cycle);
 
     // Current filter output: y(n) = w^T · x(n)
@@ -440,8 +471,8 @@ export class OCSLayer2 {
 
     // Normalized LMS weight update: w(n+1) = w(n) + μ · e(n) · x(n) / (‖x‖² + ε)
     const normSq = signals.reduce((sum, s) => sum + s * s, 0);
-    const epsilon = 0.001; // Regularization to prevent division by zero
-    const mu = this.lmsLearningRate; // Step size (0.01)
+    const epsilon = this.config.lms.epsilon;
+    const mu = this.lmsLearningRate;
 
     for (let i = 0; i < signals.length; i++) {
       this.lmsWeights[i] += mu * error * signals[i] / (normSq + epsilon);
@@ -468,8 +499,6 @@ export class OCSLayer2 {
 
   /**
    * Compute desired/reference signal for NLMS adaptation.
-   * Uses a majority-vote of the input signals, modulated by cycle phase.
-   * This acts as the "teacher signal" that the adaptive filter converges toward.
    */
   private computeDesiredSignal(
     signals: number[],
@@ -491,27 +520,24 @@ export class OCSLayer2 {
 
   /**
    * Fisher Transform: FT = 0.5 * ln((1+x)/(1-x))
-   * Normalizes bounded signals to approximately Gaussian distribution
-   * Reference: John F. Ehlers "Cybernetic Analysis for Stocks and Futures"
    */
   private fisherTransform(value: number): number {
-    // Clamp input to (-1, 1) to avoid ln(0) or ln(negative)
     const clamped = Math.max(-0.999, Math.min(0.999, value));
     return 0.5 * Math.log((1 + clamped) / (1 - clamped));
   }
 
   /**
    * Z-Score Confidence Filter with Dynamic Threshold
-   * 动态阈值：使用滚动分位数替代固定 1.5σ
-   * 参考：滚动统计方法在自适应信号处理中的应用
    */
   private calculateZScoreConfidence(signal: number): Layer2Output['confidence'] {
+    const cfg = this.config.zScore;
+
     if (!this.history.zScores) this.history.zScores = [];
     this.history.zScores.push(signal);
-    if (this.history.zScores.length > 100) this.history.zScores.shift();
+    if (this.history.zScores.length > cfg.windowSize) this.history.zScores.shift();
 
-    if (this.history.zScores.length < 20) {
-      return { zScore: 0, confidence: 50, isHighConfidence: false, dynamicThreshold: 1.5 };
+    if (this.history.zScores.length < cfg.minSamples) {
+      return { zScore: 0, confidence: 50, isHighConfidence: false, dynamicThreshold: cfg.defaultThreshold };
     }
 
     const mean = this.history.zScores.reduce((a: number, b: number) => a + b, 0) / this.history.zScores.length;
@@ -521,19 +547,19 @@ export class OCSLayer2 {
     const zScore = std === 0 ? 0 : (signal - mean) / std;
 
     // Apply Fisher Transform for better Gaussian normalization
-    const fisherZ = this.fisherTransform(Math.max(-1, Math.min(1, zScore / 3))); // Scale z-score to [-1,1] range
+    const fisherZ = this.fisherTransform(Math.max(-1, Math.min(1, zScore / 3)));
     
-    // 动态阈值：使用 85th 分位数
+    // 动态阈值：使用配置的分位数
     const sortedScores = [...this.history.zScores].sort((a: number, b: number) => a - b);
-    const percentile85Index = Math.floor(sortedScores.length * 0.85);
-    const dynamicThreshold = std === 0 ? 1.5 : Math.abs(sortedScores[percentile85Index] - mean) / std;
+    const percentileIndex = Math.floor(sortedScores.length * cfg.percentile);
+    const dynamicThreshold = std === 0 ? cfg.defaultThreshold : Math.abs(sortedScores[percentileIndex] - mean) / std;
     
     // 使用动态阈值计算置信度
-    const threshold = dynamicThreshold > 0 ? dynamicThreshold : 1.5;
-    const confidence = Math.min(100, Math.abs(fisherZ) / threshold * 86);
+    const threshold = dynamicThreshold > 0 ? dynamicThreshold : cfg.defaultThreshold;
+    const confidence = Math.min(100, Math.abs(fisherZ) / threshold * cfg.confidenceScale);
 
     return {
-      zScore: fisherZ,  // Return Fisher-transformed z-score
+      zScore: fisherZ,
       confidence,
       isHighConfidence: Math.abs(fisherZ) > threshold,
       dynamicThreshold: threshold,

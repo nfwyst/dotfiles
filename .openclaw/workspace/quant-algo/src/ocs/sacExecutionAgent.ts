@@ -1,11 +1,16 @@
 /**
- * SAC (Soft Actor-Critic) 执行智能体
+ * Linear Policy Gradient Execution Agent
  * OCS 2.0 - P3.1
  * 
- * 深度强化学习用于最优订单执行
- * 基于: "Deep Reinforcement Learning for Optimum Order Execution" (2026)
+ * NOTE: Despite the original file/class name "SAC", this is NOT a full
+ * Soft Actor-Critic implementation. It uses a simplified linear policy
+ * gradient approach with single-layer weight matrices instead of deep
+ * neural networks. There is no entropy regularization, no twin Q-networks,
+ * and no reparameterization trick. The name "SAC" was aspirational; the
+ * actual algorithm is a basic linear policy gradient with experience replay.
  * 
- * 简化版实现，使用确定性策略而非完整神经网络
+ * Based on: "Deep Reinforcement Learning for Optimum Order Execution" (2026)
+ * Simplified implementation using deterministic linear policy instead of full neural network.
  */
 
 export interface State {
@@ -29,28 +34,28 @@ export interface Transition {
   done: boolean;
 }
 
-export class SACExecutionAgent {
-  private actorWeights: number[][];      // 策略网络权重 (简化)
-  private criticWeights: number[][];     // 价值网络权重 (简化)
+export class LinearPolicyAgent {
+  private actorWeights: number[][];      // Linear policy weights (single layer)
+  private criticWeights: number[][];     // Linear value function weights (single layer)
   private replayBuffer: Transition[];
   private readonly bufferSize: number;
   private readonly gamma: number;        // 折扣因子
-  private readonly alpha: number;        // 温度参数 (熵正则化)
+  private readonly alpha: number;        // Temperature parameter (unused — no entropy regularization in this linear approximation)
   private readonly lr: number;           // 学习率
   
   constructor() {
-    // 初始化权重 (简化：使用随机初始化)
+    // Initialize linear weights (small random values)
     this.actorWeights = this.initializeWeights(10, 3);   // 输入10维，输出3维
     this.criticWeights = this.initializeWeights(13, 1);  // 输入13维（state+action），输出1维
     this.replayBuffer = [];
     this.bufferSize = 1000;
     this.gamma = 0.99;
-    this.alpha = 0.2;  // 熵正则化系数
+    this.alpha = 0.2;  // Kept for interface compatibility; not used in linear policy gradient
     this.lr = 0.001;
   }
   
   /**
-   * 选择动作 (策略网络前向传播)
+   * Select action via linear policy forward pass
    */
   selectAction(state: State): Action {
     const features = this.stateToFeatures(state);
@@ -75,7 +80,7 @@ export class SACExecutionAgent {
   }
   
   /**
-   * 训练一步
+   * Train one step using linear policy gradient with experience replay
    */
   train() {
     if (this.replayBuffer.length < 32) return;
@@ -83,12 +88,12 @@ export class SACExecutionAgent {
     // 随机采样批次
     const batch = this.sampleBatch(32);
     
-    // 更新Critic (简化版Q学习)
+    // Update linear critic (simplified TD learning)
     for (const transition of batch) {
       this.updateCritic(transition);
     }
     
-    // 更新Actor (策略梯度)
+    // Update linear actor (policy gradient)
     for (const transition of batch) {
       this.updateActor(transition);
     }
@@ -144,8 +149,10 @@ export class SACExecutionAgent {
     return batch;
   }
   
+  /**
+   * Update linear critic via TD(0) error
+   */
   private updateCritic(transition: Transition) {
-    // 简化：直接更新权重
     const features = [
       ...this.stateToFeatures(transition.state),
       transition.action.positionSize
@@ -166,15 +173,17 @@ export class SACExecutionAgent {
     }
   }
   
+  /**
+   * Update linear actor via policy gradient (REINFORCE-style)
+   */
   private updateActor(transition: Transition) {
-    // 策略梯度更新 (简化)
     const features = this.stateToFeatures(transition.state);
     const action = this.selectAction(transition.state);
     
-    // 计算策略梯度
-    const advantage = transition.reward;  // 简化优势估计
+    // Simplified advantage estimate (using raw reward as baseline-free advantage)
+    const advantage = transition.reward;
     
-    // 更新Actor权重
+    // Update linear actor weights via policy gradient
     for (let i = 0; i < this.actorWeights.length; i++) {
       for (let j = 0; j < this.actorWeights[i].length; j++) {
         this.actorWeights[i][j] += this.lr * advantage * features[j] * 0.1;
@@ -190,4 +199,7 @@ export class SACExecutionAgent {
   }
 }
 
-export const sacExecutionAgent = new SACExecutionAgent();
+// Backward-compatible alias
+export { LinearPolicyAgent as SACExecutionAgent };
+
+export const sacExecutionAgent = new LinearPolicyAgent();

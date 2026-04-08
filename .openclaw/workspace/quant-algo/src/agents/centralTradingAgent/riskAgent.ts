@@ -68,11 +68,11 @@ export class RiskAgent implements DecisionAgent {
       
       return codeResult;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.errorCount++;
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         processingTimeMs: Date.now() - startTime,
       };
     }
@@ -116,7 +116,7 @@ export class RiskAgent implements DecisionAgent {
 - ATR (波动率): ${technical.volatility.atr?.toFixed(2) || 'N/A'}
 - RSI: ${technical.momentum.rsi.value.toFixed(1)}
 - 趋势强度: ${technical.trend.strength}
-- 成交量比率: ${technical.volume.ratio?.toFixed(2) || 'N/A'}
+- 成交量比率: ${technical.volume.volumeRatio?.toFixed(2) || 'N/A'}
 
 账户信息:
 - 余额: ${balance.toFixed(2)} USDT

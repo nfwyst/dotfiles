@@ -69,9 +69,9 @@ export class ExchangeManager implements ExecutionAdapter {
         message: `Order ${order.id} filled`,
         timestamp: Date.now(),
       };
-    } catch (err: any) {
-      logger.error(`[ExchangeManager] Market order failed: ${err.message}`);
-      return { success: false, message: err.message, timestamp: Date.now() };
+    } catch (err: unknown) {
+      logger.error(`[ExchangeManager] Market order failed: ${(err instanceof Error ? err.message : String(err))}`);
+      return { success: false, message: (err instanceof Error ? err.message : String(err)), timestamp: Date.now() };
     }
   }
 
@@ -129,7 +129,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 发送签名请求（带熔断保护）
    */
-  public async request(path: string, params: any = {}, method = 'GET') {
+  public async request<T = unknown>(path: string, params: Record<string, string | number | boolean> = {}, method = 'GET'): Promise<T> {
     const result = await exchangeCircuitBreaker.execute(async () => {
       return await this._doRequest(path, params, method);
     });
@@ -138,13 +138,13 @@ export class ExchangeManager implements ExecutionAdapter {
       throw new Error(result.error || '交易所 API 熔断中');
     }
     
-    return result.value;
+    return result.value as T;
   }
 
   /**
    * 实际执行签名请求
    */
-  private async _doRequest(path: string, params: any = {}, method = 'GET') {
+  private async _doRequest(path: string, params: Record<string, string | number | boolean> = {}, method = 'GET'): Promise<unknown> {
     const span = tracingManager.isEnabled()
       ? tracingManager.startSpan('exchange.api_request', {
           attributes: {
@@ -195,9 +195,9 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -206,7 +206,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 公共API请求（带熔断保护）
    */
-  private async requestPublic(path: string, params: any = {}) {
+  private async requestPublic<T = unknown>(path: string, params: Record<string, string | number | boolean> = {}): Promise<T> {
     const result = await exchangeCircuitBreaker.execute(async () => {
       return await this._doRequestPublic(path, params);
     });
@@ -215,13 +215,13 @@ export class ExchangeManager implements ExecutionAdapter {
       throw new Error(result.error || '交易所 API 熔断中');
     }
     
-    return result.value;
+    return result.value as T;
   }
 
   /**
    * 实际执行公共API请求（始终使用主网获取真实市场数据）
    */
-  private async _doRequestPublic(path: string, params: any = {}) {
+  private async _doRequestPublic(path: string, params: Record<string, string | number | boolean> = {}): Promise<unknown> {
     const span = tracingManager.isEnabled()
       ? tracingManager.startSpan('exchange.public_request', {
           attributes: {
@@ -257,9 +257,9 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.setStatus({ code: 0 });
       span?.end();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }
@@ -281,8 +281,8 @@ export class ExchangeManager implements ExecutionAdapter {
       logger.info(`   可用 USDT: ${balance.toFixed(2)}`);
       
       return true;
-    } catch (error: any) {
-      logger.error('Binance 连接失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('Binance 连接失败:', (error instanceof Error ? error.message : String(error)));
       return false;
     }
   }
@@ -299,8 +299,8 @@ export class ExchangeManager implements ExecutionAdapter {
       
       this.leverage = leverage;
       logger.info(`杠杆已设置为 ${leverage}x`);
-    } catch (error: any) {
-      logger.error('设置杠杆失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('设置杠杆失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -316,7 +316,7 @@ export class ExchangeManager implements ExecutionAdapter {
         limit: limit.toString(),
       });
       
-      return data.map((k: any[]) => [
+      return data.map((k: (string | number)[]) => [
         k[0],           // timestamp
         parseFloat(k[1]), // open
         parseFloat(k[2]), // high
@@ -324,8 +324,8 @@ export class ExchangeManager implements ExecutionAdapter {
         parseFloat(k[4]), // close
         parseFloat(k[5]), // volume
       ]);
-    } catch (error: any) {
-      logger.error('获取K线数据失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('获取K线数据失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -340,8 +340,8 @@ export class ExchangeManager implements ExecutionAdapter {
       });
       
       return parseFloat(ticker.price);
-    } catch (error: any) {
-      logger.error('获取价格失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('获取价格失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -360,8 +360,8 @@ export class ExchangeManager implements ExecutionAdapter {
         bids: data.bids.map((b) => [parseFloat(b[0] || '0'), parseFloat(b[1] || '0')] as [number, number]),
         asks: data.asks.map((a) => [parseFloat(a[0] || '0'), parseFloat(a[1] || '0')] as [number, number]),
       };
-    } catch (error: any) {
-      logger.error('获取订单簿失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('获取订单簿失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -378,8 +378,8 @@ export class ExchangeManager implements ExecutionAdapter {
         free: parseFloat(account.availableBalance || 0),
         used: parseFloat(account.totalPositionInitialMargin || 0),
       };
-    } catch (error: any) {
-      logger.error('获取余额失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('获取余额失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -387,11 +387,11 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 获取当前持仓（内部方法，返回原始格式）
    */
-  async _getPosition(): Promise<any> {
+  async _getPosition(): Promise<{ symbol: string; side: string; contracts: number; entryPrice: number; markPrice: number; liquidationPrice: number; unrealizedPnl: number; leverage: number } | null> {
     try {
       const positions = await this.request('/fapi/v2/positionRisk');
       
-      const position = positions.find((p: any) => 
+      const position = positions.find((p: Record<string, string>) => 
         p.symbol === this.symbol && parseFloat(p.positionAmt) !== 0
       );
       
@@ -407,8 +407,8 @@ export class ExchangeManager implements ExecutionAdapter {
         unrealizedPnl: parseFloat(position.unRealizedProfit),
         leverage: parseInt(position.leverage),
       };
-    } catch (error: any) {
-      logger.error('获取持仓失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('获取持仓失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -416,7 +416,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 创建市价单
    */
-  async createMarketOrder(side: 'BUY' | 'SELL', quantity: number): Promise<any> {
+  async createMarketOrder(side: 'BUY' | 'SELL', quantity: number): Promise<{ id: string; status: string; price: number; quantity: number }> {
     try {
       const order = await this.request('/fapi/v1/order', {
         symbol: this.symbol,
@@ -433,8 +433,8 @@ export class ExchangeManager implements ExecutionAdapter {
         price: parseFloat(order.avgPrice || order.price),
         quantity: parseFloat(order.executedQty),
       };
-    } catch (error: any) {
-      logger.error('创建订单失败:', error.message);
+    } catch (error: unknown) {
+      logger.error('创建订单失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }
@@ -451,7 +451,7 @@ export class ExchangeManager implements ExecutionAdapter {
     takeProfitPrice: number,
     quantity: number,
     positionSide: 'long' | 'short' = 'long'  // BUG 8 FIX: Accept position direction
-  ): Promise<any> {
+  ): Promise<{ stopLoss: unknown; takeProfit: unknown } | null> {
     try {
       // BUG 8 FIX: Determine side from position direction
       // For a long position, SL/TP close by selling. For short, by buying.
@@ -489,8 +489,8 @@ export class ExchangeManager implements ExecutionAdapter {
       logger.info(`止损止盈已设置: SL=$${stopLossPrice.toFixed(2)} TP=$${takeProfitPrice.toFixed(2)} (${closeSide})`);
       
       return { stopLoss: slOrder, takeProfit: tpOrder };
-    } catch (error: any) {
-      logger.error(`设置止损止盈失败: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`设置止损止盈失败: ${(error instanceof Error ? error.message : String(error))}`);
       return null;
     }
   }
@@ -498,7 +498,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 开多仓
    */
-  async openLong(quantity: number, stopLoss?: number, takeProfit?: number): Promise<any> {
+  async openLong(quantity: number, stopLoss?: number, takeProfit?: number): Promise<{ id: string; status: string; price: number; quantity: number }> {
     const order = await this.createMarketOrder('BUY', quantity);
     logger.info(`开多仓: ${quantity} ETH @ $${order.price}`);
     
@@ -513,7 +513,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 开空仓
    */
-  async openShort(quantity: number, stopLoss?: number, takeProfit?: number): Promise<any> {
+  async openShort(quantity: number, stopLoss?: number, takeProfit?: number): Promise<{ id: string; status: string; price: number; quantity: number }> {
     const order = await this.createMarketOrder('SELL', quantity);
     logger.info(`开空仓: ${quantity} ETH @ $${order.price}`);
     
@@ -528,7 +528,7 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 平仓
    */
-  async closePosition(side: 'long' | 'short', quantity: number): Promise<any> {
+  async closePosition(side: 'long' | 'short', quantity: number): Promise<{ id: string; status: string; price: number; quantity: number }> {
     const closeSide = side === 'long' ? 'SELL' : 'BUY';
     const order = await this.createMarketOrder(closeSide, quantity);
     logger.info(`平仓: ${side} ${quantity} ETH @ $${order.price}`);
@@ -538,12 +538,12 @@ export class ExchangeManager implements ExecutionAdapter {
   /**
    * 获取交易对信息
    */
-  async getSymbolInfo(): Promise<any> {
+  async getSymbolInfo(): Promise<unknown> {
     try {
       const info = await this.requestPublic('/fapi/v1/exchangeInfo');
-      return info.symbols.find((s: any) => s.symbol === this.symbol);
-    } catch (error: any) {
-      logger.error('获取交易对信息失败:', error.message);
+      return info.symbols.find((s: Record<string, string>) => s.symbol === this.symbol);
+    } catch (error: unknown) {
+      logger.error('获取交易对信息失败:', (error instanceof Error ? error.message : String(error)));
       throw error;
     }
   }

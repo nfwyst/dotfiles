@@ -18,6 +18,7 @@ import type {
 } from './types';
 import logger from '../logger';
 import { config } from '../config';
+import { parseTradingEvent, parseDLQMessage } from './validation';
 
 // ==================== Stream 事件总线配置 ====================
 
@@ -502,7 +503,14 @@ export class StreamEventBus extends EventEmitter {
     }
 
     try {
-      const event = JSON.parse(messageData.data || '{}') as TradingEvent;
+      const event = parseTradingEvent(messageData.data || '{}');
+      if (!event) {
+        logger.warn(\`[EventValidation] Dropping invalid event for message \${messageId} on \${channel}\`);
+        if (autoAck) {
+          await this.ack(channel, messageId, groupName);
+        }
+        return;
+      }
       const retryCount = parseInt(messageData.retryCount || '0', 10);
 
       // FIX: M2 — Idempotency check at the consumer level.
@@ -606,7 +614,7 @@ export class StreamEventBus extends EventEmitter {
 
     const dlqMessage: DLQMessage = {
       id: messageId,
-      data: JSON.parse(messageData.data || '{}') as TradingEvent,
+      data: (parseTradingEvent(messageData.data || '{}') ?? {}) as TradingEvent,
       retryCount: parseInt(messageData.retryCount || '0', 10),
       lastError: messageData.lastError,
       deliveredCount: parseInt(messageData.deliveredCount || '0', 10),
@@ -756,7 +764,10 @@ export class StreamEventBus extends EventEmitter {
             }
           }
           try {
-            messages.push(JSON.parse(data.data || '{}') as DLQMessage);
+            const dlqMsg = parseDLQMessage(data.data || '{}');
+            if (dlqMsg) {
+              messages.push(dlqMsg as unknown as DLQMessage);
+            }
           } catch {
             // 忽略解析错误
           }
@@ -790,7 +801,11 @@ export class StreamEventBus extends EventEmitter {
             data[key] = value;
           }
         }
-        const dlqMessage = JSON.parse(data.data || '{}') as DLQMessage;
+        const dlqMessage = parseDLQMessage(data.data || '{}') as unknown as DLQMessage;
+        if (!dlqMessage) {
+          logger.warn(\`[EventValidation] Failed to parse DLQ message \${messageId}\`);
+          return;
+        }
 
         // 重新发布到原流
         const { id: _id, timestamp: _timestamp, ...eventData } = dlqMessage.data;
@@ -875,7 +890,7 @@ export class StreamEventBus extends EventEmitter {
           }
           messages.push({
             id,
-            data: JSON.parse(data.data || '{}') as TradingEvent,
+            data: (parseTradingEvent(data.data || '{}') ?? {}) as TradingEvent,
             retryCount: parseInt(data.retryCount || '0', 10),
             lastError: data.lastError,
             deliveredCount: parseInt(data.deliveredCount || '0', 10),

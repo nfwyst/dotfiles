@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit && echo '✅ Type check passed'",
+    "lint": "tsc --noEmit && echo '\u2705 Type check passed'",
     "start": "tsx src/index.ts",
     "start:live": "TRADING_MODE=live tsx src/index.ts",
     "start:paper": "TRADING_MODE=paper tsx src/index.ts",
@@ -19,7 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --reporter=junit --outputFile=test-results.xml",
     "clean": "rm -rf dist coverage backtest-reports/*.json",
-    "prepare-data": "echo '⚠️  Place OHLCV JSON files in backtest-cache/ (see README.md)'",
+    "prepare-data": "echo '\u26a0\ufe0f  Place OHLCV JSON files in backtest-cache/ (see README.md)'",
     "backtest:fast": "BT_PHASE=A tsx backtest-runner.ts",
     "backtest:verify": "BT_PHASE=AB tsx backtest-runner.ts",
     "backtest:engine": "tsx backtest-engine.ts"
@@ -33,7 +33,8 @@
     "@opentelemetry/semantic-conventions": "^1.25.0",
     "dotenv": "^16.4.0",
     "ioredis": "^5.4.0",
-    "prom-client": "^15.1.0"
+    "prom-client": "^15.1.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

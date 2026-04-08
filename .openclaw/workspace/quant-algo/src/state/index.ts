@@ -17,6 +17,9 @@ import type {
 } from './types';
 import { createDefaultState, migratePosition } from './types';
 import { StateStore } from './StateStore';
+import type { LLMTradingSignal } from '../modules/llmAnalysis';
+import type { StrategySignal } from '../modules/strategyEngine';
+import type { OCSEnhancedOutput } from '../ocs/enhanced/index';
 import { WALManager } from './WALManager';
 import { SnapshotManager } from './SnapshotManager';
 
@@ -140,7 +143,7 @@ export class StateManager {
     this.checkCheckpointNeeded();
   }
 
-  async updateLLM(decision: any, price: number): Promise<void> {
+  async updateLLM(decision: LLMTradingSignal, price: number): Promise<void> {
     const data = {
       lastDecision: decision,
       lastDecisionTime: Date.now(),
@@ -169,7 +172,7 @@ export class StateManager {
     return pending;
   }
 
-  async updateStrategy(signal: any, output?: any): Promise<void> {
+  async updateStrategy(signal: StrategySignal, output?: OCSEnhancedOutput): Promise<void> {
     const data: any = { lastSignal: signal, lastSignalTime: Date.now() };
     if (output) data.strategyOutput = output;
     await this.writeAhead('updateStrategy', data);

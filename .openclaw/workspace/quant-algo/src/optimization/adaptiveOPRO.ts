@@ -172,11 +172,11 @@ export class AdaptiveOPRO {
         processingTimeMs: Date.now() - startTime,
       };
       
-    } catch (error: any) {
-      logger.error(`❌ Optimization failed: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`❌ Optimization failed: ${(error instanceof Error ? error.message : String(error))}`);
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         processingTimeMs: Date.now() - startTime,
       };
     }
@@ -302,10 +302,10 @@ ${historyText}
         confidence: parsed.confidence,
       };
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
       };
     }
   }
@@ -477,8 +477,8 @@ ${historyText}
         
         logger.info(`📂 Loaded ${this.optimizationHistory.length} optimization records`);
       }
-    } catch (error: any) {
-      logger.warn(`Failed to load OPRO history: ${error.message}`);
+    } catch (error: unknown) {
+      logger.warn(`Failed to load OPRO history: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
   
@@ -505,8 +505,8 @@ ${historyText}
       fs.writeFileSync(this.storagePath, JSON.stringify(data, null, 2));
       logger.debug(`💾 Saved OPRO history to ${this.storagePath}`);
       
-    } catch (error: any) {
-      logger.error(`Failed to save OPRO history: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to save OPRO history: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
   

@@ -68,11 +68,11 @@ export class TrendAgent implements DecisionAgent {
       
       return codeResult;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.errorCount++;
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         processingTimeMs: Date.now() - startTime,
       };
     }
@@ -102,9 +102,9 @@ export class TrendAgent implements DecisionAgent {
 - 当前价格: ${currentPrice.toFixed(2)}
 - RSI: ${technical.momentum.rsi.value.toFixed(1)}
 - MACD 柱状图: ${technical.momentum.macd.histogram.toFixed(2)}
-- SMA20: ${technical.trend.sma20?.toFixed(2) || 'N/A'}
-- SMA50: ${technical.trend.sma50?.toFixed(2) || 'N/A'}
-- ADX: ${technical.trend.adx?.toFixed(1) || 'N/A'}
+- 趋势持续性: ${technical.trend.persistence}
+- 反转风险: ${technical.trend.reversalRisk}
+- 综合趋势评分: ${technical.compositeScores.trendScore.toFixed(1)}
 - 趋势方向 (技术分析): ${technical.trend.direction}
 - 趋势强度 (技术分析): ${technical.trend.strength}
 

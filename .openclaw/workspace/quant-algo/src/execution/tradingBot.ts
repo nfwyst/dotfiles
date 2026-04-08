@@ -128,6 +128,12 @@ export interface TradeRecord {
 
 // ==================== TradingBotRuntime ====================
 
+/**
+ * @deprecated 请使用 EventDrivenRuntime 代替。
+ * TradingBotRuntime 将在下个大版本中移除。
+ * 迁移指南：将 tradingBotConfigs/current.json 中的策略参数
+ * 迁移到 config/ocs-config.json 并使用 EventDrivenRuntime。
+ */
 export class TradingBotRuntime {
   private config: TradingBotConfig | null = null;
   private configPath: string;
@@ -177,8 +183,8 @@ export class TradingBotRuntime {
       logger.info(`✅ Loaded config v${this.config.version}, valid until ${this.config.validUntil}`);
       return true;
       
-    } catch (error: any) {
-      logger.error(`Failed to load config: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to load config: ${(error instanceof Error ? error.message : String(error))}`);
       return false;
     }
   }
@@ -223,8 +229,8 @@ export class TradingBotRuntime {
     while (this.running) {
       try {
         await this.runCycle();
-      } catch (error: any) {
-        logger.error(`Cycle error: ${error.message}`);
+      } catch (error: unknown) {
+        logger.error(`Cycle error: ${(error instanceof Error ? error.message : String(error))}`);
       }
       
       await this.sleep(this.checkInterval);
@@ -320,8 +326,8 @@ export class TradingBotRuntime {
         this.position = { side: 'none', size: 0, entryPrice: 0, markPrice: 0, unrealizedPnl: 0, leverage: 1 };
       }
       
-    } catch (error: any) {
-      logger.error(`Failed to sync account state: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to sync account state: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
   
@@ -390,8 +396,8 @@ export class TradingBotRuntime {
         low24h: Math.min(...ohlcv.slice(-288).map((c: any) => c.low)),
       };
       
-    } catch (error: any) {
-      logger.error(`Failed to get market data: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to get market data: ${(error instanceof Error ? error.message : String(error))}`);
       return null;
     }
   }
@@ -662,8 +668,8 @@ export class TradingBotRuntime {
       
       return true;
       
-    } catch (error: any) {
-      logger.error(`Order execution failed: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Order execution failed: ${(error instanceof Error ? error.message : String(error))}`);
       return false;
     }
   }

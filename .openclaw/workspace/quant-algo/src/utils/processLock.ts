@@ -57,8 +57,8 @@ export class ProcessLock {
       
       return true;
       
-    } catch (error: any) {
-      log.error(`获取进程锁失败: ${error.message}`);
+    } catch (error: unknown) {
+      log.error(`获取进程锁失败: ${(error instanceof Error ? error.message : String(error))}`);
       return false;
     }
   }
@@ -82,8 +82,8 @@ export class ProcessLock {
       
       this.locked = false;
       
-    } catch (error: any) {
-      log.error(`释放进程锁失败: ${error.message}`);
+    } catch (error: unknown) {
+      log.error(`释放进程锁失败: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
   

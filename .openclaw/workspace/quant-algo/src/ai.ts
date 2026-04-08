@@ -164,9 +164,9 @@ Respond in JSON format:
         sources: result.sources,
         summary: result.summary,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       span?.recordException(error);
-      span?.setStatus({ code: 2, message: error.message });
+      span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
     }

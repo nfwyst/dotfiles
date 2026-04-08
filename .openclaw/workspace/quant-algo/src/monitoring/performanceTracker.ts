@@ -499,8 +499,8 @@ export class PerformanceTracker {
         if (data.initialBalance) this.initialBalance = data.initialBalance;
         if (data.peakBalance) this.peakBalance = data.peakBalance;
       }
-    } catch (error: any) {
-      logger.warn(`Failed to load performance data: ${error.message}`);
+    } catch (error: unknown) {
+      logger.warn(`Failed to load performance data: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
   
@@ -524,8 +524,8 @@ export class PerformanceTracker {
       };
       
       fs.writeFileSync(this.dataPath, JSON.stringify(data, null, 2));
-    } catch (error: any) {
-      logger.error(`Failed to save performance data: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to save performance data: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
 }

@@ -77,11 +77,11 @@ export class EntryAgent implements DecisionAgent {
       
       return codeResult;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.errorCount++;
       return {
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         processingTimeMs: Date.now() - startTime,
       };
     }
@@ -111,9 +111,9 @@ export class EntryAgent implements DecisionAgent {
 - RSI: ${technical.momentum.rsi.value.toFixed(1)} (超卖<30, 超买>70)
 - MACD 柱状图: ${technical.momentum.macd.histogram.toFixed(2)}
 - ATR (波动率): ${technical.volatility.atr?.toFixed(2) || 'N/A'}
-- 成交量比率: ${technical.volume.ratio?.toFixed(2) || 'N/A'}
-- 支撑位: ${technical.supportResistance.support?.map((s: any) => s.price.toFixed(2)).join(', ') || 'N/A'}
-- 阻力位: ${technical.supportResistance.resistance?.map((r: any) => r.price.toFixed(2)).join(', ') || 'N/A'}
+- 成交量比率: ${technical.volume.volumeRatio?.toFixed(2) || 'N/A'}
+- 支撑位: ${technical.supportResistance.levels.filter((l: any) => l.type === 'support').map((s: any) => s.price.toFixed(2)).join(', ') || technical.supportResistance.nearestSupport?.toFixed(2) || 'N/A'}
+- 阻力位: ${technical.supportResistance.levels.filter((l: any) => l.type === 'resistance').map((r: any) => r.price.toFixed(2)).join(', ') || technical.supportResistance.nearestResistance?.toFixed(2) || 'N/A'}
 
 请综合分析，判断是否应该入场。如果 RSI 在 30-55 且趋势向上，可以考虑做多；如果 RSI >= 85，可以考虑做空。`;
 

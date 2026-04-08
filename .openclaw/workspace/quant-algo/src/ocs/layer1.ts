@@ -2,13 +2,14 @@
  * OCS Layer 1: 时间序列处理层
  * 严格遵循技术报告实现 + v312增强
  * - Volume Price Mean (VPM)
- * - Ehlers Adaptive Moving Average (AMA)
+ * - Kaufman Adaptive Moving Average (KAMA)
  * - Relative Strength Stochastics on Supertrend
  * - Gaussian Structure Framework (v312)
  */
 
 import { GaussianStructure } from './enhanced/gaussianStructure';
 import { OHLCV } from '../events/types';
+import { type Layer1Config, DEFAULT_OCS_CONFIG } from '../config/ocsConfig';
 
 export interface Layer1Output {
   // VPM
@@ -19,7 +20,7 @@ export interface Layer1Output {
     position: number; // 0-1
   };
   
-  // Ehlers AMA
+  // Kaufman AMA (KAMA)
   ama: {
     value: number;
     trend: 'up' | 'down' | 'flat';
@@ -52,6 +53,7 @@ export interface Layer1Output {
 
 export class OCSLayer1 {
   private gaussianStructure: GaussianStructure;
+  private readonly config: Layer1Config;
 
   // BUG 17 FIX: Add state persistence for Supertrend
   private supertrendState: {
@@ -61,9 +63,23 @@ export class OCSLayer1 {
     prevClose: number;
   } | null = null;
   
-  constructor() {
-    this.gaussianStructure = new GaussianStructure(2.0, 20);
+  constructor(config?: Partial<Layer1Config>) {
+    this.config = { ...DEFAULT_OCS_CONFIG.layer1, ...config } as Layer1Config;
+    // Deep-merge nested objects
+    if (config) {
+      if (config.vpm) this.config.vpm = { ...DEFAULT_OCS_CONFIG.layer1.vpm, ...config.vpm };
+      if (config.ama) this.config.ama = { ...DEFAULT_OCS_CONFIG.layer1.ama, ...config.ama };
+      if (config.supertrend) this.config.supertrend = { ...DEFAULT_OCS_CONFIG.layer1.supertrend, ...config.supertrend };
+      if (config.stochastics) this.config.stochastics = { ...DEFAULT_OCS_CONFIG.layer1.stochastics, ...config.stochastics };
+      if (config.atr) this.config.atr = { ...DEFAULT_OCS_CONFIG.layer1.atr, ...config.atr };
+      if (config.gaussian) this.config.gaussian = { ...DEFAULT_OCS_CONFIG.layer1.gaussian, ...config.gaussian };
+    }
+    this.gaussianStructure = new GaussianStructure(
+      this.config.gaussian.sigma,
+      this.config.gaussian.windowSize,
+    );
   }
+
   process(data: OHLCV[]): Layer1Output {
     const closes = data.map(d => d.close);
     const highs = data.map(d => d.high);
@@ -76,10 +92,10 @@ export class OCSLayer1 {
     
     return {
       vpm: this.calculateVPM(closes, volumes),
-      ama: this.calculateEhlersAMA(closes),
+      ama: this.calculateKaufmanAMA(closes),
       supertrend: this.calculateSupertrend(highs, lows, closes),
       stochastics: this.calculateStochastics(highs, lows, closes),
-      atr14: this.calculateATR(highs, lows, closes, 14),
+      atr14: this.calculateATR(highs, lows, closes, this.config.atr.period),
       gaussian: {
         smoothedClose: gaussianClose.value,
         smoothedVolume: gaussianVolume.value,
@@ -95,7 +111,7 @@ export class OCSLayer1 {
    * BUG 16 FIX: Guard against div-by-zero when totalVolume=0 or std=0
    */
   private calculateVPM(prices: number[], volumes: number[]): Layer1Output['vpm'] {
-    const period = Math.min(20, prices.length);
+    const period = Math.min(this.config.vpm.lookback, prices.length);
     const recentPrices = prices.slice(-period);
     const recentVolumes = volumes.slice(-period);
     
@@ -107,6 +123,8 @@ export class OCSLayer1 {
       weightedSum += recentPrices[i] * recentVolumes[i];
     }
     
+    const bandMult = this.config.vpm.bandMultiplier;
+
     // BUG 16 FIX: Guard against totalVolume === 0
     if (totalVolume === 0) {
       const currentPrice = prices[prices.length - 1];
@@ -142,22 +160,20 @@ export class OCSLayer1 {
     
     return {
       value: mean,
-      upperBand: mean + 2 * std,
-      lowerBand: mean - 2 * std,
-      position: (currentPrice - (mean - 2 * std)) / (4 * std),
+      upperBand: mean + bandMult * std,
+      lowerBand: mean - bandMult * std,
+      position: (currentPrice - (mean - bandMult * std)) / (2 * bandMult * std),
     };
   }
   
   /**
-   * Ehlers Adaptive Moving Average (AMA)
+   * Kaufman Adaptive Moving Average (KAMA)
    * 使用效率比率(ER)动态调整平滑系数
    * BUG 6 FIX: Correct prevAMA formula
    * BUG 7 FIX: Recompute ER and sc inside the loop for each bar
    */
-  private calculateEhlersAMA(prices: number[]): Layer1Output['ama'] {
-    const fastLength = 2;
-    const slowLength = 30;
-    const erPeriod = 10;
+  private calculateKaufmanAMA(prices: number[]): Layer1Output['ama'] {
+    const { fastLength, slowLength, erPeriod, trendThreshold } = this.config.ama;
     
     if (prices.length < erPeriod) {
       return { value: prices[prices.length - 1], trend: 'flat', period: 20 };
@@ -193,7 +209,7 @@ export class OCSLayer1 {
     }
     
     // BUG 6 FIX: prevAMA is now correctly tracked as the AMA value from the previous bar
-    const trend = ama > prevAma * 1.001 ? 'up' : ama < prevAma * 0.999 ? 'down' : 'flat';
+    const trend = ama > prevAma * (1 + trendThreshold) ? 'up' : ama < prevAma * (1 - trendThreshold) ? 'down' : 'flat';
     
     return {
       value: ama,
@@ -207,8 +223,7 @@ export class OCSLayer1 {
    * BUG 17 FIX: Add state persistence for direction and previous bands
    */
   private calculateSupertrend(highs: number[], lows: number[], closes: number[]): Layer1Output['supertrend'] {
-    const period = 10;
-    const multiplier = 3;
+    const { period, multiplier } = this.config.supertrend;
     
     const atr = this.calculateATR(highs, lows, closes, period);
     const lastClose = closes[closes.length - 1];
@@ -275,8 +290,7 @@ export class OCSLayer1 {
    * BUG 22 FIX: Guard against highestHigh === lowestLow
    */
   private calculateStochastics(highs: number[], lows: number[], closes: number[]): Layer1Output['stochastics'] {
-    const kPeriod = 14;
-    const dPeriod = 3;
+    const { kPeriod, dPeriod, oversoldThreshold, overboughtThreshold } = this.config.stochastics;
     
     if (closes.length < kPeriod) {
       return { k: 50, d: 50, oversold: false, overbought: false };
@@ -307,8 +321,8 @@ export class OCSLayer1 {
     return {
       k: Math.max(0, Math.min(100, k)),
       d: Math.max(0, Math.min(100, d)),
-      oversold: k < 20,
-      overbought: k > 80,
+      oversold: k < oversoldThreshold,
+      overbought: k > overboughtThreshold,
     };
   }
   

@@ -299,8 +299,8 @@ ${recentContext}
           fs.unlinkSync(tmpFile);
         } catch (e) {}
       }
-    } catch (error: any) {
-      console.warn('LLM API调用失败:', error.message);
+    } catch (error: unknown) {
+      console.warn('LLM API调用失败:', (error instanceof Error ? error.message : String(error)));
       // 返回空字符串，使用本地分析作为fallback
       return '';
     }

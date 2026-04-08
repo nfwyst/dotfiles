@@ -54,6 +54,12 @@ export interface ExecutionAdapter {
   /** Get current position */
   getPosition(symbol: string): Promise<Position | null>;
 
+  /** Update current market price (used by paper/backtest adapters for simulated fills) */
+  updatePrice?(price: number): void;
+
+  /** Phase 6: Partially close a position by percentage (0..1). Optional — only paper/backtest adapters. */
+  placePartialClose?(symbol: string, closePercent: number): Promise<OrderResult>;
+
   /** Clean up */
   close(): Promise<void>;
 }

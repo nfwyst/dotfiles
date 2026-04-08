@@ -12,9 +12,11 @@ import logger from './logger';
  * 4. 平滑处理：对周期序列进行平滑，减少噪音干扰
  * 
  * 参考：John F. Ehlers "Cycle Analytics for Traders"
+ * 
+ * Enhanced: Proper 4-tap FIR Hilbert Transform, WMA detrending,
+ * and adaptive smoothing coefficient based on detected cycle period.
  */
 export class HomodyneDiscriminator {
-  private alpha: number = 0.07; // 平滑系数
   private prevReal: number = 0;
   private prevImag: number = 0;
   private prevPeriod: number = 10;
@@ -26,6 +28,33 @@ export class HomodyneDiscriminator {
   private smoothImag: number = 0;
   private smoothPeriod: number = 10;
 
+  // Price history buffer for 4-tap FIR Hilbert Transform and WMA detrending
+  private priceHistory: number[] = [];
+  // Detrended price history for Hilbert FIR taps
+  private detrendedHistory: number[] = [];
+
+  /**
+   * 4-bar Weighted Moving Average (WMA) for detrending
+   * Ehlers recommends this as a simple high-pass filter to remove trend
+   */
+  private wmaDetrend(prices: number[]): number {
+    const len = prices.length;
+    if (len < 4) return prices[len - 1] ?? 0;
+    // 4-bar WMA: (4*p0 + 3*p1 + 2*p2 + 1*p3) / 10
+    const wma = (4 * prices[len - 1]! + 3 * prices[len - 2]! + 2 * prices[len - 3]! + 1 * prices[len - 4]!) / 10;
+    // Detrended = price - WMA (removes low-frequency trend)
+    return prices[len - 1]! - wma;
+  }
+
+  /**
+   * Compute adaptive smoothing alpha based on detected cycle period.
+   * Instead of fixed α=0.07, use α = 2/(period+1) clamped to [0.02, 0.15].
+   */
+  private adaptiveAlpha(): number {
+    const alpha = 2 / (this.smoothPeriod + 1);
+    return Math.max(0.02, Math.min(0.15, alpha));
+  }
+
   /**
    * 计算主导周期
    * @param price 当前价格
@@ -36,16 +65,49 @@ export class HomodyneDiscriminator {
     phase: number;
     confidence: number;
   } {
-    // 计算价格变化率（归一化）
-    const delta = prevPrice !== 0 ? (price - prevPrice) / prevPrice : 0;
-    
-    // Hilbert Transform 近似 - 生成正交分量
-    // 实部：当前价格变化
-    const real = delta;
-    
-    // 虚部：90度相移（使用简单差分近似）
-    const imag = this.prevReal;
-    
+    // Maintain price history for detrending and FIR taps
+    this.priceHistory.push(price);
+    if (this.priceHistory.length > 50) {
+      this.priceHistory.shift();
+    }
+
+    // Detrend using 4-bar WMA smoothing
+    const detrendedPrice = this.wmaDetrend(this.priceHistory);
+
+    // Maintain detrended history for Hilbert FIR delays
+    this.detrendedHistory.push(detrendedPrice);
+    if (this.detrendedHistory.length > 50) {
+      this.detrendedHistory.shift();
+    }
+
+    const dLen = this.detrendedHistory.length;
+
+    // Need at least 7 bars of detrended data for the 4-tap FIR
+    if (dLen < 7) {
+      return {
+        period: Math.round(this.smoothPeriod),
+        phase: 0,
+        confidence: 0.3,
+      };
+    }
+
+    // Delayed detrended values for the 4-tap FIR Hilbert Transform
+    const detrendedPriceDelay2 = this.detrendedHistory[dLen - 3]!;
+    const detrendedPriceDelay3 = this.detrendedHistory[dLen - 4]!;
+    const detrendedPriceDelay4 = this.detrendedHistory[dLen - 5]!;
+    const detrendedPriceDelay6 = this.detrendedHistory[dLen - 7]!;
+
+    // 正确的 Ehlers Hilbert Transform (4-tap FIR)
+    const a = 0.0962;
+    const b = 0.5769;
+    // quadrature component (in-phase to quadrature via Hilbert)
+    const hilbertQ = a * detrendedPrice + b * detrendedPriceDelay2 - b * detrendedPriceDelay4 - a * detrendedPriceDelay6;
+    // in-phase component
+    const hilbertI = detrendedPriceDelay3;
+
+    const real = hilbertI;
+    const imag = hilbertQ;
+
     // Homodyne Discriminator 核心计算
     // 计算复数共轭乘积的实部和虚部
     const re = this.prevReal * real + this.prevImag * imag;
@@ -66,8 +128,9 @@ export class HomodyneDiscriminator {
     // 限制周期范围（6-50根K线）
     this.instPeriod = Math.max(6, Math.min(50, this.instPeriod));
     
-    // 平滑处理
-    this.smoothPeriod = this.alpha * this.instPeriod + (1 - this.alpha) * this.smoothPeriod;
+    // Adaptive smoothing based on detected cycle period
+    const alpha = this.adaptiveAlpha();
+    this.smoothPeriod = alpha * this.instPeriod + (1 - alpha) * this.smoothPeriod;
     
     // 更新历史值
     this.prevReal = real;
@@ -139,6 +202,8 @@ export class HomodyneDiscriminator {
     this.smoothReal = 0;
     this.smoothImag = 0;
     this.smoothPeriod = 10;
+    this.priceHistory = [];
+    this.detrendedHistory = [];
   }
 }
 
