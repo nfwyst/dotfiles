@@ -15,6 +15,8 @@ import { TechnicalIndicators, TechnicalAnalysisModule } from './src/modules/tech
 import type { OHLCV } from './src/events/types';
 import { StrategyEngineModule, StrategySignal, StrategyContext } from './src/modules/strategyEngine';
 import SLTPCalculator from './src/modules/slTpCalculator';
+import { loadConfig } from './src/config/index.js';
+import type { UnifiedConfig } from './src/config/schema.js';
 import { OCSLayer1 } from './src/ocs/layer1';
 import type { Layer1Output } from './src/ocs/layer1';
 import { OCSLayer2 } from './src/ocs/layer2';
@@ -154,7 +156,7 @@ export class BacktestEngine {
 
 
   // FIX: Daily loss limit — prevents cascading intraday losses from compounding drawdown
-  private dailyLossLimit: number = 0.04; // 4% of day's starting equity
+  private dailyLossLimit!: number;
   private currentDayStartTs: number = 0;
   private dailyStartEquity: number = 0;
   private dailyLossLimitHit: boolean = false;
@@ -168,7 +170,7 @@ export class BacktestEngine {
 
   // Trade cooldown: prevent re-entry immediately after closing a position
   private lastCloseBarIndex: number = -999;
-  private tradeCooldownBars: number = 18; // 18 bars = 1.5 hours on 5m timeframe (reduce churn)
+  private tradeCooldownBars!: number;
 
   // OCS Layers (用于预计算)
   private ocsLayer1: OCSLayer1;
@@ -177,6 +179,7 @@ export class BacktestEngine {
   private ocsLayer4: OCSLayer4;
   private ocsEnhanced: OCSEnhanced;
   private sltpCalculator: SLTPCalculator;
+  private unifiedConfig: UnifiedConfig;
   private enhancedWarmedUp: boolean = false;
   private latestEnhancedOutput: OCSEnhancedOutput | null = null;
   
@@ -227,14 +230,24 @@ export class BacktestEngine {
     this.ocsLayer3 = new OCSLayer3();
     this.ocsLayer4 = new OCSLayer4();
     this.ocsEnhanced = new OCSEnhanced();
+    this.unifiedConfig = loadConfig('backtest');
+    this.dailyLossLimit = this.unifiedConfig.risk.maxDailyLoss;
+    this.tradeCooldownBars = this.unifiedConfig.risk.cooldownBars;
     this.sltpCalculator = new SLTPCalculator();
 
     // S3 FIX: Initialize RiskGuardChain with guards matching hardcoded thresholds
     this.riskGuardChain = new RiskGuardChain()
-      .addGuard(new CircuitBreakerGuard(10, 1500, 4000))   // 10% drawdown, escalating cooldown
-      .addGuard(new DailyLossLimitGuard(4))                 // 4% daily loss limit
-      .addGuard(new CooldownGuard(this.tradeCooldownBars))  // trade cooldown
-      .addGuard(new ConsecutiveLossGuard(5, 1000));          // 5 consecutive losses, 1000 bar pause
+      .addGuard(new CircuitBreakerGuard(
+        this.unifiedConfig.risk.maxDrawdown * 100,
+        this.unifiedConfig.risk.circuitBreakerCooldownBars,
+        this.unifiedConfig.risk.circuitBreakerMaxCooldownBars,
+      ))
+      .addGuard(new DailyLossLimitGuard(this.unifiedConfig.risk.maxDailyLoss * 100))
+      .addGuard(new CooldownGuard(this.tradeCooldownBars))
+      .addGuard(new ConsecutiveLossGuard(
+        this.unifiedConfig.risk.maxConsecutiveLosses,
+        this.unifiedConfig.risk.consecutiveLossPauseBars,
+      ));
   }
 
   /** Get the resolved trading cost config */
@@ -767,14 +780,16 @@ export class BacktestEngine {
     
     // BUG 11 FIX: Compute default SL/TP from ATR if not provided by SLTP calculator
     const atr = indicators.atr[14];
+    const atrFb = this.unifiedConfig.atrFallback;
     const defaultSL = finalDirection === 'long'
-      ? currentPrice - 2 * atr
-      : currentPrice + 2 * atr;
+      ? currentPrice - atrFb.slMultiplier * atr
+      : currentPrice + atrFb.slMultiplier * atr;
     const computedSL = sltp?.stopLoss ?? defaultSL;
+    const tpMults = atrFb.tpMultipliers;
     const computedTP = sltp?.takeProfits ?? {
-      tp1: finalDirection === 'long' ? currentPrice + 2.4 * atr : currentPrice - 2.4 * atr,  // 1.2x risk
-      tp2: finalDirection === 'long' ? currentPrice + 3.6 * atr : currentPrice - 3.6 * atr,  // 1.8x risk
-      tp3: finalDirection === 'long' ? currentPrice + 5.0 * atr : currentPrice - 5.0 * atr,  // 2.5x risk
+      tp1: finalDirection === 'long' ? currentPrice + (tpMults[0] ?? 2.4) * atr : currentPrice - (tpMults[0] ?? 2.4) * atr,
+      tp2: finalDirection === 'long' ? currentPrice + (tpMults[1] ?? 3.6) * atr : currentPrice - (tpMults[1] ?? 3.6) * atr,
+      tp3: finalDirection === 'long' ? currentPrice + (tpMults[2] ?? 5.0) * atr : currentPrice - (tpMults[2] ?? 5.0) * atr,
     };
 
     // BUG 11 FIX: Validate SL/TP are defined and sane before returning signal
@@ -821,7 +836,7 @@ export class BacktestEngine {
     // Max holding period: close position after 1500 bars (~5 days on 5m)
     // Prevents capital from being tied up in drifting trades
     const holdingBars = index - this.position.entryBarIndex;
-    if (holdingBars >= 1000) {
+    if (holdingBars >= this.unifiedConfig.risk.maxHoldingBars) {
       console.log(`  ⏰ 最大持仓时间: ${holdingBars} bars, 强制平仓`);
       this.closePosition(candle, 'max_holding', index);
       return;

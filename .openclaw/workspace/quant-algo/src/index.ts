@@ -140,6 +140,7 @@ import { AdaptiveOPRO, FeedbackLoop } from './optimization';
 import { TradingBotRuntime, OrderGenerator } from './execution';
 import { PerformanceTracker } from './monitoring';
 import { MonitoringDashboard } from './monitoring/dashboard';
+import { loadConfig, printConfigSummary } from './config/loader.js';
 
 export interface TradingSystemConfig {
   symbol: string;
@@ -155,14 +156,15 @@ export interface TradingSystemConfig {
   maxDrawdown: number;
 }
 
+const _unified = loadConfig('live');
 export const DEFAULT_SYSTEM_CONFIG: TradingSystemConfig = {
-  symbol: 'ETHUSDT',
+  symbol: _unified.symbol.binance,
   initialBalance: 1000,
   oproEnabled: true,
   optimizationWindowDays: 5,
-  maxPositionSize: 0.1,
-  maxLeverage: 50,
-  maxDrawdown: 0.15,
+  maxPositionSize: _unified.position.maxSize,
+  maxLeverage: _unified.position.leverage,
+  maxDrawdown: _unified.risk.maxDrawdown,
 };
 
 /**

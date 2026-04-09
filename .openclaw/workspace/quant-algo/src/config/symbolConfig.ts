@@ -1,3 +1,4 @@
+/** @deprecated Use unified config: import { loadConfig } from "./loader.js" */
 /**
  * Symbol Configuration for Multi-Pair Support (Phase 5)
  *

@@ -30,14 +30,28 @@
   },
   "layer2": {
     "ehlersCycle": {
-      "short": { "minPeriod": 5, "maxPeriod": 15 },
-      "medium": { "minPeriod": 15, "maxPeriod": 40 },
-      "long": { "minPeriod": 40, "maxPeriod": 100 },
+      "short": {
+        "minPeriod": 5,
+        "maxPeriod": 15
+      },
+      "medium": {
+        "minPeriod": 15,
+        "maxPeriod": 40
+      },
+      "long": {
+        "minPeriod": 40,
+        "maxPeriod": 100
+      },
       "stateChangeThreshold": 0.1
     },
     "lms": {
       "learningRate": 0.01,
-      "initialWeights": [0.25, 0.25, 0.25, 0.25],
+      "initialWeights": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
       "epsilon": 0.001
     },
     "zScore": {
@@ -48,11 +62,25 @@
       "confidenceScale": 86
     },
     "v312": {
-      "gaussian": { "sigma": 2.0, "windowSize": 20 },
-      "cvd": { "lookbackPeriod": 20, "minStrength": 60 },
-      "trix": { "period": 14, "signalPeriod": 9 },
-      "derivative": { "velocityPeriod": 10, "accelerationPeriod": 0.001 },
-      "elasticVolume": { "lookbackPeriod": 20 }
+      "gaussian": {
+        "sigma": 2.0,
+        "windowSize": 20
+      },
+      "cvd": {
+        "lookbackPeriod": 20,
+        "minStrength": 60
+      },
+      "trix": {
+        "period": 14,
+        "signalPeriod": 9
+      },
+      "derivative": {
+        "velocityPeriod": 10,
+        "accelerationPeriod": 0.001
+      },
+      "elasticVolume": {
+        "lookbackPeriod": 20
+      }
     }
   },
   "layer3": {
@@ -72,7 +100,10 @@
       "normalK": 5
     },
     "tripleBarrier": {
-      "ptSl": [2, 1],
+      "ptSl": [
+        2,
+        1
+      ],
       "maxHoldingPeriod": 20,
       "volLookback": 20,
       "minVolatility": 0.001
@@ -83,11 +114,11 @@
       "atrMultiplier": 1.5
     },
     "takeProfit": {
-      "tp1RR": 1.5,
-      "tp2RR": 2.5,
-      "tp3RR": 4.0,
-      "tp1ClosePercent": 0.50,
-      "tp2ClosePercent": 0.25
+      "tp1RR": 1.2,
+      "tp2RR": 1.8,
+      "tp3RR": 2.5,
+      "tp1ClosePercent": 0.5,
+      "tp2ClosePercent": 0.5
     },
     "positionSizing": {
       "riskPercent": 0.02

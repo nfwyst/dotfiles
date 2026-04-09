@@ -10,6 +10,7 @@
  *   const cfg = loadOCSConfig({ layer1: { vpm: { lookback: 30 } } }); // override
  */
 
+import { loadConfig } from './loader.js';
 import { z } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════
@@ -161,26 +162,30 @@ const Layer3ConfigSchema = z.object({
 // Layer 4: Virtual Trade Simulation
 // ═══════════════════════════════════════════════════════════════
 
+// Align Layer4 defaults with unified config
+const _unified = loadConfig('live');
+const _tpLevels = _unified.takeProfit.levels;
+
 const Layer4ConfigSchema = z.object({
   /** Stop loss ATR multiplier */
   stopLoss: z.object({
-    atrMultiplier: z.number().positive().default(1.5),
+    atrMultiplier: z.number().positive().default(_unified.stopLoss.atrMultiplier),
   }).default({}),
 
   /** Take-profit pyramid (R:R multiples of stop distance) */
   takeProfit: z.object({
-    tp1RR: z.number().positive().default(1.5),
-    tp2RR: z.number().positive().default(2.5),
-    tp3RR: z.number().positive().default(4.0),
+    tp1RR: z.number().positive().default(_tpLevels[0]?.rrRatio ?? 1.2),
+    tp2RR: z.number().positive().default(_tpLevels[1]?.rrRatio ?? 1.8),
+    tp3RR: z.number().positive().default(_tpLevels[2]?.rrRatio ?? 2.5),
     /** Percentage of position closed at each TP level */
-    tp1ClosePercent: z.number().min(0).max(1).default(0.50),
-    tp2ClosePercent: z.number().min(0).max(1).default(0.25),
+    tp1ClosePercent: z.number().min(0).max(1).default(_tpLevels[0]?.closePercent ?? 0.50),
+    tp2ClosePercent: z.number().min(0).max(1).default(_tpLevels[1]?.closePercent ?? 0.50),
     // tp3 closes remaining (implicitly 0.25)
   }).default({}),
 
   /** Position sizing: risk percentage of balance */
   positionSizing: z.object({
-    riskPercent: z.number().min(0).max(1).default(0.02),
+    riskPercent: z.number().min(0).max(1).default(_unified.position.riskPerTrade),
   }).default({}),
 });
 

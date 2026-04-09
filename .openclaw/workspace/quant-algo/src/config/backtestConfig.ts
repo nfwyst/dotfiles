@@ -1,3 +1,4 @@
+/** @deprecated Use unified config: import { loadConfig } from "./loader.js" */
 /**
  * Backtest Risk & Execution Configuration Schema (Phase 5)
  *

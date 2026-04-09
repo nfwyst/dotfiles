@@ -1,3 +1,4 @@
+/** @deprecated Prefer unified config cost section: loadConfig(mode).cost. This module is kept for backward compatibility. */
 export interface TradingCostConfig {
   feeRate: number;         // taker 手续费率（如 0.0004 = 4 bps）
   makerRebate: number;     // maker 返佣（如 -0.0002 = -2 bps）

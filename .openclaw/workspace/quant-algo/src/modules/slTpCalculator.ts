@@ -10,6 +10,9 @@
  * - TP3: 1:2 风险回报比
  */
 
+import { loadConfig } from '../config/index.js';
+import type { UnifiedConfig, TakeProfitConfig, StopLossConfig, SwingDetectionConfig } from '../config/schema.js';
+
 export interface SwingLevel {
   swingHigh: number;
   swingLow: number;
@@ -43,10 +46,21 @@ export interface StopLossTakeProfit {
   reasoning: string[];
 }
 
+/** Optional external config to override hardcoded defaults */
+export interface SLTPExternalConfig {
+  /** R:R ratios for TP levels, e.g. [1.2, 1.8, 2.5] */
+  rrRatios: [number, number, number];
+  /** Swing buffer fraction, e.g. 0.002 = 0.2% */
+  swingBuffer: number;
+  /** Per-timeframe swing detection params */
+  timeframeConfig: Record<TimeFrame, { lookback: number; strength: number; minStopPercent: number }>;
+}
+
 export class SLTPCalculator {
   private lookbackPeriod: number;
   private minSwingStrength: number;
   private timeframe: TimeFrame;
+  private externalConfig: SLTPExternalConfig;
 
   // 不同时间框架的默认参数
   private static TIMEFRAME_CONFIG: Record<TimeFrame, { lookback: number; strength: number; minStopPercent: number }> = {
@@ -58,11 +72,39 @@ export class SLTPCalculator {
     '1d': { lookback: 20, strength: 2, minStopPercent: 0.02 },   // 1天: 回看20根(20天)
   };
 
-  constructor(timeframe: TimeFrame = '5m', lookbackPeriod?: number, minSwingStrength?: number) {
+  constructor(timeframe: TimeFrame = '5m', lookbackPeriod?: number, minSwingStrength?: number, externalConfig?: SLTPExternalConfig) {
     this.timeframe = timeframe;
-    const config = SLTPCalculator.TIMEFRAME_CONFIG[timeframe] || SLTPCalculator.TIMEFRAME_CONFIG['5m']; // 默认使用5m
-    this.lookbackPeriod = lookbackPeriod || config.lookback;
-    this.minSwingStrength = minSwingStrength || config.strength;
+
+    // Build external config from unified config if not provided
+    if (externalConfig) {
+      this.externalConfig = externalConfig;
+    } else {
+      const unified = loadConfig('backtest');
+      const tpLevels = unified.takeProfit.levels;
+      this.externalConfig = {
+        rrRatios: [
+          tpLevels[0]?.rrRatio ?? 1.2,
+          tpLevels[1]?.rrRatio ?? 1.8,
+          tpLevels[2]?.rrRatio ?? 2.5,
+        ],
+        swingBuffer: unified.stopLoss.swingBuffer,
+        timeframeConfig: { ...SLTPCalculator.TIMEFRAME_CONFIG },
+      };
+      // Override TIMEFRAME_CONFIG from unified config if swingDetection is available
+      for (const [tf, sd] of Object.entries(unified.swingDetection)) {
+        if (tf in this.externalConfig.timeframeConfig) {
+          this.externalConfig.timeframeConfig[tf as TimeFrame] = {
+            lookback: sd.lookback,
+            strength: sd.strength,
+            minStopPercent: sd.minStopPercent,
+          };
+        }
+      }
+    }
+
+    const tfConfig = this.externalConfig.timeframeConfig[timeframe] ?? SLTPCalculator.TIMEFRAME_CONFIG['5m'];
+    this.lookbackPeriod = lookbackPeriod ?? tfConfig.lookback;
+    this.minSwingStrength = minSwingStrength ?? tfConfig.strength;
   }
 
   /**
@@ -76,7 +118,8 @@ export class SLTPCalculator {
    * 获取最小止损百分比 (根据时间框架)
    */
   private getMinStopPercent(): number {
-    return SLTPCalculator.TIMEFRAME_CONFIG[this.timeframe].minStopPercent;
+    return this.externalConfig.timeframeConfig[this.timeframe]?.minStopPercent
+      ?? SLTPCalculator.TIMEFRAME_CONFIG[this.timeframe].minStopPercent;
   }
 
   /**
@@ -213,7 +256,7 @@ export class SLTPCalculator {
 
       if (side === 'long') {
         // 做多: SL 设置在 Swing Low 下方
-        const buffer = entryPrice * 0.002; // 0.2% 缓冲
+        const buffer = entryPrice * this.externalConfig.swingBuffer;
         stopLoss = swingLevels.swingLow - buffer;
         stopDistance = entryPrice - stopLoss;
 
@@ -221,7 +264,7 @@ export class SLTPCalculator {
         reasoning.push(`Swing Low 形成于: ${currentIndex - swingLevels.swingLowIndex} 根K线前 (${this.getTimeAgo(currentIndex - swingLevels.swingLowIndex)})`);
       } else {
         // 做空: SL 设置在 Swing High 上方
-        const buffer = entryPrice * 0.002; // 0.2% 缓冲
+        const buffer = entryPrice * this.externalConfig.swingBuffer;
         stopLoss = swingLevels.swingHigh + buffer;
         stopDistance = stopLoss - entryPrice;
 
@@ -243,9 +286,10 @@ export class SLTPCalculator {
       }
 
       // 计算 TP (基于风险回报比)
-      const tp1Distance = stopDistance * 1.2;   // 1:1.2 R/R (widened from 1:1)
-      const tp2Distance = stopDistance * 1.8;   // 1:1.8 R/R (widened from 1:1.5)
-      const tp3Distance = stopDistance * 2.5;   // 1:2.5 R/R (widened from 1:2)
+      const [rr1, rr2, rr3] = this.externalConfig.rrRatios;
+      const tp1Distance = stopDistance * rr1;
+      const tp2Distance = stopDistance * rr2;
+      const tp3Distance = stopDistance * rr3;
 
       let takeProfits: { tp1: number; tp2: number; tp3: number };
 
@@ -264,18 +308,18 @@ export class SLTPCalculator {
       }
 
       reasoning.push(`风险距离: ${stopDistance.toFixed(2)} (${(stopDistance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP1 1:1.2: ${takeProfits.tp1.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp1Distance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP2 1:1.8: ${takeProfits.tp2.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp2Distance / entryPrice * 100).toFixed(2)}%)`);
-      reasoning.push(`TP3 1:2.5: ${takeProfits.tp3.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp3Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP1 1:${rr1}: ${takeProfits.tp1.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp1Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP2 1:${rr2}: ${takeProfits.tp2.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp2Distance / entryPrice * 100).toFixed(2)}%)`);
+      reasoning.push(`TP3 1:${rr3}: ${takeProfits.tp3.toFixed(2)} (${side === 'long' ? '+' : '-'}${(tp3Distance / entryPrice * 100).toFixed(2)}%)`);
 
       return {
         entryPrice,
         stopLoss,
         takeProfits,
         riskRewardRatios: {
-          tp1: 1.2,
-          tp2: 1.8,
-          tp3: 2.5,
+          tp1: this.externalConfig.rrRatios[0],
+          tp2: this.externalConfig.rrRatios[1],
+          tp3: this.externalConfig.rrRatios[2],
         },
         stopDistance,
         timeframe: this.timeframe,
@@ -286,9 +330,9 @@ export class SLTPCalculator {
       // 恢复原始时间框架
       if (timeframe && timeframe !== originalTimeframe) {
         this.timeframe = originalTimeframe;
-        const config = SLTPCalculator.TIMEFRAME_CONFIG[originalTimeframe];
-        this.lookbackPeriod = config.lookback;
-        this.minSwingStrength = config.strength;
+        const tfCfg = this.externalConfig.timeframeConfig[originalTimeframe] ?? SLTPCalculator.TIMEFRAME_CONFIG[originalTimeframe];
+        this.lookbackPeriod = tfCfg.lookback;
+        this.minSwingStrength = tfCfg.strength;
       }
     }
   }
@@ -341,7 +385,7 @@ export class SLTPCalculator {
     const tf = timeframe || this.timeframe;
     const stopDistance = Math.max(
       atr * atrMultiplier,
-      entryPrice * SLTPCalculator.TIMEFRAME_CONFIG[tf].minStopPercent
+      entryPrice * (this.externalConfig.timeframeConfig[tf]?.minStopPercent ?? SLTPCalculator.TIMEFRAME_CONFIG[tf].minStopPercent)
     );
 
     let stopLoss: number;
@@ -349,17 +393,19 @@ export class SLTPCalculator {
 
     if (side === 'long') {
       stopLoss = entryPrice - stopDistance;
+      const [rr1, rr2, rr3] = this.externalConfig.rrRatios;
       takeProfits = {
-        tp1: entryPrice + stopDistance * 1.2,
-        tp2: entryPrice + stopDistance * 1.8,
-        tp3: entryPrice + stopDistance * 2.5,
+        tp1: entryPrice + stopDistance * rr1,
+        tp2: entryPrice + stopDistance * rr2,
+        tp3: entryPrice + stopDistance * rr3,
       };
     } else {
       stopLoss = entryPrice + stopDistance;
+      const [rr1, rr2, rr3] = this.externalConfig.rrRatios;
       takeProfits = {
-        tp1: entryPrice - stopDistance * 1.2,
-        tp2: entryPrice - stopDistance * 1.8,
-        tp3: entryPrice - stopDistance * 2.5,
+        tp1: entryPrice - stopDistance * rr1,
+        tp2: entryPrice - stopDistance * rr2,
+        tp3: entryPrice - stopDistance * rr3,
       };
     }
 
@@ -367,7 +413,7 @@ export class SLTPCalculator {
       entryPrice,
       stopLoss,
       takeProfits,
-      riskRewardRatios: { tp1: 1.2, tp2: 1.8, tp3: 2.5 },
+      riskRewardRatios: { tp1: this.externalConfig.rrRatios[0], tp2: this.externalConfig.rrRatios[1], tp3: this.externalConfig.rrRatios[2] },
       stopDistance,
       timeframe: tf,
       swingLevel: { swingHigh: 0, swingLow: 0, swingHighIndex: -1, swingLowIndex: -1 },

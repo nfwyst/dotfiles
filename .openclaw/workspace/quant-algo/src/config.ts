@@ -1,3 +1,4 @@
+import { loadConfig } from './config/loader.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import fs from 'fs';
@@ -287,6 +288,10 @@ export interface TradingConfig {
   };
 }
 
+
+// Unified config — single source of truth for trading parameters
+const _unified = loadConfig('live');
+
 export const config: TradingConfig = {
   exchange: {
     id: 'binance',
@@ -296,16 +301,14 @@ export const config: TradingConfig = {
     enableRateLimit: true,
   },
   
-  symbol: 'ETH/USDT:USDT',
+  symbol: _unified.symbol.ccxt,
 
   initialBalance: 100,
   maxRiskPerTrade: riskConfig.positionSizing.maxRiskPerTrade,
-  leverage: parseInt(process.env.LEVERAGE || String(riskConfig.leverage.default)),
+  leverage: _unified.position.leverage,
 
-  timeframe: process.env.TIMEFRAME || '5m',
-  higherTimeframe: process.env.TIMEFRAME === '1m' ? '5m' :
-    process.env.TIMEFRAME === '5m' ? '15m' :
-      process.env.TIMEFRAME === '15m' ? '1h' : '4h',
+  timeframe: _unified.timeframe,
+  higherTimeframe: _unified.higherTimeframe,
   checkInterval: parseInt(process.env.CHECK_INTERVAL || '30'),
   
   smc: {
@@ -427,3 +430,7 @@ export function validateConfig(): void {
 // 导出风控配置
 export { riskConfig, RISK_CONFIG_PATH };
 export default config;
+
+// Re-export unified config for new consumers
+export { loadConfig, printConfigSummary, clearConfigCache } from './config/loader.js';
+export type { UnifiedConfig, TradingMode } from './config/schema.js';

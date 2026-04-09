@@ -32,6 +32,7 @@ import {
   type TimeSeriesObservation,
   type BacktestValidationResult,
 } from './src/backtest/cpcvValidation';
+import { loadConfig, printConfigSummary } from './src/config/index.js';
 
 // ────────────────────────────────────────────────────────────
 // Config helpers
@@ -48,20 +49,27 @@ function getPhases(): Set<string> {
 }
 
 function makeConfig(): BacktestConfig {
+  const cfg = loadConfig('backtest');
+
   const endDate = new Date();
   endDate.setUTCHours(0, 0, 0, 0);
-  const days = parseInt(process.env.BT_DAYS || '365', 10);
-  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+  const startDate = new Date(endDate.getTime() - cfg.backtest.days * 24 * 60 * 60 * 1000);
+
   return {
-    symbol:         process.env.BT_SYMBOL    || 'ETHUSDT',
-    timeframe:      process.env.BT_TIMEFRAME || '5m',
+    symbol:         cfg.symbol.binance,
+    timeframe:      cfg.timeframe,
     startDate,
     endDate,
-    initialBalance: 10000,
-    positionSize:   0.010,  // 1.0% risk per trade
-    leverage:       1,
-    feeRate:        0.0004,  // 0.04% — aligned with Binance futures maker/taker
-    slippage:       0.0001,
+    initialBalance: cfg.backtest.initialBalance,
+    positionSize:   cfg.position.baseSize,
+    leverage:       cfg.position.leverage,
+    costConfig: {
+      feeRate:      cfg.cost.feeRate,
+      makerRebate:  cfg.cost.makerRebate,
+      slippageBps:  cfg.cost.slippageBps,
+    },
+    feeRate:        cfg.cost.feeRate,
+    slippage:       cfg.cost.slippageBps / 10000,
   };
 }
 
@@ -648,6 +656,10 @@ function saveRunnerReport(report: RunnerReport): void {
 async function main() {
   const phases = getPhases();
   const config = makeConfig();
+
+  // Print unified config summary
+  const unifiedCfg = loadConfig('backtest');
+  printConfigSummary(unifiedCfg);
 
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║       Quant-Algo 三阶段回测运行器 v1.0                    ║');
