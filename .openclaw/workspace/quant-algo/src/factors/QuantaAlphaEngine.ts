@@ -15,6 +15,7 @@
 import logger from '../logger';
 import { llmClient } from '../ai/LLMClient';
 import type { LLMProvider } from '../ai/LLMConfigManager';
+import { isValidFactorType } from '../utils/typeGuards';
 
 
 const ANNUAL_TRADING_DAYS = 365; // crypto markets run 24/7
@@ -195,7 +196,8 @@ TYPE: [momentum/value/volatility/sentiment]
         } else if (line.startsWith('DESCRIPTION:')) {
           description = line.replace('DESCRIPTION:', '').trim();
         } else if (line.startsWith('TYPE:')) {
-          type = line.replace('TYPE:', '').trim() as FactorDefinition['type'];
+          const rawType = line.replace('TYPE:', '').trim();
+          type = isValidFactorType(rawType) ? rawType : 'custom';
         }
       }
 
@@ -305,7 +307,7 @@ TYPE: [momentum/value/volatility/sentiment]
       name: `Random Factor ${this.population.length}`,
       formula,
       description: `随机生成的因子: ${formula}`,
-      inputs: [input1, input2].filter((v, i, a) => a.indexOf(v) === i).filter(Boolean) as string[],
+      inputs: [input1, input2].filter((v, i, a): v is string => a.indexOf(v) === i && Boolean(v)),
       parameters: { period },
       type: types[Math.floor(Math.random() * types.length)] || 'custom',
       source: 'evolution',

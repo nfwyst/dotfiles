@@ -637,7 +637,7 @@ export class EventDrivenStrategyLayer {
             : String(strategySignal.reasoning),
           keyFactors: [],
         },
-      } as LocalStrategySignal;
+      } satisfies LocalStrategySignal;
     } catch (error) {
       logger.error('[StrategyLayer] LLM decision failed:', error);
 
@@ -662,7 +662,7 @@ export class EventDrivenStrategyLayer {
           reasoning: 'LLM unavailable — synthetic decision from strategy signal',
           keyFactors: ['llm_fallback'],
         },
-      } as LocalStrategySignal;
+      } satisfies LocalStrategySignal;
     }
   }
 

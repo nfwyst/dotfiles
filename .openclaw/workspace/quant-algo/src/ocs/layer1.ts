@@ -64,7 +64,8 @@ export class OCSLayer1 {
   } | null = null;
   
   constructor(config?: Partial<Layer1Config>) {
-    this.config = { ...DEFAULT_OCS_CONFIG.layer1, ...config } as Layer1Config;
+    const mergedConfig: Layer1Config = { ...DEFAULT_OCS_CONFIG.layer1, ...config };
+    this.config = mergedConfig;
     // Deep-merge nested objects
     if (config) {
       if (config.vpm) this.config.vpm = { ...DEFAULT_OCS_CONFIG.layer1.vpm, ...config.vpm };

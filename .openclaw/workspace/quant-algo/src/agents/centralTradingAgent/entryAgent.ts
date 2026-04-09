@@ -20,6 +20,7 @@ import {
 } from './types';
 
 import { TechnicalReport, SupportResistanceLevel } from '../marketIntelligence/types';
+import { isLLMEntryResponse } from '../../utils/typeGuards';
 import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
@@ -64,7 +65,7 @@ export class EntryAgent implements DecisionAgent {
     
     try {
       const { marketIntelligence, currentPrice, hasPosition } = context;
-      const technical = marketIntelligence.technical as TechnicalReport;
+      const technical = marketIntelligence.technical;
       
       if (!technical) {
         return {
@@ -183,7 +184,10 @@ export class EntryAgent implements DecisionAgent {
       if (!rawParsed || typeof rawParsed !== 'object') {
         return { success: false, error: 'Invalid JSON response' };
       }
-      const parsed = rawParsed as LLMEntryResponse;
+      if (!isLLMEntryResponse(rawParsed)) {
+        return { success: false, error: 'LLM response does not match LLMEntryResponse shape' };
+      }
+      const parsed = rawParsed;
       
       const output: EntryAgentOutput = {
         agentName: 'EntryAgent',
@@ -283,7 +287,7 @@ export class EntryAgent implements DecisionAgent {
         optimal: currentPrice,
       },
       riskRewardRatio: 2,
-      urgency: 'medium' as Urgency,
+      urgency: 'medium',
       confirmations: reasoning,
     };
   }

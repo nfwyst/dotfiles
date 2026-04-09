@@ -3,6 +3,7 @@
  * 链上数据分析 Agent - 鲸鱼活动、交易所流、资金费率
  */
 
+import { isOnChainRawData, isBinanceFundingRateArray, isBinanceOpenInterestResponse, isBinanceLongShortRatioArray, isNonNullObject } from '../../utils/typeGuards';
 import {
   AnalystAgent,
   AnalysisContext,
@@ -103,7 +104,11 @@ export class OnChainAnalystAgent implements AnalystAgent {
       
       // 尝试从 additionalData 或 API 获取数据
       if (additionalData?.onChainData) {
-        const rawData = additionalData.onChainData as OnChainRawData;
+        const rawOnChain = additionalData.onChainData;
+        if (!isOnChainRawData(rawOnChain)) {
+          return this.generateInferredReport(context, startTime);
+        }
+        const rawData: OnChainRawData = rawOnChain;
         hasRealData = true;
         whaleActivity = this.parseWhaleActivity(rawData);
         exchangeFlows = this.parseExchangeFlows(rawData);
@@ -207,11 +212,11 @@ export class OnChainAnalystAgent implements AnalystAgent {
       const ratioRawData: unknown = await ratioResponse.json();
       
       // Type-safe parsing
-      const fundingItems = Array.isArray(fundingRawData) ? fundingRawData as BinanceFundingRateItem[] : [];
-      const oiData = (oiRawData && typeof oiRawData === 'object' && 'openInterest' in oiRawData)
-        ? oiRawData as { openInterest: string }
+      const fundingItems = isBinanceFundingRateArray(fundingRawData) ? fundingRawData : [];
+      const oiData = isBinanceOpenInterestResponse(oiRawData)
+        ? oiRawData
         : { openInterest: '0' };
-      const ratioItems = Array.isArray(ratioRawData) ? ratioRawData as BinanceLongShortRatioItem[] : [];
+      const ratioItems = isBinanceLongShortRatioArray(ratioRawData) ? ratioRawData : [];
       
       const fundingRate = fundingItems[0] ? parseFloat(fundingItems[0].fundingRate) : 0;
       const openInterest = parseFloat(oiData.openInterest || '0');
@@ -242,8 +247,9 @@ export class OnChainAnalystAgent implements AnalystAgent {
     let signal: 'bullish' | 'bearish' | 'neutral' = 'neutral';
     let confidence = 0.2;
     
-    if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
+    if (additionalData?.strategyConsensus && isNonNullObject(additionalData.strategyConsensus)) {
+      const sc = additionalData.strategyConsensus;
+      const consensus = { type: typeof sc.type === 'string' ? sc.type : '', strength: typeof sc.strength === 'number' ? sc.strength : 0 };
       if (consensus.type === 'buy' && consensus.strength > 50) {
         signal = 'bullish';
         confidence = 0.3;

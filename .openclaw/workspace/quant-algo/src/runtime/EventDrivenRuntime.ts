@@ -365,7 +365,9 @@ export class EventDrivenRuntime {
     try {
       const state = this.stateManager.getState();
       currentBalance = state.trading?.balance ?? 0;
-      killSwitchActive = 'killSwitch' in state && (state as Record<string, unknown>).killSwitch != null ? 1 : 0;
+      // Check for optional killSwitch property that may exist on extended state
+      const stateRecord: Record<string, unknown> = { ...state };
+      killSwitchActive = stateRecord['killSwitch'] != null ? 1 : 0;
     } catch {
       // Fallback: metrics will show zero balance
     }

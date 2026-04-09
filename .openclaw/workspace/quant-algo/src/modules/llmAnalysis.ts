@@ -9,6 +9,7 @@
 
 import { TechnicalIndicators } from './technicalAnalysis';
 import { StrategySignal } from './strategyEngine';
+import { isValidTradingSignalType, isValidTradingSignalUrgency } from '../utils/typeGuards';
 import fs from 'fs';
 
 export interface LLMMarketContext {
@@ -270,7 +271,10 @@ ${recentContext}
       const model = process.env.LLM_MODEL || 'gemini-3-pro';
       
       // 构建环境变量
-      const env: Record<string, string> = { ...process.env as Record<string, string> };
+      const env: Record<string, string> = {};
+      for (const [k, v] of Object.entries(process.env)) {
+        if (v !== undefined) env[k] = v;
+      }
       
       // 如果使用 kimi/moonshot，配置对应的 API
       if (model.includes('kimi') || model.includes('moonshot')) {
@@ -620,8 +624,8 @@ ${recentContext}
 
     // FIX H3: Derive type from extracted direction or fall back to strategy
     let type: LLMTradingSignal['type'] = strategySignal.type;
-    if (fields.type && ['long', 'short', 'hold', 'wait'].includes(fields.type)) {
-      type = fields.type as LLMTradingSignal['type'];
+    if (isValidTradingSignalType(fields.type)) {
+      type = fields.type;
     } else if (fields.direction === 'bullish') {
       type = 'long';
     } else if (fields.direction === 'bearish') {
@@ -648,7 +652,7 @@ ${recentContext}
     return {
       type,
       confidence,
-      urgency: fields.urgency as LLMTradingSignal['urgency'] ?? (confidence > 0.8 ? 'immediate' : 'moderate'),
+      urgency: isValidTradingSignalUrgency(fields.urgency) ? fields.urgency : (confidence > 0.8 ? 'immediate' : 'moderate'),
       entry: {
         price: entryPrice,
         range: {

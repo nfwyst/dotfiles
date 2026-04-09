@@ -20,6 +20,15 @@ import { tracingManager } from './monitoring/tracing';
 import { ExecutionAdapter, OrderResult, TradingMode } from './feeds/types';
 import { Position } from './events/types';
 
+/** Extract typed value from circuit breaker result */
+function extractValue<T>(result: { success: boolean; value?: unknown; error?: string }, errorMsg: string): T {
+  if (!result.success) {
+    throw new Error(result.error || errorMsg);
+  }
+  // The value type is guaranteed by the inner request function's return type
+  return result.value as T;
+}
+
 // 交易 API 端点
 const TESTNET_API_BASE = 'https://testnet.binancefuture.com';
 const MAINNET_API_BASE = 'https://fapi.binance.com';
@@ -134,11 +143,7 @@ export class ExchangeManager implements ExecutionAdapter {
       return await this._doRequest(path, params, method);
     });
     
-    if (!result.success) {
-      throw new Error(result.error || '交易所 API 熔断中');
-    }
-    
-    return result.value as T;
+    return extractValue<T>(result, '交易所 API 熔断中');
   }
 
   /**
@@ -211,11 +216,7 @@ export class ExchangeManager implements ExecutionAdapter {
       return await this._doRequestPublic(path, params);
     });
     
-    if (!result.success) {
-      throw new Error(result.error || '交易所 API 熔断中');
-    }
-    
-    return result.value as T;
+    return extractValue<T>(result, '交易所 API 熔断中');
   }
 
   /**

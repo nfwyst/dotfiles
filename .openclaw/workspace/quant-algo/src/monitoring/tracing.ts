@@ -418,7 +418,7 @@ export function traced<T extends (...args: unknown[]) => unknown>(
         span.end();
         throw error;
       }
-    } as T;
+    };
 
     return descriptor;
   };
@@ -480,7 +480,7 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
         span.end();
         throw error;
       }
-    } as T;
+    };
 
     return descriptor;
   };

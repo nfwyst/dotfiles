@@ -642,7 +642,8 @@ export class LeakageControlledBacktest {
     lines.push('');
     
     // FIX: Include validation section if this is a ValidatedBacktestResult
-    const validated = result as ValidatedBacktestResult;
+    // Check if this result has validation data (i.e., is a ValidatedBacktestResult)
+    const validated: BacktestResult & { validation?: ValidatedBacktestResult['validation'] } = result;
     if (validated.validation) {
       lines.push('CPCV 验证:');
       lines.push(`  PBO: ${validated.validation.pbo.toFixed(3)}`);

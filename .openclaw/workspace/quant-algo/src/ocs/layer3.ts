@@ -82,7 +82,8 @@ export class OCSLayer3 {
   private readonly config: Layer3Config;
 
   constructor(config?: Partial<Layer3Config>) {
-    this.config = { ...DEFAULT_OCS_CONFIG.layer3 } as Layer3Config;
+    const defaultConfig: Layer3Config = { ...DEFAULT_OCS_CONFIG.layer3 };
+    this.config = defaultConfig;
     if (config) {
       if (config.knn) this.config.knn = { ...this.config.knn, ...config.knn };
       if (config.adaptiveK) this.config.adaptiveK = { ...this.config.adaptiveK, ...config.adaptiveK };

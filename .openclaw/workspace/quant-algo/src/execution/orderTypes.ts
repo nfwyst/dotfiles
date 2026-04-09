@@ -310,14 +310,15 @@ export class OrderBuilder {
   }
   
   build(): OrderSpec {
-    if (!this.order.symbol) throw new Error('Symbol is required');
-    if (!this.order.type) throw new Error('Order type is required');
-    if (!this.order.side) throw new Error('Order side is required');
-    if (!this.order.size) throw new Error('Size is required');
-    if (!this.order.stopLoss) throw new Error('Stop loss is required');
-    if (!this.order.takeProfit) throw new Error('Take profit is required');
+    const { symbol, type, side, size, stopLoss, takeProfit } = this.order;
+    if (!symbol) throw new Error('Symbol is required');
+    if (!type) throw new Error('Order type is required');
+    if (!side) throw new Error('Order side is required');
+    if (!size) throw new Error('Size is required');
+    if (!stopLoss) throw new Error('Stop loss is required');
+    if (!takeProfit) throw new Error('Take profit is required');
     
-    return this.order as OrderSpec;
+    return { ...this.order, symbol, type, side, size, stopLoss, takeProfit } satisfies OrderSpec;
   }
 }
 

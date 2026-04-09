@@ -94,6 +94,60 @@ interface DLQMessage extends StreamMessage {
   reason: string;
 }
 
+
+// ==================== Redis result type helpers ====================
+
+/** Safely type xreadgroup results */
+type XReadGroupResult = [stream: string, messages: [id: string, fields: string[]][]][];
+
+function asXReadGroupResult(raw: unknown): XReadGroupResult {
+  if (!Array.isArray(raw)) return [];
+  return raw;
+}
+
+/** Safely type xpending results (detailed form) */
+type XPendingDetailResult = [id: string, consumer: string, idle: number, delivered: number][];
+
+function asXPendingDetailResult(raw: unknown): XPendingDetailResult {
+  if (!Array.isArray(raw)) return [];
+  return raw;
+}
+
+/** Safely type xclaim results */
+type XClaimResult = [id: string, fields: string[]][];
+
+function asXClaimResult(raw: unknown): XClaimResult {
+  if (!Array.isArray(raw)) return [];
+  return raw;
+}
+
+/** Safely type xrange results */
+type XRangeResult = [id: string, fields: string[]][];
+
+function asXRangeResult(raw: unknown): XRangeResult {
+  if (!Array.isArray(raw)) return [];
+  return raw;
+}
+
+/** Safely type xinfo STREAM results into a record */
+function asStreamInfo(raw: unknown): Record<string, unknown> {
+  // xinfo can return a flat array [key, val, key, val, ...] or an object
+  if (Array.isArray(raw)) {
+    const result: Record<string, unknown> = {};
+    for (let i = 0; i < raw.length; i += 2) {
+      if (typeof raw[i] === 'string') {
+        result[raw[i]] = raw[i + 1];
+      }
+    }
+    return result;
+  }
+  if (raw !== null && typeof raw === 'object') {
+    // Spread into a new Record to satisfy the type without assertion
+    return { ...raw };
+  }
+  return {};
+}
+
 // ==================== 订阅选项 ====================
 
 export interface SubscribeOptions {
@@ -310,11 +364,13 @@ export class StreamEventBus extends EventEmitter {
       logger.warn('StreamEventBus not connected, queuing event');
     }
 
+    const id = this.generateEventId();
+    const timestamp = Date.now();
     const fullEvent: TradingEvent = {
       ...event,
-      id: this.generateEventId(),
-      timestamp: Date.now(),
-    } as TradingEvent;
+      id,
+      timestamp,
+    };
 
     const streamKey = this.getStreamKey(event.channel);
 
@@ -372,9 +428,11 @@ export class StreamEventBus extends EventEmitter {
    * 订阅频道
    * 使用消费者组从 Stream 读取消息
    */
-  async subscribe<T extends TradingEvent>(
+  async subscribe(channel: EventChannel, handler: EventHandler, options?: SubscribeOptions): Promise<void>;
+  async subscribe<T extends TradingEvent>(channel: EventChannel, handler: EventHandler<T>, options?: SubscribeOptions): Promise<void>;
+  async subscribe(
     channel: EventChannel,
-    handler: EventHandler<T>,
+    handler: EventHandler,
     options: SubscribeOptions = {}
   ): Promise<void> {
     const {
@@ -392,7 +450,7 @@ export class StreamEventBus extends EventEmitter {
     // 注册订阅
     const subscriptionKey = `${channel}:${groupName}:${consumerName}`;
     this.subscriptions.set(subscriptionKey, {
-      handler: handler as EventHandler,
+      handler: handler,
       options: { ...options, groupName, consumerName, blockTimeout },
       running: false,
     });
@@ -438,7 +496,7 @@ export class StreamEventBus extends EventEmitter {
         );
 
         if (messages && messages.length > 0) {
-          for (const [stream, streamMessages] of messages as [string, [string, string[]][]][]) {
+          for (const [stream, streamMessages] of asXReadGroupResult(messages)) {
             for (const [messageId, fields] of streamMessages) {
               await this.processMessage(
                 channel,
@@ -614,7 +672,7 @@ export class StreamEventBus extends EventEmitter {
 
     const dlqMessage: DLQMessage = {
       id: messageId,
-      data: (parseTradingEvent(messageData.data || '{}') ?? {}) as TradingEvent,
+      data: parseTradingEvent(messageData.data || '{}') ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
       retryCount: parseInt(messageData.retryCount || '0', 10),
       lastError: messageData.lastError,
       deliveredCount: parseInt(messageData.deliveredCount || '0', 10),
@@ -659,7 +717,7 @@ export class StreamEventBus extends EventEmitter {
 
       if (!pending || pending.length === 0) return;
 
-      for (const [messageId, consumer, idle, delivered] of pending as [string, string, number, number][]) {
+      for (const [messageId, consumer, idle, delivered] of asXPendingDetailResult(pending)) {
         // 如果消息空闲时间超过阈值，认领它
         if (idle >= idleTime) {
           const claimed = await this.client.xclaim(
@@ -671,7 +729,7 @@ export class StreamEventBus extends EventEmitter {
           );
 
           if (claimed && claimed.length > 0) {
-            for (const [claimedId, fields] of claimed as [string, string[]][]) {
+            for (const [claimedId, fields] of asXClaimResult(claimed)) {
               logger.debug(`Claimed pending message ${claimedId} from ${consumer}`);
               await this.processMessage(channel, claimedId, fields, handler, groupName, autoAck);
             }
@@ -731,7 +789,7 @@ export class StreamEventBus extends EventEmitter {
         100
       );
 
-      return (pending as [string, string, string, string][]).map(([id, consumer, idle, delivered]) => ({
+      return asXPendingDetailResult(pending).map(([id, consumer, idle, delivered]) => ({
         id,
         consumer,
         idleTime: parseInt(idle, 10),
@@ -754,7 +812,7 @@ export class StreamEventBus extends EventEmitter {
       const result = await this.client.xrange(dlqKey, '-', '+', 'COUNT', 100);
 
       if (result) {
-        for (const [id, fields] of result as [string, string[]][]) {
+        for (const [id, fields] of asXRangeResult(result)) {
           const data: Record<string, string> = {};
           for (let i = 0; i < fields.length; i += 2) {
             const key = fields[i];
@@ -766,7 +824,15 @@ export class StreamEventBus extends EventEmitter {
           try {
             const dlqMsg = parseDLQMessage(data.data || '{}');
             if (dlqMsg) {
-              messages.push(dlqMsg as unknown as DLQMessage);
+              messages.push({
+                id,
+                data: dlqMsg.originalEvent ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+                retryCount: dlqMsg.retryCount ?? parseInt(data.retryCount || '0', 10),
+                lastError: data.lastError,
+                deliveredCount: parseInt(data.deliveredCount || '0', 10),
+                movedToDLQAt: dlqMsg.failedAt ?? Date.now(),
+                reason: dlqMsg.error ?? '',
+              });
             }
           } catch {
             // 忽略解析错误
@@ -801,7 +867,16 @@ export class StreamEventBus extends EventEmitter {
             data[key] = value;
           }
         }
-        const dlqMessage = parseDLQMessage(data.data || '{}') as unknown as DLQMessage;
+        const parsedDlq = parseDLQMessage(data.data || '{}');
+        const dlqMessage: DLQMessage | null = parsedDlq ? {
+          id: messageId,
+          data: parsedDlq.originalEvent ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+          retryCount: parsedDlq.retryCount ?? parseInt(data.retryCount || '0', 10),
+          lastError: data.lastError,
+          deliveredCount: parseInt(data.deliveredCount || '0', 10),
+          movedToDLQAt: parsedDlq.failedAt ?? Date.now(),
+          reason: parsedDlq.error ?? '',
+        } : null;
         if (!dlqMessage) {
           logger.warn(\`[EventValidation] Failed to parse DLQ message \${messageId}\`);
           return;
@@ -809,7 +884,7 @@ export class StreamEventBus extends EventEmitter {
 
         // 重新发布到原流
         const { id: _id, timestamp: _timestamp, ...eventData } = dlqMessage.data;
-        await this.publish(eventData as Omit<TradingEvent, 'id' | 'timestamp'>);
+        await this.publish(eventData);
 
         // 从DLQ中删除
         await this.client.xdel(dlqKey, messageId);
@@ -849,13 +924,13 @@ export class StreamEventBus extends EventEmitter {
     const streamKey = this.getStreamKey(channel);
 
     try {
-      const info = await this.client.xinfo('STREAM', streamKey) as Record<string, unknown>;
+      const info = asStreamInfo(await this.client.xinfo('STREAM', streamKey));
       
       return {
-        length: (info.length as number) || 0,
-        groups: (info.groups as number) || 0,
-        firstEntry: (info['first-entry'] as [string, string[]] | null)?.[0] || null,
-        lastEntry: (info['last-entry'] as [string, string[]] | null)?.[0] || null,
+        length: typeof info.length === 'number' ? info.length : 0,
+        groups: typeof info.groups === 'number' ? info.groups : 0,
+        firstEntry: Array.isArray(info['first-entry']) ? String(info['first-entry'][0] ?? '') || null : null,
+        lastEntry: Array.isArray(info['last-entry']) ? String(info['last-entry'][0] ?? '') || null : null,
       };
     } catch (err) {
       logger.error(`Failed to get stream info for ${channel}:`, err);
@@ -890,7 +965,7 @@ export class StreamEventBus extends EventEmitter {
           }
           messages.push({
             id,
-            data: (parseTradingEvent(data.data || '{}') ?? {}) as TradingEvent,
+            data: parseTradingEvent(data.data || '{}') ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
             retryCount: parseInt(data.retryCount || '0', 10),
             lastError: data.lastError,
             deliveredCount: parseInt(data.deliveredCount || '0', 10),

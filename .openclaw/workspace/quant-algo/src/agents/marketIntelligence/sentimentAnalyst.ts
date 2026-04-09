@@ -3,6 +3,7 @@
  * 情绪分析 Agent - 新闻和社交媒体情绪
  */
 
+import { isNewsApiResponse, isNonNullObject } from '../../utils/typeGuards';
 import {
   AnalystAgent,
   AnalysisContext,
@@ -185,8 +186,9 @@ export class SentimentAnalystAgent implements AnalystAgent {
     }
     
     // 使用策略输出的共识 (如果有)
-    if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
+    if (additionalData?.strategyConsensus && isNonNullObject(additionalData.strategyConsensus)) {
+      const sc = additionalData.strategyConsensus;
+      const consensus = { type: typeof sc.type === 'string' ? sc.type : '', strength: typeof sc.strength === 'number' ? sc.strength : 0 };
       if (consensus.type === 'buy') {
         score += 0.3;
         reasoning.push(`策略共识: 买入 (${consensus.strength}%)`);
@@ -256,15 +258,8 @@ export class SentimentAnalystAgent implements AnalystAgent {
       const rawData: unknown = await response.json();
       
       // Type-safe parsing
-      if (
-        rawData &&
-        typeof rawData === 'object' &&
-        'status' in rawData &&
-        (rawData as NewsApiResponse).status === 'ok' &&
-        'articles' in rawData &&
-        Array.isArray((rawData as NewsApiResponse).articles)
-      ) {
-        const data = rawData as NewsApiResponse;
+      if (isNewsApiResponse(rawData) && rawData.status === 'ok' && Array.isArray(rawData.articles)) {
+        const data = rawData;
         return (data.articles || []).map((article) => ({
           title: article.title,
           summary: article.description || '',
@@ -339,8 +334,9 @@ export class SentimentAnalystAgent implements AnalystAgent {
     
     // 如果有策略共识，作为社交情绪的代理
     let sentiment = 0;
-    if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
+    if (additionalData?.strategyConsensus && isNonNullObject(additionalData.strategyConsensus)) {
+      const sc = additionalData.strategyConsensus;
+      const consensus = { type: typeof sc.type === 'string' ? sc.type : '', strength: typeof sc.strength === 'number' ? sc.strength : 0 };
       if (consensus.type === 'buy') {
         sentiment = 0.3;
       } else if (consensus.type === 'sell') {

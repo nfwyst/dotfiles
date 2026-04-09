@@ -36,6 +36,11 @@ export interface WALManagerConfig {
  * Guarantees crash recovery by persisting every mutation to an
  * append-only log *before* updating the in-memory state.
  */
+/** Minimal type guard for UnifiedState shape from WAL checkpoint data */
+function isUnifiedState(value: unknown): value is UnifiedState {
+  return value !== null && typeof value === 'object' && 'trading' in value;
+}
+
 export class WALManager {
   private walDir: string;
   private checkpointInterval: number;
@@ -355,7 +360,10 @@ export class WALManager {
       for (let i = entries.length - 1; i >= 0; i--) {
         const e = entries[i]!;
         if (e.operation === 'checkpoint' && e.data?.stateSnapshot) {
-          return { state: e.data.stateSnapshot as UnifiedState, sequence: e.sequence };
+          const snapshot = e.data.stateSnapshot;
+          if (isUnifiedState(snapshot)) {
+            return { state: snapshot, sequence: e.sequence };
+          }
         }
       }
     }

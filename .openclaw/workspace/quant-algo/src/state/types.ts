@@ -96,7 +96,10 @@ export interface LegacyStatePosition {
 export function migratePosition(raw: unknown): Position | null {
   if (raw === null || raw === undefined) return null;
   if (typeof raw !== 'object') return null;
-  const rec = raw as Record<string, unknown>;
+  // After the typeof/null checks above, raw is a non-null object
+  function isRecord(v: object): v is Record<string, unknown> { return true; }
+  if (!isRecord(raw)) return null;
+  const rec = raw;
 
   // Already canonical (has `size` field) — return as-is
   if (typeof rec.size === 'number') {

@@ -10,6 +10,7 @@ import {
   getTraceContextForLogging,
 } from './monitoring/tracing';
 import { OHLCV } from './events/types';
+import { isNonNullObject, isKlineArray } from './utils/typeGuards';
 
 const BINANCE_API = 'https://fapi.binance.com';  // Always use mainnet for public market data
 
@@ -44,7 +45,9 @@ export class MarketDataFetcher {
       const result = await this.fetchWithRetry(async () => {
         const res = await fetch(`${BINANCE_API}/fapi/v1/ticker/price?symbol=${this.symbol}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json() as { price: string };
+        const raw: unknown = await res.json();
+        if (!isNonNullObject(raw) || typeof raw.price !== 'string') throw new Error('Unexpected ticker response shape');
+        const data = raw;
         return parseFloat(data.price);
       });
       
@@ -74,26 +77,18 @@ export class MarketDataFetcher {
       const result = await this.fetchWithRetry(async () => {
         const res = await fetch(`${BINANCE_API}/fapi/v1/ticker/24hr?symbol=${this.symbol}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json() as {
-          lastPrice: string;
-          priceChange: string;
-          priceChangePercent: string;
-          highPrice: string;
-          lowPrice: string;
-          volume: string;
-          quoteVolume: string;
-          closeTime: number;
-        };
+        const raw: unknown = await res.json();
+        if (!isNonNullObject(raw) || typeof raw.lastPrice !== 'string') throw new Error('Unexpected 24hr ticker response shape');
         
         return {
-          price: parseFloat(data.lastPrice),
-          priceChange24h: parseFloat(data.priceChange),
-          priceChangePercent24h: parseFloat(data.priceChangePercent),
-          high24h: parseFloat(data.highPrice),
-          low24h: parseFloat(data.lowPrice),
-          volume24h: parseFloat(data.volume),
-          quoteVolume24h: parseFloat(data.quoteVolume),
-          timestamp: data.closeTime,
+          price: parseFloat(String(raw.lastPrice)),
+          priceChange24h: parseFloat(String(raw.priceChange)),
+          priceChangePercent24h: parseFloat(String(raw.priceChangePercent)),
+          high24h: parseFloat(String(raw.highPrice)),
+          low24h: parseFloat(String(raw.lowPrice)),
+          volume24h: parseFloat(String(raw.volume)),
+          quoteVolume24h: parseFloat(String(raw.quoteVolume)),
+          timestamp: typeof raw.closeTime === 'number' ? raw.closeTime : Date.now(),
         };
       });
       
@@ -130,16 +125,10 @@ export class MarketDataFetcher {
           `${BINANCE_API}/fapi/v1/klines?symbol=${this.symbol}&interval=${interval}&limit=${limit}`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json() as Array<[
-          number, // timestamp
-          string, // open
-          string, // high
-          string, // low
-          string, // close
-          string, // volume
-        ]>;
+        const raw: unknown = await res.json();
+        if (!isKlineArray(raw)) throw new Error('Unexpected kline response shape');
         
-        return data.map((k) => ({
+        return raw.map((k) => ({
           timestamp: k[0],
           open: parseFloat(k[1]),
           high: parseFloat(k[2]),

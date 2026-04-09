@@ -20,6 +20,7 @@ import {
 } from './types';
 
 import { TechnicalReport } from '../marketIntelligence/types';
+import { isLLMRiskResponse } from '../../utils/typeGuards';
 import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
@@ -70,7 +71,7 @@ export class RiskAgent implements DecisionAgent {
     
     try {
       const { marketIntelligence, currentPrice, balance, riskParameters } = context;
-      const technical = marketIntelligence.technical as TechnicalReport;
+      const technical = marketIntelligence.technical;
       
       if (!technical) {
         return {
@@ -188,7 +189,10 @@ export class RiskAgent implements DecisionAgent {
       if (!rawParsed || typeof rawParsed !== 'object') {
         return { success: false, error: 'Invalid JSON response' };
       }
-      const parsed = rawParsed as LLMRiskResponse;
+      if (!isLLMRiskResponse(rawParsed)) {
+        return { success: false, error: 'LLM response does not match LLMRiskResponse shape' };
+      }
+      const parsed = rawParsed;
       
       // 计算止损止盈价格
       // 止损止盈百分比（不计算具体价格，由 OrderGenerator 根据方向计算）

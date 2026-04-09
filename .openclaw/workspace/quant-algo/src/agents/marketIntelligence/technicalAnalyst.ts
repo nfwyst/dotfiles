@@ -23,6 +23,7 @@ import {
 
 import { TechnicalIndicators } from '../../modules/technicalAnalysis';
 import { computeRSI } from '../../indicators/rsi';
+import { isTradeRecordArray } from '../../utils/typeGuards';
 
 // ==================== Local indicator types ====================
 
@@ -141,8 +142,8 @@ export class TechnicalAnalystAgent implements AnalystAgent {
       const supportResistance = this.analyzeSupportResistance(ohlcv, currentPrice);
       
       // 细粒度任务 6: 微观结构分析 (可选)
-      const microstructure = context.additionalData?.trades 
-        ? this.analyzeMicrostructure(context.additionalData.trades as TradeRecord[], currentPrice)
+      const microstructure = context.additionalData?.trades && isTradeRecordArray(context.additionalData.trades) 
+        ? this.analyzeMicrostructure(context.additionalData.trades, currentPrice)
         : undefined;
       
       // 计算综合评分

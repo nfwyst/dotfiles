@@ -4,6 +4,7 @@
  */
 
 import logger from '../logger';
+import { isLLMProvider } from '../utils/typeGuards';
 
 // ==================== 类型定义 ====================
 
@@ -136,8 +137,8 @@ export class LLMConfigManager {
    * 检测默认供应商
    */
   private detectDefaultProvider(): LLMProvider {
-    const envProvider = process.env.AI_PROVIDER as LLMProvider;
-    if (envProvider && PROVIDER_CONFIGS[envProvider]) {
+    const envProvider = process.env.AI_PROVIDER;
+    if (isLLMProvider(envProvider) && PROVIDER_CONFIGS[envProvider]) {
       return envProvider;
     }
     
@@ -158,12 +159,14 @@ export class LLMConfigManager {
    * 加载所有配置
    */
   private loadConfigs(): void {
-    for (const [provider, config] of Object.entries(PROVIDER_CONFIGS)) {
+    for (const [providerKey, config] of Object.entries(PROVIDER_CONFIGS)) {
+      if (!isLLMProvider(providerKey)) continue;
+      const provider = providerKey;
       const apiKey = process.env[config.envKey] || '';
       
       if (apiKey) {
         const llmConfig: LLMConfig = {
-          provider: provider as LLMProvider,
+          provider: provider,
           model: process.env[`${provider.toUpperCase()}_MODEL`] || config.defaultModel,
           apiKey,
           baseUrl: process.env[`${provider.toUpperCase()}_BASE_URL`] || config.baseUrl,
@@ -173,7 +176,7 @@ export class LLMConfigManager {
           maxTokens: parseInt(process.env[`${provider.toUpperCase()}_MAX_TOKENS`] || '1000'),
         };
         
-        this.configs.set(provider as LLMProvider, llmConfig);
+        this.configs.set(provider, llmConfig);
         logger.debug(`已加载 ${config.name} 配置`);
       }
     }
@@ -347,8 +350,9 @@ export class LLMConfigManager {
   /**
    * 获取 Token 使用统计摘要
    */
-  getTokenUsageSummary(): Record<LLMProvider, { total: number; count: number; avgPerRequest: number }> {
-    const summary: Record<string, { total: number; count: number; avgPerRequest: number }> = {};
+  getTokenUsageSummary(): Partial<Record<LLMProvider, { total: number; count: number; avgPerRequest: number }>> {
+    type UsageStat = { total: number; count: number; avgPerRequest: number };
+    const summary: Partial<Record<LLMProvider, UsageStat>> = {};
     const providers = Array.from(this.configs.keys());
     for (const provider of providers) {
       const records = this.tokenUsageHistory.filter(r => r.provider === provider);
@@ -361,7 +365,7 @@ export class LLMConfigManager {
       };
     }
     
-    return summary as Record<LLMProvider, { total: number; count: number; avgPerRequest: number }>;
+    return summary;
   }
   
   // ==================== 供应商信息 ====================

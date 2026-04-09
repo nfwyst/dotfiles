@@ -19,6 +19,7 @@ import {
 } from './types';
 
 import { TechnicalReport } from '../marketIntelligence/types';
+import { isLLMTrendResponse } from '../../utils/typeGuards';
 import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
@@ -57,7 +58,7 @@ export class TrendAgent implements DecisionAgent {
     
     try {
       const { marketIntelligence, currentPrice } = context;
-      const technical = marketIntelligence.technical as TechnicalReport;
+      const technical = marketIntelligence.technical;
       
       if (!technical) {
         return {
@@ -160,7 +161,10 @@ export class TrendAgent implements DecisionAgent {
       if (!rawParsed || typeof rawParsed !== 'object') {
         return { success: false, error: 'Invalid JSON response' };
       }
-      const parsed = rawParsed as LLMTrendResponse;
+      if (!isLLMTrendResponse(rawParsed)) {
+        return { success: false, error: 'LLM response does not match LLMTrendResponse shape' };
+      }
+      const parsed = rawParsed;
       
       // 确定建议行动
       const suggestedAction = this.determineActionFromLLM(parsed);

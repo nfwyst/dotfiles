@@ -217,7 +217,7 @@ export class StateManager {
   }
 
   async createCheckpoint(): Promise<void> {
-    await this.wal.checkpoint(this.store.getState() as UnifiedState);
+    await this.wal.checkpoint(this.store.getState());
   }
 
   getWALStats(): WALStats {
@@ -235,7 +235,7 @@ export class StateManager {
   // ------------------------------------------------------------------
 
   createSnapshot(reason: string = 'manual'): SnapshotInfo | null {
-    return this.snapshot.createSnapshot(this.store.getState() as UnifiedState, reason);
+    return this.snapshot.createSnapshot(this.store.getState(), reason);
   }
 
   listSnapshots(): SnapshotInfo[] {
@@ -348,7 +348,7 @@ export async function createStateManager(config?: Partial<StateConfig>): Promise
   // which meant the manager was returned before recovery finished,
   // allowing new operations to race ahead of replay.
   try {
-    const recovered = await wal.recover(store.getState() as UnifiedState);
+    const recovered = await wal.recover(store.getState());
     if (recovered !== store.getState()) {
       store.setState(recovered);
       manager.saveNow();
@@ -359,10 +359,10 @@ export async function createStateManager(config?: Partial<StateConfig>): Promise
   }
 
   // --- Initial snapshot + auto-schedule ---
-  snap.createSnapshot(store.getState() as UnifiedState, 'startup');
+  snap.createSnapshot(store.getState(), 'startup');
   const autoInterval = config?.autoSnapshotInterval ?? DEFAULT_AUTO_SNAPSHOT_INTERVAL;
   snap.startAutoSnapshot(autoInterval, () => {
-    snap.createSnapshot(store.getState() as UnifiedState, 'auto-hourly');
+    snap.createSnapshot(store.getState(), 'auto-hourly');
   });
 
   return manager;

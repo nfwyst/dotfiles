@@ -16,6 +16,19 @@ import { TechnicalAnalystAgent } from './technicalAnalyst';
 import { SentimentAnalystAgent } from './sentimentAnalyst';
 import { OnChainAnalystAgent } from './onChainAnalyst';
 import { AnalysisContext, AgentOutput } from './types';
+import { isNonNullObject } from '../../utils/typeGuards';
+
+function isTechnicalReport(v: unknown): v is TechnicalReport {
+  return isNonNullObject(v) && 'trend' in v && 'momentum' in v && 'volatility' in v;
+}
+
+function isSentimentReport(v: unknown): v is SentimentReport {
+  return isNonNullObject(v) && 'overallSentiment' in v && 'newsAnalysis' in v;
+}
+
+function isOnChainReport(v: unknown): v is OnChainReport {
+  return isNonNullObject(v) && 'onChainSignal' in v && 'fundingData' in v;
+}
 
 export class MarketIntelligenceAggregator {
   private technicalAnalyst: TechnicalAnalystAgent;
@@ -48,17 +61,17 @@ export class MarketIntelligenceAggregator {
     let onChain: OnChainReport | undefined;
     
     if (technicalResult.success && technicalResult.data) {
-      technical = technicalResult.data as TechnicalReport;
+      technical = isTechnicalReport(technicalResult.data) ? technicalResult.data : undefined;
       agentsUsed.push('TechnicalAnalyst');
     }
     
     if (sentimentResult.success && sentimentResult.data) {
-      sentiment = sentimentResult.data as SentimentReport;
+      sentiment = isSentimentReport(sentimentResult.data) ? sentimentResult.data : undefined;
       agentsUsed.push('SentimentAnalyst');
     }
     
     if (onChainResult.success && onChainResult.data) {
-      onChain = onChainResult.data as OnChainReport;
+      onChain = isOnChainReport(onChainResult.data) ? onChainResult.data : undefined;
       agentsUsed.push('OnChainAnalyst');
     }
     

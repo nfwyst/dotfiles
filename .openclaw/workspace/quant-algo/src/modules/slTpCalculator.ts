@@ -19,6 +19,11 @@ export interface SwingLevel {
 
 export type TimeFrame = '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
 
+const TIMEFRAMES: ReadonlySet<string> = new Set<TimeFrame>(['1m', '5m', '15m', '1h', '4h', '1d']);
+function isTimeFrame(value: string): value is TimeFrame {
+  return TIMEFRAMES.has(value);
+}
+
 export interface StopLossTakeProfit {
   entryPrice: number;
   stopLoss: number;
@@ -385,17 +390,28 @@ export class SLTPCalculator {
     const results: Partial<Record<TimeFrame, StopLossTakeProfit | null>> = {};
 
     for (const [tf, data] of Object.entries(ohlcvByTimeframe)) {
-      results[tf as TimeFrame] = this.calculate(
-        side,
-        entryPrice,
-        data.highs,
-        data.lows,
-        data.highs.length,
-        tf as TimeFrame
-      );
+      if (isTimeFrame(tf)) {
+        results[tf] = this.calculate(
+          side,
+          entryPrice,
+          data.highs,
+          data.lows,
+          data.highs.length,
+          tf
+        );
+      }
     }
 
-    return results as Record<TimeFrame, StopLossTakeProfit | null>;
+    // The input is Record<TimeFrame, ...> so all TimeFrame keys are populated
+    const fullResults: Record<TimeFrame, StopLossTakeProfit | null> = {
+      '1m': results['1m'] ?? null,
+      '5m': results['5m'] ?? null,
+      '15m': results['15m'] ?? null,
+      '1h': results['1h'] ?? null,
+      '4h': results['4h'] ?? null,
+      '1d': results['1d'] ?? null,
+    };
+    return fullResults;
   }
 
   /**

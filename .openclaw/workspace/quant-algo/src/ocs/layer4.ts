@@ -43,7 +43,8 @@ export class OCSLayer4 {
   private readonly config: Layer4Config;
   
   constructor(config?: Partial<Layer4Config>) {
-    this.config = { ...DEFAULT_OCS_CONFIG.layer4 } as Layer4Config;
+    const defaultConfig: Layer4Config = { ...DEFAULT_OCS_CONFIG.layer4 };
+    this.config = defaultConfig;
     if (config) {
       if (config.stopLoss) this.config.stopLoss = { ...this.config.stopLoss, ...config.stopLoss };
       if (config.takeProfit) this.config.takeProfit = { ...this.config.takeProfit, ...config.takeProfit };

@@ -22,6 +22,19 @@ import { RiskAgent } from './riskAgent';
 import { AlignmentAnalyzer } from './alignmentAnalyzer';
 
 import logger from '../../logger';
+import { isNonNullObject } from '../../utils/typeGuards';
+
+function isTrendAgentOutput(v: unknown): v is TrendAgentOutput {
+  return isNonNullObject(v) && 'trend' in v && 'agentName' in v;
+}
+
+function isEntryAgentOutput(v: unknown): v is EntryAgentOutput {
+  return isNonNullObject(v) && 'entry' in v && 'agentName' in v;
+}
+
+function isRiskAgentOutput(v: unknown): v is RiskAgentOutput {
+  return isNonNullObject(v) && 'risk' in v && 'agentName' in v;
+}
 
 export class CentralTradingAgent {
   readonly name = 'CentralTradingAgent';
@@ -69,17 +82,17 @@ export class CentralTradingAgent {
     let riskOutput: RiskAgentOutput | null = null;
     
     if (trendResult.success && trendResult.data) {
-      trendOutput = trendResult.data as TrendAgentOutput;
+      trendOutput = isTrendAgentOutput(trendResult.data) ? trendResult.data : null;
       agentsUsed.push('TrendAgent');
     }
     
     if (entryResult.success && entryResult.data) {
-      entryOutput = entryResult.data as EntryAgentOutput;
+      entryOutput = isEntryAgentOutput(entryResult.data) ? entryResult.data : null;
       agentsUsed.push('EntryAgent');
     }
     
     if (riskResult.success && riskResult.data) {
-      riskOutput = riskResult.data as RiskAgentOutput;
+      riskOutput = isRiskAgentOutput(riskResult.data) ? riskResult.data : null;
       agentsUsed.push('RiskAgent');
     }
     

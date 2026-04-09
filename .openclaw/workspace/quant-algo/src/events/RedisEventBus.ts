@@ -23,6 +23,12 @@ import {
   getTraceContextForLogging,
 } from '../monitoring/tracing';
 import { parseTradingEvent } from './validation';
+
+// Type guard for EventChannel validation
+const EVENT_CHANNEL_VALUES: ReadonlySet<string> = new Set(Object.values(EventChannels));
+function isEventChannel(value: string): value is EventChannel {
+  return EVENT_CHANNEL_VALUES.has(value);
+}
 // ==================== 事件总线配置 ====================
 
 export interface EventBusConfig {
@@ -156,7 +162,9 @@ export class RedisEventBus extends EventEmitter {
 
     // 消息处理
     this.subscriber.on('message', (channel: string, message: string) => {
-      this.handleMessage(channel as EventChannel, message);
+      if (isEventChannel(channel)) {
+        this.handleMessage(channel, message);
+      }
     });
 
     // 连接就绪
@@ -263,11 +271,13 @@ export class RedisEventBus extends EventEmitter {
       // 可以在这里实现离线队列
     }
 
+    const id = this.generateEventId();
+    const timestamp = Date.now();
     const fullEvent: TradingEvent = {
       ...event,
-      id: this.generateEventId(),
-      timestamp: Date.now(),
-    } as TradingEvent;
+      id,
+      timestamp,
+    };
 
     const message = JSON.stringify(fullEvent);
 
@@ -297,9 +307,11 @@ export class RedisEventBus extends EventEmitter {
   /**
    * 订阅频道
    */
-  async subscribe<T extends TradingEvent>(
+  async subscribe(channel: EventChannel, handler: EventHandler): Promise<void>;
+  async subscribe<T extends TradingEvent>(channel: EventChannel, handler: EventHandler<T>): Promise<void>;
+  async subscribe(
     channel: EventChannel,
-    handler: EventHandler<T>
+    handler: EventHandler
   ): Promise<void> {
     const span = tracingManager.isEnabled()
       ? tracingManager.startSpan('eventbus.subscribe', {
@@ -318,7 +330,7 @@ export class RedisEventBus extends EventEmitter {
         logger.info(`Subscribed to channel: ${channel}`);
       }
 
-      this.subscriptions.get(channel)!.add(handler as EventHandler);
+      this.subscriptions.get(channel)!.add(handler);
       span?.setStatus({ code: 0 });
       span?.end();
     } catch (err: unknown) {
@@ -332,16 +344,18 @@ export class RedisEventBus extends EventEmitter {
   /**
    * 取消订阅
    */
-  async unsubscribe<T extends TradingEvent>(
+  async unsubscribe(channel: EventChannel, handler?: EventHandler): Promise<void>;
+  async unsubscribe<T extends TradingEvent>(channel: EventChannel, handler?: EventHandler<T>): Promise<void>;
+  async unsubscribe(
     channel: EventChannel,
-    handler?: EventHandler<T>
+    handler?: EventHandler
   ): Promise<void> {
     const handlers = this.subscriptions.get(channel);
 
     if (!handlers) return;
 
     if (handler) {
-      handlers.delete(handler as EventHandler);
+      handlers.delete(handler);
     } else {
       handlers.clear();
     }

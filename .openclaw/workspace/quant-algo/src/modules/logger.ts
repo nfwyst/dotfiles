@@ -56,9 +56,19 @@ export interface PerformanceMetrics {
 }
 
 export class LoggerModule {
-  private config = {
-    level: 'INFO' as LogLevel,
-    output: 'both' as LogOutput,
+  private config: {
+    level: LogLevel;
+    output: LogOutput;
+    logDir: string;
+    maxFileSize: number;
+    maxFiles: number;
+    enableConsole: boolean;
+    enableFile: boolean;
+    enableAudit: boolean;
+    enableMetrics: boolean;
+  } = {
+    level: 'INFO',
+    output: 'both',
     logDir: './logs',
     maxFileSize: 10 * 1024 * 1024,  // 10MB
     maxFiles: 10,
@@ -393,7 +403,12 @@ export function getLogger(moduleName: string = 'default'): LoggerModule {
  */
 export function setTraceContextGetter(getter: () => string | undefined): void {
   // 简单实现：存储 getter 供日志系统使用
-  (global as Record<string, unknown>).__traceContextGetter = getter;
+  // Store on globalThis using Object.defineProperty to avoid type assertion
+  Object.defineProperty(globalThis, '__traceContextGetter', {
+    value: getter,
+    writable: true,
+    configurable: true,
+  });
 }
 
 export default LoggerModule;

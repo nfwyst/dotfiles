@@ -208,7 +208,7 @@ export class OCSEnhanced {
       layer4Enhanced: {
         derivativeAdvice: derivativeAdvice.action,
         derivativeConfidence: derivativeAdvice.confidence,
-        isSignificantMove: 'isSignificantMove' in derivativeData ? (derivativeData as DerivativeData).isSignificantMove : false,
+        isSignificantMove: 'isSignificantMove' in derivativeData ? derivativeData.isSignificantMove : false,
       },
       combinedSignal: combined,
     };

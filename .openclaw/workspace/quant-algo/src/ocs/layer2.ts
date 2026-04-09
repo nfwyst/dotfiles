@@ -108,7 +108,8 @@ export class OCSLayer2 {
   
   constructor(useV312: boolean = true, useAttention: boolean = false, config?: Partial<Layer2Config>) {
     // Deep-merge config with defaults
-    this.config = { ...DEFAULT_OCS_CONFIG.layer2 } as Layer2Config;
+    const defaultConfig: Layer2Config = { ...DEFAULT_OCS_CONFIG.layer2 };
+    this.config = defaultConfig;
     if (config) {
       if (config.ehlersCycle) {
         this.config.ehlersCycle = { ...this.config.ehlersCycle, ...config.ehlersCycle };

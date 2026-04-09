@@ -16,6 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { computeRSI } from '../indicators/rsi';
 import { calculatePositionSize } from '../risk/positionSizing';
+import { validateTradingBotConfig } from '../utils/typeGuards';
 
 // ==================== 类型定义 ====================
 
@@ -180,6 +181,11 @@ interface MarketDataResult {
 
 type CloseReason = 'entry' | 'exit' | 'stop_loss' | 'take_profit' | 'trend_reversal';
 
+const CLOSE_REASONS: ReadonlySet<string> = new Set<CloseReason>(['entry', 'exit', 'stop_loss', 'take_profit', 'trend_reversal']);
+function isCloseReason(value: string): value is CloseReason {
+  return CLOSE_REASONS.has(value);
+}
+
 // ==================== TradingBotRuntime ====================
 // TODO: Migrate all usages of TradingBotRuntime to EventDrivenRuntime
 // and remove this class. Active consumers: src/index.ts, src/monitoring/dashboard.ts,
@@ -227,7 +233,13 @@ export class TradingBotRuntime {
       }
       
       const configContent = fs.readFileSync(fullPath, 'utf8');
-      this.config = JSON.parse(configContent) as TradingBotConfig;
+      const parsed: unknown = JSON.parse(configContent);
+      const validated = validateTradingBotConfig(parsed);
+      if (!validated) {
+        logger.warn(`Config file has invalid shape: ${fullPath}`);
+        return false;
+      }
+      this.config = validated;
       
       // 检查配置是否过期（仅警告，不阻止加载）
       if (this.config.validUntil) {
@@ -713,7 +725,7 @@ export class TradingBotRuntime {
     
     try {
       // 使用 ExchangeManager 的方法
-      const side = order.side.toUpperCase() as 'BUY' | 'SELL';
+      const side: 'BUY' | 'SELL' = order.side === 'buy' ? 'BUY' : 'SELL';
       
       if (order.type === 'market') {
         await this.exchange.createMarketOrder(side, order.size);
@@ -734,7 +746,7 @@ export class TradingBotRuntime {
   /**
    * 平仓
    */
-  private async closePosition(reason: string, price: number): Promise<void> {
+  private async closePosition(reason: CloseReason, price: number): Promise<void> {
     if (this.position.side === 'none') return;
     
     const side = this.position.side === 'long' ? 'sell' : 'buy';
@@ -756,7 +768,7 @@ export class TradingBotRuntime {
       side,
       size: this.position.size,
       price,
-      type: reason as CloseReason,
+      type: reason,
       pnl,
       reason: `Position closed: ${reason}`,
     });

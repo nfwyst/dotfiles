@@ -238,7 +238,9 @@ export class AlignmentAnalyzer {
     for (const [action, count] of Object.entries(counts)) {
       if (count > maxCount) {
         maxCount = count;
-        majority = action as ActionType;
+        if (action === 'buy' || action === 'sell' || action === 'hold') {
+          majority = action;
+        }
       }
     }
     
