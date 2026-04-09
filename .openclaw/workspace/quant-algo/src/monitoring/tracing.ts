@@ -13,8 +13,7 @@
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   trace,
   context,
@@ -154,10 +153,10 @@ export class TracingManager {
 
     try {
       // 创建资源
-      const resource = new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
-        [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
+      const resource = resourceFromAttributes({
+        'service.name': this.config.serviceName,
+        'service.version': '1.0.0',
+        'deployment.environment': process.env.NODE_ENV || 'development',
       });
 
       // 创建导出器
@@ -176,12 +175,7 @@ export class TracingManager {
       // 创建 SDK
       this.sdk = new NodeSDK({
         resource,
-        // TYPE-SAFE-BOUNDARY: SpanProcessor from @opentelemetry/sdk-trace-base has a
-        // compatible-but-not-identical interface to what NodeSDK expects from sdk-trace-node.
-        // This is a well-known OTel JS SDK version mismatch. The runtime types are fully
-        // compatible; only the TS declaration files diverge on minor generic parameters.
-        // @ts-expect-error — OTel SpanProcessor version mismatch (sdk-trace-base vs sdk-trace-node)
-        spanProcessor,
+        spanProcessors: [spanProcessor],
       });
 
       // 启动 SDK
