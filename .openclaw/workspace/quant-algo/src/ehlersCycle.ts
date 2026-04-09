@@ -316,8 +316,8 @@ export class EhlersCycleDetector {
       const state = this.discriminator.getState();
 
       // Compute smoothed dominant cycle from accumulated history
-      const smoothedCycle = this.periodHistory.length > 5
-        ? this.periodHistory.slice(-5).reduce((a, b) => a + b, 0) / 5
+      const smoothedCycle = this.periodHistory.length > 8
+        ? this.periodHistory.slice(-8).reduce((a, b) => a + b, 0) / 8
         : state.period;
 
       return {
@@ -339,8 +339,8 @@ export class EhlersCycleDetector {
       this.periodHistory.shift();
     }
 
-    const smoothedCycle = this.periodHistory.length > 5
-      ? this.periodHistory.slice(-5).reduce((a, b) => a + b, 0) / 5
+    const smoothedCycle = this.periodHistory.length > 8
+      ? this.periodHistory.slice(-8).reduce((a, b) => a + b, 0) / 8
       : result.period;
 
     return {

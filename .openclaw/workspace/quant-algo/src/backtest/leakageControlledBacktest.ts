@@ -131,7 +131,7 @@ export interface Strategy {
     data: OHLCV[],
     index: number,
     position: { side: 'long' | 'short' | 'none'; size: number; entryPrice: number } | null
-  ): { action: 'buy' | 'sell' | 'hold'; size?: number; stopLoss?: number; takeProfit?: number; reason?: string; timestamp?: number; confidence?: number; entryPrice?: number; targetExitPrice?: number };
+  ): { action: 'buy' | 'sell' | 'hold'; size?: number; stopLoss?: number; takeProfit?: number; reason?: string; timestamp?: number; confidence?: number; entryPrice?: number };
 }
 
 // ==================== 默认配置 ====================
@@ -293,10 +293,6 @@ export class LeakageControlledBacktest {
         ? executionPrice * (1 + this.config.slippage)
         : executionPrice * (1 - this.config.slippage);
       
-      // Replay mode: use target exit price if provided (preserves Phase A TP/SL fills)
-      if (signal.targetExitPrice !== undefined && position.side !== 'none') {
-        slippageAdjustedPrice = signal.targetExitPrice;
-      }
       
       // 执行
       if (signal.action === 'buy' && position.side === 'none' && !dailyLossLimitHit && !circuitBreakerActive) {

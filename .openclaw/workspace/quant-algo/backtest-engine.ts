@@ -655,7 +655,7 @@ export class BacktestEngine {
             (signal.type === 'long' && isTrendUp) || 
             (signal.type === 'short' && isTrendDown);
           
-          const confidenceThreshold = isTrendAligned ? 0.58 : 0.78;  // Tightened: filter marginal signals
+          const confidenceThreshold = isTrendAligned ? 0.49 : 0.79;  // Tightened: filter marginal signals
           
           if (signal.confidence >= confidenceThreshold) {
             console.log(`  📊 趋势: ${isTrendUp ? '↑上涨' : '↓下跌'} | 信号: ${signal.type} | 置信度: ${signal.confidence.toFixed(2)} | 阈值: ${confidenceThreshold}`);
@@ -1205,7 +1205,7 @@ export async function main() {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize: 0.010,  // 1.2%仓位 (tightened to reduce drawdown)
+    positionSize: 0.010,  // 1.0% risk per trade
     leverage: 1,         // 1倍杠杆
     costConfig: {
       feeRate: 0.0006,        // 0.06% 手续费 (6 bps taker)

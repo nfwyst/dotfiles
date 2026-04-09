@@ -58,7 +58,7 @@ function makeConfig(): BacktestConfig {
     startDate,
     endDate,
     initialBalance: 10000,
-    positionSize:   0.010,  // 1.0% risk per trade (tightened further to reduce drawdown)
+    positionSize:   0.010,  // 1.0% risk per trade
     leverage:       1,
     feeRate:        0.0004,  // 0.04% — aligned with Binance futures maker/taker
     slippage:       0.0001,
@@ -104,12 +104,10 @@ async function phaseA(config: BacktestConfig): Promise<PhaseAResult> {
 interface AggregatedPosition {
   entryTime: number;
   exitTime: number;       // Latest exit time among all partial closes
-  pnlMatchExitTime: number; // Exit time chosen by PnL-matching bar selection
   side: 'long' | 'short';
   entryPrice: number;
   totalSize: number;       // Sum of all partial close sizes
   weightedExitPrice: number; // Size-weighted average exit price
-  totalGrossPnl: number;   // Sum of gross PnL from all partial closes
   exitReason: string;      // Reason of the final (last) exit
 }
 
@@ -123,27 +121,13 @@ interface AggregatedPosition {
  *
  * This function groups trades by (entryTime, side) — which uniquely identifies
  * a position — and produces one clean entry/exit pair per position.
- *
- * PnL-matching exit bar selection: Instead of using the weighted-average exit
- * price (which rarely matches any real bar price), we compute the target gross
- * PnL from Phase A's actual trades, then find the bar whose open price produces
- * the closest PnL when closing the full position. This dramatically improves
- * P&L alignment between Phase A and Phase B.
  */
-function aggregateTradesIntoPositions(trades: Trade[], ohlcv?: OHLCV[]): AggregatedPosition[] {
+function aggregateTradesIntoPositions(trades: Trade[]): AggregatedPosition[] {
   const groups = new Map<string, Trade[]>();
   for (const t of trades) {
     const key = `${t.entryTime}:${t.side}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(t);
-  }
-
-  // Build a timestamp → OHLCV index map for fast lookups
-  const ohlcvByTime = new Map<number, number>();
-  if (ohlcv) {
-    for (let i = 0; i < ohlcv.length; i++) {
-      ohlcvByTime.set(ohlcv[i].timestamp, i);
-    }
   }
 
   const positions: AggregatedPosition[] = [];
@@ -157,59 +141,13 @@ function aggregateTradesIntoPositions(trades: Trade[], ohlcv?: OHLCV[]): Aggrega
       ? group.reduce((sum, t) => sum + t.exitPrice * t.size, 0) / totalSize
       : last.exitPrice;
 
-    const entryPrice = group[0].entryPrice;
-    const side = group[0].side;
-
-    // Compute total gross PnL from Phase A trades (before fees).
-    // Phase A trade.pnl = (exitPrice - entryPrice) * size - fee, so gross = pnl + fee.
-    // Since Trade doesn't have a fees field, recompute gross from prices directly.
-    const totalGrossPnl = group.reduce((sum, t) => {
-      return sum + (t.side === 'long'
-        ? (t.exitPrice - t.entryPrice) * t.size
-        : (t.entryPrice - t.exitPrice) * t.size);
-    }, 0);
-
-    // PnL-matching exit bar selection: find the bar whose open price produces
-    // the closest gross PnL to Phase A's actual total gross PnL.
-    let pnlMatchExitTime = last.exitTime; // fallback to original behavior
-
-    if (ohlcv && ohlcv.length > 0) {
-      // Apply PnL matching to ALL positions (TP/SL fills differ from bar opens)
-      const entryIdx = ohlcvByTime.get(group[0].entryTime);
-      const lastExitIdx = ohlcvByTime.get(last.exitTime);
-
-      if (entryIdx !== undefined && lastExitIdx !== undefined) {
-        let bestDiff = Infinity;
-        let bestTime = last.exitTime;
-
-        // Search from entry+1 to lastExit (inclusive) — the position must be
-        // open at least one bar, and we don't look beyond the last actual exit
-        for (let k = entryIdx + 1; k <= lastExitIdx; k++) {
-          const bar = ohlcv[k];
-          const hypotheticalPnl = side === 'long'
-            ? (bar.open - entryPrice) * totalSize
-            : (entryPrice - bar.open) * totalSize;
-
-          const diff = Math.abs(hypotheticalPnl - totalGrossPnl);
-          if (diff < bestDiff) {
-            bestDiff = diff;
-            bestTime = bar.timestamp;
-          }
-        }
-
-        pnlMatchExitTime = bestTime;
-      }
-    }
-
     positions.push({
       entryTime: group[0].entryTime,
       exitTime: last.exitTime,
-      pnlMatchExitTime,
-      side,
-      entryPrice,
+      side: group[0].side,
+      entryPrice: group[0].entryPrice,
       totalSize,
       weightedExitPrice,
-      totalGrossPnl,
       exitReason: last.exitReason,
     });
   }
@@ -229,9 +167,8 @@ function buildReplayStrategy(trades: Trade[], ohlcv: OHLCV[], name = 'OCS-Replay
   // FIX: Aggregate partial-close trades into full positions for LCB compatibility.
   // Without this, LCB closes 100% at the first partial-close signal (e.g. TP1),
   // causing systematic P&L divergence (was 23.71%).
-  const positions = aggregateTradesIntoPositions(trades, ohlcv);
-  const pnlMatchedCount = positions.filter(p => p.pnlMatchExitTime !== p.exitTime).length;
-  console.log(`   📦 聚合 ${trades.length} 笔交易 → ${positions.length} 个完整仓位 (${pnlMatchedCount} 仓位使用PnL匹配出场)`);
+  const positions = aggregateTradesIntoPositions(trades);
+  console.log(`   📦 聚合 ${trades.length} 笔交易 → ${positions.length} 个完整仓位`);
 
   // Fix 2: Compute bar period from OHLCV data to shift timestamps
   // Phase A records entryTime at the execution bar (bar i+1).
@@ -295,7 +232,6 @@ function buildReplayStrategy(trades: Trade[], ohlcv: OHLCV[], name = 'OCS-Replay
                 action: closeSide as 'buy' | 'sell',
                 size: position.size,  // Close full LCB position
                 reason: `replay-close: ${p.exitReason}`,
-                targetExitPrice: p.weightedExitPrice,  // Use Phase A's actual weighted exit price
               };
             }
           }
@@ -374,7 +310,7 @@ async function phaseB(config: BacktestConfig, phaseAResult: PhaseAResult): Promi
 
   // --- Per-trade entry alignment check (primary consistency metric) ---
   const phaseBTrades = lcbResult.trades;
-  const phaseAPositions = aggregateTradesIntoPositions(phaseAResult.result.trades, phaseAResult.ohlcv);
+  const phaseAPositions = aggregateTradesIntoPositions(phaseAResult.result.trades);
 
     let entryMatched = 0;
   const entryTotal = Math.min(phaseBTrades.length, phaseAPositions.length);
