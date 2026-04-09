@@ -190,14 +190,14 @@ export class RedisEventBus extends EventEmitter {
       }
 
       // 记录事件历史
-      this.addToHistory(event as TradingEvent);
+      this.addToHistory(event);
 
       // 调用本地订阅者
       const handlers = this.subscriptions.get(channel);
       if (handlers) {
         handlers.forEach((handler) => {
           try {
-            const result = handler(event as TradingEvent);
+            const result = handler(event);
             if (result instanceof Promise) {
               result.catch((err) => {
                 logger.error(`Handler error for channel ${channel}:`, err);
@@ -296,7 +296,7 @@ export class RedisEventBus extends EventEmitter {
       
       logger.debug(`Published event: ${event.channel} [${event.correlationId}]`, getTraceContextForLogging());
     } catch (err: unknown) {
-      span?.recordException(err as Error);
+      span?.recordException(err instanceof Error ? err : String(err));
       span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       logger.error(`Failed to publish event on ${event.channel}:`, err);
@@ -334,7 +334,7 @@ export class RedisEventBus extends EventEmitter {
       span?.setStatus({ code: 0 });
       span?.end();
     } catch (err: unknown) {
-      span?.recordException(err as Error);
+      span?.recordException(err instanceof Error ? err : String(err));
       span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       throw err;

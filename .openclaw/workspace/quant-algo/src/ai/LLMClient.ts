@@ -1,3 +1,4 @@
+import { toError } from '../utils/errorUtils';
 /**
  * 统一 LLM 客户端
  * 支持多供应商、智能重试、Token 监控、响应缓存、超时控制
@@ -218,7 +219,7 @@ export class LLMClient {
         const response = await this.executeRequest(options, config, timeout);
         return response;
       } catch (error: unknown) {
-        lastError = error as Error | null;
+        lastError = toError(error);
         
         // 判断是否可重试
         if (!this.isRetryableError(error)) {

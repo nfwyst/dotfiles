@@ -186,6 +186,18 @@ function isCloseReason(value: string): value is CloseReason {
   return CLOSE_REASONS.has(value);
 }
 
+/** Map a CloseReason to a TradeRecord type.  'trend_reversal' is not a
+ *  valid TradeRecord type, so it maps to 'exit'. */
+function closeReasonToTradeType(reason: CloseReason): TradeRecord['type'] {
+  switch (reason) {
+    case 'entry': return 'entry';
+    case 'exit': return 'exit';
+    case 'stop_loss': return 'stop_loss';
+    case 'take_profit': return 'take_profit';
+    case 'trend_reversal': return 'exit';
+  }
+}
+
 // ==================== TradingBotRuntime ====================
 // TODO: Migrate all usages of TradingBotRuntime to EventDrivenRuntime
 // and remove this class. Active consumers: src/index.ts, src/monitoring/dashboard.ts,
@@ -239,7 +251,7 @@ export class TradingBotRuntime {
         logger.warn(`Config file has invalid shape: ${fullPath}`);
         return false;
       }
-      this.config = validated as TradingBotConfig;
+      this.config = validated;
       
       // 检查配置是否过期（仅警告，不阻止加载）
       if (this.config!.validUntil) {
@@ -768,7 +780,7 @@ export class TradingBotRuntime {
       side,
       size: this.position.size,
       price,
-      type: reason as TradeRecord['type'],
+      type: closeReasonToTradeType(reason),
       pnl,
       reason: `Position closed: ${reason}`,
     });

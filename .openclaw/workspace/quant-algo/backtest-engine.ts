@@ -28,11 +28,22 @@ import { TradingCostConfig, DEFAULT_TRADING_COSTS, getTotalCostBps } from './src
 import { RiskGuardChain } from './src/risk/RiskGuardChain';
 import { CircuitBreakerGuard, DailyLossLimitGuard, CooldownGuard, ConsecutiveLossGuard } from './src/risk/guards';
 import type { TradingContext } from './src/risk/types';
+import { isKlineArray } from './src/utils/typeGuards';
 // FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
 
 
 // Raw kline entry from Binance REST API: [openTime, open, high, low, close, volume, ...]
 type RawKline = [number, string, string, string, string, string, ...unknown[]];
+/** Subset of TechnicalIndicators that the backtest engine precomputes. */
+interface PrecomputedIndicators {
+  sma: { 20: number; 50: number; 200: number };
+  ema: { 12: number; 26: number; 50: number };
+  rsi: { 14: number };
+  macd: { line: number; signal: number; histogram: number };
+  bollinger: { upper: number; middle: number; lower: number };
+  atr: { 14: number };
+}
+
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 export const CRYPTO_TRADING_DAYS = 365;
 
@@ -119,7 +130,7 @@ export class BacktestEngine {
   private equityCurve: number[] = [];
   private trades: Trade[] = [];
   private position: {
-    side: 'long' | 'short' | null;
+    side: 'long' | 'short';
     entryPrice: number;
     entryTime: number;
     entryBarIndex: number; // BUG 10 FIX: Store entry bar index directly
@@ -176,10 +187,10 @@ export class BacktestEngine {
   private allLows: number[] = [];
   private allVolumes: number[] = [];
 
-  private precomputedIndicators: Map<number, TechnicalIndicators> = new Map();
+  private precomputedIndicators: Map<number, PrecomputedIndicators> = new Map();
   private precomputedLayer1: Layer1Output[] = [];
   private precomputedLayer2: Layer2Output[] = [];
-  private precomputedFeatures3D: number[][] = [];
+  private precomputedFeatures3D: [number, number, number][] = [];
   
   private strategyEngine: StrategyEngineModule;
   private ta: TechnicalAnalysisModule;
@@ -272,7 +283,9 @@ export class BacktestEngine {
         throw new Error(`Binance API error: ${res.status} ${res.statusText}`);
       }
 
-      const raw: RawKline[] = await res.json() as RawKline[];
+      const rawJson: unknown = await res.json();
+      if (!isKlineArray(rawJson)) throw new Error('Unexpected Binance kline response format');
+      const raw: RawKline[] = rawJson;
       if (raw.length === 0) break;
 
       for (const k of raw) {
@@ -287,7 +300,9 @@ export class BacktestEngine {
       }
 
       // Move past the last candle's open time to avoid duplicates
-      currentStart = raw[raw.length - 1]![0] + 1;
+      const lastRaw = raw[raw.length - 1];
+      if (!lastRaw) break;
+      currentStart = lastRaw[0] + 1;
 
       // Rate-limit politeness
       if (raw.length === LIMIT) {
@@ -404,7 +419,7 @@ export class BacktestEngine {
     }
     
     // FIX P1: Pass full ohlcv with offset=lookback so features3D[i] correctly maps to ohlcv[lookback + i]
-    this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D as [number, number, number][], lookback);
+    this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D, lookback);
     
     // 预计算技术指标 (these use the full pre-extracted arrays — already O(n))
     const sma20 = this.computeSMA(allCloses, 20);
@@ -435,7 +450,7 @@ export class BacktestEngine {
           lower: bollinger.lower[i]!
         },
         atr: { 14: atr14[i]! }
-      } as TechnicalIndicators);
+      });
     }
     
     // ── Warmup Enhanced incremental processors with first 500 bars ──
@@ -560,7 +575,10 @@ export class BacktestEngine {
    */
   async run(): Promise<BacktestResult> {
     console.log('\n🚀 开始回测...');
-    console.log(`   时间范围: ${new Date(this.ohlcv[0]!.timestamp).toLocaleDateString()} - ${new Date(this.ohlcv[this.ohlcv.length - 1]!.timestamp).toLocaleDateString()}`);
+    const firstCandle = this.ohlcv[0];
+    const lastOhlcv = this.ohlcv[this.ohlcv.length - 1];
+    if (!firstCandle || !lastOhlcv) throw new Error('No OHLCV data loaded');
+    console.log(`   时间范围: ${new Date(firstCandle.timestamp).toLocaleDateString()} - ${new Date(lastOhlcv.timestamp).toLocaleDateString()}`);
     console.log(`   初始资金: $${this.config.initialBalance.toLocaleString()}`);
     console.log(`   交易成本: fee=${(this.costConfig.feeRate * 10000).toFixed(1)}bps, slippage=${this.costConfig.slippageBps.toFixed(1)}bps, total=${getTotalCostBps(this.costConfig).toFixed(1)}bps`);
 
@@ -647,7 +665,8 @@ export class BacktestEngine {
 
         const ocsIndex = i - ocsLookback;
         const l1 = this.precomputedLayer1[ocsIndex];
-        const l2 = this.precomputedLayer2[ocsIndex]!;
+        const l2 = this.precomputedLayer2[ocsIndex];
+        if (!l2) continue; // Skip if no precomputed L2 data for this index
         
         const signal = this.generateSignalFromPrecomputed(indicators, l2, currentCandle.close, i);
         
@@ -679,7 +698,8 @@ export class BacktestEngine {
 
     // 平掉最后的持仓
     if (this.position) {
-      const lastCandle = this.ohlcv[this.ohlcv.length - 1]!;
+      const lastCandle = this.ohlcv[this.ohlcv.length - 1];
+      if (!lastCandle) throw new Error('No candles available for final close');
       this.closePosition(lastCandle, 'end_of_test', this.ohlcv.length - 1);
     }
 
@@ -690,7 +710,7 @@ export class BacktestEngine {
    * 从预计算数据生成信号 (优化版)
    */
   private generateSignalFromPrecomputed(
-    indicators: TechnicalIndicators,
+    indicators: PrecomputedIndicators,
     l2Output: Layer2Output,
     currentPrice: number,
     index: number
@@ -923,14 +943,15 @@ export class BacktestEngine {
 
     this.balance -= fee;
 
+    if (type === 'hold') return; // TYPE-SAFE: narrow type to 'long' | 'short'
     this.position = {
-      side: type as 'long' | 'short',
+      side: type,
       entryPrice: actualEntryPrice,
       entryTime: candle.timestamp,
       entryBarIndex: index, // BUG 10 FIX: Store entry bar index
       size,
       stopLoss: stopLoss,
-      takeProfits: takeProfits!,
+      takeProfits: takeProfits!, // Validated non-null at top of openPosition
       tp1Hit: false,
       tp2Hit: false
     };
@@ -1016,7 +1037,7 @@ export class BacktestEngine {
     const trade: Trade = {
       entryTime,
       exitTime: candle.timestamp,
-      side: side as 'long' | 'short',
+      side: side,
       entryPrice,
       exitPrice: actualExitPrice,
       stopLoss,
@@ -1091,7 +1112,7 @@ export class BacktestEngine {
 
     // 计算Sharpe比率
     const returns = this.equityCurve.slice(1).map((e, i) => 
-      (e - this.equityCurve[i]!) / this.equityCurve[i]!
+      { const prev = this.equityCurve[i]; return prev ? (e - prev) / prev : 0; }
     );
 
     // BUG 15 FIX: Compute bars per day from timeframe config instead of hardcoding 288

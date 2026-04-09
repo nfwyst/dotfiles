@@ -151,7 +151,7 @@ export const DYNAMIC_CONTENT_TEMPLATE = `
  */
 export function composePrompt(
   staticInstructions: string,
-  dynamicData: Record<string, any>
+  dynamicData: Record<string, unknown>
 ): string {
   let dynamicContent = DYNAMIC_CONTENT_TEMPLATE;
   

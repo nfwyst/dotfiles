@@ -298,6 +298,9 @@ export class CircuitBreaker {
     if (this.config.fallbackValue !== undefined) {
       return {
         success: true,
+        // fallbackValue is typed as `unknown` in CircuitBreakerConfig; making the
+        // config generic would cascade changes across all breaker instances.
+        // The caller is responsible for ensuring the configured value matches T.
         value: this.config.fallbackValue as T,
         isFallback: true,
         state: this.state,

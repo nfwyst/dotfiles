@@ -96,44 +96,60 @@ export interface LegacyStatePosition {
 export function migratePosition(raw: unknown): Position | null {
   if (raw === null || raw === undefined) return null;
   if (typeof raw !== 'object') return null;
-  // After the typeof/null checks above, raw is a non-null object
-  function isRecord(v: object): v is Record<string, unknown> { return true; }
-  if (!isRecord(raw)) return null;
-  const rec = raw;
+  // After the typeof/null checks above, raw is a non-null object.
+  // Use Record<string, unknown> via intersection to satisfy the index signature.
+  const rec = raw as Record<string, unknown>;
+
+  // Helper: parse side field with validation
+  function parseSide(v: unknown): Position['side'] {
+    if (v === 'long' || v === 'short' || v === 'none') return v;
+    return 'none';
+  }
+
+  // Helper: parse a required numeric field with a default
+  function requiredNum(v: unknown, fallback: number): number {
+    return typeof v === 'number' ? v : fallback;
+  }
+
+  // Helper: parse an optional numeric field
+  function optionalNum(v: unknown): number | undefined {
+    return typeof v === 'number' ? v : undefined;
+  }
 
   // Already canonical (has `size` field) — return as-is
   if (typeof rec.size === 'number') {
     return {
-      side: (rec.side as Position['side']) ?? 'none',
+      side: parseSide(rec.side),
       size: rec.size,
-      entryPrice: (rec.entryPrice as number) ?? 0,
-      leverage: (rec.leverage as number) ?? 1,
-      unrealizedPnl: (rec.unrealizedPnl as number) ?? 0,
-      markPrice: rec.markPrice as number | undefined,
-      liquidationPrice: rec.liquidationPrice as number | undefined,
-      stopLoss: rec.stopLoss as number | undefined,
-      takeProfit: rec.takeProfit as number | undefined,
+      entryPrice: requiredNum(rec.entryPrice, 0),
+      leverage: requiredNum(rec.leverage, 1),
+      unrealizedPnl: requiredNum(rec.unrealizedPnl, 0),
+      markPrice: optionalNum(rec.markPrice),
+      liquidationPrice: optionalNum(rec.liquidationPrice),
+      stopLoss: optionalNum(rec.stopLoss),
+      takeProfit: optionalNum(rec.takeProfit),
     };
   }
 
   // Legacy format (has `contracts` field) — migrate
   if (typeof rec.contracts === 'number') {
     return {
-      side: (rec.side as Position['side']) ?? 'none',
-      size: rec.contracts as number,            // contracts -> size
-      entryPrice: (rec.entryPrice as number) ?? 0,
-      leverage: (rec.leverage as number) ?? 1,    // default 1 if missing
-      unrealizedPnl: (rec.pnl as number) ?? 0,   // pnl -> unrealizedPnl
-      markPrice: rec.markPrice as number | undefined,
-      liquidationPrice: rec.liquidationPrice as number | undefined,
-      stopLoss: rec.stopLoss as number | undefined,
-      takeProfit: rec.takeProfit as number | undefined,
+      side: parseSide(rec.side),
+      size: rec.contracts,                        // contracts -> size
+      entryPrice: requiredNum(rec.entryPrice, 0),
+      leverage: requiredNum(rec.leverage, 1),      // default 1 if missing
+      unrealizedPnl: requiredNum(rec.pnl, 0),     // pnl -> unrealizedPnl
+      markPrice: optionalNum(rec.markPrice),
+      liquidationPrice: optionalNum(rec.liquidationPrice),
+      stopLoss: optionalNum(rec.stopLoss),
+      takeProfit: optionalNum(rec.takeProfit),
     };
   }
 
   // Unknown shape — return null rather than corrupt state
   return null;
 }
+
 
 // ============================================
 // Unified State

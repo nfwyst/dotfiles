@@ -15,7 +15,7 @@ import {
 import { TechnicalAnalystAgent } from './technicalAnalyst';
 import { SentimentAnalystAgent } from './sentimentAnalyst';
 import { OnChainAnalystAgent } from './onChainAnalyst';
-import { AnalysisContext, AgentOutput } from './types';
+import { AnalysisContext, AgentOutput, AgentStatus } from './types';
 import { isNonNullObject } from '../../utils/typeGuards';
 
 function isTechnicalReport(v: unknown): v is TechnicalReport {
@@ -279,7 +279,7 @@ export class MarketIntelligenceAggregator {
   /**
    * 获取所有 Agent 状态
    */
-  getAgentsStatus(): Record<string, any> {
+  getAgentsStatus(): Record<string, AgentStatus> {
     return {
       technical: this.technicalAnalyst.getStatus(),
       sentiment: this.sentimentAnalyst.getStatus(),

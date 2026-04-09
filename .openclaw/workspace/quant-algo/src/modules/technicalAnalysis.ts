@@ -115,8 +115,11 @@ export class TechnicalAnalysisModule {
     const lows = candles.map(c => c.low);
     const volumes = candles.map(c => c.volume);
     
-    const current = candles[candles.length - 1]!;
-    const prev24h = candles[Math.max(0, candles.length - 289)]!; // 约24小时前 (5m周期)
+    const current = candles[candles.length - 1];
+    if (!current) return null;
+    const prev24hIdx = Math.max(0, candles.length - 289);
+    const prev24h = candles[prev24hIdx];
+    if (!prev24h) return null; // 约24小时前 (5m周期)
     
     return {
       timestamp: current.timestamp,

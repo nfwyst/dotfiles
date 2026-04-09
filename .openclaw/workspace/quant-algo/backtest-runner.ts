@@ -677,8 +677,8 @@ async function main() {
     } else {
       try {
         phaseBResult = await phaseB(config, phaseAResult);
-      } catch (err: any) {
-        console.error(`\n❌ Phase B 失败: ${err.message}`);
+      } catch (err: unknown) {
+        console.error(`\n❌ Phase B 失败: ${err instanceof Error ? err.message : String(err)}`);
         console.log('   继续执行 Phase C...');
       }
     }
@@ -695,8 +695,8 @@ async function main() {
     } else {
       try {
         phaseCResult = await phaseC(phaseAResult, phaseAResult.ohlcv);
-      } catch (err: any) {
-        console.error(`\n❌ Phase C 失败: ${err.message}`);
+      } catch (err: unknown) {
+        console.error(`\n❌ Phase C 失败: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
   }

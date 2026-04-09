@@ -295,7 +295,9 @@ export class SensitivityAnalyzer {
   private checkRobustness(sharpes: number[]): boolean {
     if (sharpes.length < 2) return true;
     const sorted = [...sharpes].sort((a, b) => a - b);
-    const median = sorted[Math.floor(sorted.length / 2)]!;
+    const medianIdx = Math.floor(sorted.length / 2);
+    const median = sorted[medianIdx];
+    if (median === undefined) return true;
     if (median === 0) return sharpes.every(s => s === 0);
     return sharpes.every(s => Math.abs(s - median) / Math.abs(median) <= 0.2);
   }

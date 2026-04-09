@@ -1,3 +1,4 @@
+import { toError } from './utils/errorUtils';
 /**
  * 交易所管理模块 - Binance Futures API
  * 
@@ -201,7 +202,7 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error as Error);
+      span?.recordException(toError(error));
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -259,7 +260,7 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error as Error);
+      span?.recordException(toError(error));
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;

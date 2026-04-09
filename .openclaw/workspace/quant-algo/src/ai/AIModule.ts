@@ -1,3 +1,4 @@
+import { toError } from '../utils/errorUtils';
 import { config } from '../config';
 import logger from '../logger';
 import { aiCircuitBreaker } from '../safety/circuitBreakers';
@@ -159,7 +160,7 @@ Respond in JSON format:
         summary: result.summary,
       };
     } catch (error: unknown) {
-      span?.recordException(error as Error);
+      span?.recordException(toError(error));
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;

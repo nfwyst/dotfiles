@@ -108,7 +108,8 @@ export class OnChainAnalystAgent implements AnalystAgent {
         if (!isOnChainRawData(rawOnChain)) {
           return this.generateInferredReport(context, startTime);
         }
-        const rawData = rawOnChain as OnChainRawData;
+        // isOnChainRawData validates shape; narrow to local OnChainRawData which has stricter field types
+        const rawData: OnChainRawData = rawOnChain as OnChainRawData;
         hasRealData = true;
         whaleActivity = this.parseWhaleActivity(rawData);
         exchangeFlows = this.parseExchangeFlows(rawData);

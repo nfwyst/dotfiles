@@ -317,8 +317,45 @@ export class OrderBuilder {
     if (!size) throw new Error('Size is required');
     if (!stopLoss) throw new Error('Stop loss is required');
     if (!takeProfit) throw new Error('Take profit is required');
-    
-    return { ...this.order, symbol, type, side, size, stopLoss, takeProfit } as OrderSpec;
+
+    // Destructure remaining required fields that were set in the constructor.
+    // Provide defaults as a safety net (they are always set by the constructor).
+    const id = this.order.id ?? `order-${Date.now()}`;
+    const timestamp = this.order.timestamp ?? Date.now();
+    const sizeType = this.order.sizeType ?? 'absolute';
+    const timeInForce = this.order.timeInForce ?? 'GTC';
+    const execution: ExecutionParams = this.order.execution ?? {
+      slippageTolerance: 0.001,
+      splitOrder: false,
+      retryOnFailure: true,
+      maxRetries: 3,
+      retryDelay: 1000,
+      timeout: 30000,
+    };
+    const metadata: OrderMetadata = this.order.metadata ?? {
+      source: 'agent',
+      reasoning: [],
+      confidence: 0.5,
+    };
+
+    return {
+      id,
+      timestamp,
+      symbol,
+      type,
+      side,
+      size,
+      sizeType,
+      timeInForce,
+      stopLoss,
+      takeProfit,
+      execution,
+      metadata,
+      // Optional fields
+      ...(this.order.price !== undefined && { price: this.order.price }),
+      ...(this.order.stopPrice !== undefined && { stopPrice: this.order.stopPrice }),
+      ...(this.order.validUntil !== undefined && { validUntil: this.order.validUntil }),
+    };
   }
 }
 

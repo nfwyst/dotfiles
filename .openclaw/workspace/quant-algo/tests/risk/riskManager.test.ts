@@ -37,20 +37,8 @@ vi.mock('../../src/logger', () => ({
   },
 }));
 
-import { RiskManager } from '../../src/riskManager';
+import { RiskManager, Position } from '../../src/riskManager';
 
-// Position type from events/types (the one riskManager uses)
-interface Position {
-  side: 'long' | 'short' | 'none';
-  size: number;
-  entryPrice: number;
-  leverage: number;
-  unrealizedPnl: number;
-  markPrice?: number;
-  liquidationPrice?: number;
-  stopLoss?: number;
-  takeProfit?: number;
-}
 
 describe('RiskManager', () => {
   let rm: RiskManager;
@@ -69,20 +57,20 @@ describe('RiskManager', () => {
 
     it('returns true with a position whose side is "none"', () => {
       const pos = { side: 'none' as const, size: 0, entryPrice: 0, leverage: 1, unrealizedPnl: 0 };
-      const result = rm.canOpenPosition(100, pos as any);
+      const result = rm.canOpenPosition(100, pos as Position);
       expect(result.allowed).toBe(true);
     });
 
     it('returns false with existing long position', () => {
       const pos = { side: 'long' as const, size: 1, entryPrice: 3000, leverage: 10, unrealizedPnl: 0 };
-      const result = rm.canOpenPosition(100, pos as any);
+      const result = rm.canOpenPosition(100, pos as Position);
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('已有持仓');
     });
 
     it('returns false with existing short position', () => {
       const pos = { side: 'short' as const, size: 1, entryPrice: 3000, leverage: 10, unrealizedPnl: 0 };
-      const result = rm.canOpenPosition(100, pos as any);
+      const result = rm.canOpenPosition(100, pos as Position);
       expect(result.allowed).toBe(false);
     });
 
@@ -196,7 +184,7 @@ describe('RiskManager', () => {
   describe('checkEmergencyExit', () => {
     it('returns shouldExit=false for side=none', () => {
       const pos = { side: 'none' as const, size: 0, entryPrice: 0, leverage: 1, unrealizedPnl: 0 };
-      const result = rm.checkEmergencyExit(pos as any, 3000);
+      const result = rm.checkEmergencyExit(pos as Position, 3000);
       expect(result.shouldExit).toBe(false);
     });
 
@@ -208,7 +196,7 @@ describe('RiskManager', () => {
       // Need leveragedPnl <= -1.5 → pnlPercent <= -0.15 for leverage=10
       // entry=3000, leverage=10, need price drop of 15%: current = 2550
       const pos = { side: 'long' as const, size: 1, entryPrice: 3000, leverage: 10, unrealizedPnl: 0 };
-      const result = rm.checkEmergencyExit(pos as any, 2550);
+      const result = rm.checkEmergencyExit(pos as Position, 2550);
       expect(result.shouldExit).toBe(true);
       expect(result.reason).toContain('止损');
     });
@@ -226,7 +214,7 @@ describe('RiskManager', () => {
         unrealizedPnl: -4,
         liquidationPrice: 2970,
       };
-      const result = rm.checkEmergencyExit(pos as any, 2996);
+      const result = rm.checkEmergencyExit(pos as Position, 2996);
       expect(result.shouldExit).toBe(true);
       expect(result.reason).toContain('爆仓');
     });
@@ -235,7 +223,7 @@ describe('RiskManager', () => {
       // With corrected SL: leveragedPnl threshold is -0.015 (not -1.5).
       // Price 2998 → pnl = (2998-3000)/3000*10 = -0.00667 > -0.015 → no exit.
       const pos = { side: 'long' as const, size: 1, entryPrice: 3000, leverage: 10, unrealizedPnl: 0 };
-      const result = rm.checkEmergencyExit(pos as any, 2998);
+      const result = rm.checkEmergencyExit(pos as Position, 2998);
       expect(result.shouldExit).toBe(false);
     });
   });

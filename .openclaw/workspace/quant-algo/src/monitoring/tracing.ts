@@ -30,6 +30,7 @@ import type {
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 
 import logger, { setTraceContextGetter } from '../logger';
+import { toError } from '../utils/errorUtils';
 
 // ==================== 类型定义 ====================
 
@@ -175,8 +176,12 @@ export class TracingManager {
       // 创建 SDK
       this.sdk = new NodeSDK({
         resource,
-        // @ts-expect-error SpanProcessor version mismatch between sdk-trace-base and sdk-trace-node
-      spanProcessor,
+        // TYPE-SAFE-BOUNDARY: SpanProcessor from @opentelemetry/sdk-trace-base has a
+        // compatible-but-not-identical interface to what NodeSDK expects from sdk-trace-node.
+        // This is a well-known OTel JS SDK version mismatch. The runtime types are fully
+        // compatible; only the TS declaration files diverge on minor generic parameters.
+        // @ts-expect-error — OTel SpanProcessor version mismatch (sdk-trace-base vs sdk-trace-node)
+        spanProcessor,
       });
 
       // 启动 SDK
@@ -340,7 +345,7 @@ export function setSpanError(error: Error | string, attributes?: SpanAttributes)
   const span = getActiveSpan();
   if (span) {
     const message = typeof error === 'string' ? error : error.message;
-    span.recordException(error as Error);
+    span.recordException(error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message,
@@ -373,9 +378,14 @@ export function traced<T extends (...args: unknown[]) => unknown>(
   return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    // @ts-expect-error wrapper function is compatible with T at runtime
+    // TYPE-SAFE-BOUNDARY: TypeScript cannot verify that our wrapper function satisfies
+    // the generic type T at the type level, because T is an arbitrary function type.
+    // At runtime the wrapper has identical signature: same args, same return type.
+    // This is a fundamental limitation of TypeScript's decorator typing model.
+    // @ts-expect-error — decorator wrapper assignment (structurally unavoidable)
     (descriptor as unknown as { value: T }).value = function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
       if (!tracingManager.isEnabled()) {
+        // Narrowing from `any` (Function.prototype.apply return type) — unavoidable in decorator pattern
         return originalMethod.apply(this, args) as ReturnType<T>;
       }
 
@@ -398,6 +408,7 @@ export function traced<T extends (...args: unknown[]) => unknown>(
           });
         }
 
+        // Narrowing from `any` (Function.prototype.apply return type) — unavoidable in decorator pattern
         const result = tracingManager.withSpan(span, () => originalMethod.apply(this, args)) as ReturnType<T>;
 
         // 记录结果
@@ -412,7 +423,7 @@ export function traced<T extends (...args: unknown[]) => unknown>(
 
         return result;
       } catch (error: unknown) {
-        span.recordException(error as Error);
+        span.recordException(toError(error));
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: (error instanceof Error ? error.message : String(error)),
@@ -436,9 +447,14 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
   return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    // @ts-expect-error wrapper function is compatible with T at runtime
+    // TYPE-SAFE-BOUNDARY: TypeScript cannot verify that our async wrapper function satisfies
+    // the generic type T at the type level, because T is an arbitrary async function type.
+    // At runtime the wrapper has identical signature: same args, same return type (Promise).
+    // This is a fundamental limitation of TypeScript's decorator typing model.
+    // @ts-expect-error — async decorator wrapper assignment (structurally unavoidable)
     (descriptor as unknown as { value: T }).value = async function (this: unknown, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
       if (!tracingManager.isEnabled()) {
+        // Narrowing from `any` (Function.prototype.apply return type) — unavoidable in decorator pattern
         return originalMethod.apply(this, args) as Awaited<ReturnType<T>>;
       }
 
@@ -461,6 +477,7 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
           });
         }
 
+        // Narrowing from `any` (Function.prototype.apply return type) — unavoidable in decorator pattern
         const result = await tracingManager.withSpanAsync(span, () => originalMethod.apply(this, args)) as Awaited<ReturnType<T>>;
 
         // 记录结果
@@ -475,7 +492,7 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
 
         return result;
       } catch (error: unknown) {
-        span.recordException(error as Error);
+        span.recordException(toError(error));
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: (error instanceof Error ? error.message : String(error)),
@@ -517,7 +534,7 @@ export function traceFunction<T>(
     span.end();
     return result;
   } catch (error: unknown) {
-    span.recordException(error as Error);
+    span.recordException(toError(error));
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message: (error instanceof Error ? error.message : String(error)),
@@ -555,7 +572,7 @@ export async function traceAsyncFunction<T>(
     span.end();
     return result;
   } catch (error: unknown) {
-    span.recordException(error as Error);
+    span.recordException(toError(error));
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message: (error instanceof Error ? error.message : String(error)),

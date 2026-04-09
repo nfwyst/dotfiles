@@ -14,6 +14,7 @@ import {
   EntryAgentOutput,
   RiskAgentOutput,
   ActionType,
+  AgentStatus,
 } from './types';
 
 import { TrendAgent } from './trendAgent';
@@ -291,7 +292,7 @@ export class CentralTradingAgent {
   /**
    * 获取所有 Agent 状态
    */
-  getAgentsStatus(): Record<string, any> {
+  getAgentsStatus(): Record<string, AgentStatus> {
     return {
       trend: this.trendAgent.getStatus(),
       entry: this.entryAgent.getStatus(),

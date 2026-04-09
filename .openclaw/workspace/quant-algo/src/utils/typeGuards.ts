@@ -1,3 +1,4 @@
+import type { TradingBotConfig } from '../execution/tradingBot';
 /**
  * Runtime type-guard utilities used across the codebase.
  *
@@ -5,6 +6,11 @@
  */
 
 // ───────────────────────────── Generic helpers ─────────────────────────────
+
+/** Narrows unknown to Record<string, unknown> after an isNonNullObject check. */
+function asRecord(v: unknown): Record<string, unknown> {
+  return v as Record<string, unknown>;
+}
 
 /** Returns `true` when `v` is a non-null `object` (not an array). */
 export function isNonNullObject(v: unknown): v is Record<string, unknown> {
@@ -22,7 +28,7 @@ export function isLLMTrendResponse(v: unknown): v is {
   reasoning: string[];
 } {
   if (!isNonNullObject(v)) return false;
-  const o = v as Record<string, unknown>;
+  const o = asRecord(v);
   return (
     (o.direction === 'up' || o.direction === 'down' || o.direction === 'sideways') &&
     typeof o.strength === 'number' &&
@@ -41,7 +47,7 @@ export function isLLMEntryResponse(v: unknown): v is {
   reasoning: string[];
 } {
   if (!isNonNullObject(v)) return false;
-  const o = v as Record<string, unknown>;
+  const o = asRecord(v);
   return (
     (o.action === 'buy' || o.action === 'sell' || o.action === 'hold') &&
     typeof o.signalStrength === 'number' &&
@@ -61,7 +67,7 @@ export function isLLMRiskResponse(v: unknown): v is {
   reasoning: string[];
 } {
   if (!isNonNullObject(v)) return false;
-  const o = v as Record<string, unknown>;
+  const o = asRecord(v);
   return (
     (o.level === 'low' || o.level === 'medium' || o.level === 'high') &&
     typeof o.volatilityAssessment === 'string' &&
@@ -79,14 +85,14 @@ export function isBinanceFundingRateArray(
 ): v is Array<{ fundingRate: string }> {
   if (!Array.isArray(v)) return false;
   return v.every(
-    (item) => isNonNullObject(item) && typeof (item as Record<string, unknown>).fundingRate === 'string',
+    (item) => isNonNullObject(item) && typeof asRecord(item).fundingRate === 'string',
   );
 }
 
 export function isBinanceOpenInterestResponse(
   v: unknown,
 ): v is { openInterest: string } {
-  return isNonNullObject(v) && typeof (v as Record<string, unknown>).openInterest === 'string';
+  return isNonNullObject(v) && typeof asRecord(v).openInterest === 'string';
 }
 
 export function isBinanceLongShortRatioArray(
@@ -94,7 +100,7 @@ export function isBinanceLongShortRatioArray(
 ): v is Array<{ longShortRatio: string }> {
   if (!Array.isArray(v)) return false;
   return v.every(
-    (item) => isNonNullObject(item) && typeof (item as Record<string, unknown>).longShortRatio === 'string',
+    (item) => isNonNullObject(item) && typeof asRecord(item).longShortRatio === 'string',
   );
 }
 
@@ -127,7 +133,7 @@ export function isNewsApiResponse(
   }>;
 } {
   if (!isNonNullObject(v)) return false;
-  const o = v as Record<string, unknown>;
+  const o = asRecord(v);
   return typeof o.status === 'string' && Array.isArray(o.articles);
 }
 
@@ -169,19 +175,9 @@ export function isLLMProvider(
 
 // ──────────────── TradingBotConfig validator ────────────────
 
-export function validateTradingBotConfig(v: unknown): {
-  version: string;
-  generatedAt: string;
-  validUntil: string;
-  symbol: string;
-  entryConditions: Record<string, unknown>;
-  exitConditions: Record<string, unknown>;
-  riskManagement: Record<string, unknown>;
-  orderSpec: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
-} | null {
+export function validateTradingBotConfig(v: unknown): TradingBotConfig | null {
   if (!isNonNullObject(v)) return null;
-  const o = v as Record<string, unknown>;
+  const o = asRecord(v);
   if (
     typeof o.version !== 'string' ||
     typeof o.generatedAt !== 'string' ||
@@ -194,17 +190,11 @@ export function validateTradingBotConfig(v: unknown): {
   ) {
     return null;
   }
-  return o as {
-    version: string;
-    generatedAt: string;
-    validUntil: string;
-    symbol: string;
-    entryConditions: Record<string, unknown>;
-    exitConditions: Record<string, unknown>;
-    riskManagement: Record<string, unknown>;
-    orderSpec: Record<string, unknown>;
-    metadata?: Record<string, unknown>;
-  };
+  // After validating top-level shape we trust the JSON structure matches
+  // TradingBotConfig.  A full deep validation is impractical for dynamic
+  // config files; the bot gracefully handles unexpected nested shapes at
+  // runtime via optional chaining throughout the codebase.
+  return v as unknown as TradingBotConfig;
 }
 
 // ──────────────── Factor type guard ────────────────
@@ -235,4 +225,14 @@ export function isValidTradingSignalUrgency(
   v: unknown,
 ): v is 'immediate' | 'soon' | 'moderate' | 'low' {
   return typeof v === 'string' && VALID_SIGNAL_URGENCIES.has(v);
+}
+
+// ──────────────── Position sizing recommendation guard ────────────────
+
+const VALID_POSITION_SIZING = new Set(['aggressive', 'normal', 'conservative', 'minimal']);
+
+export function isValidPositionSizing(
+  v: unknown,
+): v is 'aggressive' | 'normal' | 'conservative' | 'minimal' {
+  return typeof v === 'string' && VALID_POSITION_SIZING.has(v);
 }

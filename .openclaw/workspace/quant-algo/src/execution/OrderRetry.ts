@@ -1,3 +1,4 @@
+import { toError } from '../utils/errorUtils';
 /**
  * 订单重试机制 - Order Retry Mechanism
  * 
@@ -698,7 +699,7 @@ export class OrderRetryManager {
         // 首次失败，加入重试队列
         logger.warn(`⚠️ 订单 ${orderId} 首次执行失败: ${(error instanceof Error ? error.message : String(error))}，准备重试`, getTraceContextForLogging());
 
-        span?.recordException(error as Error);
+        span?.recordException(toError(error));
         span?.addEvent('order.first_attempt_failed', { error: (error instanceof Error ? error.message : String(error)) });
 
         const record: RetryRecord = {

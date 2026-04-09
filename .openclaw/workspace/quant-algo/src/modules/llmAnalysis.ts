@@ -9,7 +9,7 @@
 
 import { TechnicalIndicators } from './technicalAnalysis';
 import { StrategySignal } from './strategyEngine';
-import { isValidTradingSignalType, isValidTradingSignalUrgency } from '../utils/typeGuards';
+import { isValidTradingSignalType, isValidTradingSignalUrgency, isValidPositionSizing } from '../utils/typeGuards';
 import fs from 'fs';
 
 export interface LLMMarketContext {
@@ -496,8 +496,8 @@ ${recentContext}
 
     // FIX H3: Map direction to type if type not provided directly
     let type: LLMTradingSignal['type'] = 'hold';
-    if (json.type && ['long', 'short', 'hold', 'wait'].includes(json.type as string)) {
-      type = json.type as LLMTradingSignal['type'];
+    if (isValidTradingSignalType(json.type)) {
+      type = json.type;
     } else if (json.direction === 'bullish') {
       type = 'long';
     } else if (json.direction === 'bearish') {
@@ -519,9 +519,8 @@ ${recentContext}
       : strategySignal.entryPrice;
 
     // FIX H3: Parse urgency
-    const validUrgencies = ['immediate', 'soon', 'moderate', 'low'] as const;
     const urgency: LLMTradingSignal['urgency'] =
-      validUrgencies.includes(json.urgency as typeof validUrgencies[number]) ? (json.urgency as LLMTradingSignal['urgency']) : (confidence > 0.8 ? 'immediate' : 'moderate');
+      isValidTradingSignalUrgency(json.urgency) ? json.urgency : (confidence > 0.8 ? 'immediate' : 'moderate');
 
     // FIX H3: Parse targets from LLM output
     const defaultTp1 = type === 'long' ? currentPrice + atr * 2 : currentPrice - atr * 2;
@@ -538,9 +537,8 @@ ${recentContext}
       : strategySignal.stopLoss;
 
     // FIX H3: Parse position sizing
-    const validSizing = ['aggressive', 'normal', 'conservative', 'minimal'] as const;
     const positionRec: LLMTradingSignal['positionSizing']['recommendation'] =
-      validSizing.includes(json.position_sizing as typeof validSizing[number]) ? (json.position_sizing as LLMTradingSignal['positionSizing']['recommendation']) : (confidence > 0.8 ? 'normal' : 'conservative');
+      isValidPositionSizing(json.position_sizing) ? json.position_sizing : (confidence > 0.8 ? 'normal' : 'conservative');
 
     const positionPct = typeof json.position_percentage === 'number'
       ? Math.max(0.5, Math.min(10, json.position_percentage))
@@ -584,17 +582,17 @@ ${recentContext}
         tp1: {
           price: parsedTp1,
           probability: typeof json.tp1_prob === 'number' ? json.tp1_prob : 0.7,
-          rationale: (json.tp1_rationale as string) || '基于LLM分析和ATR',
+          rationale: String(json.tp1_rationale ?? '') || '基于LLM分析和ATR',
         },
         tp2: {
           price: parsedTp2,
           probability: typeof json.tp2_prob === 'number' ? json.tp2_prob : 0.5,
-          rationale: (json.tp2_rationale as string) || '次要目标位',
+          rationale: String(json.tp2_rationale ?? '') || '次要目标位',
         },
         tp3: {
           price: parsedTp3,
           probability: typeof json.tp3_prob === 'number' ? json.tp3_prob : 0.3,
-          rationale: (json.tp3_rationale as string) || '最终目标位',
+          rationale: String(json.tp3_rationale ?? '') || '最终目标位',
         },
       },
       stopLoss: {

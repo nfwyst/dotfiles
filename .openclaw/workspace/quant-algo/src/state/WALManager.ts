@@ -41,6 +41,11 @@ function isUnifiedState(value: unknown): value is UnifiedState {
   return value !== null && typeof value === 'object' && 'trading' in value;
 }
 
+/** Type guard: is value a non-null object (usable as a record)? */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 export class WALManager {
   private walDir: string;
   private checkpointInterval: number;
@@ -207,13 +212,24 @@ export class WALManager {
 
   static applyOperation(state: UnifiedState, entry: WALEntry): UnifiedState {
     const s = { ...state };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = entry.data as Record<string, any>;
-
+    const data = isRecord(entry.data) ? entry.data : {};
 
     switch (entry.operation) {
       case 'updateTrading':
-        s.trading = { ...s.trading, ...data };
+        s.trading = {
+          ...s.trading,
+          ...(typeof data.balance === 'number' ? { balance: data.balance } : {}),
+          ...(typeof data.tradeCount === 'number' ? { tradeCount: data.tradeCount } : {}),
+          ...(typeof data.totalPnL === 'number' ? { totalPnL: data.totalPnL } : {}),
+          ...(typeof data.startTime === 'number' ? { startTime: data.startTime } : {}),
+          ...(typeof data.lastCheck === 'number' ? { lastCheck: data.lastCheck } : {}),
+        };
+        if ('position' in data) {
+          s.trading.position = migratePosition(data.position);
+        }
+        if ('lastPosition' in data) {
+          s.trading.lastPosition = migratePosition(data.lastPosition);
+        }
         break;
       case 'updatePosition':
         if (data.position) s.trading.lastPosition = s.trading.position;
@@ -223,22 +239,53 @@ export class WALManager {
         break;
       case 'recordTrade':
         s.trading.tradeCount++;
-        s.trading.totalPnL += data.pnl || 0;
+        s.trading.totalPnL += typeof data.pnl === 'number' ? data.pnl : 0;
         break;
       case 'updateLLM':
-        s.llm = { ...s.llm, ...data };
+        s.llm = {
+          ...s.llm,
+          ...('lastDecision' in data ? { lastDecision: data.lastDecision as UnifiedState['llm']['lastDecision'] } : {}),
+          ...(typeof data.lastDecisionTime === 'number' ? { lastDecisionTime: data.lastDecisionTime } : {}),
+          ...(typeof data.lastDecisionPrice === 'number' ? { lastDecisionPrice: data.lastDecisionPrice } : {}),
+          ...('thinking' in data ? { thinking: typeof data.thinking === 'string' ? data.thinking : null } : {}),
+        };
         break;
       case 'updateNotification':
-        s.notification = { ...s.notification, ...data };
+        s.notification = {
+          ...s.notification,
+          ...(typeof data.lastReportHash === 'string' ? { lastReportHash: data.lastReportHash } : {}),
+          ...(typeof data.lastReportTime === 'number' ? { lastReportTime: data.lastReportTime } : {}),
+          ...(typeof data.lastNotifyCheck === 'number' ? { lastNotifyCheck: data.lastNotifyCheck } : {}),
+          ...(Array.isArray(data.pendingNotifications) ? { pendingNotifications: data.pendingNotifications as string[] } : {}),
+        };
         break;
       case 'updateStrategy':
-        s.strategy = { ...s.strategy, ...data };
+        s.strategy = {
+          ...s.strategy,
+          ...('lastSignal' in data ? { lastSignal: data.lastSignal as UnifiedState['strategy']['lastSignal'] } : {}),
+          ...(typeof data.lastSignalTime === 'number' ? { lastSignalTime: data.lastSignalTime } : {}),
+          ...('strategyOutput' in data ? { strategyOutput: data.strategyOutput as UnifiedState['strategy']['strategyOutput'] } : {}),
+        };
         break;
       case 'updateDaemon':
-        s.daemon = { ...s.daemon, ...(entry.data as Record<string, unknown>) };
+        s.daemon = {
+          ...s.daemon,
+          ...('pid' in data ? { pid: typeof data.pid === 'number' ? data.pid : null } : {}),
+          ...('startTime' in data ? { startTime: typeof data.startTime === 'number' ? data.startTime : null } : {}),
+          ...(typeof data.lastHeartbeat === 'number' ? { lastHeartbeat: data.lastHeartbeat } : {}),
+          ...(typeof data.status === 'string' && (data.status === 'running' || data.status === 'stopped' || data.status === 'error') ? { status: data.status } : {}),
+          ...(typeof data.errorCount === 'number' ? { errorCount: data.errorCount } : {}),
+          ...('lastError' in data ? { lastError: typeof data.lastError === 'string' ? data.lastError : null } : {}),
+        };
         break;
       case 'updateCache':
-        s.cache = { ...s.cache, ...(entry.data as Record<string, unknown>) };
+        s.cache = {
+          ...s.cache,
+          ...(typeof data.newsCache === 'string' ? { newsCache: data.newsCache } : {}),
+          ...(typeof data.newsCacheTime === 'number' ? { newsCacheTime: data.newsCacheTime } : {}),
+          ...(Array.isArray(data.priceHistory) ? { priceHistory: data.priceHistory as number[] } : {}),
+          ...(typeof data.lastPriceUpdateTime === 'number' ? { lastPriceUpdateTime: data.lastPriceUpdateTime } : {}),
+        };
         break;
       case 'heartbeat':
         s.daemon.lastHeartbeat = Date.now();
@@ -362,8 +409,9 @@ export class WALManager {
       const entries = this.readWALFile(file.path);
       for (let i = entries.length - 1; i >= 0; i--) {
         const e = entries[i]!;
-        const eData = e.data as Record<string, unknown> | undefined;
-        if (e.operation === 'checkpoint' && eData && 'stateSnapshot' in eData) {
+        if (e.operation !== 'checkpoint') continue;
+        const eData = isRecord(e.data) ? e.data : undefined;
+        if (eData && 'stateSnapshot' in eData) {
           const snapshot = eData.stateSnapshot;
           if (isUnifiedState(snapshot)) {
             return { state: snapshot, sequence: e.sequence };

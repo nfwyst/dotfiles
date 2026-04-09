@@ -1,8 +1,17 @@
 import { z } from 'zod';
+import { EventChannels } from './types';
+import type { TradingEvent } from './types';
+
+// Build a Zod enum from the EventChannels constant values,
+// preserving the literal types for proper EventChannel inference.
+const channelValues = Object.values(EventChannels) as [
+  typeof EventChannels[keyof typeof EventChannels],
+  ...typeof EventChannels[keyof typeof EventChannels][],
+];
 
 export const TradingEventSchema = z.object({
   id: z.string(),
-  channel: z.string(),
+  channel: z.enum(channelValues),
   timestamp: z.number(),
   source: z.enum(['DataLayer', 'StrategyLayer', 'ExecutionLayer', 'System']),
   correlationId: z.string(),
@@ -12,13 +21,23 @@ export const TradingEventSchema = z.object({
 export type ValidatedTradingEvent = z.infer<typeof TradingEventSchema>;
 
 /**
- * 安全解析 JSON 为 TradingEvent，失败返回 null
+ * Parse and validate a JSON string into a TradingEvent.
+ *
+ * The Zod schema validates all required BaseEvent fields including
+ * channel membership against EventChannels values, so the validated
+ * result is structurally compatible with TradingEvent (BaseEvent<unknown>).
+ *
+ * Returns null on parse failure.
  */
-export function parseTradingEvent(json: string): ValidatedTradingEvent | null {
+export function parseTradingEvent(json: string): TradingEvent | null {
   try {
-    const raw = JSON.parse(json);
+    const raw: unknown = JSON.parse(json);
     const result = TradingEventSchema.safeParse(raw);
-    if (result.success) return result.data;
+    if (result.success) {
+      // The validated data satisfies BaseEvent<unknown> which is the
+      // structural supertype of all TradingEvent union members.
+      return result.data as TradingEvent;
+    }
     console.warn('[EventValidation] Invalid event:', result.error.issues);
     return null;
   } catch {
@@ -39,7 +58,7 @@ export type ValidatedDLQMessage = z.infer<typeof DLQMessageSchema>;
 
 export function parseDLQMessage(json: string): ValidatedDLQMessage | null {
   try {
-    const raw = JSON.parse(json);
+    const raw: unknown = JSON.parse(json);
     const result = DLQMessageSchema.safeParse(raw);
     if (result.success) return result.data;
     return null;

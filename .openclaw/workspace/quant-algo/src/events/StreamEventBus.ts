@@ -94,6 +94,32 @@ interface DLQMessage extends StreamMessage {
   reason: string;
 }
 
+/**
+ * Create a minimal fallback TradingEvent for cases where parsing fails.
+ * All required BaseEvent fields are provided; the single boundary assertion
+ * is safe because the literal satisfies the structural shape.
+ */
+function createFallbackEvent(channel: EventChannel): TradingEvent {
+  const event: BaseEvent = {
+    id: '',
+    channel,
+    timestamp: 0,
+    source: 'System',
+    correlationId: '',
+    payload: {},
+  };
+  return event as TradingEvent;
+}
+
+/**
+ * Narrow a ValidatedTradingEvent (from Zod) to TradingEvent.
+ * The Zod schema validates channel against EventChannels values,
+ * so the structural cast is safe.
+ */
+function validatedToTradingEvent(v: import('./validation').ValidatedTradingEvent): TradingEvent {
+  return v as TradingEvent;
+}
+
 
 // ==================== Redis result type helpers ====================
 
@@ -561,7 +587,7 @@ export class StreamEventBus extends EventEmitter {
     }
 
     try {
-      const event = (parseTradingEvent(messageData.data || '{}') as unknown as TradingEvent);
+      const event = parseTradingEvent(messageData.data || '{}');
       if (!event) {
         logger.warn(`[EventValidation] Dropping invalid event for message ${messageId} on ${channel}`);
         if (autoAck) {
@@ -593,7 +619,7 @@ export class StreamEventBus extends EventEmitter {
       await this.client.expire(retryMetaKey, 600); // 10 min TTL
 
       // 执行处理器
-      const result = handler(event as TradingEvent);
+      const result = handler(event);
       if (result instanceof Promise) {
         await result;
       }
@@ -672,7 +698,7 @@ export class StreamEventBus extends EventEmitter {
 
     const dlqMessage: DLQMessage = {
       id: messageId,
-      data: (parseTradingEvent(messageData.data || '{}') as unknown as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
+      data: parseTradingEvent(messageData.data || '{}') ?? createFallbackEvent(channel),
       retryCount: parseInt(messageData.retryCount || '0', 10),
       lastError: messageData.lastError,
       deliveredCount: parseInt(messageData.deliveredCount || '0', 10),
@@ -826,7 +852,7 @@ export class StreamEventBus extends EventEmitter {
             if (dlqMsg) {
               messages.push({
                 id,
-                data: (dlqMsg.originalEvent as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
+                data: dlqMsg.originalEvent ? validatedToTradingEvent(dlqMsg.originalEvent) : createFallbackEvent(channel),
                 retryCount: dlqMsg.retryCount ?? parseInt(data.retryCount || '0', 10),
                 lastError: data.lastError,
                 deliveredCount: parseInt(data.deliveredCount || '0', 10),
@@ -870,7 +896,7 @@ export class StreamEventBus extends EventEmitter {
         const parsedDlq = parseDLQMessage(data.data || '{}');
         const dlqMessage: DLQMessage | null = parsedDlq ? {
           id: messageId,
-          data: (parsedDlq.originalEvent ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} }) as TradingEvent,
+          data: parsedDlq.originalEvent ? validatedToTradingEvent(parsedDlq.originalEvent) : createFallbackEvent(channel),
           retryCount: parsedDlq.retryCount ?? parseInt(data.retryCount || '0', 10),
           lastError: data.lastError,
           deliveredCount: parseInt(data.deliveredCount || '0', 10),
@@ -965,7 +991,7 @@ export class StreamEventBus extends EventEmitter {
           }
           messages.push({
             id,
-            data: (parseTradingEvent(data.data || '{}') as unknown as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
+            data: parseTradingEvent(data.data || '{}') ?? createFallbackEvent(channel),
             retryCount: parseInt(data.retryCount || '0', 10),
             lastError: data.lastError,
             deliveredCount: parseInt(data.deliveredCount || '0', 10),
