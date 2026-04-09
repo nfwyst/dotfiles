@@ -287,7 +287,7 @@ ${historyText}
         throw new Error(`LLM API error: ${response.status}`);
       }
       
-      const data = await response.json() as any;
+      const data = await response.json() as { choices?: { message?: { content?: string } }[] };
       const content = data.choices?.[0]?.message?.content || '';
       
       // 解析 JSON
@@ -384,7 +384,7 @@ ${historyText}
   /**
    * 组合完整 Prompt
    */
-  composeFullPrompt(dynamicData: Record<string, any>): string {
+  composeFullPrompt(dynamicData: Record<string, unknown>): string {
     return composePrompt(this.currentStaticInstructions, dynamicData);
   }
   

@@ -126,6 +126,60 @@ export interface TradeRecord {
   reason: string;
 }
 
+
+// ==================== Binance Account Types ====================
+
+interface BinanceAccountAsset {
+  asset: string;
+  availableBalance: string;
+  walletBalance: string;
+  unrealizedProfit: string;
+}
+
+interface BinanceAccountPosition {
+  symbol: string;
+  positionAmt: string;
+  entryPrice: string;
+  markPrice: string;
+  unrealizedProfit: string;
+  leverage: string;
+  liquidationPrice?: string;
+}
+
+interface BinanceAccountInfo {
+  assets?: BinanceAccountAsset[];
+  positions?: BinanceAccountPosition[];
+}
+
+// ==================== Market Data Types ====================
+
+interface OHLCVCandle {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+interface MarketDataResult {
+  symbol: string;
+  currentPrice: number;
+  ohlcv: OHLCVCandle[];
+  atr: number;
+  rsi: number;
+  volumeRatio: number;
+  sma20: number;
+  sma50: number;
+  trendUp: boolean;
+  trendDown: boolean;
+  trendStrength: number;
+  high24h: number;
+  low24h: number;
+}
+
+type CloseReason = 'entry' | 'exit' | 'stop_loss' | 'take_profit' | 'trend_reversal';
+
 // ==================== TradingBotRuntime ====================
 // TODO: Migrate all usages of TradingBotRuntime to EventDrivenRuntime
 // and remove this class. Active consumers: src/index.ts, src/monitoring/dashboard.ts,
@@ -303,15 +357,15 @@ export class TradingBotRuntime {
         return;
       }
       
-      const account = await (this.exchange as any).request('/fapi/v2/account');
-      const usdtAsset = account.assets?.find((a: any) => a.asset === 'USDT');
+      const account = await this.exchange.request<BinanceAccountInfo>('/fapi/v2/account');
+      const usdtAsset = account.assets?.find((a: BinanceAccountAsset) => a.asset === 'USDT');
       
-      this.balance = parseFloat(usdtAsset?.availableBalance || 0);
+      this.balance = parseFloat(usdtAsset?.availableBalance || '0');
       this.peakBalance = Math.max(this.peakBalance, this.balance);
       
       // 获取持仓
       const positionData = account.positions?.find(
-        (p: any) => p.symbol === (this.config?.symbol || 'ETHUSDT') && parseFloat(p.positionAmt) !== 0
+        (p: BinanceAccountPosition) => p.symbol === (this.config?.symbol || 'ETHUSDT') && parseFloat(p.positionAmt) !== 0
       );
       
       if (positionData) {
@@ -340,7 +394,7 @@ export class TradingBotRuntime {
    * BUG 5 FIX: Use this.exchange.getCurrentPrice() for ticker instead of raw signed request.
    *            Handle the number[][] return format from fetchOHLCV().
    */
-  private async getMarketData(): Promise<any> {
+  private async getMarketData(): Promise<MarketDataResult | null> {
     try {
       const symbol = this.config?.symbol || 'ETHUSDT';
       
@@ -366,15 +420,15 @@ export class TradingBotRuntime {
       const atr = this.calculateATR(ohlcv, 14);
       
       // 计算 RSI
-      const rsi = this.calculateRSI(ohlcv.map((c: any) => c.close), 14);
+      const rsi = this.calculateRSI(ohlcv.map((c: OHLCVCandle) => c.close), 14);
       
       // 计算成交量比率
-      const volumes = ohlcv.map((c: any) => c.volume);
+      const volumes = ohlcv.map((c: OHLCVCandle) => c.volume);
       const avgVolume = volumes.slice(-20).reduce((a: number, b: number) => a + b, 0) / 20;
       const volumeRatio = volumes[volumes.length - 1] / avgVolume;
       
       // ✅ 改进：使用 SMA 判断趋势
-      const closes = ohlcv.map((c: any) => c.close);
+      const closes = ohlcv.map((c: OHLCVCandle) => c.close);
       const sma20 = this.calculateSMA(closes, 20);
       const sma50 = this.calculateSMA(closes, 50);
       
@@ -395,8 +449,8 @@ export class TradingBotRuntime {
         trendUp,
         trendDown,
         trendStrength,
-        high24h: Math.max(...ohlcv.slice(-288).map((c: any) => c.high)),
-        low24h: Math.min(...ohlcv.slice(-288).map((c: any) => c.low)),
+        high24h: Math.max(...ohlcv.slice(-288).map((c: OHLCVCandle) => c.high)),
+        low24h: Math.min(...ohlcv.slice(-288).map((c: OHLCVCandle) => c.low)),
       };
       
     } catch (error: unknown) {
@@ -408,7 +462,7 @@ export class TradingBotRuntime {
   /**
    * 检查入场条件
    */
-  private async checkEntryConditions(marketData: any): Promise<void> {
+  private async checkEntryConditions(marketData: MarketDataResult): Promise<void> {
     if (!this.config) return;
     
     const { currentPrice, rsi, volumeRatio, atr, trendUp, trendDown, trendStrength } = marketData;
@@ -439,8 +493,8 @@ export class TradingBotRuntime {
       }
       
       // 保存趋势状态
-      (marketData as any).trendUp = trendUp;
-      (marketData as any).trendDown = trendDown;
+      marketData.trendUp = trendUp;
+      marketData.trendDown = trendDown;
     }
     
     // ✅ 改进：分离开仓信号和平仓信号
@@ -518,7 +572,7 @@ export class TradingBotRuntime {
     side: 'buy' | 'sell',
     price: number,
     atr: number,
-    marketData: any
+    marketData: MarketDataResult
   ): Promise<void> {
     if (!this.config) return;
     
@@ -581,7 +635,7 @@ export class TradingBotRuntime {
   /**
    * 持仓管理
    */
-  private async managePosition(marketData: any): Promise<void> {
+  private async managePosition(marketData: MarketDataResult): Promise<void> {
     if (!this.config || this.position.side === 'none') return;
     
     const { currentPrice, trendUp, trendDown, trendStrength } = marketData;
@@ -702,7 +756,7 @@ export class TradingBotRuntime {
       side,
       size: this.position.size,
       price,
-      type: reason as any,
+      type: reason as CloseReason,
       pnl,
       reason: `Position closed: ${reason}`,
     });
@@ -808,7 +862,7 @@ export class TradingBotRuntime {
     return data.slice(-period).reduce((a, b) => a + b, 0) / period;
   }
   
-  private calculateATR(ohlcv: any[], period: number): number {
+  private calculateATR(ohlcv: OHLCVCandle[], period: number): number {
     if (ohlcv.length < period + 1) return 0;
     
     const trValues: number[] = [];

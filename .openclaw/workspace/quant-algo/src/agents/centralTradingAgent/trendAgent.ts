@@ -23,6 +23,26 @@ import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
 
+// ==================== Trend analysis types ====================
+
+/** Internal trend analysis result */
+interface TrendAnalysisResult {
+  direction: 'up' | 'down' | 'sideways';
+  strength: number;
+  persistence: 'strong' | 'moderate' | 'weak';
+  reversalRisk: number;
+}
+
+/** LLM response shape for trend analysis */
+interface LLMTrendResponse {
+  direction: 'up' | 'down' | 'sideways';
+  strength: number;
+  persistence: 'strong' | 'moderate' | 'weak';
+  reversalRisk: number;
+  confidence: number;
+  reasoning: string[];
+}
+
 export class TrendAgent implements DecisionAgent {
   readonly name = 'TrendAgent';
   readonly version = '2.1.0';
@@ -136,7 +156,11 @@ export class TrendAgent implements DecisionAgent {
     }
     
     try {
-      const parsed = JSON.parse(resultContent);
+      const rawParsed: unknown = JSON.parse(resultContent);
+      if (!rawParsed || typeof rawParsed !== 'object') {
+        return { success: false, error: 'Invalid JSON response' };
+      }
+      const parsed = rawParsed as LLMTrendResponse;
       
       // 确定建议行动
       const suggestedAction = this.determineActionFromLLM(parsed);
@@ -201,7 +225,7 @@ export class TrendAgent implements DecisionAgent {
   /**
    * 从 LLM 结果确定建议行动
    */
-  private determineActionFromLLM(parsed: any): ActionType {
+  private determineActionFromLLM(parsed: LLMTrendResponse): ActionType {
     if (parsed.direction === 'up' && parsed.strength > 50) return 'buy';
     if (parsed.direction === 'down' && parsed.strength > 50) return 'sell';
     return 'hold';
@@ -210,7 +234,7 @@ export class TrendAgent implements DecisionAgent {
   /**
    * 从 LLM 结果计算信号强度
    */
-  private calculateSignalStrengthFromLLM(parsed: any): number {
+  private calculateSignalStrengthFromLLM(parsed: LLMTrendResponse): number {
     const base = parsed.direction === 'up' ? 1 : parsed.direction === 'down' ? -1 : 0;
     return base * parsed.strength;
   }
@@ -218,7 +242,7 @@ export class TrendAgent implements DecisionAgent {
   /**
    * 纯代码趋势分析
    */
-  private analyzeTrend(technical: TechnicalReport): any {
+  private analyzeTrend(technical: TechnicalReport): TrendAnalysisResult {
     return {
       direction: technical.trend.direction,
       strength: technical.trend.strength,
@@ -227,13 +251,13 @@ export class TrendAgent implements DecisionAgent {
     };
   }
   
-  private determineAction(trendAnalysis: any): ActionType {
+  private determineAction(trendAnalysis: TrendAnalysisResult): ActionType {
     if (trendAnalysis.direction === 'up' && trendAnalysis.strength > 50) return 'buy';
     if (trendAnalysis.direction === 'down' && trendAnalysis.strength > 50) return 'sell';
     return 'hold';
   }
   
-  private calculateSignalStrength(trendAnalysis: any): number {
+  private calculateSignalStrength(trendAnalysis: TrendAnalysisResult): number {
     const base = trendAnalysis.direction === 'up' ? 1 : trendAnalysis.direction === 'down' ? -1 : 0;
     return base * trendAnalysis.strength;
   }
@@ -242,7 +266,7 @@ export class TrendAgent implements DecisionAgent {
     return technical.trend.strength / 100;
   }
   
-  private generateReasoning(trendAnalysis: any, technical: TechnicalReport): string[] {
+  private generateReasoning(trendAnalysis: TrendAnalysisResult, technical: TechnicalReport): string[] {
     const reasons: string[] = [];
     reasons.push(`趋势${trendAnalysis.direction === 'up' ? '向上' : trendAnalysis.direction === 'down' ? '向下' : '横盘'}`);
     reasons.push(`强度 ${trendAnalysis.strength}%`);

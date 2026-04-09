@@ -24,6 +24,65 @@ import {
 import { TechnicalIndicators } from '../../modules/technicalAnalysis';
 import { computeRSI } from '../../indicators/rsi';
 
+// ==================== Local indicator types ====================
+
+/** Flat bag of indicators computed by calculateIndicators() */
+interface CalculatedIndicators {
+  rsi14: number;
+  rsi7: number;
+  macd: number;
+  macdSignal: number;
+  macdHistogram: number;
+  atr14: number;
+  adx: number;
+  plusDI: number;
+  minusDI: number;
+  bollingerUpper: number;
+  bollingerMiddle: number;
+  bollingerLower: number;
+  bollingerBandwidth: number;
+  keltnerUpper: number;
+  keltnerLower: number;
+  stochasticK: number;
+  stochasticD: number;
+  mfi: number;
+  cmf: number;
+  cci: number;
+  williamsR: number;
+  volumeSMA20: number;
+}
+
+/** Result of Bollinger Band calculation */
+interface BollingerResult {
+  upper: number;
+  middle: number;
+  lower: number;
+  bandwidth: number;
+}
+
+/** Result of Keltner Channel calculation */
+interface KeltnerResult {
+  upper: number;
+  middle: number;
+  lower: number;
+}
+
+/** A single large order detected in microstructure analysis */
+interface LargeOrder {
+  side: 'buy' | 'sell';
+  size: number;
+  price: number;
+  timestamp: number;
+}
+
+/** A single trade record used as input for microstructure analysis */
+interface TradeRecord {
+  side: 'buy' | 'sell';
+  amount: number;
+  price: number;
+  timestamp: number;
+}
+
 export class TechnicalAnalystAgent implements AnalystAgent {
   readonly name = 'TechnicalAnalyst';
   readonly version = TECHNICAL_ANALYST_VERSION;
@@ -83,7 +142,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
       
       // 细粒度任务 6: 微观结构分析 (可选)
       const microstructure = context.additionalData?.trades 
-        ? this.analyzeMicrostructure(context.additionalData.trades, currentPrice)
+        ? this.analyzeMicrostructure(context.additionalData.trades as TradeRecord[], currentPrice)
         : undefined;
       
       // 计算综合评分
@@ -138,7 +197,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    * 细粒度任务 1: 趋势分析
    * 专注于识别趋势方向和强度
    */
-  private analyzeTrend(ohlcv: OHLCV[], indicators: any): TrendAnalysis {
+  private analyzeTrend(ohlcv: OHLCV[], indicators: CalculatedIndicators): TrendAnalysis {
     const closes = ohlcv.map(c => c.close);
     const currentPrice = closes[closes.length - 1];
     
@@ -232,7 +291,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    * 细粒度任务 2: 动量分析
    * 专注于超买超卖和动量方向
    */
-  private analyzeMomentum(indicators: any): MomentumAnalysis {
+  private analyzeMomentum(indicators: CalculatedIndicators): MomentumAnalysis {
     const rsi = indicators.rsi14 || 50;
     const rsi7 = indicators.rsi7 || 50;
     const macdHistogram = indicators.macdHistogram || 0;
@@ -299,7 +358,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    */
   private analyzeVolatility(
     ohlcv: OHLCV[],
-    indicators: any,
+    indicators: CalculatedIndicators,
     currentPrice: number
   ): VolatilityAnalysis {
     const atr = indicators.atr14 || 0;
@@ -354,7 +413,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    * 细粒度任务 4: 成交量分析
    * 专注于成交量动能和资金流向
    */
-  private analyzeVolume(ohlcv: OHLCV[], indicators: any): VolumeAnalysis {
+  private analyzeVolume(ohlcv: OHLCV[], indicators: CalculatedIndicators): VolumeAnalysis {
     const volumes = ohlcv.map(c => c.volume);
     const currentVolume = volumes[volumes.length - 1];
     const volumeSMA20 = indicators.volumeSMA20 || currentVolume;
@@ -473,7 +532,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    * 分析订单流和大单活动
    */
   private analyzeMicrostructure(
-    trades: any[],
+    trades: TradeRecord[],
     currentPrice: number
   ): MicrostructureAnalysis {
     // 简化版 - 实际需要更详细的订单簿数据
@@ -482,7 +541,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     // 买卖压力
     let buyVolume = 0;
     let sellVolume = 0;
-    const largeOrders: any[] = [];
+    const largeOrders: LargeOrder[] = [];
     
     for (const trade of recentTrades) {
       if (trade.side === 'buy') {
@@ -525,7 +584,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
   
   // ==================== 辅助方法 ====================
   
-  private calculateIndicators(ohlcv: OHLCV[]): any {
+  private calculateIndicators(ohlcv: OHLCV[]): CalculatedIndicators {
     const closes = ohlcv.map(c => c.close);
     const highs = ohlcv.map(c => c.high);
     const lows = ohlcv.map(c => c.low);
@@ -681,7 +740,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     return { adx: dx, plusDI, minusDI };
   }
   
-  private calculateBollinger(closes: number[], period: number, stdDev: number): any {
+  private calculateBollinger(closes: number[], period: number, stdDev: number): BollingerResult {
     const middle = this.calculateSMA(closes.slice(-period), period);
     const slice = closes.slice(-period);
     const variance = slice.reduce((sum, v) => sum + Math.pow(v - middle, 2), 0) / period;
@@ -695,7 +754,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     };
   }
   
-  private calculateKeltner(ohlcv: OHLCV[], period: number): any {
+  private calculateKeltner(ohlcv: OHLCV[], period: number): KeltnerResult {
     const closes = ohlcv.map(c => c.close);
     const middle = this.calculateEMA(closes, period);
     const atr = this.calculateATR(ohlcv, period);
@@ -807,7 +866,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     return obv;
   }
   
-  private assessReversalRisk(indicators: any, direction: 'up' | 'down' | 'sideways'): number {
+  private assessReversalRisk(indicators: CalculatedIndicators, direction: 'up' | 'down' | 'sideways'): number {
     let risk = 30; // 基准风险
     
     // RSI 极端值增加反转风险
@@ -817,8 +876,8 @@ export class TechnicalAnalystAgent implements AnalystAgent {
       risk += 25;
     }
     
-    // 布林带外部增加反转风险
-    if (indicators.bollingerPosition === 'outside') {
+    // 布林带外部增加反转风险 (wide bandwidth indicates high volatility / potential outside)
+    if (indicators.bollingerBandwidth > 0.05) {
       risk += 20;
     }
     
@@ -830,7 +889,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     return Math.min(100, Math.max(0, risk));
   }
   
-  private detectRSIDivergence(indicators: any): boolean {
+  private detectRSIDivergence(indicators: CalculatedIndicators): boolean {
     // 简化版背离检测
     return Math.abs(indicators.rsi14 - indicators.rsi7) > 10;
   }

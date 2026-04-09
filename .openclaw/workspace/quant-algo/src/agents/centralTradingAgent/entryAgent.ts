@@ -19,10 +19,36 @@ import {
   Urgency,
 } from './types';
 
-import { TechnicalReport } from '../marketIntelligence/types';
+import { TechnicalReport, SupportResistanceLevel } from '../marketIntelligence/types';
 import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
+
+// ==================== Entry evaluation types ====================
+
+/** Internal entry evaluation result */
+interface EntryEvaluation {
+  action: ActionType;
+  confidence: number;
+  reasoning: string[];
+  priceRange: {
+    min: number;
+    max: number;
+    optimal: number;
+  };
+  riskRewardRatio: number;
+  urgency: Urgency;
+  confirmations: string[];
+}
+
+/** LLM response shape for entry analysis */
+interface LLMEntryResponse {
+  action: ActionType;
+  signalStrength: number;
+  confidence: number;
+  urgency: Urgency;
+  reasoning: string[];
+}
 
 export class EntryAgent implements DecisionAgent {
   readonly name = 'EntryAgent';
@@ -104,6 +130,16 @@ export class EntryAgent implements DecisionAgent {
   "reasoning": ["原因1", "原因2"]
 }`;
 
+    const supportLevels = technical.supportResistance.levels
+      .filter((l: SupportResistanceLevel) => l.type === 'support')
+      .map((s: SupportResistanceLevel) => s.price.toFixed(2))
+      .join(', ') || technical.supportResistance.nearestSupport?.toFixed(2) || 'N/A';
+    
+    const resistanceLevels = technical.supportResistance.levels
+      .filter((l: SupportResistanceLevel) => l.type === 'resistance')
+      .map((r: SupportResistanceLevel) => r.price.toFixed(2))
+      .join(', ') || technical.supportResistance.nearestResistance?.toFixed(2) || 'N/A';
+
     const userPrompt = `分析以下市场数据，判断入场时机:
 
 市场数据:
@@ -112,8 +148,8 @@ export class EntryAgent implements DecisionAgent {
 - MACD 柱状图: ${technical.momentum.macd.histogram.toFixed(2)}
 - ATR (波动率): ${technical.volatility.atr?.toFixed(2) || 'N/A'}
 - 成交量比率: ${technical.volume.volumeRatio?.toFixed(2) || 'N/A'}
-- 支撑位: ${technical.supportResistance.levels.filter((l: any) => l.type === 'support').map((s: any) => s.price.toFixed(2)).join(', ') || technical.supportResistance.nearestSupport?.toFixed(2) || 'N/A'}
-- 阻力位: ${technical.supportResistance.levels.filter((l: any) => l.type === 'resistance').map((r: any) => r.price.toFixed(2)).join(', ') || technical.supportResistance.nearestResistance?.toFixed(2) || 'N/A'}
+- 支撑位: ${supportLevels}
+- 阻力位: ${resistanceLevels}
 
 请综合分析，判断是否应该入场。如果 RSI 在 30-55 且趋势向上，可以考虑做多；如果 RSI >= 85，可以考虑做空。`;
 
@@ -143,7 +179,11 @@ export class EntryAgent implements DecisionAgent {
     }
     
     try {
-      const parsed = JSON.parse(resultContent);
+      const rawParsed: unknown = JSON.parse(resultContent);
+      if (!rawParsed || typeof rawParsed !== 'object') {
+        return { success: false, error: 'Invalid JSON response' };
+      }
+      const parsed = rawParsed as LLMEntryResponse;
       
       const output: EntryAgentOutput = {
         agentName: 'EntryAgent',
@@ -206,7 +246,7 @@ export class EntryAgent implements DecisionAgent {
     };
   }
   
-  private evaluateEntry(technical: TechnicalReport, currentPrice: number): any {
+  private evaluateEntry(technical: TechnicalReport, currentPrice: number): EntryEvaluation {
     const rsi = technical.momentum.rsi.value;
     const macd = technical.momentum.macd;
     const volume = technical.volume;
@@ -248,7 +288,7 @@ export class EntryAgent implements DecisionAgent {
     };
   }
   
-  private calculateSignalStrength(entry: any): number {
+  private calculateSignalStrength(entry: EntryEvaluation): number {
     if (entry.action === 'buy') return 50 * entry.confidence;
     if (entry.action === 'sell') return -50 * entry.confidence;
     return 0;

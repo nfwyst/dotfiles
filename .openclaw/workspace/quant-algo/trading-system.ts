@@ -23,6 +23,46 @@ import { getProcessLock } from './src/utils/processLock';
 import NotificationManager from './src/notifier';
 import logger from './src/logger';
 import fs from 'fs';
+import type { MarketIntelligenceReport } from './src/agents/marketIntelligence/types';
+import type { CompositeDecision } from './src/agents/centralTradingAgent/types';
+import type { SystemStatus } from './src/monitoring/dashboard';
+
+// ==================== Local Type Definitions ====================
+
+interface BinanceAccountAsset {
+  asset: string;
+  availableBalance: string;
+  walletBalance: string;
+  unrealizedProfit: string;
+}
+
+interface BinanceAccountPosition {
+  symbol: string;
+  positionAmt: string;
+  entryPrice: string;
+  unrealizedProfit: string;
+  leverage: string;
+  liquidationPrice?: string;
+  markPrice?: string;
+}
+
+interface BinanceAccountInfo {
+  assets?: BinanceAccountAsset[];
+  positions?: BinanceAccountPosition[];
+}
+
+interface TradingPosition {
+  side: 'long' | 'short';
+  size: number;
+  entryPrice: number;
+  unrealizedPnl: number;
+}
+
+interface TakeProfitLevel {
+  price: number;
+  portion: number;
+}
+
 
 // ==================== 配置 ====================
 
@@ -50,8 +90,8 @@ class TradingSystem {
   private balance: number = 0;
   private currentPrice: number = 0;
   private hasPosition: boolean = false;
-  private position: any = null;
-  private previousPosition: any = null;  // 用于检测平仓
+  private position: TradingPosition | null = null;
+  private previousPosition: TradingPosition | null = null;  // 用于检测平仓
   
   constructor() {
     this.system = createTradingSystem(CONFIG);
@@ -89,8 +129,8 @@ class TradingSystem {
     while (this.running) {
       try {
         await this.cycle();
-      } catch (error: any) {
-        logger.error(`主循环错误: ${error.message}`);
+      } catch (error: unknown) {
+        logger.error(`主循环错误: ${error instanceof Error ? error.message : String(error)}`);
       }
       
       await this.sleep(CHECK_INTERVAL);
@@ -162,15 +202,15 @@ class TradingSystem {
     try {
       this.currentPrice = await this.exchange.getCurrentPrice();
       logger.debug(`💰 当前价格: $${this.currentPrice.toFixed(2)}`);
-    } catch (error: any) {
-      logger.error(`获取市场数据失败: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`获取市场数据失败: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
   /**
    * 运行 Market Intelligence Pipeline
    */
-  private async runMarketIntelligence(): Promise<any> {
+  private async runMarketIntelligence(): Promise<MarketIntelligenceReport | null> {
     try {
       // 获取 OHLCV 数据
       const ohlcv = await this.exchange.fetchOHLCV('5m', 100);
@@ -197,8 +237,8 @@ class TradingSystem {
       
       return report;
       
-    } catch (error: any) {
-      logger.error(`Market Intelligence 错误: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Market Intelligence 错误: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     }
   }
@@ -206,7 +246,7 @@ class TradingSystem {
   /**
    * 运行 Central Trading Agent
    */
-  private async runCentralTradingAgent(intelligenceReport: any): Promise<any> {
+  private async runCentralTradingAgent(intelligenceReport: MarketIntelligenceReport): Promise<CompositeDecision> {
     try {
       const context = {
         marketIntelligence: {
@@ -232,8 +272,8 @@ class TradingSystem {
       
       return decision;
       
-    } catch (error: any) {
-      logger.error(`Central Trading Agent 错误: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`Central Trading Agent 错误: ${error instanceof Error ? error.message : String(error)}`);
       return { action: 'hold', confidence: 0, reasoning: ['错误'] };
     }
   }
@@ -241,7 +281,7 @@ class TradingSystem {
   /**
    * 执行决策
    */
-  private async executeDecision(decision: any): Promise<void> {
+  private async executeDecision(decision: CompositeDecision): Promise<void> {
     // 持仓检查：如果已有持仓，只允许平仓或反向操作
     if (this.hasPosition && this.position) {
       const currentSide = this.position.side;
@@ -276,7 +316,7 @@ class TradingSystem {
             maxDrawdown: CONFIG.maxDrawdown,
             recommendedPositionSize: decision.positionSize,
             stopLoss: decision.stopLoss,
-            takeProfitLevels: decision.takeProfitLevels.map((tp: any) => tp.price),
+            takeProfitLevels: decision.takeProfitLevels.map((tp: TakeProfitLevel) => tp.price),
           },
         },
         {
@@ -293,8 +333,8 @@ class TradingSystem {
         // 开仓前设置杠杆
         try {
           await this.exchange.setLeverage(CONFIG.maxLeverage);
-        } catch (e: any) {
-          logger.warn(`设置杠杆失败: ${e.message}`);
+        } catch (e: unknown) {
+          logger.warn(`设置杠杆失败: ${e instanceof Error ? e.message : String(e)}`);
         }
         
         // 验证订单
@@ -364,8 +404,8 @@ class TradingSystem {
         }
       }
       
-    } catch (error: any) {
-      logger.error(`执行决策错误: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`执行决策错误: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -396,8 +436,8 @@ class TradingSystem {
         }
       }
       
-    } catch (error: any) {
-      logger.error(`OPRO 优化错误: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error(`OPRO 优化错误: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -414,13 +454,13 @@ class TradingSystem {
         return;
       }
       
-      const account = await (this.exchange as any).request('/fapi/v2/account');
-      const usdtAsset = account.assets?.find((a: any) => a.asset === 'USDT');
+      const account = await this.exchange.request<BinanceAccountInfo>('/fapi/v2/account');
+      const usdtAsset = account.assets?.find((a: BinanceAccountAsset) => a.asset === 'USDT');
       
-      this.balance = parseFloat(usdtAsset?.availableBalance || 0);
+      this.balance = parseFloat(usdtAsset?.availableBalance || '0');
       
       const positionData = account.positions?.find(
-        (p: any) => p.symbol === CONFIG.symbol && parseFloat(p.positionAmt) !== 0
+        (p: BinanceAccountPosition) => p.symbol === CONFIG.symbol && parseFloat(p.positionAmt) !== 0
       );
       
       if (positionData) {
@@ -442,8 +482,8 @@ class TradingSystem {
         logger.info(`📍 持仓: ${this.position.side.toUpperCase()} ${this.position.size} @ $${this.position.entryPrice}`);
       }
       
-    } catch (error: any) {
-      logger.warn(`⚠️ 同步账户状态失败: ${error.message}`);
+    } catch (error: unknown) {
+      logger.warn(`⚠️ 同步账户状态失败: ${error instanceof Error ? error.message : String(error)}`);
       this.balance = CONFIG.initialBalance;
     }
   }
@@ -451,7 +491,7 @@ class TradingSystem {
   /**
    * 输出循环摘要
    */
-  private logCycleSummary(decision: any, cycleStart: number): void {
+  private logCycleSummary(decision: CompositeDecision, cycleStart: number): void {
     const duration = Date.now() - cycleStart;
     const metrics = this.system.performanceTracker.calculateMetrics();
     
@@ -478,7 +518,7 @@ class TradingSystem {
   /**
    * 获取状态
    */
-  getStatus(): any {
+  getStatus(): SystemStatus {
     return this.system.getStatus();
   }
   

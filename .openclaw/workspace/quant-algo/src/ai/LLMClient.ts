@@ -305,8 +305,8 @@ export class LLMClient {
     options: LLMRequestOptions,
     model: string,
     config: LLMConfig
-  ): Record<string, any> {
-    const body: Record<string, any> = {
+  ): Record<string, unknown> {
+    const body: Record<string, unknown> = {
       model,
       messages: options.messages,
       temperature: options.temperature ?? config.temperature ?? 0.7,
@@ -369,7 +369,7 @@ export class LLMClient {
    * 解析响应
    */
   private parseResponse(
-    data: any,
+    data: { content?: { text?: string }[]; choices?: { message?: { content?: string; reasoning_content?: string } }[]; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } },
     config: LLMConfig,
     model: string,
     startTime: number
@@ -533,24 +533,25 @@ export class LLMClient {
   /**
    * 判断是否可重试错误
    */
-  private isRetryableError(error: any): boolean {
+  private isRetryableError(error: unknown): boolean {
+    const err = error as { name?: string; code?: string; message?: string };
     // 超时
-    if (error.name === 'AbortError') {
+    if (err.name === 'AbortError') {
       return true;
     }
     
     // 网络错误
-    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+    if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
       return true;
     }
     
     // 服务器错误 (5xx)
-    if (error.message?.includes('5')) {
+    if (err.message?.includes('5')) {
       return true;
     }
     
     // 速率限制
-    if (error.message?.includes('429')) {
+    if (err.message?.includes('429')) {
       return true;
     }
     
@@ -641,7 +642,7 @@ export class LLMClient {
   /**
    * JSON 模式调用
    */
-  async chatJson<T = any>(
+  async chatJson<T = unknown>(
     prompt: string,
     options?: Partial<LLMRequestOptions>
   ): Promise<T> {

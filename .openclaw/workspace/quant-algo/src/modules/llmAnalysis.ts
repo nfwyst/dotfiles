@@ -324,7 +324,7 @@ ${recentContext}
    * Handles JSON embedded in markdown code fences, or bare JSON.
    * Returns null if no valid JSON object is found.
    */
-  private extractJSON(text: string): Record<string, any> | null {
+  private extractJSON(text: string): Record<string, unknown> | null {
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return null;
     }
@@ -385,7 +385,7 @@ ${recentContext}
     tp3?: number;
     urgency?: string;
   } {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     const lower = text.toLowerCase();
 
     // Direction: look for bullish/bearish/neutral keywords
@@ -478,7 +478,7 @@ ${recentContext}
    * object, using request data to fill any gaps.
    */
   private buildSignalFromParsedJSON(
-    json: Record<string, any>,
+    json: Record<string, unknown>,
     request: LLMAnalysisRequest
   ): LLMTradingSignal {
     const { strategySignal, currentPrice } = request;
@@ -541,7 +541,7 @@ ${recentContext}
     if (typeof json.reasoning === 'string' && json.reasoning.length > 0) {
       reasoning.push(`LLM分析: ${json.reasoning}`);
     } else if (Array.isArray(json.reasoning)) {
-      reasoning.push(...json.reasoning.map((r: any) => String(r)));
+      reasoning.push(...json.reasoning.map((r: unknown) => String(r)));
     }
     if (reasoning.length === 0) {
       reasoning.push('LLM分析: 无详细理由');
@@ -549,10 +549,10 @@ ${recentContext}
 
     // FIX H3: Parse warnings and alternatives
     const warnings: string[] = Array.isArray(json.warnings)
-      ? json.warnings.map((w: any) => String(w))
+      ? json.warnings.map((w: unknown) => String(w))
       : ['加密货币市场波动剧烈', '建议严格止损'];
     const alternatives: string[] = Array.isArray(json.alternatives)
-      ? json.alternatives.map((a: any) => String(a))
+      ? json.alternatives.map((a: unknown) => String(a))
       : ['若错过入场点，等待回调再入场'];
 
     // FIX H3: Parse holding times

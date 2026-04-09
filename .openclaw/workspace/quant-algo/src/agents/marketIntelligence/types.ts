@@ -280,12 +280,12 @@ export interface AnalysisContext {
   balance: number;
   hasPosition: boolean;
   currentPosition?: Position;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export interface AgentOutput {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   processingTimeMs: number;
 }

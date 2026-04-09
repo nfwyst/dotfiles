@@ -35,7 +35,7 @@ export interface WALEntry {
   sequence: number;
   timestamp: number;
   operation: WALOperationType;
-  data: any;
+  data: unknown;
   checksum: string;
 }
 
@@ -93,36 +93,38 @@ export interface LegacyStatePosition {
  *
  * If the position already has the canonical fields, it is returned as-is.
  */
-export function migratePosition(raw: any): Position | null {
+export function migratePosition(raw: unknown): Position | null {
   if (raw === null || raw === undefined) return null;
+  if (typeof raw !== 'object') return null;
+  const rec = raw as Record<string, unknown>;
 
   // Already canonical (has `size` field) — return as-is
-  if (typeof raw.size === 'number') {
+  if (typeof rec.size === 'number') {
     return {
-      side: raw.side ?? 'none',
-      size: raw.size,
-      entryPrice: raw.entryPrice ?? 0,
-      leverage: raw.leverage ?? 1,
-      unrealizedPnl: raw.unrealizedPnl ?? 0,
-      markPrice: raw.markPrice,
-      liquidationPrice: raw.liquidationPrice,
-      stopLoss: raw.stopLoss,
-      takeProfit: raw.takeProfit,
+      side: rec.side ?? 'none',
+      size: rec.size,
+      entryPrice: rec.entryPrice ?? 0,
+      leverage: rec.leverage ?? 1,
+      unrealizedPnl: rec.unrealizedPnl ?? 0,
+      markPrice: rec.markPrice,
+      liquidationPrice: rec.liquidationPrice,
+      stopLoss: rec.stopLoss,
+      takeProfit: rec.takeProfit,
     };
   }
 
   // Legacy format (has `contracts` field) — migrate
-  if (typeof raw.contracts === 'number') {
+  if (typeof rec.contracts === 'number') {
     return {
-      side: raw.side ?? 'none',
-      size: raw.contracts,            // contracts -> size
-      entryPrice: raw.entryPrice ?? 0,
-      leverage: raw.leverage ?? 1,    // default 1 if missing
-      unrealizedPnl: raw.pnl ?? 0,   // pnl -> unrealizedPnl
-      markPrice: raw.markPrice,
-      liquidationPrice: raw.liquidationPrice,
-      stopLoss: raw.stopLoss,
-      takeProfit: raw.takeProfit,
+      side: rec.side ?? 'none',
+      size: rec.contracts,            // contracts -> size
+      entryPrice: rec.entryPrice ?? 0,
+      leverage: rec.leverage ?? 1,    // default 1 if missing
+      unrealizedPnl: rec.pnl ?? 0,   // pnl -> unrealizedPnl
+      markPrice: rec.markPrice,
+      liquidationPrice: rec.liquidationPrice,
+      stopLoss: rec.stopLoss,
+      takeProfit: rec.takeProfit,
     };
   }
 

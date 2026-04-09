@@ -24,6 +24,38 @@ import { LLMClient } from '../../ai/LLMClient';
 
 import logger from '../../logger';
 
+// ==================== Risk analysis types ====================
+
+/** Risk parameters controlling position sizing and limits */
+interface RiskParameters {
+  maxPositionSize: number;
+  maxLeverage: number;
+  maxDrawdown: number;
+}
+
+/** Internal risk analysis result */
+interface RiskAnalysis {
+  level: RiskLevel;
+  maxDrawdown: number;
+  volatilityAssessment: string;
+  recommendedPositionSize: number;
+  stopLoss: number;
+  stopLossPercent?: number;
+  takeProfitLevels: number[];
+  takeProfitPercents?: number[];
+}
+
+/** LLM response shape for risk assessment */
+interface LLMRiskResponse {
+  level: RiskLevel;
+  volatilityAssessment: string;
+  recommendedPositionSize: number;
+  stopLossPercent: number;
+  takeProfitLevels?: Array<{ percent: number; portion: number }>;
+  confidence: number;
+  reasoning: string[];
+}
+
 export class RiskAgent implements DecisionAgent {
   readonly name = 'RiskAgent';
   readonly version = '2.1.0';
@@ -85,7 +117,7 @@ export class RiskAgent implements DecisionAgent {
     technical: TechnicalReport,
     currentPrice: number,
     balance: number,
-    riskParameters: any
+    riskParameters: RiskParameters
   ): Promise<AgentOutput> {
     const llm = LLMClient.getInstance();
     const systemPrompt = `你是一个专业的风险评估专家。
@@ -152,13 +184,17 @@ export class RiskAgent implements DecisionAgent {
     }
     
     try {
-      const parsed = JSON.parse(resultContent);
+      const rawParsed: unknown = JSON.parse(resultContent);
+      if (!rawParsed || typeof rawParsed !== 'object') {
+        return { success: false, error: 'Invalid JSON response' };
+      }
+      const parsed = rawParsed as LLMRiskResponse;
       
       // 计算止损止盈价格
       // 止损止盈百分比（不计算具体价格，由 OrderGenerator 根据方向计算）
       const stopLossPercent = parsed.stopLossPercent || 2;
       const takeProfitPercents = parsed.takeProfitLevels 
-        ? parsed.takeProfitLevels.map((tp: any) => tp.percent)
+        ? parsed.takeProfitLevels.map((tp) => tp.percent)
         : [1.5, 3, 5];
       
       const output: RiskAgentOutput = {
@@ -202,7 +238,7 @@ export class RiskAgent implements DecisionAgent {
     technical: TechnicalReport,
     currentPrice: number,
     balance: number,
-    riskParameters: any
+    riskParameters: RiskParameters
   ): AgentOutput {
     const riskAnalysis = this.analyzeRisk(technical, currentPrice, balance, riskParameters);
     const suggestedAction = this.determineAction(riskAnalysis);
@@ -230,8 +266,8 @@ export class RiskAgent implements DecisionAgent {
     technical: TechnicalReport,
     currentPrice: number,
     balance: number,
-    riskParameters: any
-  ): any {
+    riskParameters: RiskParameters
+  ): RiskAnalysis {
     const atr = technical.volatility.atr || currentPrice * 0.02;
     const volatilityPercent = (atr / currentPrice) * 100;
     
@@ -258,17 +294,17 @@ export class RiskAgent implements DecisionAgent {
     };
   }
   
-  private determineAction(riskAnalysis: any): ActionType {
+  private determineAction(riskAnalysis: RiskAnalysis): ActionType {
     return riskAnalysis.level === 'high' ? 'hold' : 'buy';
   }
   
-  private calculateSignalStrength(riskAnalysis: any): number {
+  private calculateSignalStrength(riskAnalysis: RiskAnalysis): number {
     if (riskAnalysis.level === 'high') return 0;
     if (riskAnalysis.level === 'medium') return 25;
     return 50;
   }
   
-  private generateReasoning(riskAnalysis: any): string[] {
+  private generateReasoning(riskAnalysis: RiskAnalysis): string[] {
     const reasons: string[] = [];
     reasons.push(`风险等级: ${riskAnalysis.level}`);
     reasons.push(`建议仓位: ${(riskAnalysis.recommendedPositionSize * 100).toFixed(1)}%`);

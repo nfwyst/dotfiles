@@ -13,6 +13,55 @@ import {
   ONCHAIN_ANALYST_VERSION,
 } from './types';
 
+// ==================== On-chain data types ====================
+
+/** Parsed funding data from exchange APIs */
+interface FundingData {
+  fundingRate: number;
+  openInterest: number;
+  longShortRatio: number;
+  liquidations: { long: number; short: number; total: number };
+}
+
+/** Parsed whale activity summary */
+interface WhaleActivitySummary {
+  movements: WhaleMovement[];
+  netFlow: number;
+  largeTransactions: number;
+  signal: 'accumulation' | 'distribution' | 'neutral';
+}
+
+/** Parsed exchange flow data */
+interface ExchangeFlowData {
+  netInflow: number;
+  netOutflow: number;
+  exchangeReserve: number;
+  reserveChange: number;
+}
+
+/** Raw on-chain data passed via additionalData */
+interface OnChainRawData {
+  whaleMovements?: WhaleMovement[];
+  netInflow?: number;
+  netOutflow?: number;
+  exchangeReserve?: number;
+  reserveChange?: number;
+  fundingRate?: number;
+  openInterest?: number;
+  longShortRatio?: number;
+  liquidations?: { long: number; short: number; total: number };
+}
+
+/** Binance funding rate response item */
+interface BinanceFundingRateItem {
+  fundingRate: string;
+}
+
+/** Binance long/short ratio response item */
+interface BinanceLongShortRatioItem {
+  longShortRatio: string;
+}
+
 export class OnChainAnalystAgent implements AnalystAgent {
   readonly name = 'OnChainAnalyst';
   readonly version = ONCHAIN_ANALYST_VERSION;
@@ -48,16 +97,17 @@ export class OnChainAnalystAgent implements AnalystAgent {
       
       // 尝试获取真实链上数据
       let hasRealData = false;
-      let whaleActivity = null;
-      let exchangeFlows = null;
-      let fundingData = null;
+      let whaleActivity: WhaleActivitySummary | null = null;
+      let exchangeFlows: ExchangeFlowData | null = null;
+      let fundingData: FundingData | null = null;
       
       // 尝试从 additionalData 或 API 获取数据
       if (additionalData?.onChainData) {
+        const rawData = additionalData.onChainData as OnChainRawData;
         hasRealData = true;
-        whaleActivity = this.parseWhaleActivity(additionalData.onChainData);
-        exchangeFlows = this.parseExchangeFlows(additionalData.onChainData);
-        fundingData = this.parseFundingData(additionalData.onChainData);
+        whaleActivity = this.parseWhaleActivity(rawData);
+        exchangeFlows = this.parseExchangeFlows(rawData);
+        fundingData = this.parseFundingData(rawData);
       }
       
       // 如果没有真实数据，使用 Binance API 获取资金费率和持仓
@@ -134,7 +184,7 @@ export class OnChainAnalystAgent implements AnalystAgent {
   /**
    * 从 Binance API 获取资金费率和持仓数据
    */
-  private async fetchFundingData(symbol: string): Promise<any> {
+  private async fetchFundingData(symbol: string): Promise<FundingData | null> {
     try {
       const exchangeSymbol = symbol.replace('/', '').toUpperCase() + 'USDT';
       
@@ -142,23 +192,30 @@ export class OnChainAnalystAgent implements AnalystAgent {
       const fundingResponse = await fetch(
         `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${exchangeSymbol}&limit=1`
       );
-      const fundingData = await fundingResponse.json() as any[];
+      const fundingRawData: unknown = await fundingResponse.json();
       
       // 获取持仓量
       const oiResponse = await fetch(
         `https://fapi.binance.com/fapi/v1/openInterest?symbol=${exchangeSymbol}`
       );
-      const oiData = await oiResponse.json() as { openInterest: string };
+      const oiRawData: unknown = await oiResponse.json();
       
       // 获取多空比例
       const ratioResponse = await fetch(
         `https://fapi.binance.com/fapi/v1/globalLongShortAccountRatio?symbol=${exchangeSymbol}&period=5m&limit=1`
       );
-      const ratioData = await ratioResponse.json() as any[];
+      const ratioRawData: unknown = await ratioResponse.json();
       
-      const fundingRate = fundingData[0] ? parseFloat(fundingData[0].fundingRate) : 0;
+      // Type-safe parsing
+      const fundingItems = Array.isArray(fundingRawData) ? fundingRawData as BinanceFundingRateItem[] : [];
+      const oiData = (oiRawData && typeof oiRawData === 'object' && 'openInterest' in oiRawData)
+        ? oiRawData as { openInterest: string }
+        : { openInterest: '0' };
+      const ratioItems = Array.isArray(ratioRawData) ? ratioRawData as BinanceLongShortRatioItem[] : [];
+      
+      const fundingRate = fundingItems[0] ? parseFloat(fundingItems[0].fundingRate) : 0;
       const openInterest = parseFloat(oiData.openInterest || '0');
-      const longShortRatio = ratioData[0] ? parseFloat(ratioData[0].longShortRatio) : 1;
+      const longShortRatio = ratioItems[0] ? parseFloat(ratioItems[0].longShortRatio) : 1;
       
       return {
         fundingRate,
@@ -186,7 +243,7 @@ export class OnChainAnalystAgent implements AnalystAgent {
     let confidence = 0.2;
     
     if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus;
+      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
       if (consensus.type === 'buy' && consensus.strength > 50) {
         signal = 'bullish';
         confidence = 0.3;
@@ -239,7 +296,7 @@ export class OnChainAnalystAgent implements AnalystAgent {
     };
   }
   
-  private parseWhaleActivity(data: any): any {
+  private parseWhaleActivity(data: OnChainRawData): WhaleActivitySummary {
     const movements: WhaleMovement[] = data.whaleMovements || [];
     const largeTransactions = movements.filter(
       (m: WhaleMovement) => m.usdValue > this.config.largeTxThreshold
@@ -260,7 +317,7 @@ export class OnChainAnalystAgent implements AnalystAgent {
     return { movements, netFlow, largeTransactions, signal };
   }
   
-  private parseExchangeFlows(data: any): any {
+  private parseExchangeFlows(data: OnChainRawData): ExchangeFlowData {
     return {
       netInflow: data.netInflow || 0,
       netOutflow: data.netOutflow || 0,
@@ -269,7 +326,7 @@ export class OnChainAnalystAgent implements AnalystAgent {
     };
   }
   
-  private parseFundingData(data: any): any {
+  private parseFundingData(data: OnChainRawData): FundingData {
     return {
       fundingRate: data.fundingRate || 0,
       openInterest: data.openInterest || 0,
@@ -279,9 +336,9 @@ export class OnChainAnalystAgent implements AnalystAgent {
   }
   
   private calculateOnChainSignal(
-    whaleActivity: any,
-    exchangeFlows: any,
-    fundingData: any
+    whaleActivity: WhaleActivitySummary | null,
+    exchangeFlows: ExchangeFlowData | null,
+    fundingData: FundingData | null
   ): { direction: 'bullish' | 'bearish' | 'neutral'; confidence: number; reasoning: string[] } {
     const reasoning: string[] = [];
     let bullishScore = 0;

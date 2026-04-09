@@ -21,7 +21,7 @@ export interface LogEntry {
   level: LogLevel;
   module: string;
   message: string;
-  data?: any;
+  data?: unknown;
   traceId?: string;
 }
 
@@ -39,7 +39,7 @@ export interface TradeLogEntry {
   signalStrength: number;
   signalConfidence: number;
   reasoning: string[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceMetrics {
@@ -114,30 +114,30 @@ export class LoggerModule {
   /**
    * 分级日志方法
    */
-  debug(message: string, data?: any) {
+  debug(message: string, data?: unknown) {
     this.log('DEBUG', message, data);
   }
   
-  info(message: string, data?: any) {
+  info(message: string, data?: unknown) {
     this.log('INFO', message, data);
   }
   
-  warn(message: string, data?: any) {
+  warn(message: string, data?: unknown) {
     this.log('WARN', message, data);
   }
   
-  error(message: string, data?: any) {
+  error(message: string, data?: unknown) {
     this.log('ERROR', message, data);
   }
   
-  fatal(message: string, data?: any) {
+  fatal(message: string, data?: unknown) {
     this.log('FATAL', message, data);
   }
   
   /**
    * 核心日志方法
    */
-  private log(level: LogLevel, message: string, data?: any) {
+  private log(level: LogLevel, message: string, data?: unknown) {
     // 级别过滤
     if (!this.shouldLog(level)) return;
     
@@ -393,7 +393,7 @@ export function getLogger(moduleName: string = 'default'): LoggerModule {
  */
 export function setTraceContextGetter(getter: () => string | undefined): void {
   // 简单实现：存储 getter 供日志系统使用
-  (global as any).__traceContextGetter = getter;
+  (global as Record<string, unknown>).__traceContextGetter = getter;
 }
 
 export default LoggerModule;

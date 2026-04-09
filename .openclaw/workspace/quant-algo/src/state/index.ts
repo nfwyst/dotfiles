@@ -173,7 +173,7 @@ export class StateManager {
   }
 
   async updateStrategy(signal: StrategySignal, output?: OCSEnhancedOutput): Promise<void> {
-    const data: any = { lastSignal: signal, lastSignalTime: Date.now() };
+    const data: { lastSignal: StrategySignal; lastSignalTime: number; strategyOutput?: OCSEnhancedOutput } = { lastSignal: signal, lastSignalTime: Date.now() };
     if (output) data.strategyOutput = output;
     await this.writeAhead('updateStrategy', data);
     this.store.updateStrategy(signal, output);
@@ -207,7 +207,7 @@ export class StateManager {
   // WAL helpers
   // ------------------------------------------------------------------
 
-  private async writeAhead(operation: WALOperationType, data: any): Promise<void> {
+  private async writeAhead(operation: WALOperationType, data: unknown): Promise<void> {
     try {
       await this.wal.append(operation, data);
     } catch (error) {
@@ -320,9 +320,9 @@ export async function createStateManager(config?: Partial<StateConfig>): Promise
     if (initialState.trading.position) {
       initialState.trading.position = migratePosition(initialState.trading.position);
     }
-    if ((initialState.trading as any).lastPosition) {
-      (initialState.trading as any).lastPosition = migratePosition(
-        (initialState.trading as any).lastPosition,
+    if (initialState.trading.lastPosition) {
+      initialState.trading.lastPosition = migratePosition(
+        initialState.trading.lastPosition,
       );
     }
   }

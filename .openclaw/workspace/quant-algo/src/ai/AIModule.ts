@@ -183,7 +183,7 @@ Respond in JSON format:
    * 2. 异常检测
    * 检测闪崩、假突破、大单操纵等异常
    */
-  detectAnomaly(ohlcv: number[][], recentTrades?: any[]): AnomalyDetection {
+  detectAnomaly(ohlcv: number[][], recentTrades?: { price: number; amount: number; side: string; timestamp: number }[]): AnomalyDetection {
     if (ohlcv.length < 10) {
       return { isAnomaly: false, severity: 0, reason: '数据不足' };
     }
@@ -370,7 +370,7 @@ Respond in JSON format:
    * 5. 自然语言查询
    * 用自然语言询问市场状态
    */
-  async queryMarket(question: string, context: any): Promise<string> {
+  async queryMarket(question: string, context: { price?: number; change24h?: number; position?: string; balance?: number }): Promise<string> {
     if (!llmConfigManager.isProviderAvailable(llmConfigManager.getDefaultProvider())) {
       return 'AI 查询需要配置 LLM API Key';
     }

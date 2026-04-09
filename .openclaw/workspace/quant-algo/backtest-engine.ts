@@ -16,10 +16,13 @@ import type { OHLCV } from './src/events/types';
 import { StrategyEngineModule, StrategySignal, StrategyContext } from './src/modules/strategyEngine';
 import SLTPCalculator from './src/modules/slTpCalculator';
 import { OCSLayer1 } from './src/ocs/layer1';
+import type { Layer1Output } from './src/ocs/layer1';
 import { OCSLayer2 } from './src/ocs/layer2';
+import type { Layer2Output } from './src/ocs/layer2';
 import { OCSLayer3 } from './src/ocs/layer3';
 import { OCSLayer4 } from './src/ocs/layer4';
 import { OCSEnhanced } from './src/ocs/enhanced';
+import type { OCSEnhancedOutput } from './src/ocs/enhanced';
 import { calculatePositionSize } from './src/risk/positionSizing';
 import { TradingCostConfig, DEFAULT_TRADING_COSTS, getTotalCostBps } from './src/config/tradingCosts';
 import { RiskGuardChain } from './src/risk/RiskGuardChain';
@@ -27,6 +30,9 @@ import { CircuitBreakerGuard, DailyLossLimitGuard, CooldownGuard, ConsecutiveLos
 import type { TradingContext } from './src/risk/types';
 // FIX L2: Removed duplicate imports of OCSLayer2 and OCSLayer3 that were at lines 22-23
 
+
+// Raw kline entry from Binance REST API: [openTime, open, high, low, close, volume, ...]
+type RawKline = [number, string, string, string, string, string, ...unknown[]];
 // FIX H4: Crypto trades 365 days/year, not 252 (equity markets)
 export const CRYPTO_TRADING_DAYS = 365;
 
@@ -161,7 +167,7 @@ export class BacktestEngine {
   private ocsEnhanced: OCSEnhanced;
   private sltpCalculator: SLTPCalculator;
   private enhancedWarmedUp: boolean = false;
-  private latestEnhancedOutput: any = null;
+  private latestEnhancedOutput: OCSEnhancedOutput | null = null;
   
   // 预计算数据存储
   // Pre-extracted arrays (computed once in precomputeAll, reused in signal generation)
@@ -171,8 +177,8 @@ export class BacktestEngine {
   private allVolumes: number[] = [];
 
   private precomputedIndicators: Map<number, TechnicalIndicators> = new Map();
-  private precomputedLayer1: any[] = [];
-  private precomputedLayer2: any[] = [];
+  private precomputedLayer1: Layer1Output[] = [];
+  private precomputedLayer2: Layer2Output[] = [];
   private precomputedFeatures3D: number[][] = [];
   
   private strategyEngine: StrategyEngineModule;
@@ -266,7 +272,7 @@ export class BacktestEngine {
         throw new Error(`Binance API error: ${res.status} ${res.statusText}`);
       }
 
-      const raw: any[] = await res.json();
+      const raw: RawKline[] = await res.json() as RawKline[];
       if (raw.length === 0) break;
 
       for (const k of raw) {
@@ -685,7 +691,7 @@ export class BacktestEngine {
    */
   private generateSignalFromPrecomputed(
     indicators: TechnicalIndicators,
-    l2Output: any,
+    l2Output: Layer2Output,
     currentPrice: number,
     index: number
   ): StrategySignal | null {

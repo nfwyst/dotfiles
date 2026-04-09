@@ -13,6 +13,46 @@ import {
   SENTIMENT_ANALYST_VERSION,
 } from './types';
 
+// ==================== Sentiment analysis types ====================
+
+/** Aggregated news sentiment analysis */
+interface NewsSentiment {
+  items: NewsItem[];
+  aggregateSentiment: number;
+  keyEvents: string[];
+  impactAssessment: 'positive' | 'negative' | 'neutral';
+}
+
+/** Social media sentiment analysis */
+interface SocialSentiment {
+  twitterSentiment: number;
+  redditSentiment: number;
+  trending: boolean;
+  volume: number;
+}
+
+/** Event analysis result */
+interface EventAnalysis {
+  upcomingEvents: Array<{
+    event: string;
+    date: number;
+    expectedImpact: 'high' | 'medium' | 'low';
+  }>;
+  recentEvents: string[];
+}
+
+/** Raw news API response shape */
+interface NewsApiResponse {
+  status: string;
+  articles?: Array<{
+    title: string;
+    description?: string;
+    source?: { name?: string };
+    publishedAt: string;
+    url: string;
+  }>;
+}
+
 export class SentimentAnalystAgent implements AnalystAgent {
   readonly name = 'SentimentAnalyst';
   readonly version = SENTIMENT_ANALYST_VERSION;
@@ -146,7 +186,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
     
     // 使用策略输出的共识 (如果有)
     if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus;
+      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
       if (consensus.type === 'buy') {
         score += 0.3;
         reasoning.push(`策略共识: 买入 (${consensus.strength}%)`);
@@ -167,7 +207,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
         items: [],
         aggregateSentiment: score,
         keyEvents: [],
-        impactAssessment: direction,
+        impactAssessment: direction === 'bullish' ? 'positive' : direction === 'bearish' ? 'negative' : 'neutral',
       },
       socialAnalysis: {
         twitterSentiment: score,
@@ -213,10 +253,19 @@ export class SentimentAnalystAgent implements AnalystAgent {
     try {
       const url = `https://newsapi.org/v2/everything?q=${symbol}&sortBy=publishedAt&pageSize=10&apiKey=${newsApiKey}`;
       const response = await fetch(url);
-      const data = await response.json() as any;
+      const rawData: unknown = await response.json();
       
-      if (data.status === 'ok' && data.articles) {
-        return data.articles.map((article: any) => ({
+      // Type-safe parsing
+      if (
+        rawData &&
+        typeof rawData === 'object' &&
+        'status' in rawData &&
+        (rawData as NewsApiResponse).status === 'ok' &&
+        'articles' in rawData &&
+        Array.isArray((rawData as NewsApiResponse).articles)
+      ) {
+        const data = rawData as NewsApiResponse;
+        return (data.articles || []).map((article) => ({
           title: article.title,
           summary: article.description || '',
           source: article.source?.name || 'unknown',
@@ -233,7 +282,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
     return [];
   }
   
-  private analyzeNewsSentiment(items: NewsItem[]): any {
+  private analyzeNewsSentiment(items: NewsItem[]): NewsSentiment {
     if (items.length === 0) {
       return {
         items: [],
@@ -282,7 +331,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
     };
   }
   
-  private analyzeSocialSentiment(context: AnalysisContext): any {
+  private analyzeSocialSentiment(context: AnalysisContext): SocialSentiment {
     // 简化版社交媒体分析
     // 实际应用中应该连接 Twitter API, Reddit API 等
     
@@ -291,7 +340,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
     // 如果有策略共识，作为社交情绪的代理
     let sentiment = 0;
     if (additionalData?.strategyConsensus) {
-      const consensus = additionalData.strategyConsensus;
+      const consensus = additionalData.strategyConsensus as { type: string; strength: number };
       if (consensus.type === 'buy') {
         sentiment = 0.3;
       } else if (consensus.type === 'sell') {
@@ -307,7 +356,7 @@ export class SentimentAnalystAgent implements AnalystAgent {
     };
   }
   
-  private analyzeEvents(context: AnalysisContext): any {
+  private analyzeEvents(context: AnalysisContext): EventAnalysis {
     // 事件分析 (简化版)
     // 实际应用中应该连接事件日历 API
     
@@ -318,8 +367,8 @@ export class SentimentAnalystAgent implements AnalystAgent {
   }
   
   private calculateOverallSentiment(
-    newsAnalysis: any,
-    socialAnalysis: any
+    newsAnalysis: NewsSentiment,
+    socialAnalysis: SocialSentiment
   ): { score: number; confidence: number; direction: 'bullish' | 'bearish' | 'neutral' } {
     // 加权平均
     const newsWeight = 0.6;

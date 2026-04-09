@@ -13,7 +13,7 @@ import OCSLayer4 from '../ocs/layer4';
 import SLTPCalculator from './slTpCalculator';
 import OCSEnhanced from '../ocs/enhanced/index';
 // OCS 2.0 新增导入
-import { sacExecutionAgent, State as SACState } from '../ocs/linearPolicyAgent';
+import { sacExecutionAgent, State as SACState, Action as SACAction } from '../ocs/linearPolicyAgent';
 
 export type StrategyType = 'ocs';
 
@@ -34,7 +34,7 @@ export interface StrategySignal {
   reasoning: string[];
   metadata?: {
     ocsFeatures?: [number, number, number];  // OCS 3D特征
-    technicalScores?: any;
+    technicalScores?: Record<string, number>;
     confirmations?: number;
   };
 }
@@ -45,7 +45,7 @@ export interface StrategyContext {
   currentPrice: number;
   balance: number;
   hasPosition: boolean;
-  currentPosition?: any;
+  currentPosition?: { direction: 'long' | 'short'; entryPrice: number; size: number } | null;
   marketContext: string;
 }
 
@@ -73,7 +73,7 @@ export class StrategyEngineModule {
   private sacEnabled: boolean = false;  // 默认禁用，直到训练完成
   private sacTrainingMode: boolean = false;
   private lastSACState: SACState | null = null;
-  private lastSACAction: any = null;
+  private lastSACAction: SACAction | null = null;
 
   constructor(strategy: StrategyType = 'ocs') {
     this.activeStrategy = strategy;
@@ -273,7 +273,7 @@ export class StrategyEngineModule {
    * OCS持仓管理
    */
   getOCSPosition() { return this.ocsLayer4.getPosition(); }
-  setOCSPosition(position: any) { this.ocsLayer4.setPosition(position); }
+  setOCSPosition(position: Parameters<OCSLayer4['setPosition']>[0]) { this.ocsLayer4.setPosition(position); }
   clearOCSPosition() { this.ocsLayer4.clearPosition(); }
 
   // ========== OCS 2.0: SAC训练方法 ==========

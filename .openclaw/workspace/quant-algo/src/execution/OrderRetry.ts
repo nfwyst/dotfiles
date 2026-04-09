@@ -46,7 +46,7 @@ export interface OrderRequest {
   stopLoss?: number;
   takeProfit?: number;
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -270,7 +270,7 @@ interface RetryQueueItem {
   startTime: number;
   nextRetryAt: number;
   history: RetryRecord[];
-  executor: () => Promise<any>;
+  executor: () => Promise<ExchangeOrderResult>;
 }
 
 /**
@@ -281,13 +281,13 @@ export class RetryQueue {
   private strategy: ExponentialBackoffStrategy;
   private checkInterval: NodeJS.Timeout | null = null;
   private processing: boolean = false;
-  private onRetrySuccess?: (orderId: string, result: any) => void;
+  private onRetrySuccess?: (orderId: string, result: ExchangeOrderResult) => void;
   private onRetryFailed?: (orderId: string, error: string) => void;
 
   constructor(
     strategy: ExponentialBackoffStrategy,
     config: {
-      onRetrySuccess?: (orderId: string, result: any) => void;
+      onRetrySuccess?: (orderId: string, result: ExchangeOrderResult) => void;
       onRetryFailed?: (orderId: string, error: string) => void;
     } = {}
   ) {
@@ -302,7 +302,7 @@ export class RetryQueue {
    */
   enqueue(
     request: OrderRequest,
-    executor: () => Promise<any>,
+    executor: () => Promise<ExchangeOrderResult>,
     retryCount: number = 0,
     history: RetryRecord[] = []
   ): void {
@@ -740,7 +740,7 @@ export class OrderRetryManager {
   /**
    * 处理重试成功
    */
-  private handleRetrySuccess(orderId: string, result: any): void {
+  private handleRetrySuccess(orderId: string, result: ExchangeOrderResult): void {
     const orderResult: OrderResult = {
       orderId,
       status: OrderStatus.FILLED,

@@ -46,7 +46,7 @@ export async function web_search(
       if (Array.isArray(parsed) && parsed.length > 0) {
         return {
           query,
-          results: parsed.slice(0, count).map((r: any) => ({
+          results: parsed.slice(0, count).map((r: Record<string, string>) => ({
             title: r.title || 'No title',
             snippet: r.snippet || r.description || '',
             url: r.url || '',
@@ -109,7 +109,7 @@ function generateContextualNews(query: string): { results: WebSearchResult[]; qu
 export async function session_status(): Promise<{
   time: string;
   model: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }> {
   try {
     const result = execSync('openclaw status --json 2>/dev/null || echo "{}"', {

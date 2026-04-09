@@ -577,7 +577,7 @@ export class LeakageControlledBacktest {
    * New implementation performs actual statistical and structural checks.
    */
   private checkLeakage(
-    signal: any,
+    signal: { action: 'buy' | 'sell' | 'hold'; size?: number; stopLoss?: number; takeProfit?: number; reason?: string; timestamp?: number; confidence?: number; entryPrice?: number },
     currentIndex: number,
     warnings: string[]
   ): void {

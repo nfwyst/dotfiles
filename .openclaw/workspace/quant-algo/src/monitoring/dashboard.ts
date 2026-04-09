@@ -3,11 +3,12 @@
  * 提供系统状态查询
  */
 
-import { PerformanceTracker, PerformanceReport } from './performanceTracker';
-import { AdaptiveOPRO, OPROStatus } from '../optimization/adaptiveOPRO';
+import { PerformanceTracker, PerformanceReport, TradeRecord, PerformanceMetrics } from './performanceTracker';
+import { AdaptiveOPRO, OPROStatus, OptimizationHistory } from '../optimization/adaptiveOPRO';
 import { TradingBotRuntime } from '../execution/tradingBot';
 import { MarketIntelligencePipeline } from '../agents/marketIntelligence';
 import { CentralTradingAgent } from '../agents/centralTradingAgent';
+import type { AgentStatus } from '../agents/centralTradingAgent/types';
 import logger from '../logger';
 
 // ==================== 类型定义 ====================
@@ -30,7 +31,7 @@ export interface SystemStatus {
     };
     centralTradingAgent: {
       healthy: boolean;
-      agentStatus: Record<string, any>;
+      agentStatus: Record<string, AgentStatus>;
     };
     opro: {
       healthy: boolean;
@@ -152,7 +153,7 @@ export class MonitoringDashboard {
   /**
    * 获取交易历史
    */
-  getTradeHistory(limit: number = 50): any[] {
+  getTradeHistory(limit: number = 50): TradeRecord[] {
     const trades = this.performanceTracker.getTradeHistory();
     return trades.slice(-limit);
   }
@@ -160,7 +161,7 @@ export class MonitoringDashboard {
   /**
    * 获取 OPRO 历史
    */
-  getOPROHistory(): any {
+  getOPROHistory(): OptimizationHistory {
     return this.opro.getHistory();
   }
   
@@ -208,7 +209,7 @@ export class MonitoringDashboard {
   
   // ==================== 私有方法 ====================
   
-  private getTradingBotStatus(): any {
+  private getTradingBotStatus(): SystemStatus['components']['tradingBot'] {
     if (!this.tradingBot) {
       return {
         running: false,
@@ -229,27 +230,27 @@ export class MonitoringDashboard {
     };
   }
   
-  private getMarketIntelligenceStatus(): any {
+  private getMarketIntelligenceStatus(): SystemStatus['components']['marketIntelligence'] {
     if (!this.marketIntelligence) {
       return { healthy: false, lastUpdate: 0 };
     }
     
     const status = this.marketIntelligence.getStatus();
-    const allHealthy = Object.values(status).every((s: any) => s.healthy);
+    const allHealthy = Object.values(status).every((s: AgentStatus) => s.healthy);
     
     return {
       healthy: allHealthy,
-      lastUpdate: Math.max(...Object.values(status).map((s: any) => s.lastRun || 0)),
+      lastUpdate: Math.max(...Object.values(status).map((s: AgentStatus) => s.lastRun || 0)),
     };
   }
   
-  private getCentralTradingAgentStatus(): any {
+  private getCentralTradingAgentStatus(): SystemStatus['components']['centralTradingAgent'] {
     if (!this.centralTradingAgent) {
       return { healthy: false, agentStatus: {} };
     }
     
     const status = this.centralTradingAgent.getAgentsStatus();
-    const allHealthy = Object.values(status).every((s: any) => s.healthy);
+    const allHealthy = Object.values(status).every((s: AgentStatus) => s.healthy);
     
     return {
       healthy: allHealthy,
@@ -257,7 +258,7 @@ export class MonitoringDashboard {
     };
   }
   
-  private getOPROStatus(): any {
+  private getOPROStatus(): SystemStatus['components']['opro'] {
     const status = this.opro.getStatus();
     
     return {
@@ -268,7 +269,7 @@ export class MonitoringDashboard {
     };
   }
   
-  private updateAlerts(metrics: any): void {
+  private updateAlerts(metrics: PerformanceMetrics): void {
     const now = Date.now();
     
     // 清理旧告警

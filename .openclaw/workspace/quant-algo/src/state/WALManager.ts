@@ -76,7 +76,7 @@ export class WALManager {
   // ------------------------------------------------------------------
 
   /** Append an operation to the WAL and return its sequence number. */
-  async append(operation: WALOperationType, data: any): Promise<number> {
+  async append(operation: WALOperationType, data: unknown): Promise<number> {
     const sequence = ++this.currentSequence;
 
     const entry: WALEntry = {

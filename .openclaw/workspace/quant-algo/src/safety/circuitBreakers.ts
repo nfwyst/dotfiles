@@ -5,7 +5,7 @@
  */
 
 import { CircuitBreaker } from './CircuitBreaker';
-import type { CircuitBreakerConfig, CircuitState } from './CircuitBreaker';
+import type { CircuitBreakerConfig, CircuitState, StateChangeEvent, CircuitBreakerStats } from './CircuitBreaker';
 import logger from '../logger';
 
 // ==================== 预配置熔断器实例 ====================
@@ -100,7 +100,7 @@ export class CircuitBreakerManager {
   private breakers: Map<string, CircuitBreaker> = new Map();
   
   /** 全局告警回调 */
-  private globalAlertCallbacks: Array<(name: string, event: any) => void> = [];
+  private globalAlertCallbacks: Array<(name: string, event: StateChangeEvent) => void> = [];
 
   private constructor() {
     // 注册预配置熔断器
@@ -144,8 +144,8 @@ export class CircuitBreakerManager {
   /**
    * 获取所有熔断器状态
    */
-  getAllStates(): Record<string, { state: CircuitState; stats: any }> {
-    const result: Record<string, { state: CircuitState; stats: any }> = {};
+  getAllStates(): Record<string, { state: CircuitState; stats: CircuitBreakerStats }> {
+    const result: Record<string, { state: CircuitState; stats: CircuitBreakerStats }> = {};
     
     for (const [name, breaker] of this.breakers) {
       result[name] = {
@@ -197,21 +197,21 @@ export class CircuitBreakerManager {
   /**
    * 注册全局告警回调
    */
-  onGlobalAlert(callback: (name: string, event: any) => void): void {
+  onGlobalAlert(callback: (name: string, event: StateChangeEvent) => void): void {
     this.globalAlertCallbacks.push(callback);
   }
 
   /**
    * 移除全局告警回调
    */
-  offGlobalAlert(callback: (name: string, event: any) => void): void {
+  offGlobalAlert(callback: (name: string, event: StateChangeEvent) => void): void {
     this.globalAlertCallbacks = this.globalAlertCallbacks.filter(cb => cb !== callback);
   }
 
   /**
    * 处理告警
    */
-  private handleAlert(name: string, event: any): void {
+  private handleAlert(name: string, event: StateChangeEvent): void {
     logger.warn(`🚨 [CircuitBreakerManager] 熔断告警: ${name}`, event);
     
     for (const callback of this.globalAlertCallbacks) {

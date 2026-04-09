@@ -365,14 +365,14 @@ export function setSpanAttributes(attributes: SpanAttributes): void {
 /**
  * 同步函数追踪包装器
  */
-export function traced<T extends (...args: any[]) => any>(
+export function traced<T extends (...args: unknown[]) => unknown>(
   name: string,
   options: TracingOptions = {}
-): (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> {
-  return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
+): (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> {
+  return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    descriptor.value = function (this: any, ...args: Parameters<T>): ReturnType<T> {
+    descriptor.value = function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
       if (!tracingManager.isEnabled()) {
         return originalMethod.apply(this, args);
       }
@@ -427,14 +427,14 @@ export function traced<T extends (...args: any[]) => any>(
 /**
  * 异步函数追踪包装器
  */
-export function tracedAsync<T extends (...args: any[]) => Promise<any>>(
+export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
   name: string,
   options: TracingOptions = {}
-): (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> {
-  return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
+): (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> {
+  return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    descriptor.value = async function (this: any, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
+    descriptor.value = async function (this: unknown, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
       if (!tracingManager.isEnabled()) {
         return originalMethod.apply(this, args);
       }
@@ -567,7 +567,7 @@ export async function traceAsyncFunction<T>(
 /**
  * 过滤敏感数据
  */
-function filterSensitiveData(data: any, sensitiveFields: string[] = []): any {
+function filterSensitiveData(data: unknown, sensitiveFields: string[] = []): unknown {
   const defaultSensitiveFields = [
     'password',
     'secret',
@@ -592,7 +592,7 @@ function filterSensitiveData(data: any, sensitiveFields: string[] = []): any {
     return data.map(item => filterSensitiveData(item, sensitiveFields));
   }
 
-  const filtered: Record<string, any> = {};
+  const filtered: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const lowerKey = key.toLowerCase();
     if (fieldsToHide.some(field => lowerKey.includes(field.toLowerCase()))) {

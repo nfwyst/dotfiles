@@ -7,15 +7,23 @@ import { MarketData, OHLCV } from '../events/types';
 import { config } from '../config';
 import logger from '../logger';
 
+/** Minimal interface for the CCXT exchange methods used by LiveDataFeed. */
+interface CCXTExchange {
+  loadMarkets(): Promise<unknown>;
+  fetchOHLCV(symbol: string, timeframe: string, since?: number, limit?: number): Promise<number[][]>;
+  fetchTicker(symbol: string): Promise<{ last?: number }>;
+  fetchOrderBook(symbol: string, limit?: number): Promise<{ bids: Array<[number, number]>; asks: Array<[number, number]> }>;
+}
+
 export class LiveDataFeed implements DataFeed {
   readonly mode: TradingMode;
-  private exchange: any; // CCXT exchange instance
+  private exchange: CCXTExchange;
   private symbol: string;
   private timeframe: string;
   private running: boolean = false;
   private lastTimestamp: number = 0;
 
-  constructor(mode: 'live' | 'paper', exchange: any) {
+  constructor(mode: 'live' | 'paper', exchange: CCXTExchange) {
     this.mode = mode;
     this.exchange = exchange;
     this.symbol = config.symbol;
@@ -41,7 +49,7 @@ export class LiveDataFeed implements DataFeed {
         undefined,
         200,
       );
-      const ohlcv: OHLCV[] = candles.map((c: any) => ({
+      const ohlcv: OHLCV[] = candles.map((c: number[]) => ({
         timestamp: c[0],
         open: c[1],
         high: c[2],
@@ -57,7 +65,7 @@ export class LiveDataFeed implements DataFeed {
         undefined,
         100,
       );
-      const higherTfOhlcv: OHLCV[] = htfCandles.map((c: any) => ({
+      const higherTfOhlcv: OHLCV[] = htfCandles.map((c: number[]) => ({
         timestamp: c[0],
         open: c[1],
         high: c[2],
