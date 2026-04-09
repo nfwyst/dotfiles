@@ -99,7 +99,7 @@ describe('WALManager', () => {
     const files = fs.readdirSync(walDir).filter(f => f.startsWith('wal-') && f.endsWith('.log'));
     expect(files.length).toBeGreaterThanOrEqual(1);
     // Check naming pattern: wal-YYYY-MM-DDTHH-MM-SS.log
-    expect(files[0]).toMatch(/^wal-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.log$/);
+    expect(files[0]!).toMatch(/^wal-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.log$/);
   });
 
   // ── Checksums ─────────────────────────────────────────────────
@@ -111,8 +111,8 @@ describe('WALManager', () => {
 
     // Read the raw WAL file and check the entry has a checksum
     const files = fs.readdirSync(walDir).filter(f => f.startsWith('wal-'));
-    const content = fs.readFileSync(path.join(walDir, files[0]), 'utf-8');
-    const entry = JSON.parse(content.trim().split('\n')[0]);
+    const content = fs.readFileSync(path.join(walDir, files[0]!), 'utf-8');
+    const entry = JSON.parse(content.trim().split('\n')[0]!);
     expect(entry.checksum).toBeTruthy();
     expect(typeof entry.checksum).toBe('string');
     expect(entry.checksum.length).toBe(16); // sha256 truncated to 16 hex chars
@@ -127,7 +127,7 @@ describe('WALManager', () => {
 
     // Corrupt the WAL file by appending invalid JSON
     const files = fs.readdirSync(walDir).filter(f => f.startsWith('wal-'));
-    fs.appendFileSync(path.join(walDir, files[0]), 'THIS IS NOT VALID JSON\n');
+    fs.appendFileSync(path.join(walDir, files[0]!), 'THIS IS NOT VALID JSON\n');
 
     // Append a valid entry after the corrupt one
     await wal.append('updateTrading', { balance: 200 });
@@ -256,7 +256,7 @@ describe('WALManager', () => {
 
     // Simulate a crash: append a truncated JSON line
     const files = fs.readdirSync(walDir).filter(f => f.startsWith('wal-'));
-    fs.appendFileSync(path.join(walDir, files[0]), '{"sequence":2,"timestamp":123,"opera');
+    fs.appendFileSync(path.join(walDir, files[0]!), '{"sequence":2,"timestamp":123,"opera');
 
     const baseState = createDefaultState();
     const recovered = await wal.recover(baseState);

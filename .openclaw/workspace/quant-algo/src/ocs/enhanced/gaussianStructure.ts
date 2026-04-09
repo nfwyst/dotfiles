@@ -88,8 +88,8 @@ export class GaussianStructure {
     for (let j = 0; j < actualWindow; j++) {
       const dataIndex = i - halfWindow + j;
       if (dataIndex >= 0 && dataIndex < data.length) {
-        smoothed += data[dataIndex] * normalizedWeights[j];
-        currentWeightSum += normalizedWeights[j];
+        smoothed += data[dataIndex]! * normalizedWeights[j]!;
+        currentWeightSum += normalizedWeights[j]!;
       }
     }
 
@@ -97,7 +97,7 @@ export class GaussianStructure {
     if (currentWeightSum > 0) {
       return smoothed / currentWeightSum * weightSum;
     }
-    return data[i];
+    return data[i]!;
   }
 
   /**
@@ -130,8 +130,8 @@ export class GaussianStructure {
       for (let j = 0; j < actualWindow; j++) {
         const dataIndex = i - halfWindow + j;
         if (dataIndex >= 0 && dataIndex < data.length) {
-          smoothed += data[dataIndex] * normalizedWeights[j];
-          currentWeightSum += normalizedWeights[j];
+          smoothed += data[dataIndex]! * normalizedWeights[j]!;
+          currentWeightSum += normalizedWeights[j]!;
         }
       }
       
@@ -139,12 +139,12 @@ export class GaussianStructure {
       if (currentWeightSum > 0) {
         smoothedValues.push(smoothed / currentWeightSum * weightSum);
       } else {
-        smoothedValues.push(data[i]);
+        smoothedValues.push(data[i]!);
       }
     }
     
     return {
-      value: smoothedValues[smoothedValues.length - 1],
+      value: smoothedValues[smoothedValues.length - 1]!,
       weights: normalizedWeights,
       sigma: sig,
       windowSize: actualWindow,

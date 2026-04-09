@@ -120,15 +120,15 @@ export class OCSLayer1 {
     let weightedSum = 0;
     
     for (let i = 0; i < period; i++) {
-      totalVolume += recentVolumes[i];
-      weightedSum += recentPrices[i] * recentVolumes[i];
+      totalVolume += recentVolumes[i]!;
+      weightedSum += recentPrices[i]! * recentVolumes[i]!;
     }
     
     const bandMult = this.config.vpm.bandMultiplier;
 
     // BUG 16 FIX: Guard against totalVolume === 0
     if (totalVolume === 0) {
-      const currentPrice = prices[prices.length - 1];
+      const currentPrice = prices[prices.length - 1]!;
       return {
         value: currentPrice,
         upperBand: currentPrice,
@@ -142,12 +142,12 @@ export class OCSLayer1 {
     // 计算标准差
     let variance = 0;
     for (let i = 0; i < period; i++) {
-      variance += Math.pow(recentPrices[i] - mean, 2);
+      variance += Math.pow(recentPrices[i]! - mean, 2);
     }
     variance /= period;
     const std = Math.sqrt(variance);
     
-    const currentPrice = prices[prices.length - 1];
+    const currentPrice = prices[prices.length - 1]!;
     
     // BUG 16 FIX: Guard against std === 0
     if (std === 0) {
@@ -177,11 +177,11 @@ export class OCSLayer1 {
     const { fastLength, slowLength, erPeriod, trendThreshold } = this.config.ama;
     
     if (prices.length < erPeriod) {
-      return { value: prices[prices.length - 1], trend: 'flat', period: 20 };
+      return { value: prices[prices.length - 1]!, trend: 'flat', period: 20 };
     }
     
     // BUG 7 FIX: Compute AMA iteratively with per-bar adaptive smoothing constant
-    let ama = prices[0];
+    let ama = prices[0]!;
     let prevAma = ama;
     let lastSC = 0;
     
@@ -189,10 +189,10 @@ export class OCSLayer1 {
       // Compute ER for this bar (need at least erPeriod bars of history)
       let sc: number;
       if (i >= erPeriod) {
-        const change = Math.abs(prices[i] - prices[i - erPeriod]);
+        const change = Math.abs(prices[i]! - prices[i - erPeriod]!);
         let volatility = 0;
         for (let j = i - erPeriod + 1; j <= i; j++) {
-          volatility += Math.abs(prices[j] - prices[j - 1]);
+          volatility += Math.abs(prices[j]! - prices[j - 1]!);
         }
         const er = volatility === 0 ? 0 : change / volatility;
         
@@ -205,7 +205,7 @@ export class OCSLayer1 {
       }
       
       prevAma = ama;
-      ama = sc * prices[i] + (1 - sc) * ama;
+      ama = sc * prices[i]! + (1 - sc) * ama;
       lastSC = sc;
     }
     
@@ -227,9 +227,9 @@ export class OCSLayer1 {
     const { period, multiplier } = this.config.supertrend;
     
     const atr = this.calculateATR(highs, lows, closes, period);
-    const lastClose = closes[closes.length - 1];
-    const lastHigh = highs[highs.length - 1];
-    const lastLow = lows[lows.length - 1];
+    const lastClose = closes[closes.length - 1]!;
+    const lastHigh = highs[highs.length - 1]!;
+    const lastLow = lows[lows.length - 1]!;
     
     const hl2 = (lastHigh + lastLow) / 2;
     let basicUpperBand = hl2 + multiplier * atr;
@@ -299,7 +299,7 @@ export class OCSLayer1 {
     
     const lowestLow = Math.min(...lows.slice(-kPeriod));
     const highestHigh = Math.max(...highs.slice(-kPeriod));
-    const currentClose = closes[closes.length - 1];
+    const currentClose = closes[closes.length - 1]!;
     
     // BUG 22 FIX: Guard against highestHigh === lowestLow
     const k = highestHigh === lowestLow ? 50 : ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
@@ -311,7 +311,7 @@ export class OCSLayer1 {
       for (let i = 0; i < dPeriod; i++) {
         const periodLowest = Math.min(...lows.slice(-kPeriod - i, -i || undefined));
         const periodHighest = Math.max(...highs.slice(-kPeriod - i, -i || undefined));
-        const periodClose = closes[closes.length - 1 - i];
+        const periodClose = closes[closes.length - 1 - i]!;
         // BUG 22 FIX: Also guard the inner stochastic computation
         const periodK = periodHighest === periodLowest ? 50 : ((periodClose - periodLowest) / (periodHighest - periodLowest)) * 100;
         sumK += periodK;
@@ -336,9 +336,9 @@ export class OCSLayer1 {
     const trs: number[] = [];
     for (let i = 1; i < closes.length; i++) {
       const tr = Math.max(
-        highs[i] - lows[i],
-        Math.abs(highs[i] - closes[i - 1]),
-        Math.abs(lows[i] - closes[i - 1])
+        highs[i]! - lows[i]!,
+        Math.abs(highs[i]! - closes[i - 1]!),
+        Math.abs(lows[i]! - closes[i - 1]!)
       );
       trs.push(tr);
     }

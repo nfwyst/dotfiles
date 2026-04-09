@@ -87,8 +87,8 @@ export class TailRiskModel {
 
     // Compute returns from consecutive candles
     for (let i = 1; i < ohlcv.length; i++) {
-      if (ohlcv[i - 1].close > 0) {
-        const ret = (ohlcv[i].close - ohlcv[i - 1].close) / ohlcv[i - 1].close;
+      if (ohlcv[i - 1]!.close > 0) {
+        const ret = (ohlcv[i]!.close - ohlcv[i - 1]!.close) / ohlcv[i - 1]!.close;
         this.returns.push(ret);
       }
     }
@@ -246,7 +246,7 @@ export class TailRiskModel {
     // Average of the worst returns
     let tailSum = 0;
     for (let i = 0; i < tailCount; i++) {
-      tailSum += sorted[i];
+      tailSum += sorted[i]!;
     }
 
     const avgTailReturn = tailSum / tailCount;

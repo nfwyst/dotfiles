@@ -207,35 +207,38 @@ export class WALManager {
 
   static applyOperation(state: UnifiedState, entry: WALEntry): UnifiedState {
     const s = { ...state };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = entry.data as Record<string, any>;
+
 
     switch (entry.operation) {
       case 'updateTrading':
-        s.trading = { ...s.trading, ...entry.data };
+        s.trading = { ...s.trading, ...data };
         break;
       case 'updatePosition':
-        if (entry.data.position) s.trading.lastPosition = s.trading.position;
+        if (data.position) s.trading.lastPosition = s.trading.position;
         // FIX H7: Migrate legacy position fields during WAL replay
-        s.trading.position = migratePosition(entry.data.position);
+        s.trading.position = migratePosition(data.position);
         s.trading.lastCheck = Date.now();
         break;
       case 'recordTrade':
         s.trading.tradeCount++;
-        s.trading.totalPnL += entry.data.pnl || 0;
+        s.trading.totalPnL += data.pnl || 0;
         break;
       case 'updateLLM':
-        s.llm = { ...s.llm, ...entry.data };
+        s.llm = { ...s.llm, ...data };
         break;
       case 'updateNotification':
-        s.notification = { ...s.notification, ...entry.data };
+        s.notification = { ...s.notification, ...data };
         break;
       case 'updateStrategy':
-        s.strategy = { ...s.strategy, ...entry.data };
+        s.strategy = { ...s.strategy, ...data };
         break;
       case 'updateDaemon':
-        s.daemon = { ...s.daemon, ...entry.data };
+        s.daemon = { ...s.daemon, ...(entry.data as Record<string, unknown>) };
         break;
       case 'updateCache':
-        s.cache = { ...s.cache, ...entry.data };
+        s.cache = { ...s.cache, ...(entry.data as Record<string, unknown>) };
         break;
       case 'heartbeat':
         s.daemon.lastHeartbeat = Date.now();
@@ -359,8 +362,9 @@ export class WALManager {
       const entries = this.readWALFile(file.path);
       for (let i = entries.length - 1; i >= 0; i--) {
         const e = entries[i]!;
-        if (e.operation === 'checkpoint' && e.data?.stateSnapshot) {
-          const snapshot = e.data.stateSnapshot;
+        const eData = e.data as Record<string, unknown> | undefined;
+        if (e.operation === 'checkpoint' && eData && 'stateSnapshot' in eData) {
+          const snapshot = eData.stateSnapshot;
           if (isUnifiedState(snapshot)) {
             return { state: snapshot, sequence: e.sequence };
           }

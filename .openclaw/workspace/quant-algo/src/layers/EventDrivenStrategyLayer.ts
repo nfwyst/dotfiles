@@ -281,7 +281,7 @@ export class EventDrivenStrategyLayer {
     // Feed the latest candle to the OrderFlowAnalyzer. It works even
     // without an order book (falls back to TFI from OHLCV).
     if (context.recentCandles && context.recentCandles.length > 0) {
-      const latestCandle = context.recentCandles[context.recentCandles.length - 1];
+      const latestCandle = context.recentCandles[context.recentCandles.length - 1]!;
       const ohlcvCandle = {
         timestamp: Date.now(),
         open: latestCandle.open,
@@ -321,7 +321,7 @@ export class EventDrivenStrategyLayer {
     // Feed the latest candle to the MTF aggregator and use the trend
     // alignment score to filter counter-trend trades.
     if (context.recentCandles && context.recentCandles.length > 0) {
-      const latestCandle = context.recentCandles[context.recentCandles.length - 1];
+      const latestCandle = context.recentCandles[context.recentCandles.length - 1]!;
       const ohlcvCandle = {
         timestamp: Date.now(),
         open: latestCandle.open,
@@ -518,7 +518,7 @@ export class EventDrivenStrategyLayer {
       currentPrice: context.currentPrice,
       balance: context.balance,
       hasPosition: context.position !== null && context.position.side !== 'none',
-      currentPosition: context.position,
+      currentPosition: context.position ? { direction: context.position.side === 'none' ? 'long' as const : context.position.side, entryPrice: context.position.entryPrice, size: context.position.size } : context.position,
       marketContext: `price=${context.currentPrice}`,
     };
   }

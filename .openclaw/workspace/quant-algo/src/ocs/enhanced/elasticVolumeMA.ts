@@ -66,7 +66,7 @@ export class ElasticVolumeMA {
     const capacity = this.lookbackPeriod + 1;
     if (this.ringCount >= capacity) {
       // Remove outgoing value from running stats
-      const outVol = this.volumeRing[this.ringHead];
+      const outVol = this.volumeRing[this.ringHead]!;
       this.volSum -= outVol;
       this.volSumSq -= outVol * outVol;
     } else {
@@ -98,15 +98,15 @@ export class ElasticVolumeMA {
     for (let j = 0; j < period; j++) {
       // Index into ring: most recent is at (ringHead - 1), going backward
       const idx = (this.ringHead - 1 - j + capacity * 2) % capacity;
-      const v = this.volumeRing[idx];
-      const p = this.priceRing[idx];
+      const v = this.volumeRing[idx]!;
+      const p = this.priceRing[idx]!;
       const posInWindow = period - j; // 1..period (1 = oldest in window, period = newest)
       const timeWeight = posInWindow / period;
 
       let trendWeight = 1;
       if (j < period - 1) {
         const nextIdx = (this.ringHead - 2 - j + capacity * 2) % capacity;
-        const prevPrice = this.priceRing[nextIdx];
+        const prevPrice = this.priceRing[nextIdx]!;
         if (prevPrice !== 0) {
           const priceChange = (p - prevPrice) / prevPrice;
           trendWeight = 1 + priceChange * 5;
@@ -208,12 +208,12 @@ export class ElasticVolumeMA {
       // 价格趋势权重
       let trendWeight = 1;
       if (j > 0) {
-        const priceChange = (priceSlice[j] - priceSlice[j - 1]) / priceSlice[j - 1];
+        const priceChange = (priceSlice[j]! - priceSlice[j - 1]!) / priceSlice[j - 1]!;
         trendWeight = 1 + priceChange * 5;
       }
       
       const weight = timeWeight * Math.max(0.5, trendWeight);
-      weightedSum += volumeSlice[j] * weight;
+      weightedSum += volumeSlice[j]! * weight;
       weightSum += weight;
     }
     
@@ -229,10 +229,10 @@ export class ElasticVolumeMA {
     // 3. 标准化到 -1 到 1
     const normalized = stdVolume === 0 
       ? 0 
-      : Math.max(-1, Math.min(1, (volumes[i] - meanVolume) / (stdVolume * 2)));
+      : Math.max(-1, Math.min(1, (volumes[i]! - meanVolume) / (stdVolume * 2)));
     
     // 4. 计算弹性系数
-    const elasticity = meanVolume === 0 ? 0 : (volumes[i] / meanVolume - 1);
+    const elasticity = meanVolume === 0 ? 0 : (volumes[i]! / meanVolume - 1);
     
     // 5. 相对强度
     const relativeStrength = elasticity * 100;
@@ -273,11 +273,11 @@ export class ElasticVolumeMA {
       const timeWeight = (j + 1) / period;
       let trendWeight = 1;
       if (j > 0) {
-        const priceChange = (priceSlice[j] - priceSlice[j - 1]) / priceSlice[j - 1];
+        const priceChange = (priceSlice[j]! - priceSlice[j - 1]!) / priceSlice[j - 1]!;
         trendWeight = 1 + priceChange * 5;
       }
       const weight = timeWeight * Math.max(0.5, trendWeight);
-      weightedSum += volumeSlice[j] * weight;
+      weightedSum += volumeSlice[j]! * weight;
       weightSum += weight;
     }
     

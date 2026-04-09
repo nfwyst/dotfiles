@@ -50,12 +50,12 @@ export class LiveDataFeed implements DataFeed {
         200,
       );
       const ohlcv: OHLCV[] = candles.map((c: number[]) => ({
-        timestamp: c[0],
-        open: c[1],
-        high: c[2],
-        low: c[3],
-        close: c[4],
-        volume: c[5],
+        timestamp: c[0]!,
+        open: c[1]!,
+        high: c[2]!,
+        low: c[3]!,
+        close: c[4]!,
+        volume: c[5]!,
       }));
 
       // Fetch higher timeframe
@@ -66,12 +66,12 @@ export class LiveDataFeed implements DataFeed {
         100,
       );
       const higherTfOhlcv: OHLCV[] = htfCandles.map((c: number[]) => ({
-        timestamp: c[0],
-        open: c[1],
-        high: c[2],
-        low: c[3],
-        close: c[4],
-        volume: c[5],
+        timestamp: c[0]!,
+        open: c[1]!,
+        high: c[2]!,
+        low: c[3]!,
+        close: c[4]!,
+        volume: c[5]!,
       }));
 
       // Get current price

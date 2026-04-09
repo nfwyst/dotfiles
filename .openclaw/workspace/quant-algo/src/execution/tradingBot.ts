@@ -239,17 +239,17 @@ export class TradingBotRuntime {
         logger.warn(`Config file has invalid shape: ${fullPath}`);
         return false;
       }
-      this.config = validated;
+      this.config = validated as TradingBotConfig;
       
       // 检查配置是否过期（仅警告，不阻止加载）
-      if (this.config.validUntil) {
-        const validUntil = new Date(this.config.validUntil).getTime();
+      if (this.config!.validUntil) {
+        const validUntil = new Date(this.config!.validUntil).getTime();
         if (Date.now() > validUntil) {
-          logger.warn(`⚠️ Config expired at ${this.config.validUntil}, but still using it`);
+          logger.warn(`⚠️ Config expired at ${this.config!.validUntil}, but still using it`);
         }
       }
       
-      logger.info(`✅ Loaded config v${this.config.version}, valid until ${this.config.validUntil}`);
+      logger.info(`✅ Loaded config v${this.config!.version}, valid until ${this.config!.validUntil}`);
       return true;
       
     } catch (error: unknown) {
@@ -417,12 +417,12 @@ export class TradingBotRuntime {
       // [timestamp, open, high, low, close, volume]
       // Convert to object format for downstream use
       const ohlcv = rawOhlcv.map((k: number[]) => ({
-        timestamp: k[0],
-        open: k[1],
-        high: k[2],
-        low: k[3],
-        close: k[4],
-        volume: k[5],
+        timestamp: k[0]!,
+        open: k[1]!,
+        high: k[2]!,
+        low: k[3]!,
+        close: k[4]!,
+        volume: k[5]!,
       }));
       
       // BUG 5 FIX: Use getCurrentPrice() instead of raw signed request with malformed URL
@@ -437,7 +437,7 @@ export class TradingBotRuntime {
       // 计算成交量比率
       const volumes = ohlcv.map((c: OHLCVCandle) => c.volume);
       const avgVolume = volumes.slice(-20).reduce((a: number, b: number) => a + b, 0) / 20;
-      const volumeRatio = volumes[volumes.length - 1] / avgVolume;
+      const volumeRatio = volumes[volumes.length - 1]! / avgVolume;
       
       // ✅ 改进：使用 SMA 判断趋势
       const closes = ohlcv.map((c: OHLCVCandle) => c.close);
@@ -651,7 +651,7 @@ export class TradingBotRuntime {
     if (!this.config || this.position.side === 'none') return;
     
     const { currentPrice, trendUp, trendDown, trendStrength } = marketData;
-    const { stopLoss, trailing, trailingPercent } = this.config.exitConditions.stopLoss;
+    const { atrMultiplier: stopLoss, trailing, trailingPercent } = this.config.exitConditions.stopLoss;
     
     // ✅ 改进：趋势反转保护
     if (this.position.side === 'short' && trendUp && trendStrength > 50) {
@@ -695,10 +695,10 @@ export class TradingBotRuntime {
     const pnlPercent = ((currentPrice - this.position.entryPrice) / this.position.entryPrice) * 100;
     const adjustedPnl = this.position.side === 'short' ? -pnlPercent : pnlPercent;
     
-    if (adjustedPnl > this.config.exitConditions.takeProfit.levels[0]) {
-      const portion = this.config.exitConditions.takeProfit.portions[0];
-      const closeSize = this.position.size * portion;
-      logger.info(`🎯 止盈触发: +${adjustedPnl.toFixed(2)}%, 平仓 ${portion * 100}%`);
+    if (adjustedPnl > this.config.exitConditions.takeProfit.levels[0]!) {
+      const portion = this.config.exitConditions.takeProfit.portions[0]!;
+      const closeSize = this.position.size * portion!;
+      logger.info(`🎯 止盈触发: +${adjustedPnl.toFixed(2)}%, 平仓 ${portion! * 100}%`);
       await this.partialClose(closeSize, 'take_profit', currentPrice);
     }
   }
@@ -768,7 +768,7 @@ export class TradingBotRuntime {
       side,
       size: this.position.size,
       price,
-      type: reason,
+      type: reason as TradeRecord['type'],
       pnl,
       reason: `Position closed: ${reason}`,
     });
@@ -870,7 +870,7 @@ export class TradingBotRuntime {
   // ==================== 辅助方法 ====================
   
   private calculateSMA(data: number[], period: number): number {
-    if (data.length < period) return data[data.length - 1];
+    if (data.length < period) return data[data.length - 1]!;
     return data.slice(-period).reduce((a, b) => a + b, 0) / period;
   }
   
@@ -879,9 +879,9 @@ export class TradingBotRuntime {
     
     const trValues: number[] = [];
     for (let i = 1; i < ohlcv.length; i++) {
-      const high = ohlcv[i].high;
-      const low = ohlcv[i].low;
-      const prevClose = ohlcv[i - 1].close;
+      const high = ohlcv[i]!.high;
+      const low = ohlcv[i]!.low;
+      const prevClose = ohlcv[i - 1]!.close;
       
       const tr = Math.max(
         high - low,

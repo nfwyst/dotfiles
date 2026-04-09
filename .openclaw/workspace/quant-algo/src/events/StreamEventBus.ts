@@ -366,11 +366,11 @@ export class StreamEventBus extends EventEmitter {
 
     const id = this.generateEventId();
     const timestamp = Date.now();
-    const fullEvent: TradingEvent = {
+    const fullEvent = {
       ...event,
       id,
       timestamp,
-    };
+    } as TradingEvent;
 
     const streamKey = this.getStreamKey(event.channel);
 
@@ -561,9 +561,9 @@ export class StreamEventBus extends EventEmitter {
     }
 
     try {
-      const event = parseTradingEvent(messageData.data || '{}');
+      const event = (parseTradingEvent(messageData.data || '{}') as unknown as TradingEvent);
       if (!event) {
-        logger.warn(\`[EventValidation] Dropping invalid event for message \${messageId} on \${channel}\`);
+        logger.warn(`[EventValidation] Dropping invalid event for message ${messageId} on ${channel}`);
         if (autoAck) {
           await this.ack(channel, messageId, groupName);
         }
@@ -593,7 +593,7 @@ export class StreamEventBus extends EventEmitter {
       await this.client.expire(retryMetaKey, 600); // 10 min TTL
 
       // 执行处理器
-      const result = handler(event);
+      const result = handler(event as TradingEvent);
       if (result instanceof Promise) {
         await result;
       }
@@ -672,7 +672,7 @@ export class StreamEventBus extends EventEmitter {
 
     const dlqMessage: DLQMessage = {
       id: messageId,
-      data: parseTradingEvent(messageData.data || '{}') ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+      data: (parseTradingEvent(messageData.data || '{}') as unknown as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
       retryCount: parseInt(messageData.retryCount || '0', 10),
       lastError: messageData.lastError,
       deliveredCount: parseInt(messageData.deliveredCount || '0', 10),
@@ -792,8 +792,8 @@ export class StreamEventBus extends EventEmitter {
       return asXPendingDetailResult(pending).map(([id, consumer, idle, delivered]) => ({
         id,
         consumer,
-        idleTime: parseInt(idle, 10),
-        deliveredCount: parseInt(delivered, 10),
+        idleTime: parseInt(String(idle), 10),
+        deliveredCount: parseInt(String(delivered), 10),
       }));
     } catch (err) {
       logger.error(`Failed to get pending messages for ${channel}:`, err);
@@ -826,7 +826,7 @@ export class StreamEventBus extends EventEmitter {
             if (dlqMsg) {
               messages.push({
                 id,
-                data: dlqMsg.originalEvent ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+                data: (dlqMsg.originalEvent as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
                 retryCount: dlqMsg.retryCount ?? parseInt(data.retryCount || '0', 10),
                 lastError: data.lastError,
                 deliveredCount: parseInt(data.deliveredCount || '0', 10),
@@ -870,7 +870,7 @@ export class StreamEventBus extends EventEmitter {
         const parsedDlq = parseDLQMessage(data.data || '{}');
         const dlqMessage: DLQMessage | null = parsedDlq ? {
           id: messageId,
-          data: parsedDlq.originalEvent ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+          data: (parsedDlq.originalEvent ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} }) as TradingEvent,
           retryCount: parsedDlq.retryCount ?? parseInt(data.retryCount || '0', 10),
           lastError: data.lastError,
           deliveredCount: parseInt(data.deliveredCount || '0', 10),
@@ -878,7 +878,7 @@ export class StreamEventBus extends EventEmitter {
           reason: parsedDlq.error ?? '',
         } : null;
         if (!dlqMessage) {
-          logger.warn(\`[EventValidation] Failed to parse DLQ message \${messageId}\`);
+          logger.warn(`[EventValidation] Failed to parse DLQ message ${messageId}`);
           return;
         }
 
@@ -965,7 +965,7 @@ export class StreamEventBus extends EventEmitter {
           }
           messages.push({
             id,
-            data: parseTradingEvent(data.data || '{}') ?? { id: '', channel: '', timestamp: 0, source: 'System' as const, correlationId: '', payload: {} },
+            data: (parseTradingEvent(data.data || '{}') as unknown as TradingEvent) ?? { id: '', channel: '' as EventChannel, timestamp: 0, source: 'System' as const, correlationId: '', payload: {} } as TradingEvent,
             retryCount: parseInt(data.retryCount || '0', 10),
             lastError: data.lastError,
             deliveredCount: parseInt(data.deliveredCount || '0', 10),

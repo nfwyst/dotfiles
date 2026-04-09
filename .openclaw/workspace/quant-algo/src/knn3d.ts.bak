@@ -236,12 +236,12 @@ export class KNN3DClassifier {
     
     // 计算加权平均收益
     const weightedAvgReturn = neighbors.reduce((sum, n, i) => {
-      return sum + n.futureReturn * normalizedWeights[i]!;
+      return sum + n.futureReturn * normalizedWeights[i];
     }, 0);
     
     // 计算加权正收益比例
     const positiveWeight = neighbors.reduce((sum, n, i) => {
-      return sum + (n.futureReturn > 0 ? normalizedWeights[i]! : 0);
+      return sum + (n.futureReturn > 0 ? normalizedWeights[i] : 0);
     }, 0);
 
     // 6. 动态分类决策
@@ -334,11 +334,11 @@ export class KNN3DClassifier {
 
     // 6. 加权投票
     const weightedAvgReturn = neighbors.reduce((sum, n, i) => {
-      return sum + n.futureReturn * normalizedWeights[i]!;
+      return sum + n.futureReturn * normalizedWeights[i];
     }, 0);
     
     const positiveWeight = neighbors.reduce((sum, n, i) => {
-      return sum + (n.futureReturn > 0 ? normalizedWeights[i]! : 0);
+      return sum + (n.futureReturn > 0 ? normalizedWeights[i] : 0);
     }, 0);
 
     // 7. 分类决策
@@ -393,11 +393,11 @@ export class KNN3DClassifier {
     const features = this.history.map(h => h.features);
     
     for (let i = 0; i < 3; i++) {
-      const values = features.map(f => f[i]!);
+      const values = features.map(f => f[i]);
       this.featureMeans[i] = values.reduce((a, b) => a + b, 0) / values.length;
       
       const variance = values.reduce((sum, val) => {
-        return sum + Math.pow(val - this.featureMeans[i]!, 2);
+        return sum + Math.pow(val - this.featureMeans[i], 2);
       }, 0) / values.length;
       
       this.featureStds[i] = Math.sqrt(variance) || 0.2;
@@ -500,8 +500,8 @@ export class KNN3DClassifier {
         // 随机选择两个样本进行插值
         const idx1 = Math.floor(Math.random() * patterns.length);
         const idx2 = Math.floor(Math.random() * patterns.length);
-        const p1 = patterns[idx1]!;
-        const p2 = patterns[idx2]!;
+        const p1 = patterns[idx1];
+        const p2 = patterns[idx2];
         
         // 线性插值（0.3-0.7 之间随机）
         const alpha = 0.3 + Math.random() * 0.4;
@@ -559,8 +559,8 @@ export class KNN3DClassifier {
         // 随机选择两个样本进行插值
         const idx1 = Math.floor(Math.random() * classPatterns.length);
         const idx2 = Math.floor(Math.random() * classPatterns.length);
-        const p1 = classPatterns[idx1]!;
-        const p2 = classPatterns[idx2]!;
+        const p1 = classPatterns[idx1];
+        const p2 = classPatterns[idx2];
         
         // 线性插值
         const alpha = 0.3 + Math.random() * 0.4; // 0.3-0.7
@@ -613,7 +613,7 @@ export class KNN3DClassifier {
     const recentPrices = prices.slice(-lookback);
     const minPrice = Math.min(...recentPrices);
     const maxPrice = Math.max(...recentPrices);
-    const currentPrice = prices[prices.length - 1]!;
+    const currentPrice = prices[prices.length - 1];
     const pricePosition = maxPrice > minPrice
       ? (currentPrice - minPrice) / (maxPrice - minPrice)
       : 0.5;
@@ -621,7 +621,7 @@ export class KNN3DClassifier {
     // 2. 成交量弹性（使用 EMA）
     const recentVolumes = volumes.slice(-20);
     const emaVolume = this.calculateEMA(recentVolumes, 10);
-    const currentVolume = volumes[volumes.length - 1]!;
+    const currentVolume = volumes[volumes.length - 1];
     const volumeElasticity = emaVolume > 0
       ? Math.min(3, currentVolume / emaVolume) / 3
       : 0.5;
@@ -638,9 +638,9 @@ export class KNN3DClassifier {
   private calculateEMA(data: number[], period: number): number {
     if (data.length === 0) return 0;
     const k = 2 / (period + 1);
-    let ema: number = data[0]!;
+    let ema = data[0];
     for (let i = 1; i < data.length; i++) {
-      ema = data[i]! * k + ema * (1 - k);
+      ema = data[i] * k + ema * (1 - k);
     }
     return ema;
   }
@@ -698,7 +698,7 @@ export class KNN3DClassifier {
     
     const returns: number[] = [];
     for (let i = prices.length - period + 1; i < prices.length; i++) {
-      returns.push((prices[i]! - prices[i - 1]!) / prices[i - 1]!);
+      returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
     }
     
     const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
@@ -796,12 +796,12 @@ export class KNN3DClassifier {
             const permuteIdx1 = Math.floor(Math.random() * 3);
             const permuteIdx2 = Math.floor(Math.random() * 3);
             if (permuteIdx1 !== permuteIdx2) {
-              const temp = augmentedFeatures[permuteIdx1]!;
+              const temp = augmentedFeatures[permuteIdx1];
               const alpha = 0.9; // 保留 90% 原值
               augmentedFeatures[permuteIdx1] = 
-                alpha * temp + (1 - alpha) * augmentedFeatures[permuteIdx2]!;
+                alpha * temp + (1 - alpha) * augmentedFeatures[permuteIdx2];
               augmentedFeatures[permuteIdx2] = 
-                alpha * augmentedFeatures[permuteIdx2]! + (1 - alpha) * temp;
+                alpha * augmentedFeatures[permuteIdx2] + (1 - alpha) * temp;
             }
             break;
         }

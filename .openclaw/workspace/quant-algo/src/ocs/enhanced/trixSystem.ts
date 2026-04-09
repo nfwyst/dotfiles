@@ -175,10 +175,10 @@ export class TRIXSystem {
   private ema(data: number[], period: number): number[] {
     const multiplier = 2 / (period + 1);
     const result: number[] = [];
-    let ema = data[0];
+    let ema = data[0]!;
     
     for (let i = 0; i < data.length; i++) {
-      ema = (data[i] - ema) * multiplier + ema;
+      ema = (data[i]! - ema) * multiplier + ema;
       result.push(ema);
     }
     
@@ -222,8 +222,8 @@ export class TRIXSystem {
     trixValues.push(0); // 第一个值设为0
     
     for (let i = 1; i < ema3.length; i++) {
-      const trix = ema3[i - 1] !== 0 
-        ? ((ema3[i] - ema3[i - 1]) / ema3[i - 1]) * 100
+      const trix = ema3[i - 1]! !== 0 
+        ? ((ema3[i]! - ema3[i - 1]!) / ema3[i - 1]!) * 100
         : 0;
       trixValues.push(trix);
     }
@@ -235,8 +235,8 @@ export class TRIXSystem {
     const result: TRIXData[] = [];
     
     for (let i = 0; i < trixValues.length; i++) {
-      const trix = trixValues[i];
-      const signal = signalValues[i];
+      const trix = trixValues[i]!;
+      const signal = signalValues[i]!;
       const histogram = trix - signal;
       
       // 判断趋势
@@ -254,14 +254,14 @@ export class TRIXSystem {
       
       if (i > 0) {
         // 金叉: TRIX上穿Signal
-        crossOver = trixValues[i - 1] < signalValues[i - 1] && trix >= signal;
+        crossOver = trixValues[i - 1]! < signalValues[i - 1]! && trix >= signal;
         
         // 死叉: TRIX下穿Signal
-        crossUnder = trixValues[i - 1] > signalValues[i - 1] && trix <= signal;
+        crossUnder = trixValues[i - 1]! > signalValues[i - 1]! && trix <= signal;
         
         // 零轴穿越
-        zeroCross = (trixValues[i - 1] < 0 && trix >= 0) || 
-                    (trixValues[i - 1] > 0 && trix <= 0);
+        zeroCross = (trixValues[i - 1]! < 0 && trix >= 0) || 
+                    (trixValues[i - 1]! > 0 && trix <= 0);
       }
       
       result.push({
@@ -284,7 +284,7 @@ export class TRIXSystem {
    */
   getLatestSignal(prices: number[]): TRIXData {
     const data = this.calculate(prices);
-    return data[data.length - 1];
+    return data[data.length - 1]!;
   }
 
   /**
@@ -296,8 +296,8 @@ export class TRIXSystem {
     reasoning: string[];
   } {
     const data = this.calculate(prices);
-    const current = data[data.length - 1];
-    const prev = data[data.length - 2];
+    const current = data[data.length - 1]!;
+    const prev = data[data.length - 2]!;
     
     const reasoning: string[] = [];
     

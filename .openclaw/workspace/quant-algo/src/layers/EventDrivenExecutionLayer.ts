@@ -302,7 +302,7 @@ export class EventDrivenExecutionLayer {
           `(trained=${regimeResult.isTrained}, regime=${regimeResult.label})`
         );
       } else if (this.hmmWarmedUp) {
-        const latestCandle = ohlcv[ohlcv.length - 1];
+        const latestCandle = ohlcv[ohlcv.length - 1]!;
         this.hmmDetector.update(latestCandle);
       }
     } catch (error) {
@@ -312,13 +312,13 @@ export class EventDrivenExecutionLayer {
     try {
       if (!this.tailRiskWarmedUp && ohlcv.length >= 2) {
         this.tailRisk.batchUpdate(ohlcv);
-        this.lastClose = ohlcv[ohlcv.length - 1].close;
+        this.lastClose = ohlcv[ohlcv.length - 1]!.close;
         this.tailRiskWarmedUp = true;
         logger.info(
           `[ExecutionLayer] TailRisk batch initialized with ${ohlcv.length} candles`
         );
       } else if (this.tailRiskWarmedUp) {
-        const latestCandle = ohlcv[ohlcv.length - 1];
+        const latestCandle = ohlcv[ohlcv.length - 1]!;
         if (this.lastClose > 0) {
           this.tailRisk.update(latestCandle, this.lastClose);
         }

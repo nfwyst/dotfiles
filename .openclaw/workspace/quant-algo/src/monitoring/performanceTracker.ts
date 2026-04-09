@@ -149,7 +149,7 @@ export class PerformanceTracker {
   calculateMetrics(): PerformanceMetrics {
     const now = Date.now();
     const startDate = this.trades.length > 0 
-      ? this.trades[0].timestamp 
+      ? this.trades[0]!.timestamp 
       : now;
     
     // 收益指标
@@ -413,8 +413,8 @@ export class PerformanceTracker {
   /**
    * 更新日指标
    */
-  private updateDailyMetrics(trade: TradeRecord): void {
-    const today = new Date().toISOString().split('T')[0];
+  private updateDailyMetrics(trade: Omit<TradeRecord, 'id'>): void {
+    const today = new Date().toISOString().split('T')[0]!;
     
     let daily = this.dailyMetrics.find(d => d.date === today);
     
@@ -436,19 +436,19 @@ export class PerformanceTracker {
     
     // 更新
     if (trade.pnl !== undefined) {
-      daily.pnl += trade.pnl;
-      daily.endBalance = this.balance;
-      daily.roi = daily.pnl / daily.startBalance;
-      daily.peakBalance = Math.max(daily.peakBalance, this.balance);
+      daily!.pnl += trade.pnl;
+      daily!.endBalance = this.balance;
+      daily!.roi = daily!.pnl / daily!.startBalance;
+      daily!.peakBalance = Math.max(daily!.peakBalance, this.balance);
       
       if (trade.pnl > 0) {
-        daily.winCount++;
+        daily!.winCount++;
       } else if (trade.pnl < 0) {
-        daily.lossCount++;
+        daily!.lossCount++;
       }
     }
     
-    daily.tradeCount++;
+    daily!.tradeCount++;
   }
   
   /**

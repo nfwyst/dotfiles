@@ -41,7 +41,7 @@ describe('InformationCoefficientTracker', () => {
     const predictions = [1, 5, 2, 8, 3, 7, 4, 6, 9, 0, 11, 15, 12, 18, 13, 17, 14, 16, 19, 10];
     const actuals = [10, 0, 15, 5, 12, 8, 18, 2, 6, 14, 1, 11, 16, 3, 19, 7, 13, 9, 4, 17];
     for (let i = 0; i < predictions.length; i++) {
-      tracker.addObservation(predictions[i], actuals[i]);
+      tracker.addObservation(predictions[i]!, actuals[i]!);
     }
     const ic = tracker.getIC();
     // Should be close to 0 (not exactly 0 due to finite sample)
@@ -125,8 +125,8 @@ describe('InformationCoefficientTracker', () => {
     const t2 = new InformationCoefficientTracker(50);
     const data = Array.from({ length: 30 }, (_, i) => [i * 1.5, i * 2.0]);
     for (const [p, a] of data) {
-      t1.addObservation(p, a);
-      t2.addObservation(p, a);
+      t1.addObservation(p!, a!);
+      t2.addObservation(p!, a!);
     }
     expect(t1.getIC()).toBe(t2.getIC());
   });

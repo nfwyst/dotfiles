@@ -449,7 +449,7 @@ ${historyText}
     const improvements: number[] = [];
     for (let i = 1; i < this.optimizationHistory.length; i++) {
       improvements.push(
-        this.optimizationHistory[i].score - this.optimizationHistory[i - 1].score
+        this.optimizationHistory[i]!.score - this.optimizationHistory[i - 1]!.score
       );
     }
     
@@ -534,3 +534,6 @@ ${historyText}
 }
 
 export default AdaptiveOPRO;
+
+// Re-export types used by downstream consumers
+export type { OPROStatus, OptimizationHistory } from './types';

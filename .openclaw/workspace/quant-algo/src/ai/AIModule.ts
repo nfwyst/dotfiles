@@ -1,4 +1,3 @@
-/**
 import { config } from '../config';
 import logger from '../logger';
 import { aiCircuitBreaker } from '../safety/circuitBreakers';
@@ -160,7 +159,7 @@ Respond in JSON format:
         summary: result.summary,
       };
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -188,14 +187,14 @@ Respond in JSON format:
       return { isAnomaly: false, severity: 0, reason: '数据不足' };
     }
     
-    const current = ohlcv[ohlcv.length - 1];
-    const prev = ohlcv[ohlcv.length - 2];
+    const current = ohlcv[ohlcv.length - 1]!;
+    const prev = ohlcv[ohlcv.length - 2]!;
     const recent = ohlcv.slice(-10);
     
-    const currentPrice = current[4];
-    const prevPrice = prev[4];
-    const currentVolume = current[5];
-    const avgVolume = recent.reduce((sum, c) => sum + c[5], 0) / recent.length;
+    const currentPrice = current[4]!;
+    const prevPrice = prev[4]!;
+    const currentVolume = current[5]!;
+    const avgVolume = recent.reduce((sum, c) => sum + c[5]!, 0) / recent.length;
     
     // 检测 1: 闪崩 (5分钟内跌幅 > 3%)
     const priceChange = (currentPrice - prevPrice) / prevPrice;
@@ -209,10 +208,10 @@ Respond in JSON format:
     }
     
     // 检测 2: 假突破 (长上影线 + 高成交量)
-    const high = current[2];
-    const low = current[3];
-    const open = current[1];
-    const close = current[4];
+    const high = current[2]!;
+    const low = current[3]!;
+    const open = current[1]!;
+    const close = current[4]!;
     const bodySize = Math.abs(close - open);
     const wickSize = high - Math.max(open, close);
     
@@ -257,7 +256,7 @@ Respond in JSON format:
     volatility: number,
     trend: 'up' | 'down' | 'sideways'
   ): StrategyRecommendation {
-    const currentPrice = ohlcv[ohlcv.length - 1][4];
+    const currentPrice = ohlcv[ohlcv.length - 1]![4]!;
     const atr = this.calculateATR(ohlcv);
     const volatilityPercent = atr / currentPrice;
     
@@ -344,7 +343,7 @@ Respond in JSON format:
     
     // 3. 波动率影响
     const atr = this.calculateATR(ohlcv);
-    const volatility = atr / ohlcv[ohlcv.length - 1][4];
+    const volatility = atr / ohlcv[ohlcv.length - 1]![4]!;
     if (volatility > 0.02) {
       riskLevel = 'high';
       reasons.push('高波动警告');
@@ -412,8 +411,8 @@ Respond in JSON format:
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
     
     const recent = ohlcv.slice(-20);
-    const prices = recent.map(c => c[4]);
-    const volumes = recent.map(c => c[5]);
+    const prices = recent.map(c => c[4]!);
+    const volumes = recent.map(c => c[5]!);
     
     // 1. 波动率增加
     const volatility = this.calculateVolatility(prices);
@@ -423,8 +422,8 @@ Respond in JSON format:
     }
     
     // 2. 成交量下降（可能预示变盘）
-    const avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
-    const lastVolume = volumes[volumes.length - 1];
+    const avgVolume = volumes.reduce((a, b) => a! + b!, 0) / volumes.length;
+    const lastVolume = volumes[volumes.length - 1]!;
     if (lastVolume < avgVolume * 0.5) {
       warnings.push('成交量萎缩，可能即将变盘');
     }
@@ -432,8 +431,8 @@ Respond in JSON format:
     // 3. 连续同方向K线
     let consecutive = 1;
     for (let i = prices.length - 1; i > 0; i--) {
-      if ((prices[i] > prices[i - 1] && prices[i - 1] > prices[i - 2]) ||
-          (prices[i] < prices[i - 1] && prices[i - 1] < prices[i - 2])) {
+      if ((prices[i]! > prices[i - 1]! && prices[i - 1]! > prices[i - 2]!) ||
+          (prices[i]! < prices[i - 1]! && prices[i - 1]! < prices[i - 2]!)) {
         consecutive++;
       } else {
         break;
@@ -453,12 +452,12 @@ Respond in JSON format:
     
     const trValues: number[] = [];
     for (let i = ohlcv.length - period; i < ohlcv.length; i++) {
-      const current = ohlcv[i];
-      const prev = ohlcv[i - 1];
+      const current = ohlcv[i]!;
+      const prev = ohlcv[i - 1]!;
       
-      const high = current[2];
-      const low = current[3];
-      const prevClose = prev[4];
+      const high = current[2]!;
+      const low = current[3]!;
+      const prevClose = prev[4]!;
       
       const tr = Math.max(
         high - low,
@@ -477,7 +476,7 @@ Respond in JSON format:
     
     const returns: number[] = [];
     for (let i = 1; i < prices.length; i++) {
-      returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+      returns.push((prices[i]! - prices[i - 1]!) / prices[i - 1]!);
     }
     
     const mean = returns.reduce((a, b) => a + b, 0) / returns.length;

@@ -229,7 +229,7 @@ export class HMMRegimeDetector {
 
     // Run Viterbi on the full observation window to get the last state
     const stateSequence = this.viterbi(this.observations);
-    const lastState = stateSequence[stateSequence.length - 1]!;
+    const lastState = stateSequence[stateSequence.length - 1];
     const regime = this.mapStateToRegime(lastState);
 
     // Compute the filtered probability of each regime at the last time step
@@ -237,7 +237,7 @@ export class HMMRegimeDetector {
     const T = this.observations.length;
 
     // alpha is already scaled so that sum_i alpha[t][i] = 1 at each t
-    const lastAlpha = alpha[T - 1]!;
+    const lastAlpha = alpha[T - 1];
     const probabilities = this.regimeProbabilities(lastAlpha);
 
     const positionScaling = this.getPositionScaling(regime, probabilities);
@@ -317,8 +317,8 @@ export class HMMRegimeDetector {
     const logReturns: number[] = new Array(ohlcv.length);
     logReturns[0] = 0;
     for (let i = 1; i < ohlcv.length; i++) {
-      const prev = ohlcv[i - 1]!.close;
-      const cur = ohlcv[i]!.close;
+      const prev = ohlcv[i - 1].close;
+      const cur = ohlcv[i].close;
       // Guard against zero / negative prices
       if (prev <= 0 || cur <= 0) {
         logReturns[i] = 0;
@@ -337,14 +337,14 @@ export class HMMRegimeDetector {
 
     for (let t = L + 1; t < ohlcv.length; t++) {
       // --- 1. Log return at t ---
-      const logRet = logReturns[t]!;
+      const logRet = logReturns[t];
 
       // --- 2. Realised volatility (rolling std of log returns * annualisation) ---
       let sumRet = 0;
       let sumRetSq = 0;
       for (let j = t - L; j < t; j++) {
-        sumRet += logReturns[j]!;
-        sumRetSq += logReturns[j]! * logReturns[j]!;
+        sumRet += logReturns[j];
+        sumRetSq += logReturns[j] * logReturns[j];
       }
       const meanRet = sumRet / L;
       let variance = sumRetSq / L - meanRet * meanRet;
@@ -354,10 +354,10 @@ export class HMMRegimeDetector {
       // --- 3. Volume change: ln(volume[t] / mean(volume over lookback)) ---
       let volSum = 0;
       for (let j = t - L; j < t; j++) {
-        volSum += ohlcv[j]!.volume;
+        volSum += ohlcv[j].volume;
       }
       const meanVol = volSum / L;
-      const curVol = ohlcv[t]!.volume;
+      const curVol = ohlcv[t].volume;
       let volumeChange: number;
       if (meanVol <= 0 || curVol <= 0) {
         volumeChange = 0;
@@ -393,7 +393,7 @@ export class HMMRegimeDetector {
   private train(observations: number[][]): void {
     const N = this.config.numStates;
     const T = observations.length;
-    const D = observations[0]!.length;
+    const D = observations[0].length;
 
     // 1. Initialise parameters with K-means
     this.initializeWithKMeans(observations, N);
@@ -416,12 +416,12 @@ export class HMMRegimeDetector {
       for (let t = 0; t < T; t++) {
         let norm = 0;
         for (let i = 0; i < N; i++) {
-          gamma[t]![i] = alpha[t]![i]! * beta[t]![i]!;
-          norm += gamma[t]![i]!;
+          gamma[t][i] = alpha[t][i] * beta[t][i];
+          norm += gamma[t][i];
         }
         if (norm > 0) {
           for (let i = 0; i < N; i++) {
-            gamma[t]![i]! /= norm;
+            gamma[t][i] /= norm;
           }
         }
       }
@@ -432,18 +432,18 @@ export class HMMRegimeDetector {
         for (let i = 0; i < N; i++) {
           for (let j = 0; j < N; j++) {
             const emProb = this.gaussianPdf(
-              observations[t + 1]!,
-              this.means[j]!,
-              this.variances[j]!,
+              observations[t + 1],
+              this.means[j],
+              this.variances[j],
             );
-            xi[t]![i]![j] = alpha[t]![i]! * this.A[i]![j]! * emProb * beta[t + 1]![j]!;
-            norm += xi[t]![i]![j]!;
+            xi[t][i][j] = alpha[t][i] * this.A[i][j] * emProb * beta[t + 1][j];
+            norm += xi[t][i][j];
           }
         }
         if (norm > 0) {
           for (let i = 0; i < N; i++) {
             for (let j = 0; j < N; j++) {
-              xi[t]![i]![j]! /= norm;
+              xi[t][i][j] /= norm;
             }
           }
         }
@@ -453,21 +453,21 @@ export class HMMRegimeDetector {
 
       // Update pi
       for (let i = 0; i < N; i++) {
-        this.pi[i] = gamma[0]![i]!;
+        this.pi[i] = gamma[0][i];
       }
 
       // Update A
       for (let i = 0; i < N; i++) {
         let gammaSum = 0;
         for (let t = 0; t < T - 1; t++) {
-          gammaSum += gamma[t]![i]!;
+          gammaSum += gamma[t][i];
         }
         for (let j = 0; j < N; j++) {
           let xiSum = 0;
           for (let t = 0; t < T - 1; t++) {
-            xiSum += xi[t]![i]![j]!;
+            xiSum += xi[t][i][j];
           }
-          this.A[i]![j] = gammaSum > 0 ? xiSum / gammaSum : 1 / N;
+          this.A[i][j] = gammaSum > 0 ? xiSum / gammaSum : 1 / N;
         }
       }
 
@@ -475,14 +475,14 @@ export class HMMRegimeDetector {
       for (let i = 0; i < N; i++) {
         let gammaSum = 0;
         for (let t = 0; t < T; t++) {
-          gammaSum += gamma[t]![i]!;
+          gammaSum += gamma[t][i];
         }
         for (let d = 0; d < D; d++) {
           let weightedSum = 0;
           for (let t = 0; t < T; t++) {
-            weightedSum += gamma[t]![i]! * observations[t]![d]!;
+            weightedSum += gamma[t][i] * observations[t][d];
           }
-          this.means[i]![d] = gammaSum > 0 ? weightedSum / gammaSum : 0;
+          this.means[i][d] = gammaSum > 0 ? weightedSum / gammaSum : 0;
         }
       }
 
@@ -490,18 +490,18 @@ export class HMMRegimeDetector {
       for (let i = 0; i < N; i++) {
         let gammaSum = 0;
         for (let t = 0; t < T; t++) {
-          gammaSum += gamma[t]![i]!;
+          gammaSum += gamma[t][i];
         }
         for (let d = 0; d < D; d++) {
           let weightedSqSum = 0;
           for (let t = 0; t < T; t++) {
-            const diff = observations[t]![d]! - this.means[i]![d]!;
-            weightedSqSum += gamma[t]![i]! * diff * diff;
+            const diff = observations[t][d] - this.means[i][d];
+            weightedSqSum += gamma[t][i] * diff * diff;
           }
-          this.variances[i]![d] = gammaSum > 0 ? weightedSqSum / gammaSum : 1;
+          this.variances[i][d] = gammaSum > 0 ? weightedSqSum / gammaSum : 1;
           // Enforce variance floor
-          if (this.variances[i]![d]! < MIN_VARIANCE) {
-            this.variances[i]![d] = MIN_VARIANCE;
+          if (this.variances[i][d] < MIN_VARIANCE) {
+            this.variances[i][d] = MIN_VARIANCE;
           }
         }
       }
@@ -509,7 +509,7 @@ export class HMMRegimeDetector {
       // Compute log-likelihood from scaling factors
       let logLikelihood = 0;
       for (let t = 0; t < T; t++) {
-        logLikelihood += Math.log(scalingFactors[t]! + EPS);
+        logLikelihood += Math.log(scalingFactors[t] + EPS);
       }
 
       // Check convergence
@@ -544,13 +544,13 @@ export class HMMRegimeDetector {
     // t = 0
     let c0 = 0;
     for (let i = 0; i < N; i++) {
-      alpha[0]![i] = this.pi[i]! * this.gaussianPdf(obs[0]!, this.means[i]!, this.variances[i]!);
-      c0 += alpha[0]![i]!;
+      alpha[0][i] = this.pi[i] * this.gaussianPdf(obs[0], this.means[i], this.variances[i]);
+      c0 += alpha[0][i];
     }
     c0 = c0 > 0 ? c0 : EPS;
     scalingFactors[0] = c0;
     for (let i = 0; i < N; i++) {
-      alpha[0]![i]! /= c0;
+      alpha[0][i] /= c0;
     }
 
     // t = 1 ... T-1
@@ -559,15 +559,15 @@ export class HMMRegimeDetector {
       for (let j = 0; j < N; j++) {
         let sum = 0;
         for (let i = 0; i < N; i++) {
-          sum += alpha[t - 1]![i]! * this.A[i]![j]!;
+          sum += alpha[t - 1][i] * this.A[i][j];
         }
-        alpha[t]![j] = sum * this.gaussianPdf(obs[t]!, this.means[j]!, this.variances[j]!);
-        ct += alpha[t]![j]!;
+        alpha[t][j] = sum * this.gaussianPdf(obs[t], this.means[j], this.variances[j]);
+        ct += alpha[t][j];
       }
       ct = ct > 0 ? ct : EPS;
       scalingFactors[t] = ct;
       for (let j = 0; j < N; j++) {
-        alpha[t]![j]! /= ct;
+        alpha[t][j] /= ct;
       }
     }
 
@@ -589,7 +589,7 @@ export class HMMRegimeDetector {
 
     // t = T-1 (initialise)
     for (let i = 0; i < N; i++) {
-      beta[T - 1]![i] = 1;
+      beta[T - 1][i] = 1;
     }
 
     // t = T-2 ... 0
@@ -598,16 +598,16 @@ export class HMMRegimeDetector {
         let sum = 0;
         for (let j = 0; j < N; j++) {
           sum +=
-            this.A[i]![j]! *
-            this.gaussianPdf(obs[t + 1]!, this.means[j]!, this.variances[j]!) *
-            beta[t + 1]![j]!;
+            this.A[i][j] *
+            this.gaussianPdf(obs[t + 1], this.means[j], this.variances[j]) *
+            beta[t + 1][j];
         }
-        beta[t]![i] = sum;
+        beta[t][i] = sum;
       }
       // Scale with the *next* time step's factor (same factor used for alpha[t+1])
-      const ct1 = scalingFactors[t + 1]! > 0 ? scalingFactors[t + 1]! : EPS;
+      const ct1 = scalingFactors[t + 1] > 0 ? scalingFactors[t + 1] : EPS;
       for (let i = 0; i < N; i++) {
-        beta[t]![i]! /= ct1;
+        beta[t][i] /= ct1;
       }
     }
 
@@ -633,9 +633,9 @@ export class HMMRegimeDetector {
 
     // Initialisation
     for (let i = 0; i < N; i++) {
-      delta[0]![i] =
-        Math.log(this.pi[i]! + EPS) +
-        this.logGaussianPdf(obs[0]!, this.means[i]!, this.variances[i]!);
+      delta[0][i] =
+        Math.log(this.pi[i] + EPS) +
+        this.logGaussianPdf(obs[0], this.means[i], this.variances[i]);
     }
 
     // Recursion
@@ -644,15 +644,15 @@ export class HMMRegimeDetector {
         let bestVal = -Infinity;
         let bestIdx = 0;
         for (let i = 0; i < N; i++) {
-          const val = delta[t - 1]![i]! + Math.log(this.A[i]![j]! + EPS);
+          const val = delta[t - 1][i] + Math.log(this.A[i][j] + EPS);
           if (val > bestVal) {
             bestVal = val;
             bestIdx = i;
           }
         }
-        delta[t]![j] =
-          bestVal + this.logGaussianPdf(obs[t]!, this.means[j]!, this.variances[j]!);
-        psi[t]![j] = bestIdx;
+        delta[t][j] =
+          bestVal + this.logGaussianPdf(obs[t], this.means[j], this.variances[j]);
+        psi[t][j] = bestIdx;
       }
     }
 
@@ -661,15 +661,15 @@ export class HMMRegimeDetector {
     let bestFinal = -Infinity;
     states[T - 1] = 0;
     for (let i = 0; i < N; i++) {
-      if (delta[T - 1]![i]! > bestFinal) {
-        bestFinal = delta[T - 1]![i]!;
+      if (delta[T - 1][i] > bestFinal) {
+        bestFinal = delta[T - 1][i];
         states[T - 1] = i;
       }
     }
 
     // Backtracking
     for (let t = T - 2; t >= 0; t--) {
-      states[t] = psi[t + 1]![states[t + 1]!]!;
+      states[t] = psi[t + 1][states[t + 1]];
     }
 
     return states;
@@ -688,11 +688,11 @@ export class HMMRegimeDetector {
     let logP = 0;
     for (let d = 0; d < D; d++) {
       // BUG 7 FIX (partial): Return EPS for NaN/Infinity input
-      if (!isFinite(x[d]!) || !isFinite(mean[d]!) || !isFinite(variance[d]!)) {
+      if (!isFinite(x[d]) || !isFinite(mean[d]) || !isFinite(variance[d])) {
         return EPS;
       }
-      const v = variance[d]! > MIN_VARIANCE ? variance[d]! : MIN_VARIANCE;
-      const diff = x[d]! - mean[d]!;
+      const v = variance[d] > MIN_VARIANCE ? variance[d] : MIN_VARIANCE;
+      const diff = x[d] - mean[d];
       logP += -0.5 * Math.log(2 * Math.PI * v) - (diff * diff) / (2 * v);
     }
     // Clamp to avoid underflow producing exactly 0
@@ -707,11 +707,11 @@ export class HMMRegimeDetector {
     let logP = 0;
     for (let d = 0; d < D; d++) {
       // BUG 7 FIX (partial): Return a very negative log-prob for NaN/Infinity input
-      if (!isFinite(x[d]!) || !isFinite(mean[d]!) || !isFinite(variance[d]!)) {
+      if (!isFinite(x[d]) || !isFinite(mean[d]) || !isFinite(variance[d])) {
         return -700;
       }
-      const v = variance[d]! > MIN_VARIANCE ? variance[d]! : MIN_VARIANCE;
-      const diff = x[d]! - mean[d]!;
+      const v = variance[d] > MIN_VARIANCE ? variance[d] : MIN_VARIANCE;
+      const diff = x[d] - mean[d];
       logP += -0.5 * Math.log(2 * Math.PI * v) - (diff * diff) / (2 * v);
     }
     return logP;
@@ -730,7 +730,7 @@ export class HMMRegimeDetector {
    */
   private initializeWithKMeans(obs: number[][], k: number): void {
     const T = obs.length;
-    const D = obs[0]!.length;
+    const D = obs[0].length;
 
     // ---------- Seed centroids deterministically with K-means++ ----------
     const centroids: number[][] = [];
@@ -739,23 +739,23 @@ export class HMMRegimeDetector {
     const globalMean = new Array(D).fill(0);
     for (let t = 0; t < T; t++) {
       for (let d = 0; d < D; d++) {
-        globalMean[d]! += obs[t]![d]!;
+        globalMean[d] += obs[t][d];
       }
     }
     for (let d = 0; d < D; d++) {
-      globalMean[d]! /= T;
+      globalMean[d] /= T;
     }
 
     let bestIdx = 0;
     let bestDist = Infinity;
     for (let t = 0; t < T; t++) {
-      const dist = this.squaredDistance(obs[t]!, globalMean);
+      const dist = this.squaredDistance(obs[t], globalMean);
       if (dist < bestDist) {
         bestDist = dist;
         bestIdx = t;
       }
     }
-    centroids.push([...obs[bestIdx]!]);
+    centroids.push([...obs[bestIdx]]);
 
     // Subsequent centroids: deterministic K-means++ (pick the farthest point)
     while (centroids.length < k) {
@@ -764,7 +764,7 @@ export class HMMRegimeDetector {
       for (let t = 0; t < T; t++) {
         let minDist = Infinity;
         for (const c of centroids) {
-          const d = this.squaredDistance(obs[t]!, c);
+          const d = this.squaredDistance(obs[t], c);
           if (d < minDist) minDist = d;
         }
         if (minDist > farthestDist) {
@@ -772,7 +772,7 @@ export class HMMRegimeDetector {
           farthestIdx = t;
         }
       }
-      centroids.push([...obs[farthestIdx]!]);
+      centroids.push([...obs[farthestIdx]]);
     }
 
     // ---------- K-means iterations ----------
@@ -786,7 +786,7 @@ export class HMMRegimeDetector {
         let bestC = 0;
         let bestD = Infinity;
         for (let c = 0; c < k; c++) {
-          const d = this.squaredDistance(obs[t]!, centroids[c]!);
+          const d = this.squaredDistance(obs[t], centroids[c]);
           if (d < bestD) {
             bestD = d;
             bestC = c;
@@ -805,13 +805,13 @@ export class HMMRegimeDetector {
         const c = assignments[t];
         counts[c]++;
         for (let d = 0; d < D; d++) {
-          sums[c]![d]! += obs[t]![d]!;
+          sums[c][d] += obs[t][d];
         }
       }
       for (let c = 0; c < k; c++) {
         if (counts[c] > 0) {
           for (let d = 0; d < D; d++) {
-            centroids[c]![d] = sums[c]![d]! / counts[c]!;
+            centroids[c][d] = sums[c][d] / counts[c];
           }
         }
       }
@@ -830,9 +830,9 @@ export class HMMRegimeDetector {
           }
           // Split the largest cluster: perturb its centroid slightly
           for (let d = 0; d < D; d++) {
-            const perturbation = Math.abs(centroids[largestCluster]![d]!) * 0.1 + 1e-6;
-            centroids[c]![d] = centroids[largestCluster]![d]! + perturbation;
-            centroids[largestCluster]![d] = centroids[largestCluster]![d]! - perturbation;
+            const perturbation = Math.abs(centroids[largestCluster][d]) * 0.1 + 1e-6;
+            centroids[c][d] = centroids[largestCluster][d] + perturbation;
+            centroids[largestCluster][d] = centroids[largestCluster][d] - perturbation;
           }
           // Force another iteration since we changed centroids
           changed = true;
@@ -846,7 +846,7 @@ export class HMMRegimeDetector {
 
     // Means = cluster centroids
     for (let i = 0; i < k; i++) {
-      this.means[i] = [...centroids[i]!];
+      this.means[i] = [...centroids[i]];
     }
 
     // Variances = within-cluster variance per dimension
@@ -856,15 +856,15 @@ export class HMMRegimeDetector {
       const c = assignments[t];
       counts[c]++;
       for (let d = 0; d < D; d++) {
-        const diff = obs[t]![d]! - centroids[c]![d]!;
-        varSums[c]![d]! += diff * diff;
+        const diff = obs[t][d] - centroids[c][d];
+        varSums[c][d] += diff * diff;
       }
     }
     for (let i = 0; i < k; i++) {
       for (let d = 0; d < D; d++) {
-        this.variances[i]![d] = counts[i]! > 1 ? varSums[i]![d]! / counts[i]! : 1;
-        if (this.variances[i]![d]! < MIN_VARIANCE) {
-          this.variances[i]![d] = MIN_VARIANCE;
+        this.variances[i][d] = counts[i] > 1 ? varSums[i][d] / counts[i] : 1;
+        if (this.variances[i][d] < MIN_VARIANCE) {
+          this.variances[i][d] = MIN_VARIANCE;
         }
       }
     }
@@ -897,7 +897,7 @@ export class HMMRegimeDetector {
 
     // Create (state, meanVol) pairs and sort ascending by volatility
     const indexed = this.means.map((m, i) => ({ state: i, vol: m[1] }));
-    indexed.sort((a, b) => a.vol! - b.vol!);
+    indexed.sort((a, b) => a.vol - b.vol);
 
     this.stateMap = new Array(N);
     for (let rank = 0; rank < N; rank++) {
@@ -907,7 +907,7 @@ export class HMMRegimeDetector {
           : rank === N - 1
             ? MarketRegime.CRISIS
             : MarketRegime.HIGH_VOL;
-      this.stateMap[indexed[rank]!.state] = regime;
+      this.stateMap[indexed[rank].state] = regime;
     }
   }
 
@@ -928,16 +928,16 @@ export class HMMRegimeDetector {
     const probs = [0, 0, 0]; // LOW_VOL, HIGH_VOL, CRISIS
 
     for (let i = 0; i < N; i++) {
-      const regime = this.stateMap[i]!;
-      probs[regime]! += alpha[i]!;
+      const regime = this.stateMap[i];
+      probs[regime] += alpha[i];
     }
 
     // Normalise (should already sum to ~1)
-    const total = probs[0]! + probs[1]! + probs[2]!;
+    const total = probs[0] + probs[1] + probs[2];
     if (total > 0) {
-      probs[0]! /= total;
-      probs[1]! /= total;
-      probs[2]! /= total;
+      probs[0] /= total;
+      probs[1] /= total;
+      probs[2] /= total;
     }
 
     return probs;
@@ -957,7 +957,7 @@ export class HMMRegimeDetector {
     // Probability-weighted blend
     let scaling = 0;
     for (let r = 0; r < 3; r++) {
-      scaling += probabilities[r]! * baseScales[r]!;
+      scaling += probabilities[r] * baseScales[r];
     }
 
     // Clamp to [0, 1]
@@ -1006,7 +1006,7 @@ export class HMMRegimeDetector {
   private squaredDistance(a: number[], b: number[]): number {
     let s = 0;
     for (let d = 0; d < a.length; d++) {
-      const diff = a[d]! - b[d]!;
+      const diff = a[d] - b[d];
       s += diff * diff;
     }
     return s;

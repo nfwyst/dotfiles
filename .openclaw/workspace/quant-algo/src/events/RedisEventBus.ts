@@ -185,19 +185,19 @@ export class RedisEventBus extends EventEmitter {
     try {
       const event = parseTradingEvent(message);
       if (!event) {
-        logger.warn(\`[EventValidation] Dropping invalid event on channel \${channel}\`);
+        logger.warn(`[EventValidation] Dropping invalid event on channel ${channel}`);
         return;
       }
 
       // 记录事件历史
-      this.addToHistory(event);
+      this.addToHistory(event as TradingEvent);
 
       // 调用本地订阅者
       const handlers = this.subscriptions.get(channel);
       if (handlers) {
         handlers.forEach((handler) => {
           try {
-            const result = handler(event);
+            const result = handler(event as TradingEvent);
             if (result instanceof Promise) {
               result.catch((err) => {
                 logger.error(`Handler error for channel ${channel}:`, err);
@@ -273,11 +273,11 @@ export class RedisEventBus extends EventEmitter {
 
     const id = this.generateEventId();
     const timestamp = Date.now();
-    const fullEvent: TradingEvent = {
+    const fullEvent = {
       ...event,
       id,
       timestamp,
-    };
+    } as TradingEvent;
 
     const message = JSON.stringify(fullEvent);
 
@@ -296,7 +296,7 @@ export class RedisEventBus extends EventEmitter {
       
       logger.debug(`Published event: ${event.channel} [${event.correlationId}]`, getTraceContextForLogging());
     } catch (err: unknown) {
-      span?.recordException(err);
+      span?.recordException(err as Error);
       span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       logger.error(`Failed to publish event on ${event.channel}:`, err);
@@ -334,7 +334,7 @@ export class RedisEventBus extends EventEmitter {
       span?.setStatus({ code: 0 });
       span?.end();
     } catch (err: unknown) {
-      span?.recordException(err);
+      span?.recordException(err as Error);
       span?.setStatus({ code: 2, message: (err instanceof Error ? err.message : String(err)) });
       span?.end();
       throw err;

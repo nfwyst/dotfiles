@@ -26,7 +26,9 @@ export interface AgentDecision {
     maxDrawdown: number;
     recommendedPositionSize: number;
     stopLoss: number;
+    stopLossPercent?: number;
     takeProfitLevels: number[];
+    takeProfitPercents?: number[];
   };
   
   trend?: {
@@ -318,7 +320,7 @@ export class OrderGenerator {
         price: decision.action === 'buy'
           ? currentPrice * (1 + percent / 100)
           : currentPrice * (1 - percent / 100),
-        portion: portions[i],
+        portion: portions[i]!,
         type: 'limit' as const,
       }));
     }
@@ -327,7 +329,7 @@ export class OrderGenerator {
     if (decision.risk?.takeProfitLevels && decision.risk.takeProfitLevels.length >= 3) {
       return decision.risk.takeProfitLevels.slice(0, 3).map((price, i) => ({
         price,
-        portion: portions[i],
+        portion: portions[i]!,
         type: 'limit' as const,
       }));
     }
@@ -338,7 +340,7 @@ export class OrderGenerator {
       price: decision.action === 'buy'
         ? currentPrice + atr * mult
         : currentPrice - atr * mult,
-      portion: portions[i],
+      portion: portions[i]!,
       type: 'limit' as const,
     }));
   }

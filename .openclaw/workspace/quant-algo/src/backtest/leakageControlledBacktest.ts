@@ -23,8 +23,8 @@ const CRYPTO_TRADING_DAYS = 365;
 function barsPerDay(timeframe: string): number {
   const match = timeframe.match(/^(\d+)(m|h|d|w)$/i);
   if (!match) return 288; // default to 5-min bars
-  const value = parseInt(match[1], 10);
-  const unit = match[2].toLowerCase();
+  const value = parseInt(match[1]!, 10);
+  const unit = match[2]!.toLowerCase();
   switch (unit) {
     case 'm': return (24 * 60) / value;
     case 'h': return 24 / value;
@@ -220,7 +220,7 @@ export class LeakageControlledBacktest {
     for (let i = this.config.warmupPeriod; i < this.data.length - this.config.executionDelay; i++) {
       // 关键泄漏控制：只使用 i 之前的数据
       const availableData = this.data.slice(0, i);
-      const currentCandle = this.data[i];
+      const currentCandle = this.data[i]!;
       
       // Fix 3: Daily loss limit tracking
       const dayTs = new Date(currentCandle.timestamp);
@@ -283,10 +283,10 @@ export class LeakageControlledBacktest {
       
       // 执行交易 (使用下一根 K 线的开盘价)
       const executionIndex = i + this.config.executionDelay;
-      const executionCandle = this.data[executionIndex];
+      const executionCandle = this.data[executionIndex]!;
       const executionPrice = this.config.useNextOpen 
         ? executionCandle.open 
-        : availableData[availableData.length - 1].close;
+        : availableData[availableData.length - 1]!.close;
       
       // 应用滑点
       let slippageAdjustedPrice = signal.action === 'buy'
@@ -333,7 +333,7 @@ export class LeakageControlledBacktest {
         balance += pnl - fees;
         
         trades.push({
-          entryTime: this.data[entryIndex].timestamp,
+          entryTime: this.data[entryIndex]!.timestamp,
           entryPrice: position.entryPrice,
           exitTime: executionCandle.timestamp,
           exitPrice: slippageAdjustedPrice,
@@ -366,7 +366,7 @@ export class LeakageControlledBacktest {
         balance += pnl - fees;
         
         trades.push({
-          entryTime: this.data[entryIndex].timestamp,
+          entryTime: this.data[entryIndex]!.timestamp,
           entryPrice: position.entryPrice,
           exitTime: executionCandle.timestamp,
           exitPrice: slippageAdjustedPrice,
@@ -424,7 +424,7 @@ export class LeakageControlledBacktest {
     // 计算夏普比率
     const returns: number[] = [];
     for (let i = 1; i < equityCurve.length; i++) {
-      returns.push((equityCurve[i] - equityCurve[i - 1]) / equityCurve[i - 1]);
+      returns.push((equityCurve[i]! - equityCurve[i - 1]!) / equityCurve[i - 1]!);
     }
     
     // BUG 7 FIX: Guard against empty/insufficient equity curve
@@ -517,12 +517,12 @@ export class LeakageControlledBacktest {
     // Step 2: Convert equity curve to per-bar return observations for CPCV
     const observations: TimeSeriesObservation[] = [];
     for (let i = 1; i < baseResult.equityCurve.length; i++) {
-      const prev = baseResult.equityCurve[i - 1];
-      const curr = baseResult.equityCurve[i];
+      const prev = baseResult.equityCurve[i - 1]!;
+      const curr = baseResult.equityCurve[i]!;
       const ret = prev !== 0 ? (curr - prev) / prev : 0;
       // FIX: Use the data timestamps when available, fall back to index
       const ts = (this.config.warmupPeriod + i < this.data.length)
-        ? this.data[this.config.warmupPeriod + i].timestamp
+        ? this.data[this.config.warmupPeriod + i]!.timestamp
         : i;
       observations.push({ timestamp: ts, value: ret });
     }
@@ -582,7 +582,7 @@ export class LeakageControlledBacktest {
     warnings: string[]
   ): void {
     // FIX: Check 1 — Signal should not reference future timestamps
-    if (signal.timestamp && signal.timestamp > this.data[currentIndex].timestamp) {
+    if (signal.timestamp && signal.timestamp > this.data[currentIndex]!.timestamp) {
       warnings.push(`Signal at index ${currentIndex} references future timestamp ${signal.timestamp}`);
     }
 
@@ -593,7 +593,7 @@ export class LeakageControlledBacktest {
 
     // FIX: Check 3 — Entry price should be within current bar's range
     if (signal.entryPrice !== undefined) {
-      const bar = this.data[currentIndex];
+      const bar = this.data[currentIndex]!;
       if (signal.entryPrice > bar.high * 1.01 || signal.entryPrice < bar.low * 0.99) {
         warnings.push(`Signal at index ${currentIndex} has entry price ${signal.entryPrice} outside bar range [${bar.low}, ${bar.high}]`);
       }

@@ -258,7 +258,7 @@ export class LoggerModule {
       
       // 删除超出数量的旧文件
       for (let i = this.config.maxFiles; i < files.length; i++) {
-        fs.unlinkSync(files[i].path);
+        fs.unlinkSync(files[i]!.path);
       }
     } catch (e) {
       console.error('清理旧日志失败:', e);
@@ -401,7 +401,7 @@ export function getLogger(moduleName: string = 'default'): LoggerModule {
 /**
  * 设置追踪上下文获取器 (用于 OpenTelemetry 集成)
  */
-export function setTraceContextGetter(getter: () => string | undefined): void {
+export function setTraceContextGetter(getter: () => { traceId: string; spanId: string } | string | undefined): void {
   // 简单实现：存储 getter 供日志系统使用
   // Store on globalThis using Object.defineProperty to avoid type assertion
   Object.defineProperty(globalThis, '__traceContextGetter', {

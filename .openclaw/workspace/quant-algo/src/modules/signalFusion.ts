@@ -88,7 +88,7 @@ export class InformationCoefficientTracker {
 
     let sumD2 = 0;
     for (let i = 0; i < n; i++) {
-      const d = predRanks[i] - actualRanks[i];
+      const d = predRanks[i]! - actualRanks[i]!;
       sumD2 += d * d;
     }
 
@@ -136,13 +136,13 @@ function computeRanks(values: number[]): number[] {
   while (i < n) {
     let j = i;
     // Find the end of the group of ties
-    while (j < n - 1 && indexed[j + 1].value === indexed[j].value) {
+    while (j < n - 1 && indexed[j + 1]!.value === indexed[j]!.value) {
       j++;
     }
     // Average rank for tied values (1-based)
     const avgRank = (i + j) / 2 + 1;
     for (let k = i; k <= j; k++) {
-      ranks[indexed[k].index] = avgRank;
+      ranks[indexed[k]!.index] = avgRank;
     }
     i = j + 1;
   }
@@ -159,11 +159,11 @@ function pearsonCorrelation(a: number[], b: number[]): number {
 
   let sumA = 0, sumB = 0, sumA2 = 0, sumB2 = 0, sumAB = 0;
   for (let i = 0; i < n; i++) {
-    sumA += a[i];
-    sumB += b[i];
-    sumA2 += a[i] * a[i];
-    sumB2 += b[i] * b[i];
-    sumAB += a[i] * b[i];
+    sumA += a[i]!;
+    sumB += b[i]!;
+    sumA2 += a[i]! * a[i]!;
+    sumB2 += b[i]! * b[i]!;
+    sumAB += a[i]! * b[i]!;
   }
 
   const numerator = n * sumAB - sumA * sumB;

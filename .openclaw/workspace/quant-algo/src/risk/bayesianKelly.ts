@@ -212,17 +212,17 @@ export class BayesianKellyManager {
       totalWeight += weight;
       
       // BUG 9 FIX: pnl=0 trades classified as wins (>= 0) instead of losses
-      if (trades[i].pnl >= 0) {
+      if (trades[i]!.pnl >= 0) {
         weightedWins += weight;
-        weightedWinSum += weight * trades[i].returnPct;
+        weightedWinSum += weight * trades[i]!.returnPct;
       } else {
         weightedLosses += weight;
-        weightedLossSum += weight * Math.abs(trades[i].returnPct);
+        weightedLossSum += weight * Math.abs(trades[i]!.returnPct);
       }
 
       // BUG 13 FIX: Use same exponential weighting for volatility calculation
-      weightedReturnSum += weight * trades[i].returnPct;
-      weightedReturnSqSum += weight * trades[i].returnPct * trades[i].returnPct;
+      weightedReturnSum += weight * trades[i]!.returnPct;
+      weightedReturnSqSum += weight * trades[i]!.returnPct * trades[i]!.returnPct;
     }
     
     const wins = weightedWins;

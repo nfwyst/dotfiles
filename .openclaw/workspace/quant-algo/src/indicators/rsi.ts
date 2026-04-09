@@ -33,7 +33,7 @@ export function computeRSI(closes: number[], period: number = 14): number {
   let seedGain = 0;
   let seedLoss = 0;
   for (let i = 1; i <= period; i++) {
-    const change = closes[i] - closes[i - 1];
+    const change = closes[i]! - closes[i - 1]!;
     if (change > 0) {
       seedGain += change;
     } else {
@@ -46,7 +46,7 @@ export function computeRSI(closes: number[], period: number = 14): number {
 
   // Apply Wilder's exponential smoothing for remaining data points
   for (let i = period + 1; i < closes.length; i++) {
-    const change = closes[i] - closes[i - 1];
+    const change = closes[i]! - closes[i - 1]!;
     const currentGain = change > 0 ? change : 0;
     const currentLoss = change < 0 ? -change : 0;
 
@@ -85,7 +85,7 @@ export function computeRSISeries(closes: number[], period: number = 14): number[
   let seedGain = 0;
   let seedLoss = 0;
   for (let i = 1; i <= period; i++) {
-    const change = closes[i] - closes[i - 1];
+    const change = closes[i]! - closes[i - 1]!;
     if (change > 0) {
       seedGain += change;
     } else {
@@ -106,7 +106,7 @@ export function computeRSISeries(closes: number[], period: number = 14): number[
 
   // Incrementally compute RSI for all subsequent positions
   for (let i = period + 1; i < closes.length; i++) {
-    const change = closes[i] - closes[i - 1];
+    const change = closes[i]! - closes[i - 1]!;
     const currentGain = change > 0 ? change : 0;
     const currentLoss = change < 0 ? -change : 0;
 
@@ -189,13 +189,13 @@ export function computeAdaptiveRSI(
   const lookback = Math.min(20, closes.length - 1);
   const changes: number[] = [];
   for (let i = closes.length - lookback; i < closes.length; i++) {
-    changes.push(closes[i] - closes[i - 1]);
+    changes.push(closes[i]! - closes[i - 1]!);
   }
   const positiveCount = changes.filter(c => c > 0).length;
   const negativeCount = changes.filter(c => c < 0).length;
   const consistency = Math.max(positiveCount, negativeCount) / changes.length;
   const avgAbsChange = changes.reduce((s, c) => s + Math.abs(c), 0) / changes.length;
-  const normalizedChange = Math.min(avgAbsChange / (closes[closes.length - 1] * 0.01), 1);
+  const normalizedChange = Math.min(avgAbsChange / (closes[closes.length - 1]! * 0.01), 1);
   const trendStrength = consistency * normalizedChange;
   const isTrending = trendStrength > 0.6;
   const regime: 'trending' | 'ranging' = isTrending ? 'trending' : 'ranging';
@@ -219,7 +219,7 @@ export function computeAdaptiveRSI(
   let oversold: number;
 
   if (isTrending) {
-    const trendDir = closes[closes.length - 1] > closes[closes.length - 10] ? 'up' : 'down';
+    const trendDir = closes[closes.length - 1]! > closes[closes.length - 10]! ? 'up' : 'down';
     if (trendDir === 'up') {
       overbought = 75;
       oversold = 40;

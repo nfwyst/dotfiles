@@ -29,9 +29,9 @@ export class GatedLayerFusion {
    * 记录层表现
    */
   recordPerformance(layer: number, performance: LayerPerformance) {
-    this.performanceHistory[layer - 1].push(performance);
-    if (this.performanceHistory[layer - 1].length > this.HISTORY_SIZE) {
-      this.performanceHistory[layer - 1].shift();
+    this.performanceHistory[layer - 1]!.push(performance);
+    if (this.performanceHistory[layer - 1]!.length > this.HISTORY_SIZE) {
+      this.performanceHistory[layer - 1]!.shift();
     }
   }
   
@@ -67,8 +67,8 @@ export class GatedLayerFusion {
     let totalWeight = 0;
     
     for (let i = 0; i < signals.length; i++) {
-      const effectiveWeight = this.layerWeights[i] * confidences[i];
-      weightedSum += signals[i] * effectiveWeight;
+      const effectiveWeight = this.layerWeights[i]! * confidences[i]!;
+      weightedSum += signals[i]! * effectiveWeight;
       totalWeight += effectiveWeight;
     }
     

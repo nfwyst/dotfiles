@@ -278,8 +278,8 @@ export class SensitivityAnalyzer {
     const span = range[1] - range[0] || 1;
     let maxGrad = 0;
     for (let i = 1; i < values.length; i++) {
-      const dp = (values[i] - values[i - 1]) / span; // normalized param delta
-      const ds = sharpes[i] - sharpes[i - 1];
+      const dp = (values[i]! - values[i - 1]!) / span; // normalized param delta
+      const ds = sharpes[i]! - sharpes[i - 1]!;
       const grad = dp !== 0 ? Math.abs(ds / dp) : 0;
       if (grad > maxGrad) maxGrad = grad;
     }
@@ -295,7 +295,7 @@ export class SensitivityAnalyzer {
   private checkRobustness(sharpes: number[]): boolean {
     if (sharpes.length < 2) return true;
     const sorted = [...sharpes].sort((a, b) => a - b);
-    const median = sorted[Math.floor(sorted.length / 2)];
+    const median = sorted[Math.floor(sorted.length / 2)]!;
     if (median === 0) return sharpes.every(s => s === 0);
     return sharpes.every(s => Math.abs(s - median) / Math.abs(median) <= 0.2);
   }
@@ -411,7 +411,7 @@ export class WalkForwardValidator {
 
     for (const combo of combos) {
       const params: Record<string, number> = {};
-      space.forEach((p, i) => { params[p.name] = combo[i]; });
+      space.forEach((p, i) => { params[p.name]! = combo[i]!; });
 
       const m = await runner(params, trainData);
       const score = metricValue(m, metric);

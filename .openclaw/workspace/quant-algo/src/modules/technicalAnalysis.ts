@@ -115,8 +115,8 @@ export class TechnicalAnalysisModule {
     const lows = candles.map(c => c.low);
     const volumes = candles.map(c => c.volume);
     
-    const current = candles[candles.length - 1];
-    const prev24h = candles[Math.max(0, candles.length - 289)]; // 约24小时前 (5m周期)
+    const current = candles[candles.length - 1]!;
+    const prev24h = candles[Math.max(0, candles.length - 289)]!; // 约24小时前 (5m周期)
     
     return {
       timestamp: current.timestamp,
@@ -196,17 +196,17 @@ export class TechnicalAnalysisModule {
   // ========== 私有计算方法 ==========
   
   private sma(data: number[], period: number): number {
-    if (data.length < period) return data[data.length - 1] || 0;
+    if (data.length < period) return data[data.length - 1]! || 0;
     const sum = data.slice(-period).reduce((a, b) => a + b, 0);
     return sum / period;
   }
   
   private ema(data: number[], period: number): number {
-    if (data.length < period) return data[data.length - 1] || 0;
+    if (data.length < period) return data[data.length - 1]! || 0;
     const multiplier = 2 / (period + 1);
     let ema = this.sma(data.slice(0, period), period);
     for (let i = period; i < data.length; i++) {
-      ema = (data[i] - ema) * multiplier + ema;
+      ema = (data[i]! - ema) * multiplier + ema;
     }
     return ema;
   }
@@ -233,12 +233,12 @@ export class TechnicalAnalysisModule {
 
     // Seed fast EMA with SMA of first `fast` bars
     let emaFast = 0;
-    for (let i = 0; i < fast; i++) emaFast += data[i];
+    for (let i = 0; i < fast; i++) emaFast += data[i]!;
     emaFast /= fast;
 
     // Seed slow EMA with SMA of first `slow` bars
     let emaSlow = 0;
-    for (let i = 0; i < slow; i++) emaSlow += data[i];
+    for (let i = 0; i < slow; i++) emaSlow += data[i]!;
     emaSlow /= slow;
 
     // We only have meaningful MACD values starting at index `slow - 1`.
@@ -247,10 +247,10 @@ export class TechnicalAnalysisModule {
 
     // Re-seed fast EMA properly: run it from bar 0 to bar slow-1
     emaFast = 0;
-    for (let i = 0; i < fast; i++) emaFast += data[i];
+    for (let i = 0; i < fast; i++) emaFast += data[i]!;
     emaFast /= fast;
     for (let i = fast; i < slow; i++) {
-      emaFast = (data[i] - emaFast) * fastMultiplier + emaFast;
+      emaFast = (data[i]! - emaFast) * fastMultiplier + emaFast;
     }
 
     // Now both EMAs are positioned at bar slow-1
@@ -259,13 +259,13 @@ export class TechnicalAnalysisModule {
     macdLineSeries.push(emaFast - emaSlow);
 
     for (let i = slow; i < data.length; i++) {
-      emaFast = (data[i] - emaFast) * fastMultiplier + emaFast;
-      emaSlow = (data[i] - emaSlow) * slowMultiplier + emaSlow;
+      emaFast = (data[i]! - emaFast) * fastMultiplier + emaFast;
+      emaSlow = (data[i]! - emaSlow) * slowMultiplier + emaSlow;
       macdLineSeries.push(emaFast - emaSlow);
     }
 
     // Compute signal line as EMA(signalPeriod) of the macdLineSeries
-    const currentLine = macdLineSeries[macdLineSeries.length - 1];
+    const currentLine = macdLineSeries[macdLineSeries.length - 1]!;
 
     if (macdLineSeries.length < signalPeriod) {
       // Not enough MACD values for signal EMA; use SMA as approximation
@@ -275,12 +275,12 @@ export class TechnicalAnalysisModule {
 
     // Seed signal EMA with SMA of first signalPeriod MACD values
     let signalEma = 0;
-    for (let i = 0; i < signalPeriod; i++) signalEma += macdLineSeries[i];
+    for (let i = 0; i < signalPeriod; i++) signalEma += macdLineSeries[i]!;
     signalEma /= signalPeriod;
 
     const signalMultiplier = 2 / (signalPeriod + 1);
     for (let i = signalPeriod; i < macdLineSeries.length; i++) {
-      signalEma = (macdLineSeries[i] - signalEma) * signalMultiplier + signalEma;
+      signalEma = (macdLineSeries[i]! - signalEma) * signalMultiplier + signalEma;
     }
 
     return { line: currentLine, signal: signalEma, histogram: currentLine - signalEma };
@@ -308,13 +308,13 @@ export class TechnicalAnalysisModule {
       
       const lowestLow = Math.min(...periodLows);
       const highestHigh = Math.max(...periodHighs);
-      const closeVal = closes[endIdx - 1];
+      const closeVal = closes[endIdx - 1]!;
       
       const kVal = highestHigh === lowestLow ? 50 : ((closeVal - lowestLow) / (highestHigh - lowestLow)) * 100;
       kValues.push(kVal);
     }
 
-    const k = kValues[kValues.length - 1]; // most recent %K
+    const k = kValues[kValues.length - 1]!; // most recent %K
     const d = kValues.reduce((a, b) => a + b, 0) / kValues.length; // SMA of %K values
 
     return { k, d };
@@ -322,17 +322,17 @@ export class TechnicalAnalysisModule {
   
   private cci(highs: number[], lows: number[], closes: number[], period: number) {
     if (closes.length < period) return 0;
-    const tp = closes.map((c, i) => (highs[i] + lows[i] + c) / 3);
+    const tp = closes.map((c, i) => (highs[i]! + lows[i]! + c) / 3);
     const smaTP = this.sma(tp, period);
     const md = tp.slice(-period).reduce((sum, x) => sum + Math.abs(x - smaTP), 0) / period;
-    return md === 0 ? 0 : (tp[tp.length - 1] - smaTP) / (0.015 * md);
+    return md === 0 ? 0 : (tp[tp.length - 1]! - smaTP) / (0.015 * md);
   }
   
   private williamsR(highs: number[], lows: number[], closes: number[], period: number) {
     if (closes.length < period) return -50;
     const high = Math.max(...highs.slice(-period));
     const low = Math.min(...lows.slice(-period));
-    const close = closes[closes.length - 1];
+    const close = closes[closes.length - 1]!;
     return high === low ? -50 : ((high - close) / (high - low)) * -100;
   }
   
@@ -341,9 +341,9 @@ export class TechnicalAnalysisModule {
     let sum = 0;
     for (let i = closes.length - period; i < closes.length; i++) {
       const tr = Math.max(
-        highs[i] - lows[i],
-        Math.abs(highs[i] - closes[i - 1]),
-        Math.abs(lows[i] - closes[i - 1])
+        highs[i]! - lows[i]!,
+        Math.abs(highs[i]! - closes[i - 1]!),
+        Math.abs(lows[i]! - closes[i - 1]!)
       );
       sum += tr;
     }
@@ -360,7 +360,7 @@ export class TechnicalAnalysisModule {
     const upper = middle + stdDev * std;
     const lower = middle - stdDev * std;
     const bandwidth = ((upper - lower) / middle) * 100;
-    const close = data[data.length - 1];
+    const close = data[data.length - 1]!;
     const percentB = (close - lower) / (upper - lower);
     return { upper, middle, lower, bandwidth, percentB };
   }
@@ -393,14 +393,14 @@ export class TechnicalAnalysisModule {
 
     for (let i = 1; i < len; i++) {
       const tr = Math.max(
-        highs[i] - lows[i],
-        Math.abs(highs[i] - closes[i - 1]),
-        Math.abs(lows[i] - closes[i - 1])
+        highs[i]! - lows[i]!,
+        Math.abs(highs[i]! - closes[i - 1]!),
+        Math.abs(lows[i]! - closes[i - 1]!)
       );
       trArray.push(tr);
 
-      const upMove = highs[i] - highs[i - 1];
-      const downMove = lows[i - 1] - lows[i];
+      const upMove = highs[i]! - highs[i - 1]!;
+      const downMove = lows[i - 1]! - lows[i]!;
 
       plusDMArray.push(upMove > downMove && upMove > 0 ? upMove : 0);
       minusDMArray.push(downMove > upMove && downMove > 0 ? downMove : 0);
@@ -411,10 +411,10 @@ export class TechnicalAnalysisModule {
     const wilderSmooth = (values: number[], p: number): number[] => {
       const result: number[] = [];
       let sum = 0;
-      for (let i = 0; i < p; i++) sum += values[i];
+      for (let i = 0; i < p; i++) sum += values[i]!;
       result.push(sum);
       for (let i = p; i < values.length; i++) {
-        const smoothed = result[result.length - 1] - result[result.length - 1] / p + values[i];
+        const smoothed = result[result.length - 1]! - result[result.length - 1]! / p + values[i]!;
         result.push(smoothed);
       }
       return result;
@@ -430,8 +430,8 @@ export class TechnicalAnalysisModule {
     let latestDIMinus = 0;
 
     for (let i = 0; i < smoothTR.length; i++) {
-      const diP = smoothTR[i] === 0 ? 0 : (smoothPlusDM[i] / smoothTR[i]) * 100;
-      const diM = smoothTR[i] === 0 ? 0 : (smoothMinusDM[i] / smoothTR[i]) * 100;
+      const diP = smoothTR[i]! === 0 ? 0 : (smoothPlusDM[i]! / smoothTR[i]!) * 100;
+      const diM = smoothTR[i]! === 0 ? 0 : (smoothMinusDM[i]! / smoothTR[i]!) * 100;
       const diSum = diP + diM;
       const dx = diSum === 0 ? 0 : (Math.abs(diP - diM) / diSum) * 100;
       dxArray.push(dx);
@@ -448,12 +448,12 @@ export class TechnicalAnalysisModule {
 
     // First ADX = SMA of first `period` DX values
     let adx = 0;
-    for (let i = 0; i < period; i++) adx += dxArray[i];
+    for (let i = 0; i < period; i++) adx += dxArray[i]!;
     adx /= period;
 
     // Subsequent ADX values use Wilder smoothing
     for (let i = period; i < dxArray.length; i++) {
-      adx = (adx * (period - 1) + dxArray[i]) / period;
+      adx = (adx * (period - 1) + dxArray[i]!) / period;
     }
 
     return { adxValue: adx, diPlusValue: latestDIPlus, diMinusValue: latestDIMinus };
@@ -473,7 +473,7 @@ export class TechnicalAnalysisModule {
   
   private supertrend(highs: number[], lows: number[], closes: number[], period: number, multiplier: number) {
     const atr = this.atr(highs, lows, closes, period);
-    const close = closes[closes.length - 1];
+    const close = closes[closes.length - 1]!;
     const sma = this.sma(closes, period);
     const direction: 'up' | 'down' = close > sma ? 'up' : 'down';
     return { direction, value: close > sma ? close - multiplier * atr : close + multiplier * atr };
@@ -482,8 +482,8 @@ export class TechnicalAnalysisModule {
   private obv(closes: number[], volumes: number[]) {
     let obv = 0;
     for (let i = 1; i < closes.length; i++) {
-      if (closes[i] > closes[i - 1]) obv += volumes[i];
-      else if (closes[i] < closes[i - 1]) obv -= volumes[i];
+      if (closes[i]! > closes[i - 1]!) obv += volumes[i]!;
+      else if (closes[i]! < closes[i - 1]!) obv -= volumes[i]!;
     }
     return obv;
   }
@@ -499,7 +499,7 @@ export class TechnicalAnalysisModule {
   }
   
   private calculateScores(closes: number[], highs: number[], lows: number[], volumes: number[]) {
-    const current = closes[closes.length - 1];
+    const current = closes[closes.length - 1]!;
     const sma20 = this.sma(closes, 20);
     const sma50 = this.sma(closes, 50);
     const rsi14 = this.rsi(closes, 14);
@@ -530,7 +530,7 @@ export class TechnicalAnalysisModule {
     
     // 量能评分
     const volSma20 = this.sma(volumes, 20);
-    const currentVol = volumes[volumes.length - 1];
+    const currentVol = volumes[volumes.length - 1]!;
     let volume = 0;
     if (currentVol > volSma20 * 1.5) volume = 50;
     else if (currentVol < volSma20 * 0.5) volume = -50;

@@ -134,7 +134,7 @@ function aggregateTradesIntoPositions(trades: Trade[]): AggregatedPosition[] {
   for (const [, group] of groups) {
     // Sort by exitTime so the last element is the final exit
     group.sort((a, b) => a.exitTime - b.exitTime);
-    const last = group[group.length - 1];
+    const last = group[group.length - 1]!;
     const totalSize = group.reduce((sum, t) => sum + t.size, 0);
     // Weighted exit price: preserves the P&L semantics of partial closes
     const weightedExitPrice = totalSize > 0
@@ -142,10 +142,10 @@ function aggregateTradesIntoPositions(trades: Trade[]): AggregatedPosition[] {
       : last.exitPrice;
 
     positions.push({
-      entryTime: group[0].entryTime,
+      entryTime: group[0]!.entryTime,
       exitTime: last.exitTime,
-      side: group[0].side,
-      entryPrice: group[0].entryPrice,
+      side: group[0]!.side,
+      entryPrice: group[0]!.entryPrice,
       totalSize,
       weightedExitPrice,
       exitReason: last.exitReason,
@@ -182,10 +182,10 @@ function buildReplayStrategy(trades: Trade[], ohlcv: OHLCV[], name = 'OCS-Replay
     // Use median of first 10 bar intervals for robustness
     const intervals: number[] = [];
     for (let k = 1; k < Math.min(ohlcv.length, 11); k++) {
-      intervals.push(ohlcv[k].timestamp - ohlcv[k - 1].timestamp);
+      intervals.push(ohlcv[k]!.timestamp - ohlcv[k - 1]!.timestamp);
     }
     intervals.sort((a, b) => a - b);
-    barPeriodMs = intervals[Math.floor(intervals.length / 2)];
+    barPeriodMs = intervals[Math.floor(intervals.length / 2)]!;
   }
   console.log(`   ⏱  Bar period: ${barPeriodMs}ms (${barPeriodMs / 60000}min) — shifting replay timestamps by -1 bar`);
 
@@ -197,7 +197,7 @@ function buildReplayStrategy(trades: Trade[], ohlcv: OHLCV[], name = 'OCS-Replay
   const consumedExits = new Set<number>();
 
   for (let i = 0; i < positions.length; i++) {
-    const p = positions[i];
+    const p = positions[i]!;
     // Fix 2: Use shifted timestamps (one bar earlier) so LCB's +1 executionDelay
     // lands on the correct Phase A execution bar
     const shiftedEntry = p.entryTime - barPeriodMs;
@@ -398,7 +398,7 @@ interface PhaseCResult {
  */
 function estimateBarsPerDay(ohlcv: OHLCV[]): number {
   if (ohlcv.length < 2) return 288; // default: 5m bars
-  const totalMs = ohlcv[ohlcv.length - 1].timestamp - ohlcv[0].timestamp;
+  const totalMs = ohlcv[ohlcv.length - 1]!.timestamp - ohlcv[0]!.timestamp;
   const totalDays = totalMs / (24 * 60 * 60 * 1000);
   if (totalDays < 0.5) return 288;
   return Math.round(ohlcv.length / totalDays);
@@ -410,13 +410,13 @@ function estimateBarsPerDay(ohlcv: OHLCV[]): number {
  */
 function resampleEquityToDaily(equity: number[], barsPerDay: number): number[] {
   if (barsPerDay <= 1) return equity;
-  const daily: number[] = [equity[0]]; // start with initial equity
+  const daily: number[] = [equity[0]!]; // start with initial equity
   for (let i = barsPerDay; i < equity.length; i += barsPerDay) {
-    daily.push(equity[i]);
+    daily.push(equity[i]!);
   }
   // Always include the last point
   if (equity.length > 0 && (equity.length - 1) % barsPerDay !== 0) {
-    daily.push(equity[equity.length - 1]);
+    daily.push(equity[equity.length - 1]!);
   }
   return daily;
 }
@@ -445,8 +445,8 @@ async function phaseC(
   const dailyEquity = resampleEquityToDaily(equity, barsPerDay);
   const observations: TimeSeriesObservation[] = [];
   for (let i = 1; i < dailyEquity.length; i++) {
-    const prev = dailyEquity[i - 1];
-    const curr = dailyEquity[i];
+    const prev = dailyEquity[i - 1]!;
+    const curr = dailyEquity[i]!;
     const ret = prev !== 0 ? (curr - prev) / prev : 0;
     observations.push({ timestamp: i, value: ret });
   }
@@ -580,7 +580,7 @@ function printFinalReport(report: RunnerReport): void {
   const sep = '+' + colWidths.map(w => '-'.repeat(w + 2)).join('+') + '+';
   console.log(sep);
   for (const row of rows) {
-    const cells = row.map((cell, i) => ` ${cell.padEnd(colWidths[i])} `);
+    const cells = row.map((cell, i) => ` ${cell.padEnd(colWidths[i]!)} `);
     console.log('|' + cells.join('|') + '|');
     if (row === rows[0]) console.log(sep);
   }

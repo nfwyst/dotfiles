@@ -36,6 +36,9 @@ export interface StrategySignal {
     ocsFeatures?: [number, number, number];  // OCS 3D特征
     technicalScores?: Record<string, number>;
     confirmations?: number;
+    enhanced?: unknown;
+    unifiedTpsl?: boolean;
+    microstructure?: unknown;
   };
 }
 

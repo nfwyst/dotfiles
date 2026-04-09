@@ -111,8 +111,8 @@ export class TripleBarrierLabeler {
       // Collect log-returns over the lookback window
       const logReturns: number[] = [];
       for (let j = i - lookback + 1; j <= i; j++) {
-        if (ohlcv[j - 1].close > 0 && ohlcv[j].close > 0) {
-          logReturns.push(Math.log(ohlcv[j].close / ohlcv[j - 1].close));
+        if (ohlcv[j - 1]!.close > 0 && ohlcv[j]!.close > 0) {
+          logReturns.push(Math.log(ohlcv[j]!.close / ohlcv[j - 1]!.close));
         }
       }
 
@@ -145,7 +145,7 @@ export class TripleBarrierLabeler {
     entryIdx: number,
     dailyVol: number,
   ): BarrierLabel {
-    const entryPrice = ohlcv[entryIdx].close;
+    const entryPrice = ohlcv[entryIdx]!.close;
     const [ptMult, slMult] = this.config.ptSl;
     const maxHold = this.config.maxHoldingPeriod;
 
@@ -157,7 +157,7 @@ export class TripleBarrierLabeler {
     const lastIdx = Math.min(entryIdx + maxHold, ohlcv.length - 1);
 
     for (let t = entryIdx + 1; t <= lastIdx; t++) {
-      const candle = ohlcv[t];
+      const candle = ohlcv[t]!;
 
       const upperBreached = candle.high >= upperBarrier;
       const lowerBreached = candle.low <= lowerBarrier;
@@ -220,7 +220,7 @@ export class TripleBarrierLabeler {
 
     // Vertical barrier hit (time expiry)
     const exitIdx = lastIdx;
-    const exitPrice = ohlcv[exitIdx].close;
+    const exitPrice = ohlcv[exitIdx]!.close;
     const ret = (exitPrice - entryPrice) / entryPrice;
 
     // Label based on the return at expiry

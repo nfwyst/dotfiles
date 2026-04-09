@@ -218,7 +218,7 @@ export class LLMClient {
         const response = await this.executeRequest(options, config, timeout);
         return response;
       } catch (error: unknown) {
-        lastError = error;
+        lastError = error as Error | null;
         
         // 判断是否可重试
         if (!this.isRetryableError(error)) {
@@ -369,7 +369,7 @@ export class LLMClient {
    * 解析响应
    */
   private parseResponse(
-    data: { content?: { text?: string }[]; choices?: { message?: { content?: string; reasoning_content?: string } }[]; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } },
+    data: { content?: { text?: string }[]; choices?: { message?: { content?: string; reasoning_content?: string }; finish_reason?: string }[]; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } },
     config: LLMConfig,
     model: string,
     startTime: number

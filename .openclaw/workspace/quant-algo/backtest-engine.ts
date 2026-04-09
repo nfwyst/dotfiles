@@ -40,8 +40,8 @@ export const CRYPTO_TRADING_DAYS = 365;
 function barsPerDay(timeframe: string): number {
   const match = timeframe.match(/^(\d+)(m|h|d|w)$/i);
   if (!match) return 288; // default to 5-min bars
-  const value = parseInt(match[1], 10);
-  const unit = match[2].toLowerCase();
+  const value = parseInt(match[1]!, 10);
+  const unit = match[2]!.toLowerCase();
   switch (unit) {
     case 'm': return (24 * 60) / value;
     case 'h': return 24 / value;
@@ -287,7 +287,7 @@ export class BacktestEngine {
       }
 
       // Move past the last candle's open time to avoid duplicates
-      currentStart = raw[raw.length - 1][0] + 1;
+      currentStart = raw[raw.length - 1]![0] + 1;
 
       // Rate-limit politeness
       if (raw.length === LIMIT) {
@@ -404,7 +404,7 @@ export class BacktestEngine {
     }
     
     // FIX P1: Pass full ohlcv with offset=lookback so features3D[i] correctly maps to ohlcv[lookback + i]
-    this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D, lookback);
+    this.ocsLayer3.initializeFromHistory(this.ohlcv, this.precomputedFeatures3D as [number, number, number][], lookback);
     
     // 预计算技术指标 (these use the full pre-extracted arrays — already O(n))
     const sma20 = this.computeSMA(allCloses, 20);
@@ -421,21 +421,21 @@ export class BacktestEngine {
     // 存储预计算指标到 Map
     for (let i = 200; i < this.ohlcv.length; i++) {
       this.precomputedIndicators.set(i, {
-        sma: { 20: sma20[i], 50: sma50[i], 200: sma200[i] },
-        ema: { 12: ema12[i], 26: ema26[i], 50: ema50[i] },
-        rsi: { 14: rsi14[i] },
+        sma: { 20: sma20[i]!, 50: sma50[i]!, 200: sma200[i]! },
+        ema: { 12: ema12[i]!, 26: ema26[i]!, 50: ema50[i]! },
+        rsi: { 14: rsi14[i]! },
         macd: {
-          line: macd.line[i],
-          signal: macd.signal[i],
-          histogram: macd.histogram[i]
+          line: macd.line[i]!,
+          signal: macd.signal[i]!,
+          histogram: macd.histogram[i]!
         },
         bollinger: {
-          upper: bollinger.upper[i],
-          middle: bollinger.middle[i],
-          lower: bollinger.lower[i]
+          upper: bollinger.upper[i]!,
+          middle: bollinger.middle[i]!,
+          lower: bollinger.lower[i]!
         },
-        atr: { 14: atr14[i] }
-      });
+        atr: { 14: atr14[i]! }
+      } as TechnicalIndicators);
     }
     
     // ── Warmup Enhanced incremental processors with first 500 bars ──
@@ -451,8 +451,8 @@ export class BacktestEngine {
     const result: number[] = new Array(data.length).fill(0);
     let sum = 0;
     for (let i = 0; i < data.length; i++) {
-      sum += data[i];
-      if (i >= period) sum -= data[i - period];
+      sum += data[i]!;
+      if (i >= period) sum -= data[i - period]!;
       if (i >= period - 1) result[i] = sum / period;
     }
     return result;
@@ -467,7 +467,7 @@ export class BacktestEngine {
     let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
     result[period - 1] = ema;
     for (let i = period; i < data.length; i++) {
-      ema = (data[i] - ema) * multiplier + ema;
+      ema = (data[i]! - ema) * multiplier + ema;
       result[i] = ema;
     }
     return result;
@@ -482,7 +482,7 @@ export class BacktestEngine {
     
     // Seeding: accumulate changes for i = 1 to period (inclusive)
     for (let i = 1; i <= period; i++) {
-      const change = data[i] - data[i - 1];
+      const change = data[i]! - data[i - 1]!;
       if (change > 0) gains += change;
       else losses -= change;
     }
@@ -496,7 +496,7 @@ export class BacktestEngine {
     
     // BUG 4 FIX: Start smoothing at period + 1 instead of period
     for (let i = period + 1; i < data.length; i++) {
-      const change = data[i] - data[i - 1];
+      const change = data[i]! - data[i - 1]!;
       avgGain = (avgGain * (period - 1) + Math.max(0, change)) / period;
       avgLoss = (avgLoss * (period - 1) + Math.max(0, -change)) / period;
       
@@ -509,7 +509,7 @@ export class BacktestEngine {
   private computeMACD(data: number[], fast: number, slow: number, signal: number): { line: number[]; signal: number[]; histogram: number[] } {
     const emaFast = this.computeEMA(data, fast);
     const emaSlow = this.computeEMA(data, slow);
-    const line = emaFast.map((f, i) => f - emaSlow[i]);
+    const line = emaFast.map((f, i) => f - emaSlow[i]!);
     // FIX C2: Compute signal EMA directly on the full MACD line to preserve temporal alignment.
     // The old code used filter(l => l !== 0) which destroyed index correspondence (lookahead bias).
     const signalLine = this.computeEMA(line, signal);
@@ -519,7 +519,7 @@ export class BacktestEngine {
     return {
       line,
       signal: signalLine,
-      histogram: line.map((l, i) => l - signalLine[i])
+      histogram: line.map((l, i) => l - signalLine[i]!)
     };
   }
 
@@ -532,10 +532,10 @@ export class BacktestEngine {
       if (i >= period - 1) {
         const slice = data.slice(i - period + 1, i + 1);
         const mean = middle[i];
-        const variance = slice.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / period;
+        const variance = slice.reduce((sum, v) => sum + Math.pow(v - mean!, 2), 0) / period;
         const std = Math.sqrt(variance);
-        upper.push(mean + stdDev * std);
-        lower.push(mean - stdDev * std);
+        upper.push(mean! + stdDev * std);
+        lower.push(mean! - stdDev * std);
       } else {
         upper.push(0);
         lower.push(0);
@@ -547,9 +547,9 @@ export class BacktestEngine {
   private computeATR(highs: number[], lows: number[], closes: number[], period: number): number[] {
     const tr: number[] = [0];
     for (let i = 1; i < highs.length; i++) {
-      const hl = highs[i] - lows[i];
-      const hc = Math.abs(highs[i] - closes[i - 1]);
-      const lc = Math.abs(lows[i] - closes[i - 1]);
+      const hl = highs[i]! - lows[i]!;
+      const hc = Math.abs(highs[i]! - closes[i - 1]!);
+      const lc = Math.abs(lows[i]! - closes[i - 1]!);
       tr.push(Math.max(hl, hc, lc));
     }
     return this.computeSMA(tr, period);
@@ -560,7 +560,7 @@ export class BacktestEngine {
    */
   async run(): Promise<BacktestResult> {
     console.log('\n🚀 开始回测...');
-    console.log(`   时间范围: ${new Date(this.ohlcv[0].timestamp).toLocaleDateString()} - ${new Date(this.ohlcv[this.ohlcv.length - 1].timestamp).toLocaleDateString()}`);
+    console.log(`   时间范围: ${new Date(this.ohlcv[0]!.timestamp).toLocaleDateString()} - ${new Date(this.ohlcv[this.ohlcv.length - 1]!.timestamp).toLocaleDateString()}`);
     console.log(`   初始资金: $${this.config.initialBalance.toLocaleString()}`);
     console.log(`   交易成本: fee=${(this.costConfig.feeRate * 10000).toFixed(1)}bps, slippage=${this.costConfig.slippageBps.toFixed(1)}bps, total=${getTotalCostBps(this.costConfig).toFixed(1)}bps`);
 
@@ -571,7 +571,7 @@ export class BacktestEngine {
     const ocsLookback = 50;
 
     for (let i = lookback; i < this.ohlcv.length; i++) {
-      const currentCandle = this.ohlcv[i];
+      const currentCandle = this.ohlcv[i]!;
 
       // ── Incremental Enhanced update: feed EVERY bar to maintain state ──
       if (this.enhancedWarmedUp) {
@@ -647,7 +647,7 @@ export class BacktestEngine {
 
         const ocsIndex = i - ocsLookback;
         const l1 = this.precomputedLayer1[ocsIndex];
-        const l2 = this.precomputedLayer2[ocsIndex];
+        const l2 = this.precomputedLayer2[ocsIndex]!;
         
         const signal = this.generateSignalFromPrecomputed(indicators, l2, currentCandle.close, i);
         
@@ -679,7 +679,7 @@ export class BacktestEngine {
 
     // 平掉最后的持仓
     if (this.position) {
-      const lastCandle = this.ohlcv[this.ohlcv.length - 1];
+      const lastCandle = this.ohlcv[this.ohlcv.length - 1]!;
       this.closePosition(lastCandle, 'end_of_test', this.ohlcv.length - 1);
     }
 
@@ -724,7 +724,7 @@ export class BacktestEngine {
     
     // 如果 Layer4 没有信号，返回 hold
     if (l4.signal === 'hold' || !l4.setup) {
-      return { type: 'hold', confidence: 0 };
+      return null;
     }
     
     const finalDirection = l4.setup.direction;
@@ -760,7 +760,7 @@ export class BacktestEngine {
     // BUG 11 FIX: Validate SL/TP are defined and sane before returning signal
     if (computedSL === undefined || computedSL === null || !isFinite(computedSL)) {
       console.log(`  ⚠️ Invalid SL computed, skipping signal`);
-      return { type: 'hold', confidence: 0 };
+      return null;
     }
 
     // Minimum reward-to-cost filter: skip trades where TP1 is too close to entry
@@ -773,7 +773,7 @@ export class BacktestEngine {
     const roundTripCost = entryP * (roundTripCostBps / 10000);
     if (tp1Distance < 2.0 * roundTripCost) {
       console.log(`  ⏭️ 奖励/成本过低: TP1距离 ${tp1Distance.toFixed(2)} < 2x成本 ${(2 * roundTripCost).toFixed(2)}, 跳过`);
-      return { type: 'hold', confidence: 0 };
+      return null;
     }
 
     return {
@@ -782,7 +782,10 @@ export class BacktestEngine {
       stopLoss: computedSL,
       takeProfits: computedTP,
       confidence: finalConfidence,
-      reason: `Layer4: ${l4.reason}`
+      strategy: 'OCS',
+      strength: finalConfidence * 100,
+      timeframe: this.config.timeframe,
+      reasoning: [`Layer4: ${l4.reason}`]
     };
   }
 
@@ -921,7 +924,7 @@ export class BacktestEngine {
     this.balance -= fee;
 
     this.position = {
-      side: type,
+      side: type as 'long' | 'short',
       entryPrice: actualEntryPrice,
       entryTime: candle.timestamp,
       entryBarIndex: index, // BUG 10 FIX: Store entry bar index
@@ -1013,7 +1016,7 @@ export class BacktestEngine {
     const trade: Trade = {
       entryTime,
       exitTime: candle.timestamp,
-      side,
+      side: side as 'long' | 'short',
       entryPrice,
       exitPrice: actualExitPrice,
       stopLoss,
@@ -1088,7 +1091,7 @@ export class BacktestEngine {
 
     // 计算Sharpe比率
     const returns = this.equityCurve.slice(1).map((e, i) => 
-      (e - this.equityCurve[i]) / this.equityCurve[i]
+      (e - this.equityCurve[i]!) / this.equityCurve[i]!
     );
 
     // BUG 15 FIX: Compute bars per day from timeframe config instead of hardcoding 288

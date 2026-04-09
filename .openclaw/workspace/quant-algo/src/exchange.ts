@@ -167,7 +167,7 @@ export class ExchangeManager implements ExecutionAdapter {
       let query = `timestamp=${timestamp}`;
       
       if (Object.keys(params).length > 0) {
-        query += '&' + new URLSearchParams(params).toString();
+        query += '&' + new URLSearchParams(Object.fromEntries(Object.entries(params).map(([k,v]) => [k, String(v)]))).toString();
       }
       
       const signature = crypto
@@ -201,7 +201,7 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -235,7 +235,7 @@ export class ExchangeManager implements ExecutionAdapter {
       : null;
 
     try {
-      const query = new URLSearchParams(params).toString();
+      const query = new URLSearchParams(Object.fromEntries(Object.entries(params).map(([k,v]) => [k, String(v)]))).toString();
       const url = `${PUBLIC_API_BASE}${path}${query ? '?' + query : ''}`;
       
       const startTime = Date.now();
@@ -259,7 +259,7 @@ export class ExchangeManager implements ExecutionAdapter {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -274,8 +274,8 @@ export class ExchangeManager implements ExecutionAdapter {
   async testConnection(): Promise<boolean> {
     try {
       // 测试获取余额
-      const account = await this.request('/fapi/v2/account');
-      const balance = parseFloat(account.availableBalance || 0);
+      const account = await this.request<Record<string, string>>('/fapi/v2/account');
+      const balance = parseFloat(account.availableBalance || '0');
       
       logger.info(`Binance ${config.exchange.sandbox ? 'Testnet' : 'MAINNET ⚠️'} 连接成功`);
       logger.info(`   API Base: ${this.apiBase}`);
@@ -311,19 +311,19 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async fetchOHLCV(timeframe: string, limit: number = 100): Promise<number[][]> {
     try {
-      const data = await this.requestPublic('/fapi/v1/klines', {
+      const data = await this.requestPublic<(string | number)[][]>('/fapi/v1/klines', {
         symbol: this.symbol,
         interval: timeframe,
         limit: limit.toString(),
       });
       
-      return data.map((k: (string | number)[]) => [
-        k[0],           // timestamp
-        parseFloat(k[1]), // open
-        parseFloat(k[2]), // high
-        parseFloat(k[3]), // low
-        parseFloat(k[4]), // close
-        parseFloat(k[5]), // volume
+      return data.map((k) => [
+        Number(k[0]),           // timestamp
+        parseFloat(String(k[1])), // open
+        parseFloat(String(k[2])), // high
+        parseFloat(String(k[3])), // low
+        parseFloat(String(k[4])), // close
+        parseFloat(String(k[5])), // volume
       ]);
     } catch (error: unknown) {
       logger.error('获取K线数据失败:', (error instanceof Error ? error.message : String(error)));
@@ -336,7 +336,7 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async getCurrentPrice(): Promise<number> {
     try {
-      const ticker = await this.requestPublic('/fapi/v1/ticker/price', {
+      const ticker = await this.requestPublic<{ price: string }>('/fapi/v1/ticker/price', {
         symbol: this.symbol,
       });
       
@@ -372,12 +372,12 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async _getBalance(): Promise<{ total: number; free: number; used: number }> {
     try {
-      const account = await this.request('/fapi/v2/account');
+      const account = await this.request<Record<string, string>>('/fapi/v2/account');
       
       return {
-        total: parseFloat(account.totalWalletBalance || 0),
-        free: parseFloat(account.availableBalance || 0),
-        used: parseFloat(account.totalPositionInitialMargin || 0),
+        total: parseFloat(account.totalWalletBalance || '0'),
+        free: parseFloat(account.availableBalance || '0'),
+        used: parseFloat(account.totalPositionInitialMargin || '0'),
       };
     } catch (error: unknown) {
       logger.error('获取余额失败:', (error instanceof Error ? error.message : String(error)));
@@ -390,23 +390,23 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async _getPosition(): Promise<{ symbol: string; side: string; contracts: number; entryPrice: number; markPrice: number; liquidationPrice: number; unrealizedPnl: number; leverage: number } | null> {
     try {
-      const positions = await this.request('/fapi/v2/positionRisk');
+      const positions = await this.request<Record<string, string>[]>('/fapi/v2/positionRisk');
       
       const position = positions.find((p: Record<string, string>) => 
-        p.symbol === this.symbol && parseFloat(p.positionAmt) !== 0
+        p['symbol'] === this.symbol && parseFloat(p['positionAmt'] ?? '') !== 0
       );
       
       if (!position) return null;
       
       return {
-        symbol: position.symbol,
-        side: parseFloat(position.positionAmt) > 0 ? 'long' : 'short',
-        contracts: Math.abs(parseFloat(position.positionAmt)),
-        entryPrice: parseFloat(position.entryPrice),
-        markPrice: parseFloat(position.markPrice),
-        liquidationPrice: parseFloat(position.liquidationPrice),
-        unrealizedPnl: parseFloat(position.unRealizedProfit),
-        leverage: parseInt(position.leverage),
+        symbol: position['symbol']!,
+        side: parseFloat(position['positionAmt']!) > 0 ? 'long' : 'short',
+        contracts: Math.abs(parseFloat(position['positionAmt']!)),
+        entryPrice: parseFloat(position['entryPrice']!),
+        markPrice: parseFloat(position['markPrice']!),
+        liquidationPrice: parseFloat(position['liquidationPrice']!),
+        unrealizedPnl: parseFloat(position['unRealizedProfit']!),
+        leverage: parseInt(position['leverage']!),
       };
     } catch (error: unknown) {
       logger.error('获取持仓失败:', (error instanceof Error ? error.message : String(error)));
@@ -419,7 +419,7 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async createMarketOrder(side: 'BUY' | 'SELL', quantity: number): Promise<{ id: string; status: string; price: number; quantity: number }> {
     try {
-      const order = await this.request('/fapi/v1/order', {
+      const order = await this.request<Record<string, string | number>>('/fapi/v1/order', {
         symbol: this.symbol,
         side,
         type: 'MARKET',
@@ -429,10 +429,10 @@ export class ExchangeManager implements ExecutionAdapter {
       logger.info(`市价单执行: ${side} ${quantity} ETH @ #${order.orderId}`);
       
       return {
-        id: order.orderId.toString(),
+        id: order['orderId']!.toString(),
         status: order.status === 'FILLED' ? 'closed' : 'open',
-        price: parseFloat(order.avgPrice || order.price),
-        quantity: parseFloat(order.executedQty),
+        price: parseFloat(String(order['avgPrice'] || order['price'])),
+        quantity: parseFloat(String(order['executedQty'])),
       };
     } catch (error: unknown) {
       logger.error('创建订单失败:', (error instanceof Error ? error.message : String(error)));
@@ -460,7 +460,7 @@ export class ExchangeManager implements ExecutionAdapter {
 
       // BUG 23 FIX: Use separate timestamps for each order
       // BUG 8 FIX: Use this.request() instead of raw fetch() to go through circuit breaker
-      const slOrder = await this.request('/fapi/v1/order', {
+      const slOrder = await this.request<Record<string, string | number>>('/fapi/v1/order', {
         symbol: this.symbol,
         side: closeSide,
         type: 'STOP_MARKET',
@@ -474,7 +474,7 @@ export class ExchangeManager implements ExecutionAdapter {
       }
 
       // BUG 23 FIX: Separate timestamp (this.request() generates its own timestamp)
-      const tpOrder = await this.request('/fapi/v1/order', {
+      const tpOrder = await this.request<Record<string, string | number>>('/fapi/v1/order', {
         symbol: this.symbol,
         side: closeSide,
         type: 'TAKE_PROFIT_MARKET',
@@ -541,7 +541,7 @@ export class ExchangeManager implements ExecutionAdapter {
    */
   async getSymbolInfo(): Promise<unknown> {
     try {
-      const info = await this.requestPublic('/fapi/v1/exchangeInfo');
+      const info = await this.requestPublic<{ symbols: Record<string, string>[] }>('/fapi/v1/exchangeInfo');
       return info.symbols.find((s: Record<string, string>) => s.symbol === this.symbol);
     } catch (error: unknown) {
       logger.error('获取交易对信息失败:', (error instanceof Error ? error.message : String(error)));

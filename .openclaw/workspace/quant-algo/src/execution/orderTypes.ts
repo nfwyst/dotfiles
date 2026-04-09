@@ -318,7 +318,7 @@ export class OrderBuilder {
     if (!stopLoss) throw new Error('Stop loss is required');
     if (!takeProfit) throw new Error('Take profit is required');
     
-    return { ...this.order, symbol, type, side, size, stopLoss, takeProfit } satisfies OrderSpec;
+    return { ...this.order, symbol, type, side, size, stopLoss, takeProfit } as OrderSpec;
   }
 }
 

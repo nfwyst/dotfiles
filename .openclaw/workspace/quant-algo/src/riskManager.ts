@@ -34,7 +34,7 @@ export class RiskManager {
   
   private initDailyStats(): DailyStats {
     return {
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0]!,
       trades: 0,
       wins: 0,
       losses: 0,

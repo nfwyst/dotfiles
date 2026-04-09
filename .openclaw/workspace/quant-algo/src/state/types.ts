@@ -104,30 +104,30 @@ export function migratePosition(raw: unknown): Position | null {
   // Already canonical (has `size` field) — return as-is
   if (typeof rec.size === 'number') {
     return {
-      side: rec.side ?? 'none',
+      side: (rec.side as Position['side']) ?? 'none',
       size: rec.size,
-      entryPrice: rec.entryPrice ?? 0,
-      leverage: rec.leverage ?? 1,
-      unrealizedPnl: rec.unrealizedPnl ?? 0,
-      markPrice: rec.markPrice,
-      liquidationPrice: rec.liquidationPrice,
-      stopLoss: rec.stopLoss,
-      takeProfit: rec.takeProfit,
+      entryPrice: (rec.entryPrice as number) ?? 0,
+      leverage: (rec.leverage as number) ?? 1,
+      unrealizedPnl: (rec.unrealizedPnl as number) ?? 0,
+      markPrice: rec.markPrice as number | undefined,
+      liquidationPrice: rec.liquidationPrice as number | undefined,
+      stopLoss: rec.stopLoss as number | undefined,
+      takeProfit: rec.takeProfit as number | undefined,
     };
   }
 
   // Legacy format (has `contracts` field) — migrate
   if (typeof rec.contracts === 'number') {
     return {
-      side: rec.side ?? 'none',
-      size: rec.contracts,            // contracts -> size
-      entryPrice: rec.entryPrice ?? 0,
-      leverage: rec.leverage ?? 1,    // default 1 if missing
-      unrealizedPnl: rec.pnl ?? 0,   // pnl -> unrealizedPnl
-      markPrice: rec.markPrice,
-      liquidationPrice: rec.liquidationPrice,
-      stopLoss: rec.stopLoss,
-      takeProfit: rec.takeProfit,
+      side: (rec.side as Position['side']) ?? 'none',
+      size: rec.contracts as number,            // contracts -> size
+      entryPrice: (rec.entryPrice as number) ?? 0,
+      leverage: (rec.leverage as number) ?? 1,    // default 1 if missing
+      unrealizedPnl: (rec.pnl as number) ?? 0,   // pnl -> unrealizedPnl
+      markPrice: rec.markPrice as number | undefined,
+      liquidationPrice: rec.liquidationPrice as number | undefined,
+      stopLoss: rec.stopLoss as number | undefined,
+      takeProfit: rec.takeProfit as number | undefined,
     };
   }
 

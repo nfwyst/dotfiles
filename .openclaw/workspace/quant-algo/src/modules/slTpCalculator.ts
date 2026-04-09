@@ -100,12 +100,12 @@ export class SLTPCalculator {
     
     // 查找 Swing High
     for (let i = startIndex + this.minSwingStrength; i < endIndex - this.minSwingStrength; i++) {
-      const current = highs[i];
+      const current = highs[i]!;
       let isSwingHigh = true;
       
       // 检查左边 minSwingStrength 根K线
       for (let j = 1; j <= this.minSwingStrength; j++) {
-        if (highs[i - j] > current) {
+        if (highs[i - j]! > current) {
           isSwingHigh = false;
           break;
         }
@@ -114,7 +114,7 @@ export class SLTPCalculator {
       // 检查右边 minSwingStrength 根K线
       if (isSwingHigh) {
         for (let j = 1; j <= this.minSwingStrength; j++) {
-          if (i + j < highs.length && highs[i + j] > current) {
+          if (i + j < highs.length && highs[i + j]! > current) {
             isSwingHigh = false;
             break;
           }
@@ -129,12 +129,12 @@ export class SLTPCalculator {
     
     // 查找 Swing Low
     for (let i = startIndex + this.minSwingStrength; i < endIndex - this.minSwingStrength; i++) {
-      const current = lows[i];
+      const current = lows[i]!;
       let isSwingLow = true;
       
       // 检查左边 minSwingStrength 根K线
       for (let j = 1; j <= this.minSwingStrength; j++) {
-        if (lows[i - j] < current) {
+        if (lows[i - j]! < current) {
           isSwingLow = false;
           break;
         }
@@ -143,7 +143,7 @@ export class SLTPCalculator {
       // 检查右边 minSwingStrength 根K线
       if (isSwingLow) {
         for (let j = 1; j <= this.minSwingStrength; j++) {
-          if (i + j < lows.length && lows[i + j] < current) {
+          if (i + j < lows.length && lows[i + j]! < current) {
             isSwingLow = false;
             break;
           }

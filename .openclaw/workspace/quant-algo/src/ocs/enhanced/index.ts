@@ -151,7 +151,7 @@ export class OCSEnhanced {
     const gaussData: number[] = new Array(this.gaussianBufCount);
     const start = (this.gaussianBufHead - this.gaussianBufCount + cap * 2) % cap;
     for (let k = 0; k < this.gaussianBufCount; k++) {
-      gaussData[k] = this.gaussianBuffer[(start + k) % cap];
+      gaussData[k] = this.gaussianBuffer[(start + k) % cap]!;
     }
     this.lastGaussianSmoothed = this.gaussian.smoothLast(gaussData);
   }
@@ -261,7 +261,7 @@ export class OCSEnhanced {
       trixSignal,
       derivativeAdvice,
       cvdDivergence,
-      latestDerivative
+      latestDerivative!
     );
     
     return {
@@ -279,7 +279,7 @@ export class OCSEnhanced {
       layer4Enhanced: {
         derivativeAdvice: derivativeAdvice.action,
         derivativeConfidence: derivativeAdvice.confidence,
-        isSignificantMove: latestDerivative.isSignificantMove,
+        isSignificantMove: latestDerivative!.isSignificantMove,
       },
       combinedSignal: combined,
     };

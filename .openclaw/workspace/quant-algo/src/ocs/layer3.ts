@@ -102,7 +102,7 @@ export class OCSLayer3 {
    */
   private calculateVolatility(prices: number[], precomputedATR?: number): number {
     if (precomputedATR !== undefined && precomputedATR > 0) {
-      const currentPrice = prices[prices.length - 1];
+      const currentPrice = prices[prices.length - 1]!;
       return precomputedATR / currentPrice;
     }
 
@@ -110,7 +110,7 @@ export class OCSLayer3 {
 
     // 计算 14 周期 ATR
     const atr = this.calculateATR(prices, 14);
-    const currentPrice = prices[prices.length - 1];
+    const currentPrice = prices[prices.length - 1]!;
 
     return atr / currentPrice; // ATR 百分比
   }
@@ -128,14 +128,14 @@ export class OCSLayer3 {
       if (highs && lows && i < highs.length && i < lows.length && i > 0) {
         // BUG 18 FIX: Use true range: max(high-low, |high-prevClose|, |low-prevClose|)
         tr = Math.max(
-          highs[i] - lows[i],
-          Math.abs(highs[i] - prices[i - 1]),
-          Math.abs(lows[i] - prices[i - 1])
+          highs[i]! - lows[i]!,
+          Math.abs(highs[i]! - prices[i - 1]!),
+          Math.abs(lows[i]! - prices[i - 1]!)
         );
       } else {
         // Fallback: use close-to-close as proxy
-        const high = Math.max(prices[i], prices[i - 1]);
-        const low = Math.min(prices[i], prices[i - 1]);
+        const high = Math.max(prices[i]!, prices[i - 1]!);
+        const low = Math.min(prices[i]!, prices[i - 1]!);
         tr = high - low;
       }
       sum += tr;
@@ -183,7 +183,7 @@ export class OCSLayer3 {
 
     // 3. KNN分类（带距离加权 + temporal embargo）
     const now = this.history.length > 0
-      ? this.history[this.history.length - 1].timestamp
+      ? this.history[this.history.length - 1]!.timestamp
       : Date.now();
     const distances = this.findKNearestNeighborsWithDistance(features3D, now);
     const neighbors = distances.map((d) => d.neighbor);
@@ -260,7 +260,7 @@ export class OCSLayer3 {
 
     // Iterate directly with index bound — no array.slice() copy
     for (let i = 0; i < embargoStart; i++) {
-      const h = this.history[i];
+      const h = this.history[i]!;
       const d = this.euclideanDistance(features, h.features);
 
       if (topK.length < K) {
@@ -268,12 +268,12 @@ export class OCSLayer3 {
         topK.push({ neighbor: h, distance: d });
         if (topK.length === K) {
           topK.sort((a, b) => a.distance - b.distance);
-          maxDist = topK[K - 1].distance;
+          maxDist = topK[K - 1]!.distance;
         }
       } else if (d < maxDist) {
         topK[K - 1] = { neighbor: h, distance: d };
         topK.sort((a, b) => a.distance - b.distance);
-        maxDist = topK[K - 1].distance;
+        maxDist = topK[K - 1]!.distance;
       }
     }
 
@@ -427,10 +427,10 @@ export class OCSLayer3 {
         const label = this.mapTripleBarrierLabel(bl.label);
 
         this.history.push({
-          features: features3D[featureIdx],
+          features: features3D[featureIdx]!,
           futureReturn: bl.returnAtExit,
           label,
-          timestamp: ohlcv[exitIdx].timestamp,
+          timestamp: ohlcv[exitIdx]!.timestamp,
         });
       }
 
@@ -450,18 +450,18 @@ export class OCSLayer3 {
         if (ohlcvIdx >= ohlcv.length) continue;
 
         const pastReturn =
-          (ohlcv[ohlcvIdx].close - ohlcv[ohlcvIdx - LABEL_LOOKBACK].close) /
-          ohlcv[ohlcvIdx - LABEL_LOOKBACK].close;
+          (ohlcv[ohlcvIdx]!.close - ohlcv[ohlcvIdx - LABEL_LOOKBACK]!.close) /
+          ohlcv[ohlcvIdx - LABEL_LOOKBACK]!.close;
 
         let label: 'buy' | 'sell' | 'hold' = 'hold';
         if (pastReturn > labelThreshold) label = 'buy';
         else if (pastReturn < -labelThreshold) label = 'sell';
 
         this.history.push({
-          features: features3D[i],
+          features: features3D[i]!,
           futureReturn: pastReturn,
           label,
-          timestamp: ohlcv[ohlcvIdx].timestamp,
+          timestamp: ohlcv[ohlcvIdx]!.timestamp,
         });
       }
     }
@@ -473,7 +473,7 @@ export class OCSLayer3 {
   private computeTripleBarrierLabels(ohlcv: OHLCV[]): BarrierLabel[] | null {
     if (ohlcv.length < 2) return null;
 
-    const sample = ohlcv[0];
+    const sample = ohlcv[0]!;
     if (
       sample.high === undefined ||
       sample.low === undefined ||

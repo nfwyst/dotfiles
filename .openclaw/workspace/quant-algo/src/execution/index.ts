@@ -21,6 +21,9 @@ export type {
 
 export type {
   TradingBotConfig,
+} from './tradingBot';
+
+export type {
   AgentDecision,
   MarketContext,
-} from './tradingBot';
+} from './orderGenerator';

@@ -157,8 +157,8 @@ export class SentimentAnalystAgent implements AnalystAgent {
     
     // 使用技术指标推断市场情绪
     const closes = ohlcv.map(c => c.close);
-    const currentPrice = closes[closes.length - 1];
-    const prevPrice = closes[closes.length - 2];
+    const currentPrice = closes[closes.length - 1]!;
+    const prevPrice = closes[closes.length - 2]!;
     const priceChange = (currentPrice - prevPrice) / prevPrice;
     
     // 计算简单的市场状态

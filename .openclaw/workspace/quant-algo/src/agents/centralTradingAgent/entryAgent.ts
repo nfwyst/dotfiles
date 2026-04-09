@@ -169,6 +169,7 @@ export class EntryAgent implements DecisionAgent {
       return {
         success: false,
         error: llmError instanceof Error ? llmError.message : 'LLM call failed',
+        processingTimeMs: 0,
       };
     }
 
@@ -176,16 +177,17 @@ export class EntryAgent implements DecisionAgent {
       return {
         success: false,
         error: 'Empty response',
+        processingTimeMs: 0,
       };
     }
     
     try {
       const rawParsed: unknown = JSON.parse(resultContent);
       if (!rawParsed || typeof rawParsed !== 'object') {
-        return { success: false, error: 'Invalid JSON response' };
+        return { success: false, error: 'Invalid JSON response', processingTimeMs: 0 };
       }
       if (!isLLMEntryResponse(rawParsed)) {
-        return { success: false, error: 'LLM response does not match LLMEntryResponse shape' };
+        return { success: false, error: 'LLM response does not match LLMEntryResponse shape', processingTimeMs: 0 };
       }
       const parsed = rawParsed;
       
@@ -220,6 +222,7 @@ export class EntryAgent implements DecisionAgent {
       return {
         success: false,
         error: `JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        processingTimeMs: 0,
       };
     }
   }
@@ -317,11 +320,10 @@ export class EntryAgent implements DecisionAgent {
   
   getStatus(): AgentStatus {
     return {
-      name: this.name,
-      version: this.version,
+      healthy: this.errorCount < 10,
       lastRun: this.lastRun,
       errorCount: this.errorCount,
-      avgProcessingTime: this.processingTimes.length > 0
+      avgProcessingTimeMs: this.processingTimes.length > 0
         ? this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length
         : 0,
     };

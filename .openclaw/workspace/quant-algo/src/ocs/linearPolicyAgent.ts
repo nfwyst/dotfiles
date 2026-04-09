@@ -63,9 +63,9 @@ export class LinearPolicyAgent {
     
     // 输出映射到动作空间
     return {
-      positionSize: Math.tanh(output[0]),           // -1 ~ 1
-      stopLossRatio: 0.01 + Math.abs(output[1]) * 0.04,   // 0.01 ~ 0.05
-      takeProfitRatio: 0.02 + Math.abs(output[2]) * 0.08  // 0.02 ~ 0.10
+      positionSize: Math.tanh(output[0]!),           // -1 ~ 1
+      stopLossRatio: 0.01 + Math.abs(output[1]!) * 0.04,   // 0.01 ~ 0.05
+      takeProfitRatio: 0.02 + Math.abs(output[2]!) * 0.08  // 0.02 ~ 0.10
     };
   }
   
@@ -144,7 +144,7 @@ export class LinearPolicyAgent {
     const batch: Transition[] = [];
     for (let i = 0; i < size; i++) {
       const idx = Math.floor(Math.random() * this.replayBuffer.length);
-      batch.push(this.replayBuffer[idx]);
+      batch.push(this.replayBuffer[idx]!);
     }
     return batch;
   }
@@ -162,13 +162,13 @@ export class LinearPolicyAgent {
       (transition.done ? 0 : this.gamma * this.estimateValue(transition.nextState));
     
     // 梯度下降更新
-    const currentQ = this.forward(features, this.criticWeights)[0];
+    const currentQ = this.forward(features, this.criticWeights)[0]!;
     const error = targetQ - currentQ;
     
     // 权重更新
     for (let i = 0; i < this.criticWeights.length; i++) {
-      for (let j = 0; j < this.criticWeights[i].length; j++) {
-        this.criticWeights[i][j] += this.lr * error * (features[j] || 0);
+      for (let j = 0; j < this.criticWeights[i]!.length; j++) {
+        this.criticWeights[i]![j]! += this.lr * error * (features[j] || 0);
       }
     }
   }
@@ -185,8 +185,8 @@ export class LinearPolicyAgent {
     
     // Update linear actor weights via policy gradient
     for (let i = 0; i < this.actorWeights.length; i++) {
-      for (let j = 0; j < this.actorWeights[i].length; j++) {
-        this.actorWeights[i][j] += this.lr * advantage * features[j] * 0.1;
+      for (let j = 0; j < this.actorWeights[i]!.length; j++) {
+        this.actorWeights[i]![j]! += this.lr * advantage * features[j]! * 0.1;
       }
     }
   }
@@ -195,7 +195,7 @@ export class LinearPolicyAgent {
     const features = this.stateToFeatures(state);
     const action = this.selectAction(state);
     const criticFeatures = [...features, action.positionSize];
-    return this.forward(criticFeatures, this.criticWeights)[0];
+    return this.forward(criticFeatures, this.criticWeights)[0]!;
   }
 }
 

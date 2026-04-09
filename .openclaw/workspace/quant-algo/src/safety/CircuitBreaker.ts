@@ -298,7 +298,7 @@ export class CircuitBreaker {
     if (this.config.fallbackValue !== undefined) {
       return {
         success: true,
-        value: this.config.fallbackValue,
+        value: this.config.fallbackValue as T,
         isFallback: true,
         state: this.state,
         duration: Date.now() - startTime,

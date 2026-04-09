@@ -278,7 +278,7 @@ export function combinatorialPurgedCV(
     // Build test index set
     const testSet = new Set<number>();
     for (const gi of testGroupIndices) {
-      for (let idx = groups[gi].start; idx < groups[gi].end; idx++) {
+      for (let idx = groups[gi]!.start; idx < groups[gi]!.end; idx++) {
         testSet.add(idx);
       }
     }
@@ -286,7 +286,7 @@ export function combinatorialPurgedCV(
     // Build purge zone
     const purgeSet = new Set<number>();
     for (const gi of testGroupIndices) {
-      const { start, end } = groups[gi];
+      const { start, end } = groups[gi]!;
       for (let p = Math.max(0, start - effectiveEmbargo); p < start; p++) {
         if (!testSet.has(p)) purgeSet.add(p);
       }
@@ -300,9 +300,9 @@ export function combinatorialPurgedCV(
     const testValues: number[] = [];
     for (let i = 0; i < data.length; i++) {
       if (testSet.has(i)) {
-        testValues.push(data[i].value);
+        testValues.push(data[i]!.value);
       } else if (!purgeSet.has(i)) {
-        trainValues.push(data[i].value);
+        trainValues.push(data[i]!.value);
       }
     }
 
@@ -340,7 +340,7 @@ export function probabilityOfBacktestOverfitting(
     throw new Error('At least one CPCVResult is required.');
   }
 
-  const nFolds = variantResults[0].totalCombinations;
+  const nFolds = variantResults[0]!.totalCombinations;
   for (const vr of variantResults) {
     if (vr.totalCombinations !== nFolds) {
       throw new Error(
@@ -353,7 +353,7 @@ export function probabilityOfBacktestOverfitting(
   // When numStrategies < 3, we label the result as degradationRate (not real PBO)
   // and set isPBOReliable = false with a warning.
   if (S < 3) {
-    const folds = variantResults[0].folds;
+    const folds = variantResults[0]!.folds;
     let degradedCount = 0;
     const logitLambdas: number[] = [];
 
@@ -389,7 +389,7 @@ export function probabilityOfBacktestOverfitting(
     const oosMetrics: number[] = [];
 
     for (let s = 0; s < S; s++) {
-      const fold = variantResults[s].folds[foldIdx];
+      const fold = variantResults[s]!.folds[foldIdx]!;
       oosMetrics.push(fold.outOfSampleMetric);
       if (fold.inSampleMetric > bestIS) {
         bestIS = fold.inSampleMetric;
@@ -397,7 +397,7 @@ export function probabilityOfBacktestOverfitting(
       }
     }
 
-    const bestOOS = oosMetrics[bestStrategyIdx];
+    const bestOOS = oosMetrics[bestStrategyIdx]!;
     const sortedOOS = [...oosMetrics].sort((a, b) => a - b);
     let rank = sortedOOS.findIndex((v) => v >= bestOOS);
     if (rank === -1) rank = S - 1;

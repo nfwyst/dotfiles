@@ -48,7 +48,7 @@ export class MarketDataFetcher {
         const raw: unknown = await res.json();
         if (!isNonNullObject(raw) || typeof raw.price !== 'string') throw new Error('Unexpected ticker response shape');
         const data = raw;
-        return parseFloat(data.price);
+        return parseFloat(data.price as string);
       });
       
       span?.setAttributes({ 'market_data.price': result });
@@ -56,7 +56,7 @@ export class MarketDataFetcher {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -100,7 +100,7 @@ export class MarketDataFetcher {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -143,7 +143,7 @@ export class MarketDataFetcher {
       span?.end();
       return result;
     } catch (error: unknown) {
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -180,7 +180,7 @@ export class MarketDataFetcher {
       return result;
     } catch (error: unknown) {
       console.error(`获取市场数据失败: ${(error instanceof Error ? error.message : String(error))}`);
-      span?.recordException(error);
+      span?.recordException(error as Error);
       span?.setStatus({ code: 2, message: (error instanceof Error ? error.message : String(error)) });
       span?.end();
       throw error;
@@ -194,7 +194,7 @@ export class MarketDataFetcher {
       try {
         return await fn();
       } catch (error: unknown) {
-        lastError = error;
+        lastError = error as Error | undefined;
         console.warn(`请求失败 (尝试 ${i + 1}/${this.retryCount}): ${(error instanceof Error ? error.message : String(error))}`);
         
         if (i < this.retryCount - 1) {

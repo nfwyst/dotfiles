@@ -231,22 +231,22 @@ export class OCSLayer2 {
 
     // TRIX
     const trixData = this.trixSystem.calculate(prices);
-    const trix = trixData[trixData.length - 1];
+    const trix = trixData[trixData.length - 1]!;
     const trixSignal = this.trixSystem.generateSignal(prices);
     v312Output.trix = {
       value: trix.trix,
-      trend: trix.trend,
+      trend: trix.trend === 'neutral' ? 'flat' : trix.trend,
       signal: trixSignal.action,
     };
 
     // 导数过滤器
     const derivativeSignal = this.derivativeFilter.getTradingAdvice(prices);
     const derivativeData = this.derivativeFilter.calculate(prices);
-    const latestDerivative = derivativeData[derivativeData.length - 1];
+    const latestDerivative = derivativeData[derivativeData.length - 1]!;
     v312Output.derivative = {
       trendStrength: latestDerivative.trendState.includes('strong') ? 'strong' : 
                      latestDerivative.trendState.includes('weakening') ? 'weak' : 'consolidating',
-      signal: derivativeSignal.action,
+      signal: (derivativeSignal.action === 'buy' ? 'enter' : derivativeSignal.action === 'sell' ? 'exit' : derivativeSignal.action) as 'hold' | 'reduce' | 'exit' | 'enter',
     };
 
     // Elastic VMA
@@ -350,7 +350,7 @@ export class OCSLayer2 {
 
     // Compute phase from recent price position within the detected cycle
     const recentPrices = prices.slice(-period);
-    const currentPrice = prices[prices.length - 1];
+    const currentPrice = prices[prices.length - 1]!;
     const minPrice = Math.min(...recentPrices);
     const maxPrice = Math.max(...recentPrices);
     const phase = maxPrice === minPrice ? 0 : 2 * ((currentPrice - minPrice) / (maxPrice - minPrice)) - 1;
@@ -402,7 +402,7 @@ export class OCSLayer2 {
     const attentionScores = keys.map(key => {
       let dotProduct = 0;
       for (let i = 0; i < query.length; i++) {
-        dotProduct += query[i] * key[i];
+        dotProduct += query[i]! * key[i]!;
       }
       // 缩放点积
       return dotProduct / Math.sqrt(key.length);
@@ -422,8 +422,8 @@ export class OCSLayer2 {
     const learningRate = 0.1;
     for (let i = 0; i < signals.length; i++) {
       // 注意力权重 + 历史权重平滑
-      const targetWeight = attentionWeights[i];
-      this.lmsWeights[i] += learningRate * (targetWeight - this.lmsWeights[i]);
+      const targetWeight = attentionWeights[i]!;
+      this.lmsWeights[i]! += learningRate * (targetWeight - this.lmsWeights[i]!);
     }
 
     // 归一化权重
@@ -434,7 +434,7 @@ export class OCSLayer2 {
 
     // 计算融合输出 — iterate over all 4 signals
     const filteredSignal = signals.reduce((sum, sig, i) => 
-      sum + sig * this.lmsWeights[i], 0);
+      sum + sig * this.lmsWeights[i]!, 0);
 
     // 计算收敛度 (注意力熵的补数)
     const entropy = attentionWeights.reduce((sum, w) => 
@@ -470,7 +470,7 @@ export class OCSLayer2 {
     const desiredSignal = this.computeDesiredSignal(signals, cycle);
 
     // Current filter output: y(n) = w^T · x(n)
-    const filterOutput = signals.reduce((sum, sig, i) => sum + sig * this.lmsWeights[i], 0);
+    const filterOutput = signals.reduce((sum, sig, i) => sum + sig * this.lmsWeights[i]!, 0);
 
     // Error signal: e(n) = d(n) - y(n)
     const error = desiredSignal - filterOutput;
@@ -481,7 +481,7 @@ export class OCSLayer2 {
     const mu = this.lmsLearningRate;
 
     for (let i = 0; i < signals.length; i++) {
-      this.lmsWeights[i] += mu * error * signals[i] / (normSq + epsilon);
+      this.lmsWeights[i]! += mu * error * signals[i]! / (normSq + epsilon);
     }
 
     // Compute convergence metric (running average of squared error)
@@ -556,7 +556,7 @@ export class OCSLayer2 {
     // 动态阈值：使用配置的分位数
     const sortedScores = [...this.history.zScores].sort((a, b) => a - b);
     const percentileIndex = Math.floor(sortedScores.length * cfg.percentile);
-    const dynamicThreshold = std === 0 ? cfg.defaultThreshold : Math.abs(sortedScores[percentileIndex] - mean) / std;
+    const dynamicThreshold = std === 0 ? cfg.defaultThreshold : Math.abs(sortedScores[percentileIndex]! - mean) / std;
     
     // 使用动态阈值计算置信度
     const threshold = dynamicThreshold > 0 ? dynamicThreshold : cfg.defaultThreshold;
@@ -575,7 +575,7 @@ export class OCSLayer2 {
    */
   private calculatePricePosition(prices: number[], period: number): number {
     const recentPrices = prices.slice(-period);
-    const current = prices[prices.length - 1];
+    const current = prices[prices.length - 1]!;
     const min = Math.min(...recentPrices);
     const max = Math.max(...recentPrices);
 

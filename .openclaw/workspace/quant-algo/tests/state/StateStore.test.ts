@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { StateStore } from '../../src/state/StateStore';
 import { createDefaultState, UnifiedState, Position } from '../../src/state/types';
+import type { LLMTradingSignal } from '../../src/modules/llmAnalysis';
+import type { StrategySignal } from '../../src/modules/strategyEngine';
+import type { OCSEnhancedOutput } from '../../src/ocs/enhanced/index';
 
 describe('StateStore', () => {
   let store: StateStore;
@@ -80,10 +83,10 @@ describe('StateStore', () => {
   it('updatePosition sets position and records lastCheck', () => {
     const pos: Position = {
       side: 'long',
-      contracts: 1,
+      size: 1,
       entryPrice: 3000,
-      markPrice: 3100,
-      pnl: 100,
+      leverage: 1,
+      unrealizedPnl: 100,
     };
     store.updatePosition(pos);
     expect(store.getTrading().position).toEqual(pos);
@@ -91,8 +94,8 @@ describe('StateStore', () => {
   });
 
   it('updatePosition saves previous position in lastPosition', () => {
-    const pos1: Position = { side: 'long', contracts: 1, entryPrice: 3000, markPrice: 3100, pnl: 100 };
-    const pos2: Position = { side: 'short', contracts: 2, entryPrice: 3200, markPrice: 3100, pnl: 200 };
+    const pos1: Position = { side: 'long', size: 1, entryPrice: 3000, leverage: 1, unrealizedPnl: 100 };
+    const pos2: Position = { side: 'short', size: 2, entryPrice: 3200, leverage: 1, unrealizedPnl: 200 };
     store.updatePosition(pos1);
     store.updatePosition(pos2);
     expect(store.getTrading().position).toEqual(pos2);
@@ -100,7 +103,7 @@ describe('StateStore', () => {
   });
 
   it('handles null position correctly', () => {
-    const pos: Position = { side: 'long', contracts: 1, entryPrice: 3000, markPrice: 3100, pnl: 100 };
+    const pos: Position = { side: 'long', size: 1, entryPrice: 3000, leverage: 1, unrealizedPnl: 100 };
     store.updatePosition(pos);
     store.updatePosition(null);
     expect(store.getTrading().position).toBeNull();
@@ -120,7 +123,7 @@ describe('StateStore', () => {
   // ── LLM updates ───────────────────────────────────────────────
 
   it('updateLLM stores decision, price, and thinking', () => {
-    const decision = { type: 'long', thinking: 'bullish divergence detected' };
+    const decision = { type: 'long' as const, thinking: 'bullish divergence detected' } as unknown as LLMTradingSignal;
     store.updateLLM(decision, 2500);
     const llm = store.getLLM();
     expect(llm.lastDecision).toEqual(decision);
@@ -156,8 +159,8 @@ describe('StateStore', () => {
   // ── Strategy updates ──────────────────────────────────────────
 
   it('updateStrategy sets signal and optional output', () => {
-    const signal = { type: 'long', confidence: 0.85 };
-    const output = { scores: [1, 2, 3] };
+    const signal = { type: 'long' as const, confidence: 0.85 } as unknown as StrategySignal;
+    const output = { scores: [1, 2, 3] } as unknown as OCSEnhancedOutput;
     store.updateStrategy(signal, output);
     expect(store.getStrategy().lastSignal).toEqual(signal);
     expect(store.getStrategy().strategyOutput).toEqual(output);

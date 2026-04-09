@@ -94,7 +94,7 @@ export class MicrostructureFeatureExtractor {
     
     if (totalWeight === 0) return 0;
     
-    return imbalances.reduce((sum, imb, i) => sum + imb * weights[i], 0) / totalWeight;
+    return imbalances.reduce((sum, imb, i) => sum + imb * weights[i]!, 0) / totalWeight;
   }
   
   /**
@@ -108,7 +108,7 @@ export class MicrostructureFeatureExtractor {
     const returns = [];
     for (let i = 1; i < this.history.length; i++) {
       returns.push(
-        (this.history[i].close - this.history[i-1].close) / this.history[i-1].close
+        (this.history[i]!.close - this.history[i-1]!.close) / this.history[i-1]!.close
       );
     }
     
@@ -135,9 +135,9 @@ export class MicrostructureFeatureExtractor {
     const impacts = [];
     for (let i = 1; i < this.history.length; i++) {
       const priceChange = Math.abs(
-        (this.history[i].close - this.history[i-1].close) / this.history[i-1].close
+        (this.history[i]!.close - this.history[i-1]!.close) / this.history[i-1]!.close
       );
-      const volume = this.history[i].volume;
+      const volume = this.history[i]!.volume;
       const avgVolume = this.average(this.history.slice(0, i).map(c => c.volume));
       
       if (avgVolume === 0) continue;
@@ -210,7 +210,7 @@ export class MicrostructureFeatureExtractor {
     const returns = [];
     for (let i = 1; i < this.history.length; i++) {
       returns.push(
-        (this.history[i].close - this.history[i-1].close) / this.history[i-1].close
+        (this.history[i]!.close - this.history[i-1]!.close) / this.history[i-1]!.close
       );
     }
     

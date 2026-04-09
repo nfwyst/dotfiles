@@ -308,3 +308,13 @@ export class CentralTradingAgent {
 }
 
 export default CentralTradingAgent;
+
+// Re-export types used by downstream consumers
+export type {
+  CompositeDecision,
+  DecisionContext,
+  TrendAgentOutput,
+  EntryAgentOutput,
+  RiskAgentOutput,
+  AlignmentReport,
+} from './types';

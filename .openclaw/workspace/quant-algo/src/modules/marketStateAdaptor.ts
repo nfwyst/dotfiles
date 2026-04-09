@@ -100,16 +100,16 @@ export class MarketStateAdaptor {
     let plusDM = 0, minusDM = 0, trSum = 0;
     
     for (let i = prices.length - period; i < prices.length; i++) {
-      const highDiff = highs[i] - highs[i - 1];
-      const lowDiff = lows[i - 1] - lows[i];
+      const highDiff = highs[i]! - highs[i - 1]!;
+      const lowDiff = lows[i - 1]! - lows[i]!;
       
       if (highDiff > lowDiff && highDiff > 0) plusDM += highDiff;
       if (lowDiff > highDiff && lowDiff > 0) minusDM += lowDiff;
       
       const tr = Math.max(
-        highs[i] - lows[i],
-        Math.abs(highs[i] - prices[i - 1]),
-        Math.abs(lows[i] - prices[i - 1])
+        highs[i]! - lows[i]!,
+        Math.abs(highs[i]! - prices[i - 1]!),
+        Math.abs(lows[i]! - prices[i - 1]!)
       );
       trSum += tr;
     }
@@ -129,7 +129,7 @@ export class MarketStateAdaptor {
     
     const returns = [];
     for (let i = 1; i < prices.length; i++) {
-      returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+      returns.push((prices[i]! - prices[i - 1]!) / prices[i - 1]!);
     }
     
     const mean = returns.reduce((a, b) => a + b, 0) / returns.length;

@@ -290,7 +290,8 @@ export class EventDrivenRuntime {
           leverage: Number(process.env.LEVERAGE) || 5,
         },
         balance: 0, // actual balance fetched by layers on demand
-        mode: this.mode,
+        // mode passed via startConfig
+
       },
     });
 
@@ -476,9 +477,9 @@ export class EventDrivenRuntime {
             reason: 'Graceful shutdown',
             duration: uptime,
             finalStats: {
-              totalTrades: state.trading.totalTrades,
-              winRate: state.trading.winRate,
-              totalPnl: state.trading.totalPnl,
+              totalTrades: state.trading.tradeCount,
+              winRate: 0 /* winRate not tracked in state */,
+              totalPnl: state.trading.totalPnL,
             },
           },
         });

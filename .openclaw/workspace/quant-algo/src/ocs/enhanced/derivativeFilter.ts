@@ -54,7 +54,7 @@ class CircularZScoreBuffer {
   push(value: number): void {
     if (this.count >= this.capacity) {
       // Remove outgoing value
-      const outgoing = this.buffer[this.head];
+      const outgoing = this.buffer[this.head]!;
       this.sum -= outgoing;
       this.sumSq -= outgoing * outgoing;
     } else {
@@ -103,7 +103,7 @@ class CircularSMABuffer {
 
   push(value: number): number {
     if (this.count >= this.capacity) {
-      const outgoing = this.buffer[this.head];
+      const outgoing = this.buffer[this.head]!;
       this.sum -= outgoing;
     } else {
       this.count++;
@@ -289,7 +289,7 @@ export class DerivativeFilter {
     velocity.push(0); // 第一个点速度为0
     
     for (let i = 1; i < prices.length; i++) {
-      velocity.push(prices[i] - prices[i - 1]);
+      velocity.push(prices[i]! - prices[i - 1]!);
     }
     
     return velocity;
@@ -304,7 +304,7 @@ export class DerivativeFilter {
     acceleration.push(0); // 第一个点加速度为0
     
     for (let i = 1; i < velocity.length; i++) {
-      acceleration.push(velocity[i] - velocity[i - 1]);
+      acceleration.push(velocity[i]! - velocity[i - 1]!);
     }
     
     return acceleration;
@@ -318,7 +318,7 @@ export class DerivativeFilter {
     
     for (let i = 0; i < data.length; i++) {
       if (i < period - 1) {
-        result.push(data[i]);
+        result.push(data[i]!);
       } else {
         const sum = data.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
         result.push(sum / period);
@@ -341,7 +341,7 @@ export class DerivativeFilter {
       const variance = slice.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / slice.length;
       const std = Math.sqrt(variance);
       
-      result.push(std === 0 ? 0 : (data[i] - mean) / std);
+      result.push(std === 0 ? 0 : (data[i]! - mean) / std);
     }
     
     return result;
@@ -389,10 +389,10 @@ export class DerivativeFilter {
     const result: DerivativeData[] = [];
     
     for (let i = 0; i < prices.length; i++) {
-      const v = normalizedVelocity[i];
-      const a = normalizedAcceleration[i];
-      const vMA = velocityMA[i];
-      const aMA = accelerationMA[i];
+      const v = normalizedVelocity[i]!;
+      const a = normalizedAcceleration[i]!;
+      const vMA = velocityMA[i]!;
+      const aMA = accelerationMA[i]!;
       
       // 判断趋势状态
       let trendState: DerivativeData['trendState'] = 'neutral';
@@ -425,7 +425,7 @@ export class DerivativeFilter {
       const strength = Math.min(100, (Math.abs(vMA) + Math.abs(aMA)) * 25);
       
       result.push({
-        price: prices[i],
+        price: prices[i]!,
         velocity: v,
         velocityMA: vMA,
         acceleration: a,
@@ -450,7 +450,7 @@ export class DerivativeFilter {
     signal: 'hold' | 'reduce' | 'exit' | 'enter';
   } {
     const data = this.calculate(prices);
-    const current = data[data.length - 1];
+    const current = data[data.length - 1]!;
     
     let trendStrength: 'strong' | 'weak' | 'reversing' | 'consolidating';
     switch (current.trendState) {
@@ -496,7 +496,7 @@ export class DerivativeFilter {
     reasoning: string[];
   } {
     const data = this.calculate(prices);
-    const current = data[data.length - 1];
+    const current = data[data.length - 1]!;
     
     const reasoning = [...current.reasoning];
     

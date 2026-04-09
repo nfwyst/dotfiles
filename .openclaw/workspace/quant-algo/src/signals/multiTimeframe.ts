@@ -153,11 +153,11 @@ export class MultiTimeframeAggregator {
       if (group.length === 0) continue;
 
       const merged: OHLCV = {
-        timestamp: group[0].timestamp,
-        open: group[0].open,
+        timestamp: group[0]!.timestamp,
+        open: group[0]!.open,
         high: Math.max(...group.map((c) => c.high)),
         low: Math.min(...group.map((c) => c.low)),
-        close: group[group.length - 1].close,
+        close: group[group.length - 1]!.close,
         volume: group.reduce((s, c) => s + c.volume, 0),
       };
       result.push(merged);
@@ -181,16 +181,16 @@ export class MultiTimeframeAggregator {
     }
 
     // ── Return: last candle's return ──────────────────────────
-    const lastClose = candles[n - 1].close;
-    const prevClose = candles[n - 2].close;
+    const lastClose = candles[n - 1]!.close;
+    const prevClose = candles[n - 2]!.close;
     const ret = prevClose !== 0 ? (lastClose - prevClose) / prevClose : 0;
 
     // ── Volatility: std of recent log returns ─────────────────
     const lookback = Math.min(20, n - 1);
     const logReturns: number[] = [];
     for (let i = n - lookback; i < n; i++) {
-      if (candles[i - 1].close > 0 && candles[i].close > 0) {
-        logReturns.push(Math.log(candles[i].close / candles[i - 1].close));
+      if (candles[i - 1]!.close > 0 && candles[i]!.close > 0) {
+        logReturns.push(Math.log(candles[i]!.close / candles[i - 1]!.close));
       }
     }
 
@@ -209,7 +209,7 @@ export class MultiTimeframeAggregator {
     let downs = 0;
     const momLookback = Math.min(14, n - 1);
     for (let i = n - momLookback; i < n; i++) {
-      const change = candles[i].close - candles[i - 1].close;
+      const change = candles[i]!.close - candles[i - 1]!.close;
       if (change > 0) ups += change;
       else downs += Math.abs(change);
     }
@@ -222,7 +222,7 @@ export class MultiTimeframeAggregator {
     const recentVolumes = candles.slice(-volLookback).map((c) => c.volume);
     const avgVol =
       recentVolumes.reduce((s, v) => s + v, 0) / recentVolumes.length;
-    const currentVol = candles[n - 1].volume;
+    const currentVol = candles[n - 1]!.volume;
     const volRatio = avgVol > 0 ? currentVol / avgVol : 1;
 
     return { ret, vol, mom, volRatio };

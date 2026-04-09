@@ -17,9 +17,9 @@ import {
   VolumeAnalysis,
   SupportResistanceLevel,
   MicrostructureAnalysis,
-  OHLCV,
   TECHNICAL_ANALYST_VERSION,
 } from './types';
+import type { OHLCV } from '../../events/types';
 
 import { TechnicalIndicators } from '../../modules/technicalAnalysis';
 import { computeRSI } from '../../indicators/rsi';
@@ -200,7 +200,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    */
   private analyzeTrend(ohlcv: OHLCV[], indicators: CalculatedIndicators): TrendAnalysis {
     const closes = ohlcv.map(c => c.close);
-    const currentPrice = closes[closes.length - 1];
+    const currentPrice = closes[closes.length - 1]!;
     
     // 计算趋势指标
     const sma20 = this.calculateSMA(closes, 20);
@@ -416,7 +416,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
    */
   private analyzeVolume(ohlcv: OHLCV[], indicators: CalculatedIndicators): VolumeAnalysis {
     const volumes = ohlcv.map(c => c.volume);
-    const currentVolume = volumes[volumes.length - 1];
+    const currentVolume = volumes[volumes.length - 1]!;
     const volumeSMA20 = indicators.volumeSMA20 || currentVolume;
     const volumeRatio = currentVolume / volumeSMA20;
     
@@ -468,11 +468,11 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     const levels: SupportResistanceLevel[] = [];
     
     for (let i = 2; i < recentOHLCV.length - 2; i++) {
-      const candle = recentOHLCV[i];
-      const prev1 = recentOHLCV[i - 1];
-      const prev2 = recentOHLCV[i - 2];
-      const next1 = recentOHLCV[i + 1];
-      const next2 = recentOHLCV[i + 2];
+      const candle = recentOHLCV[i]!;
+      const prev1 = recentOHLCV[i - 1]!;
+      const prev2 = recentOHLCV[i - 2]!;
+      const next1 = recentOHLCV[i + 1]!;
+      const next2 = recentOHLCV[i + 2]!;
       
       // 摆动高点 (阻力)
       if (
@@ -653,7 +653,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
   
   // 简化的指标计算方法
   private calculateSMA(data: number[], period: number): number {
-    if (data.length < period) return data[data.length - 1] || 0;
+    if (data.length < period) return data[data.length - 1]! || 0;
     const slice = data.slice(-period);
     return slice.reduce((a, b) => a + b, 0) / period;
   }
@@ -663,7 +663,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     const multiplier = 2 / (period + 1);
     let ema = this.calculateSMA(data.slice(0, period), period);
     for (let i = period; i < data.length; i++) {
-      ema = (data[i] - ema) * multiplier + ema;
+      ema = (data[i]! - ema) * multiplier + ema;
     }
     return ema;
   }
@@ -695,9 +695,9 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     
     const trValues: number[] = [];
     for (let i = 1; i < ohlcv.length; i++) {
-      const high = ohlcv[i].high;
-      const low = ohlcv[i].low;
-      const prevClose = ohlcv[i - 1].close;
+      const high = ohlcv[i]!.high;
+      const low = ohlcv[i]!.low;
+      const prevClose = ohlcv[i - 1]!.close;
       
       const tr = Math.max(
         high - low,
@@ -721,11 +721,11 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     const minusDM: number[] = [];
     
     for (let i = 1; i < ohlcv.length; i++) {
-      const high = ohlcv[i].high;
-      const low = ohlcv[i].low;
-      const prevHigh = ohlcv[i - 1].high;
-      const prevLow = ohlcv[i - 1].low;
-      const prevClose = ohlcv[i - 1].close;
+      const high = ohlcv[i]!.high;
+      const low = ohlcv[i]!.low;
+      const prevHigh = ohlcv[i - 1]!.high;
+      const prevLow = ohlcv[i - 1]!.low;
+      const prevClose = ohlcv[i - 1]!.close;
       
       trValues.push(Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose)));
       plusDM.push(high - prevHigh > prevLow - low ? Math.max(high - prevHigh, 0) : 0);
@@ -769,7 +769,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
   
   private calculateStochastic(ohlcv: OHLCV[], period: number): { k: number; d: number } {
     const recent = ohlcv.slice(-period);
-    const currentClose = ohlcv[ohlcv.length - 1].close;
+    const currentClose = ohlcv[ohlcv.length - 1]!.close;
     const highestHigh = Math.max(...recent.map(c => c.high));
     const lowestLow = Math.min(...recent.map(c => c.low));
     
@@ -779,7 +779,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     const kValues: number[] = [];
     for (let i = period; i <= ohlcv.length; i++) {
       const slice = ohlcv.slice(i - period, i);
-      const close = slice[slice.length - 1].close;
+      const close = slice[slice.length - 1]!.close;
       const high = Math.max(...slice.map(c => c.high));
       const low = Math.min(...slice.map(c => c.low));
       kValues.push(((close - low) / (high - low)) * 100);
@@ -798,9 +798,9 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     let negativeFlow = 0;
     
     for (let i = ohlcv.length - period; i < ohlcv.length; i++) {
-      const typicalPrice = (ohlcv[i].high + ohlcv[i].low + ohlcv[i].close) / 3;
-      const prevTypicalPrice = (ohlcv[i - 1].high + ohlcv[i - 1].low + ohlcv[i - 1].close) / 3;
-      const moneyFlow = typicalPrice * ohlcv[i].volume;
+      const typicalPrice = (ohlcv[i]!.high + ohlcv[i]!.low + ohlcv[i]!.close) / 3;
+      const prevTypicalPrice = (ohlcv[i - 1]!.high + ohlcv[i - 1]!.low + ohlcv[i - 1]!.close) / 3;
+      const moneyFlow = typicalPrice * ohlcv[i]!.volume;
       
       if (typicalPrice > prevTypicalPrice) {
         positiveFlow += moneyFlow;
@@ -823,7 +823,7 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     let sumVolume = 0;
     
     for (let i = ohlcv.length - period; i < ohlcv.length; i++) {
-      const { high, low, close, volume } = ohlcv[i];
+      const { high, low, close, volume } = ohlcv[i]!;
       const mfMultiplier = ((close - low) - (high - close)) / (high - low);
       const mfVolume = mfMultiplier * volume;
       
@@ -841,14 +841,14 @@ export class TechnicalAnalystAgent implements AnalystAgent {
     const smaTP = this.calculateSMA(typicalPrices, period);
     
     const meanDev = typicalPrices.reduce((sum, tp) => sum + Math.abs(tp - smaTP), 0) / period;
-    const currentTP = typicalPrices[typicalPrices.length - 1];
+    const currentTP = typicalPrices[typicalPrices.length - 1]!;
     
     return meanDev > 0 ? (currentTP - smaTP) / (0.015 * meanDev) : 0;
   }
   
   private calculateWilliamsR(ohlcv: OHLCV[], period: number): number {
     const recent = ohlcv.slice(-period);
-    const currentClose = ohlcv[ohlcv.length - 1].close;
+    const currentClose = ohlcv[ohlcv.length - 1]!.close;
     const highestHigh = Math.max(...recent.map(c => c.high));
     const lowestLow = Math.min(...recent.map(c => c.low));
     
@@ -858,10 +858,10 @@ export class TechnicalAnalystAgent implements AnalystAgent {
   private calculateOBV(ohlcv: OHLCV[]): number {
     let obv = 0;
     for (let i = 1; i < ohlcv.length; i++) {
-      if (ohlcv[i].close > ohlcv[i - 1].close) {
-        obv += ohlcv[i].volume;
-      } else if (ohlcv[i].close < ohlcv[i - 1].close) {
-        obv -= ohlcv[i].volume;
+      if (ohlcv[i]!.close > ohlcv[i - 1]!.close) {
+        obv += ohlcv[i]!.volume;
+      } else if (ohlcv[i]!.close < ohlcv[i - 1]!.close) {
+        obv -= ohlcv[i]!.volume;
       }
     }
     return obv;

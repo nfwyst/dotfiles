@@ -13,7 +13,7 @@
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { resourceFromAttributes } from '@opentelemetry/resources';
+import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   trace,
@@ -28,7 +28,7 @@ import type {
   SpanAttributes,
 } from '@opentelemetry/api';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import type { SpanProcessor } from '@opentelemetry/sdk-trace-base';
+
 import logger, { setTraceContextGetter } from '../logger';
 
 // ==================== 类型定义 ====================
@@ -147,13 +147,13 @@ export class TracingManager {
       logger.info('⚠️ 分布式追踪已禁用');
       this.isInitialized = true;
       // 即使追踪禁用，也设置 trace context getter 以便日志正常工作
-      setTraceContextGetter(() => ({}));
+      setTraceContextGetter(() => undefined);
       return;
     }
 
     try {
       // 创建资源
-      const resource = resourceFromAttributes({
+      const resource = new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
         [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
@@ -175,7 +175,8 @@ export class TracingManager {
       // 创建 SDK
       this.sdk = new NodeSDK({
         resource,
-        spanProcessor,
+        // @ts-expect-error SpanProcessor version mismatch between sdk-trace-base and sdk-trace-node
+      spanProcessor,
       });
 
       // 启动 SDK
@@ -187,7 +188,7 @@ export class TracingManager {
       // 设置日志的 Trace Context 获取器
       setTraceContextGetter(() => {
         const spanContext = this.getActiveSpanContext();
-        if (!spanContext) return {};
+        if (!spanContext) return undefined;
         return {
           traceId: spanContext.traceId,
           spanId: spanContext.spanId,
@@ -339,7 +340,7 @@ export function setSpanError(error: Error | string, attributes?: SpanAttributes)
   const span = getActiveSpan();
   if (span) {
     const message = typeof error === 'string' ? error : error.message;
-    span.recordException(error);
+    span.recordException(error as Error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message,
@@ -372,9 +373,10 @@ export function traced<T extends (...args: unknown[]) => unknown>(
   return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    descriptor.value = function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
+    // @ts-expect-error wrapper function is compatible with T at runtime
+    (descriptor as unknown as { value: T }).value = function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
       if (!tracingManager.isEnabled()) {
-        return originalMethod.apply(this, args);
+        return originalMethod.apply(this, args) as ReturnType<T>;
       }
 
       const spanName = `${options.module || 'unknown'}.${name}`;
@@ -396,7 +398,7 @@ export function traced<T extends (...args: unknown[]) => unknown>(
           });
         }
 
-        const result = tracingManager.withSpan(span, () => originalMethod.apply(this, args));
+        const result = tracingManager.withSpan(span, () => originalMethod.apply(this, args)) as ReturnType<T>;
 
         // 记录结果
         if (options.recordResult !== false && result !== undefined) {
@@ -410,7 +412,7 @@ export function traced<T extends (...args: unknown[]) => unknown>(
 
         return result;
       } catch (error: unknown) {
-        span.recordException(error);
+        span.recordException(error as Error);
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: (error instanceof Error ? error.message : String(error)),
@@ -434,9 +436,10 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
   return function (target: unknown, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) {
     const originalMethod = descriptor.value!;
     
-    descriptor.value = async function (this: unknown, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
+    // @ts-expect-error wrapper function is compatible with T at runtime
+    (descriptor as unknown as { value: T }).value = async function (this: unknown, ...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
       if (!tracingManager.isEnabled()) {
-        return originalMethod.apply(this, args);
+        return originalMethod.apply(this, args) as Awaited<ReturnType<T>>;
       }
 
       const spanName = `${options.module || 'unknown'}.${name}`;
@@ -458,7 +461,7 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
           });
         }
 
-        const result = await tracingManager.withSpanAsync(span, () => originalMethod.apply(this, args));
+        const result = await tracingManager.withSpanAsync(span, () => originalMethod.apply(this, args)) as Awaited<ReturnType<T>>;
 
         // 记录结果
         if (options.recordResult !== false && result !== undefined) {
@@ -472,7 +475,7 @@ export function tracedAsync<T extends (...args: unknown[]) => Promise<unknown>>(
 
         return result;
       } catch (error: unknown) {
-        span.recordException(error);
+        span.recordException(error as Error);
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: (error instanceof Error ? error.message : String(error)),
@@ -514,7 +517,7 @@ export function traceFunction<T>(
     span.end();
     return result;
   } catch (error: unknown) {
-    span.recordException(error);
+    span.recordException(error as Error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message: (error instanceof Error ? error.message : String(error)),
@@ -552,7 +555,7 @@ export async function traceAsyncFunction<T>(
     span.end();
     return result;
   } catch (error: unknown) {
-    span.recordException(error);
+    span.recordException(error as Error);
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message: (error instanceof Error ? error.message : String(error)),

@@ -175,10 +175,10 @@ export class OrderFlowAnalyzer {
     let ofi = 0;
 
     for (let i = 0; i < levels; i++) {
-      const [prevBidPrice, prevBidSize] = prev.bids[i];
-      const [currBidPrice, currBidSize] = curr.bids[i];
-      const [prevAskPrice, prevAskSize] = prev.asks[i];
-      const [currAskPrice, currAskSize] = curr.asks[i];
+      const [prevBidPrice, prevBidSize] = prev.bids[i]!;
+      const [currBidPrice, currBidSize] = curr.bids[i]!;
+      const [prevAskPrice, prevAskSize] = prev.asks[i]!;
+      const [currAskPrice, currAskSize] = curr.asks[i]!;
 
       // Bid-side contribution:
       // If current bid price >= previous bid price, the change in bid size
@@ -281,13 +281,13 @@ export class OrderFlowAnalyzer {
    */
   private ema(values: number[], halfLife: number): number {
     if (values.length === 0) return 0;
-    if (values.length === 1) return values[0];
+    if (values.length === 1) return values[0]!;
 
     const alpha = 1 - Math.exp(-Math.LN2 / Math.max(1, halfLife));
-    let result = values[0];
+    let result = values[0]!;
 
     for (let i = 1; i < values.length; i++) {
-      result = alpha * values[i] + (1 - alpha) * result;
+      result = alpha * values[i]! + (1 - alpha) * result;
     }
 
     return result;
