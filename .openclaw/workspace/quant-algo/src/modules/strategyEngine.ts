@@ -245,8 +245,8 @@ export class StrategyEngineModule {
       strength: layer4Output.riskLevel === 'low' ? 85 : 70,
       confidence: finalConfidence,
       entryPrice: setup.entryPrice,
-      stopLoss: sltp?.stopLoss || setup.stopLoss,
-      takeProfits: sltp?.takeProfits || setup.takeProfits,
+      stopLoss: sltp?.stopLoss || 0,
+      takeProfits: sltp?.takeProfits,
       positionSize: setup.positionSize,
       timeframe: '5m',
       reasoning,
@@ -272,12 +272,8 @@ export class StrategyEngineModule {
     this.ocsLayer3.updateHistory(features3D, entryPrice, exitPrice, direction);
   }
 
-  /**
-   * OCS持仓管理
-   */
-  getOCSPosition() { return this.ocsLayer4.getPosition(); }
-  setOCSPosition(position: Parameters<OCSLayer4['setPosition']>[0]) { this.ocsLayer4.setPosition(position); }
-  clearOCSPosition() { this.ocsLayer4.clearPosition(); }
+  // OCS position management removed — Layer4 no longer tracks positions.
+  // Exit logic is handled by ExecutionLayer (live/paper) and backtest-engine.
 
   // ========== OCS 2.0: SAC训练方法 ==========
 

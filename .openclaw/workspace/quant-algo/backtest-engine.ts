@@ -1019,16 +1019,15 @@ export class BacktestEngine {
       ? exitPrice - slippageCost
       : exitPrice + slippageCost;
     
-    // FIX P1: Determine partial close size based on exit reason (Layer4 spec)
-    // TP1: close 50% of current position (closePercent: 0.5)
-    // TP2: close 50% of remaining (which is 25% of original)
+    // Partial close percentages from unified config (consistent with live ExecutionLayer)
+    const tpLevels = this.unifiedConfig.takeProfit.levels;
     let closeSize: number;
     if (reason === 'tp1') {
-      closeSize = size * 0.5; // TP1: close 50% of current
+      closeSize = size * (tpLevels[0]?.closePercent ?? 0.5);
     } else if (reason === 'tp2') {
-      closeSize = size * 0.5; // TP2: close 50% of remaining (which is 25% of original)
+      closeSize = size * (tpLevels[1]?.closePercent ?? 0.5);
     } else {
-      closeSize = size; // Full close (SL, TP3, end_of_test)
+      closeSize = size; // Full close (SL, TP3, end_of_test, max_holding, etc.)
     }
     // BUG 3 FIX: Removed duplicate `const positionValue = psResult.notionalValue;`
     // psResult doesn't exist in this scope. Compute positionValue from closeSize * actualExitPrice.
