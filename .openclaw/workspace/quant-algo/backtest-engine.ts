@@ -99,6 +99,7 @@ export interface BacktestResult {
   trades: Trade[];
   stats: {
     totalTrades: number;
+    totalPositions: number;
     winningTrades: number;
     losingTrades: number;
     winRate: number;
@@ -1163,6 +1164,18 @@ export class BacktestEngine {
   }
 
   /**
+   * 聚合部分平仓交易，计算实际仓位数
+   * 同一仓位的多次平仓 (TP1 partial + final close) 共享 entryTime+side
+   */
+  private countPositions(): number {
+    const seen = new Set<string>();
+    for (const t of this.trades) {
+      seen.add(`${t.entryTime}_${t.side}`);
+    }
+    return seen.size;
+  }
+
+  /**
    * 生成回测结果
    */
   private generateResult(): BacktestResult {
@@ -1217,6 +1230,7 @@ export class BacktestEngine {
 
     const stats = {
       totalTrades: this.trades.length,
+      totalPositions: this.countPositions(),
       winningTrades: winningTrades.length,
       losingTrades: losingTrades.length,
       winRate: this.trades.length > 0 ? (winningTrades.length / this.trades.length) * 100 : 0,
@@ -1272,7 +1286,8 @@ export class BacktestEngine {
     console.log('📊 回测结果摘要');
     console.log('='.repeat(60));
     console.log(`\n📈 交易统计:`);
-    console.log(`   总交易次数: ${stats.totalTrades}`);
+    console.log(`   总仓位数: ${stats.totalPositions}`);
+    console.log(`   总交易笔数: ${stats.totalTrades} (含部分止盈)`);
     console.log(`   胜率: ${stats.winRate.toFixed(2)}%`);
     console.log(`   盈利交易: ${stats.winningTrades} | 亏损交易: ${stats.losingTrades}`);
     

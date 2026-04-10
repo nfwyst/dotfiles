@@ -468,7 +468,7 @@ async function phaseC(
     console.log(`   建议: 增加回测时长至 60+ 天 (设置 BT_START_DATE/BT_END_DATE)`);
   }
   if (tradeCount < 30) {
-    console.log(`\n⚠️  交易次数不足 (${tradeCount} < 30), 统计结论仅供参考`);
+    console.log(`\n⚠️  交易笔数不足 (${tradeCount} < 30), 统计结论仅供参考`);
     console.log(`   建议: 增加回测时长或降低策略触发阈值`);
   }
 
@@ -564,7 +564,8 @@ function printFinalReport(report: RunnerReport): void {
     rows.push(['A: Sharpe', s.sharpeRatio.toFixed(2), s.sharpeRatio > 1 ? '✅' : s.sharpeRatio > 0 ? '⚠️' : '❌']);
     rows.push(['A: 胜率', `${s.winRate.toFixed(1)}%`, s.winRate > 50 ? '✅' : '⚠️']);
     rows.push(['A: 最大回撤', `${s.maxDrawdown.toFixed(2)}%`, s.maxDrawdown < 15 ? '✅' : s.maxDrawdown < 25 ? '⚠️' : '❌']);
-    rows.push(['A: 交易次数', String(s.totalTrades), s.totalTrades >= 10 ? '✅' : '⚠️']);
+    rows.push(['A: 仓位数', String(s.totalPositions), s.totalPositions >= 10 ? '✅' : '⚠️']);
+    rows.push(['A: 交易笔数', String(s.totalTrades), s.totalTrades >= 10 ? '✅' : '⚠️']);
   }
 
   if (report.phaseB) {
