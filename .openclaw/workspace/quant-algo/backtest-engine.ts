@@ -349,40 +349,84 @@ export class BacktestEngine {
    * auto-fetches from Binance public API and saves to cache.
    */
   async loadData(): Promise<void> {
-    // ── Warmup extension: fetch extra bars before startDate for indicator warmup ──
-    const WARMUP_BARS = 250; // > lookback (200) + margin
+    const LOOKBACK = 200;
+    const WARMUP_BARS = 250; // > LOOKBACK + margin
     const barMs = this.getBarDurationMs();
-    const warmupMs = WARMUP_BARS * barMs;
-    const fetchStart = new Date(this.config.startDate.getTime() - warmupMs);
 
-    // Cache key uses extended range (includes warmup)
-    const cacheDir = path.join(process.cwd(), 'backtest-cache');
-    const cacheStartStr = fetchStart.toISOString().split('T')[0];
-    const cacheEndStr = this.config.endDate.toISOString().split('T')[0];
-    const cacheFile = path.join(cacheDir, `${this.config.symbol}-${this.config.timeframe}-${cacheStartStr}-${cacheEndStr}.json`);
+    // Estimate how many bars the user's date range contains
+    const rangeMs = this.config.endDate.getTime() - this.config.startDate.getTime();
+    const estimatedBars = Math.floor(rangeMs / barMs);
 
-    if (fs.existsSync(cacheFile)) {
-      console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
-      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-      this.ohlcv = data.ohlcv || data;
-    } else {
-      // Temporarily adjust startDate to fetch warmup data
-      const origStart = this.config.startDate;
-      this.config.startDate = fetchStart;
-      this.ohlcv = await this.fetchFromBinance();
-      this.config.startDate = origStart;
+    // Only extend warmup if the user's range is too short for the lookback period.
+    // For long backtests (e.g. 365 days ≈ 105K bars), no warmup extension —
+    // this preserves exact result parity with the pre-warmup behavior.
+    const needsWarmup = estimatedBars < WARMUP_BARS;
 
-      if (!fs.existsSync(cacheDir)) {
-        fs.mkdirSync(cacheDir, { recursive: true });
+    if (needsWarmup) {
+      // ── Short range: extend fetch backward for indicator warmup ──
+      const warmupMs = WARMUP_BARS * barMs;
+      const fetchStart = new Date(this.config.startDate.getTime() - warmupMs);
+
+      const cacheDir = path.join(process.cwd(), 'backtest-cache');
+      const cacheStartStr = fetchStart.toISOString().split('T')[0];
+      const cacheEndStr = this.config.endDate.toISOString().split('T')[0];
+      const cacheFile = path.join(cacheDir, `${this.config.symbol}-${this.config.timeframe}-${cacheStartStr}-${cacheEndStr}-warmup.json`);
+
+      if (fs.existsSync(cacheFile)) {
+        console.log(`📂 读取缓存 (warmup): ${path.basename(cacheFile)}`);
+        const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+        this.ohlcv = data.ohlcv || data;
+      } else {
+        const origStart = this.config.startDate;
+        this.config.startDate = fetchStart;
+        this.ohlcv = await this.fetchFromBinance();
+        this.config.startDate = origStart;
+
+        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+        fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
+        console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
       }
-      fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
-      console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
-    }
 
-    // Sort and filter up to endDate (keep warmup bars before startDate)
-    this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
-    const endTs = this.config.endDate.getTime();
-    this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp <= endTs);
+      // Sort and filter up to endDate (keep warmup bars before startDate)
+      this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
+      const endTs = this.config.endDate.getTime();
+      this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp <= endTs);
+
+      // Compute tradingStartIdx = first bar at user's startDate
+      const userStartTs = this.config.startDate.getTime();
+      this.tradingStartIdx = this.ohlcv.findIndex(c => c.timestamp >= userStartTs);
+      if (this.tradingStartIdx < 0) this.tradingStartIdx = this.ohlcv.length;
+
+      const warmupBars = this.tradingStartIdx;
+      const tradingBars = this.ohlcv.length - this.tradingStartIdx;
+      console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${warmupBars} warmup + ${tradingBars} trading) [${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]}]`);
+    } else {
+      // ── Long range: no warmup extension, exact same behavior as pre-warmup code ──
+      const cacheFile = this.getCacheFile();
+      const cacheDir = path.dirname(cacheFile);
+
+      if (fs.existsSync(cacheFile)) {
+        console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
+        const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+        this.ohlcv = data.ohlcv || data;
+      } else {
+        this.ohlcv = await this.fetchFromBinance();
+        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+        fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
+        console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
+      }
+
+      // Sort and filter to exact date range (identical to fa1daa0 behavior)
+      this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
+      const startTs = this.config.startDate.getTime();
+      const endTs = this.config.endDate.getTime();
+      this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp >= startTs && c.timestamp <= endTs);
+
+      // No warmup: tradingStartIdx = 0, so entryStartIdx in run() falls back to lookback
+      this.tradingStartIdx = 0;
+
+      console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]})`);
+    }
 
     if (this.ohlcv.length === 0) {
       throw new Error(
@@ -390,15 +434,6 @@ export class BacktestEngine {
         `Delete cache and retry, or check your date range.`
       );
     }
-
-    // Compute the bar index where actual trading should start (after warmup, at user's startDate)
-    const userStartTs = this.config.startDate.getTime();
-    this.tradingStartIdx = this.ohlcv.findIndex(c => c.timestamp >= userStartTs);
-    if (this.tradingStartIdx < 0) this.tradingStartIdx = this.ohlcv.length;
-
-    const warmupBars = this.tradingStartIdx;
-    const tradingBars = this.ohlcv.length - this.tradingStartIdx;
-    console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${warmupBars} warmup + ${tradingBars} trading) [${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]}]`);
   }
 
   /**
@@ -1271,26 +1306,26 @@ export class BacktestEngine {
 
 // 主函数
 export async function main() {
-  // Date range from unified config
-  const btCfg = loadConfig('backtest').backtest;
-  const startDate = new Date(btCfg.startDate);
-  const endDate = new Date(btCfg.endDate);
+  // All config from unified config system — no hardcoded values
+  const cfg = loadConfig('backtest');
+  const startDate = new Date(cfg.backtest.startDate);
+  const endDate = new Date(cfg.backtest.endDate);
 
   const config: BacktestConfig = {
-    symbol: loadConfig('backtest').symbol.binance,
-    timeframe: loadConfig('backtest').timeframe,
+    symbol:         cfg.symbol.binance,
+    timeframe:      cfg.timeframe,
     startDate,
     endDate,
-    initialBalance: 10000,
-    positionSize: 0.010,  // 1.0% risk per trade
-    leverage: 1,         // 1倍杠杆
+    initialBalance: cfg.backtest.initialBalance,
+    positionSize:   cfg.position.baseSize,
+    leverage:       cfg.position.leverage,
     costConfig: {
-      feeRate: 0.0006,        // 0.06% 手续费 (6 bps taker)
-      makerRebate: -0.0002,   // -2 bps maker rebate
-      slippageBps: 1,         // 1 bps slippage estimate
+      feeRate:      cfg.cost.feeRate,
+      makerRebate:  cfg.cost.makerRebate,
+      slippageBps:  cfg.cost.slippageBps,
     },
-    feeRate: 0.0006,     // legacy: kept in sync by constructor
-    slippage: 0.0001     // legacy: kept in sync by constructor
+    feeRate:        cfg.cost.feeRate,
+    slippage:       cfg.cost.slippageBps / 10000,
   };
 
   const engine = new BacktestEngine(config);
