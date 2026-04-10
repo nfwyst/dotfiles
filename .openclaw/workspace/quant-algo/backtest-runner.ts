@@ -51,9 +51,16 @@ function getPhases(): Set<string> {
 function makeConfig(): BacktestConfig {
   const cfg = loadConfig('backtest');
 
-  const endDate = new Date();
-  endDate.setUTCHours(0, 0, 0, 0);
-  const startDate = new Date(endDate.getTime() - cfg.backtest.days * 24 * 60 * 60 * 1000);
+  let startDate: Date;
+  let endDate: Date;
+  if (cfg.backtest.startDate) {
+    startDate = new Date(cfg.backtest.startDate);
+    endDate = cfg.backtest.endDate ? new Date(cfg.backtest.endDate) : new Date();
+  } else {
+    endDate = new Date();
+    endDate.setUTCHours(0, 0, 0, 0);
+    startDate = new Date(endDate.getTime() - cfg.backtest.days * 24 * 60 * 60 * 1000);
+  }
 
   return {
     symbol:         cfg.symbol.binance,

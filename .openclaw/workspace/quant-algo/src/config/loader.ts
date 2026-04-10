@@ -110,6 +110,14 @@ function readEnvOverrides(): ConfigOverlay {
     }
   }
 
+  // Backtest date range (overrides days)
+  if (env['BT_START_DATE']) {
+    overlay.backtest = { ...overlay.backtest, startDate: env['BT_START_DATE'] };
+  }
+  if (env['BT_END_DATE']) {
+    overlay.backtest = { ...overlay.backtest, endDate: env['BT_END_DATE'] };
+  }
+
   // Exchange
   if (env['EXCHANGE_SANDBOX'] === 'true') {
     overlay.exchange = { sandbox: true };
@@ -217,7 +225,11 @@ export function printConfigSummary(config: UnifiedConfig): void {
   console.log(`  Slippage:   ${config.cost.slippageBps} bps`);
   if (config.mode === 'backtest') {
     console.log(`  Balance:    $${config.backtest.initialBalance.toLocaleString()}`);
-    console.log(`  Days:       ${config.backtest.days}`);
+    if (config.backtest.startDate) {
+      console.log(`  Range:      ${config.backtest.startDate} → ${config.backtest.endDate || 'now'}`);
+    } else {
+      console.log(`  Days:       ${config.backtest.days}`);
+    }
   }
   console.log('═══════════════════════════════════════════════');
 }

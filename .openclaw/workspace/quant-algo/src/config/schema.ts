@@ -184,10 +184,14 @@ export type CostConfig = z.infer<typeof CostSchema>;
 export const BacktestSchema = z.object({
   /** Initial balance in quote currency */
   initialBalance: z.number().positive().default(10000),
-  /** Days of historical data to test */
+  /** Days of historical data to test (used when startDate/endDate not set) */
   days: z.number().int().positive().default(365),
   /** Trading days per year (crypto = 365) */
   tradingDaysPerYear: z.number().int().positive().default(365),
+  /** Explicit start date (ISO 8601, e.g. '2026-04-10'). Overrides `days`. */
+  startDate: z.string().optional(),
+  /** Explicit end date (ISO 8601, e.g. '2026-04-11'). Defaults to now. */
+  endDate: z.string().optional(),
 });
 export type BacktestSpecConfig = z.infer<typeof BacktestSchema>;
 

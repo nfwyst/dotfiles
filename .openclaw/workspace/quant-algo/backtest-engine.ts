@@ -1238,10 +1238,18 @@ export class BacktestEngine {
 
 // 主函数
 export async function main() {
-  // Default: backtest last 7 days. Override via env or CLI args as needed.
-  const endDate = new Date();
-  endDate.setUTCHours(0, 0, 0, 0);
-  const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Date range: prefer explicit startDate/endDate from unified config, fallback to `days`.
+  const btCfg = loadConfig('backtest').backtest;
+  let startDate: Date;
+  let endDate: Date;
+  if (btCfg.startDate) {
+    startDate = new Date(btCfg.startDate);
+    endDate = btCfg.endDate ? new Date(btCfg.endDate) : new Date();
+  } else {
+    endDate = new Date();
+    endDate.setUTCHours(0, 0, 0, 0);
+    startDate = new Date(endDate.getTime() - btCfg.days * 24 * 60 * 60 * 1000);
+  }
 
   const config: BacktestConfig = {
     symbol: loadConfig('backtest').symbol.binance,
