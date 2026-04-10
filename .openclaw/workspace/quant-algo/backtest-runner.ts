@@ -465,7 +465,7 @@ async function phaseC(
   // Minimum requirements check
   if (observations.length < 30) {
     console.log(`\n⚠️  日收益观测值不足 (${observations.length} < 30), 统计验证不可靠`);
-    console.log(`   建议: 增加回测时长至 60+ 天 (BT_DAYS=90)`);
+    console.log(`   建议: 增加回测时长至 60+ 天 (设置 BT_START_DATE/BT_END_DATE)`);
   }
   if (tradeCount < 30) {
     console.log(`\n⚠️  交易次数不足 (${tradeCount} < 30), 统计结论仅供参考`);
@@ -528,7 +528,7 @@ async function phaseC(
       // Compute how many calendar days are needed
       const neededDays = Math.ceil(validation.minBacktestLength);
       if (neededDays < 3650) {
-        console.log(`   - 建议: 设置 BT_DAYS=${neededDays} 重新回测`);
+        console.log(`   - 建议: 调整 BT_START_DATE/BT_END_DATE 使回测区间 >= ${neededDays} 天`);
       }
     }
   }

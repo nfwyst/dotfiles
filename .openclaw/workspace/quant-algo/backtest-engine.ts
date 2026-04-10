@@ -1335,6 +1335,7 @@ export async function main() {
     const result = await engine.run();
     engine.printSummary(result);
     engine.saveResult(result);
+    console.log('\n💡 提示: 运行 bun run backtest 可获取完整三阶段验证报告 (Phase A/B/C)');
   } catch (error) {
     console.error('❌ 回测失败:', error);
     process.exit(1);
