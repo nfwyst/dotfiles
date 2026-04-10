@@ -170,6 +170,7 @@ export class BacktestEngine {
 
   // Trade cooldown: prevent re-entry immediately after closing a position
   private lastCloseBarIndex: number = -999;
+  private tradingStartIdx: number = 0;
   private tradeCooldownBars!: number;
 
   // OCS Layers (用于预计算)
@@ -255,6 +256,22 @@ export class BacktestEngine {
     return { ...this.costConfig };
   }
 
+  /** Get bar duration in milliseconds based on timeframe config */
+  private getBarDurationMs(): number {
+    const tf = this.config.timeframe;
+    const match = tf.match(/^(\d+)(m|h|d|w)$/i);
+    if (!match) return 5 * 60 * 1000; // default 5m
+    const value = parseInt(match[1]!, 10);
+    const unit = match[2]!.toLowerCase();
+    switch (unit) {
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      case 'w': return value * 7 * 24 * 60 * 60 * 1000;
+      default: return 5 * 60 * 1000;
+    }
+  }
+
   /**
    * 加载历史数据
    */
@@ -332,19 +349,29 @@ export class BacktestEngine {
    * auto-fetches from Binance public API and saves to cache.
    */
   async loadData(): Promise<void> {
-    const cacheFile = this.getCacheFile();
-    const cacheDir  = path.dirname(cacheFile);
+    // ── Warmup extension: fetch extra bars before startDate for indicator warmup ──
+    const WARMUP_BARS = 250; // > lookback (200) + margin
+    const barMs = this.getBarDurationMs();
+    const warmupMs = WARMUP_BARS * barMs;
+    const fetchStart = new Date(this.config.startDate.getTime() - warmupMs);
+
+    // Cache key uses extended range (includes warmup)
+    const cacheDir = path.join(process.cwd(), 'backtest-cache');
+    const cacheStartStr = fetchStart.toISOString().split('T')[0];
+    const cacheEndStr = this.config.endDate.toISOString().split('T')[0];
+    const cacheFile = path.join(cacheDir, `${this.config.symbol}-${this.config.timeframe}-${cacheStartStr}-${cacheEndStr}.json`);
 
     if (fs.existsSync(cacheFile)) {
-      // ── Cache hit ──
       console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
       const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
       this.ohlcv = data.ohlcv || data;
     } else {
-      // ── Cache miss → fetch from Binance ──
+      // Temporarily adjust startDate to fetch warmup data
+      const origStart = this.config.startDate;
+      this.config.startDate = fetchStart;
       this.ohlcv = await this.fetchFromBinance();
+      this.config.startDate = origStart;
 
-      // Save to cache for next run
       if (!fs.existsSync(cacheDir)) {
         fs.mkdirSync(cacheDir, { recursive: true });
       }
@@ -352,13 +379,10 @@ export class BacktestEngine {
       console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
     }
 
-    // Sort by time
+    // Sort and filter up to endDate (keep warmup bars before startDate)
     this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
-
-    // Filter to requested date range (cache may contain wider window)
-    const startTs = this.config.startDate.getTime();
-    const endTs   = this.config.endDate.getTime();
-    this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp >= startTs && c.timestamp <= endTs);
+    const endTs = this.config.endDate.getTime();
+    this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp <= endTs);
 
     if (this.ohlcv.length === 0) {
       throw new Error(
@@ -367,7 +391,14 @@ export class BacktestEngine {
       );
     }
 
-    console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]})`);
+    // Compute the bar index where actual trading should start (after warmup, at user's startDate)
+    const userStartTs = this.config.startDate.getTime();
+    this.tradingStartIdx = this.ohlcv.findIndex(c => c.timestamp >= userStartTs);
+    if (this.tradingStartIdx < 0) this.tradingStartIdx = this.ohlcv.length;
+
+    const warmupBars = this.tradingStartIdx;
+    const tradingBars = this.ohlcv.length - this.tradingStartIdx;
+    console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${warmupBars} warmup + ${tradingBars} trading) [${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]}]`);
   }
 
   /**
@@ -600,6 +631,8 @@ export class BacktestEngine {
 
     const lookback = 200;
     const ocsLookback = 50;
+    // tradingStartIdx: only allow new entries at or after user's requested startDate
+    const entryStartIdx = Math.max(lookback, this.tradingStartIdx);
 
     for (let i = lookback; i < this.ohlcv.length; i++) {
       const currentCandle = this.ohlcv[i]!;
@@ -666,13 +699,13 @@ export class BacktestEngine {
       }
 
       // FIX C3: Execute pending signal at current bar's OPEN price (next-bar execution)
-      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars) {
+      if (this.pendingSignal && !this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars && i >= entryStartIdx) {
         this.openPosition(this.pendingSignal.signal, currentCandle, i, true); // useOpen=true
         this.pendingSignal = null;
       }
 
       // 如果没有持仓，生成信号
-      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars) {
+      if (!this.position && !this.circuitBreakerActive && !this.dailyLossLimitHit && i >= this.consecutiveLossPauseEnd && (i - this.lastCloseBarIndex) >= this.tradeCooldownBars && i >= entryStartIdx) {
         const indicators = this.precomputedIndicators.get(i);
         if (!indicators) continue;
 
