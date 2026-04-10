@@ -95,8 +95,13 @@ export const BASE_DEFAULTS: z.input<typeof UnifiedConfigSchema> = {
 
   backtest: {
     initialBalance: 10000,
-    days: 365,
     tradingDaysPerYear: 365,
+    startDate: (() => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - 7);
+      return d.toISOString().split('T')[0]!;
+    })(),
+    endDate: new Date().toISOString().split('T')[0]!,
   },
 
   exchange: {

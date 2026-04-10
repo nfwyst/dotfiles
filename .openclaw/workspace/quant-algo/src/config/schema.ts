@@ -184,14 +184,12 @@ export type CostConfig = z.infer<typeof CostSchema>;
 export const BacktestSchema = z.object({
   /** Initial balance in quote currency */
   initialBalance: z.number().positive().default(10000),
-  /** Days of historical data to test (used when startDate/endDate not set) */
-  days: z.number().int().positive().default(365),
-  /** Trading days per year (crypto = 365) */
+  /** Trading days per year (crypto = 365, used for annualized return calc) */
   tradingDaysPerYear: z.number().int().positive().default(365),
-  /** Explicit start date (ISO 8601, e.g. '2026-04-10'). Overrides `days`. */
-  startDate: z.string().optional(),
-  /** Explicit end date (ISO 8601, e.g. '2026-04-11'). Defaults to now. */
-  endDate: z.string().optional(),
+  /** Start date (ISO 8601 date string, e.g. '2026-04-03') */
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
+  /** End date (ISO 8601 date string, e.g. '2026-04-10') */
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
 });
 export type BacktestSpecConfig = z.infer<typeof BacktestSchema>;
 
@@ -234,7 +232,17 @@ export const UnifiedConfigSchema = z.object({
   /** Trading costs */
   cost: CostSchema.default({}),
   /** Backtest-specific settings */
-  backtest: BacktestSchema.default({}),
+  backtest: BacktestSchema.default(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setUTCDate(start.getUTCDate() - 7);
+    return {
+      initialBalance: 10000,
+      tradingDaysPerYear: 365,
+      startDate: start.toISOString().split('T')[0]!,
+      endDate: end.toISOString().split('T')[0]!,
+    };
+  }),
   /** Exchange connectivity */
   exchange: ExchangeSchema.default({}),
 });

@@ -44,7 +44,6 @@ export const BACKTEST_OVERLAY: ConfigOverlay = {
 
   backtest: {
     initialBalance: 10000,
-    days: 365,
     tradingDaysPerYear: 365,
   },
 };

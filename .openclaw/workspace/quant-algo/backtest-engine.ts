@@ -1238,18 +1238,10 @@ export class BacktestEngine {
 
 // 主函数
 export async function main() {
-  // Date range: prefer explicit startDate/endDate from unified config, fallback to `days`.
+  // Date range from unified config
   const btCfg = loadConfig('backtest').backtest;
-  let startDate: Date;
-  let endDate: Date;
-  if (btCfg.startDate) {
-    startDate = new Date(btCfg.startDate);
-    endDate = btCfg.endDate ? new Date(btCfg.endDate) : new Date();
-  } else {
-    endDate = new Date();
-    endDate.setUTCHours(0, 0, 0, 0);
-    startDate = new Date(endDate.getTime() - btCfg.days * 24 * 60 * 60 * 1000);
-  }
+  const startDate = new Date(btCfg.startDate);
+  const endDate = new Date(btCfg.endDate);
 
   const config: BacktestConfig = {
     symbol: loadConfig('backtest').symbol.binance,
