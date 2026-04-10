@@ -39,3 +39,4 @@ Thumbs.db
 debug*.ts
 diagnostic*.ts
 package-lock.json
+trading-system.ts.bak

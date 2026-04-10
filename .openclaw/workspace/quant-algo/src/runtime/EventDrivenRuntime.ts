@@ -24,7 +24,7 @@
  * live data and paper mode still sent real orders.
  */
 
-import { StreamEventBus } from '../events/StreamEventBus';
+import type { EventBus } from '../events/EventBus';
 import { EventChannels } from '../events/types';
 import type { MarketDataGatheredEvent, ExecutionLayerCompleteEvent } from '../events/types';
 import type { EventDrivenDataLayer } from '../layers/EventDrivenDataLayer';
@@ -48,6 +48,9 @@ export interface RuntimeConfig {
 
   /** Trading mode: 'backtest' | 'paper' | 'live' (default: 'live') */
   mode?: TradingMode;
+
+  /** Data polling interval in milliseconds (default: 60 000 = 1 minute) */
+  dataPollIntervalMs?: number;
 }
 
 // ==================== Health types ====================
@@ -74,7 +77,7 @@ export interface RuntimeHealth {
 // ==================== Dependency container ====================
 
 export interface RuntimeDeps {
-  eventBus: StreamEventBus;
+  eventBus: EventBus;
   dataLayer: EventDrivenDataLayer;
   strategyLayer: EventDrivenStrategyLayer;
   executionLayer: EventDrivenExecutionLayer;
@@ -114,7 +117,7 @@ export interface RuntimeDeps {
  */
 export class EventDrivenRuntime {
   // --- Components (injected) ---
-  private eventBus: StreamEventBus;
+  private eventBus: EventBus;
   private dataLayer: EventDrivenDataLayer;
   private strategyLayer: EventDrivenStrategyLayer;
   private executionLayer: EventDrivenExecutionLayer;
@@ -133,6 +136,7 @@ export class EventDrivenRuntime {
 
   // --- Config ---
   private readonly healthCheckIntervalMs: number;
+  private readonly dataPollIntervalMs: number;
   private readonly shutdownTimeoutMs: number;
   private readonly mode: TradingMode;
 
@@ -140,6 +144,7 @@ export class EventDrivenRuntime {
   private isRunning = false;
   private startedAt = 0;
   private healthCheckTimer?: NodeJS.Timeout;
+  private dataPollTimer?: NodeJS.Timeout;
   private shuttingDown = false;
 
   // FIX M1: Accept a flat dependency bag — keeps the constructor signature
@@ -152,6 +157,7 @@ export class EventDrivenRuntime {
     this.stateManager = deps.stateManager;
 
     this.healthCheckIntervalMs = deps.config?.healthCheckIntervalMs ?? 30_000;
+    this.dataPollIntervalMs = deps.config?.dataPollIntervalMs ?? 60_000;
     this.shutdownTimeoutMs = deps.config?.shutdownTimeoutMs ?? 10_000;
     this.mode = deps.config?.mode ?? 'live';
 
@@ -297,6 +303,8 @@ export class EventDrivenRuntime {
     });
 
     // 10. Start periodic health checks (includes periodic alert evaluation)
+    // 10.5. Start data polling loop — triggers DataLayer → StrategyLayer → ExecutionLayer
+    this.startDataPolling();
     this.startHealthChecks();
 
     logger.info(`[Runtime] Pipeline started successfully in ${modeLabel} mode`);
@@ -429,6 +437,7 @@ export class EventDrivenRuntime {
     const shutdownWork = async (): Promise<void> => {
       // 1. Stop health checks
       this.stopHealthChecks();
+      this.stopDataPolling();
 
       // 2. Close DataFeed and ExecutionAdapter
       if (this.dataFeed) {
@@ -655,6 +664,58 @@ export class EventDrivenRuntime {
     }
   }
 
+  // ----------------------------------------------------------------
+  // Data polling — triggers the DataLayer → StrategyLayer → ExecutionLayer pipeline
+  // ----------------------------------------------------------------
+
+  /**
+   * Start a periodic timer that calls dataLayer.gatherDataAndEmit().
+   * This is the heartbeat of the event-driven pipeline: each tick
+   * produces a DATA_LAYER_COMPLETE event which the StrategyLayer
+   * picks up, processes, and publishes STRATEGY_LAYER_COMPLETE,
+   * which the ExecutionLayer then handles.
+   *
+   * In backtest mode the DataFeed drives iteration externally, so
+   * this polling loop is only active in live and paper modes.
+   */
+  private startDataPolling(): void {
+    if (this.mode === 'backtest') {
+      logger.info('[Runtime] Backtest mode — data polling disabled (DataFeed drives iteration)');
+      return;
+    }
+
+    // Fire immediately on start, then repeat at interval
+    const poll = async (): Promise<void> => {
+      if (!this.isRunning || this.shuttingDown) return;
+      try {
+        await this.dataLayer.gatherDataAndEmit();
+      } catch (err) {
+        logger.error('[Runtime] Data polling cycle failed:', err);
+      }
+    };
+
+    // First tick immediately
+    poll();
+
+    this.dataPollTimer = setInterval(() => {
+      poll();
+    }, this.dataPollIntervalMs);
+
+    // Don't prevent process exit
+    if (this.dataPollTimer.unref) {
+      this.dataPollTimer.unref();
+    }
+
+    logger.info(`[Runtime] Data polling started (interval=${this.dataPollIntervalMs}ms)`);
+  }
+
+  private stopDataPolling(): void {
+    if (this.dataPollTimer) {
+      clearInterval(this.dataPollTimer);
+      this.dataPollTimer = undefined;
+      logger.info('[Runtime] Data polling stopped');
+    }
+  }
   // ----------------------------------------------------------------
   // Signal handlers
   // ----------------------------------------------------------------

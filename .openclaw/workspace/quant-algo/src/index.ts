@@ -1,8 +1,9 @@
 /**
  * Quant Algo 2.0 系统集成入口
- * 整合所有模块：Market Intelligence + Central Trading Agent + OPRO + Execution
+ * 整合所有模块：Event-Driven Runtime + OCS Layers + State
  *
- * FIX M1: Added exports for event-driven runtime, layers, and state module.
+ * Phase 0: Migrated from TradingBotRuntime to EventDrivenRuntime.
+ * The `bootstrap()` factory creates and wires all components.
  */
 
 // ==================== 核心模块 ====================
@@ -48,19 +49,7 @@ export type {
   OPROConfig,
 } from './optimization';
 
-// Execution Layer
-export {
-  TradingBotRuntime,
-  OrderGenerator,
-} from './execution';
-
-export type {
-  TradingBotConfig,
-  OrderSpec,
-  AgentDecision,
-  MarketContext,
-} from './execution';
-
+// Order types (still useful for order construction)
 export {
   OrderBuilder,
   validateOrder,
@@ -99,12 +88,16 @@ export type {
   Strategy as BacktestStrategy,
 } from './backtest';
 
-// ==================== FIX M1: Event-driven runtime ====================
+// ==================== Event-driven runtime ====================
 
 export { EventDrivenRuntime } from './runtime';
 export type { RuntimeConfig, RuntimeDeps, RuntimeHealth, ComponentHealth } from './runtime';
 
-// ==================== FIX M1: Event-driven layers ====================
+// ==================== Bootstrap factory ====================
+
+export { bootstrap } from './bootstrap';
+
+// ==================== Event-driven layers ====================
 
 export {
   EventDrivenDataLayer,
@@ -112,7 +105,7 @@ export {
   EventDrivenExecutionLayer,
 } from './layers';
 
-// ==================== FIX M1: State module ====================
+// ==================== State module ====================
 
 export {
   StateManager,
@@ -132,113 +125,8 @@ export type {
   SnapshotInfo,
 } from './state';
 
-// ==================== 系统工厂 ====================
+// ==================== Event Bus ====================
 
-import { MarketIntelligencePipeline } from './agents/marketIntelligence';
-import { CentralTradingAgent } from './agents/centralTradingAgent';
-import { AdaptiveOPRO, FeedbackLoop } from './optimization';
-import { TradingBotRuntime, OrderGenerator } from './execution';
-import { PerformanceTracker } from './monitoring';
-import { MonitoringDashboard } from './monitoring/dashboard';
-import { loadConfig, printConfigSummary } from './config/loader.js';
-
-export interface TradingSystemConfig {
-  symbol: string;
-  initialBalance: number;
-  
-  // OPRO 配置
-  oproEnabled: boolean;
-  optimizationWindowDays: number;
-  
-  // 风险配置
-  maxPositionSize: number;
-  maxLeverage: number;
-  maxDrawdown: number;
-}
-
-const _unified = loadConfig('live');
-export const DEFAULT_SYSTEM_CONFIG: TradingSystemConfig = {
-  symbol: _unified.symbol.binance,
-  initialBalance: 1000,
-  oproEnabled: true,
-  optimizationWindowDays: 5,
-  maxPositionSize: _unified.position.maxSize,
-  maxLeverage: _unified.position.leverage,
-  maxDrawdown: _unified.risk.maxDrawdown,
-};
-
-/**
- * 创建完整的交易系统
- */
-export function createTradingSystem(config?: Partial<TradingSystemConfig>) {
-  const finalConfig = { ...DEFAULT_SYSTEM_CONFIG, ...config };
-  
-  // 1. 性能追踪器
-  const performanceTracker = new PerformanceTracker(
-    finalConfig.initialBalance,
-    finalConfig.optimizationWindowDays
-  );
-  
-  // 2. Adaptive-OPRO
-  const opro = new AdaptiveOPRO({
-    windowSize: finalConfig.optimizationWindowDays,
-  });
-  
-  // 3. 反馈循环
-  const feedbackLoop = new FeedbackLoop(opro, finalConfig.optimizationWindowDays);
-  
-  // 4. Market Intelligence Pipeline
-  const marketIntelligence = new MarketIntelligencePipeline();
-  
-  // 5. Central Trading Agent
-  const centralTradingAgent = new CentralTradingAgent({
-    riskLimits: {
-      maxPositionSize: finalConfig.maxPositionSize,
-      maxLeverage: finalConfig.maxLeverage,
-      maxDrawdown: finalConfig.maxDrawdown,
-    },
-  });
-  
-  // 6. Trading Bot Runtime
-  const tradingBot = new TradingBotRuntime();
-  
-  // 7. Order Generator
-  const orderGenerator = new OrderGenerator();
-  
-  // 8. Monitoring Dashboard
-  const dashboard = new MonitoringDashboard(performanceTracker, opro);
-  dashboard.setTradingBot(tradingBot);
-  dashboard.setMarketIntelligence(marketIntelligence);
-  dashboard.setCentralTradingAgent(centralTradingAgent);
-  
-  return {
-    // 配置
-    config: finalConfig,
-    
-    // 模块
-    performanceTracker,
-    opro,
-    feedbackLoop,
-    marketIntelligence,
-    centralTradingAgent,
-    tradingBot,
-    orderGenerator,
-    dashboard,
-    
-    // 便捷方法
-    async initialize() {
-      await tradingBot.initialize();
-      logger.info('Trading system initialized');
-    },
-    
-    getStatus() {
-      return dashboard.getStatus();
-    },
-    
-    getPerformance() {
-      return performanceTracker.calculateMetrics();
-    },
-  };
-}
+export type { EventBus } from './events/EventBus';
 
 import logger from './logger';
