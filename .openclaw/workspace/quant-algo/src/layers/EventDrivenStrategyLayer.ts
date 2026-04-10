@@ -5,7 +5,8 @@
 
 import type { StrategyEngineModule, StrategySignal, StrategyContext as OCSStrategyContext } from '../modules/strategyEngine';
 import type { TechnicalIndicators } from '../modules/technicalAnalysis';
-import type { LLMAnalysisModule } from '../modules/llmAnalysis';
+import type { LLMAnalysisModule, LLMTradingSignal } from '../modules/llmAnalysis';
+import { fuseSignals, updateICObservation } from '../modules/signalFusion';
 import type { Position } from '../riskManager';
 import { getEventBus } from '../events';
 import {
@@ -620,22 +621,45 @@ export class EventDrivenStrategyLayer {
         },
       });
 
-      return {
+      // Build LLMTradingSignal for fuseSignals (stub — will be real when LLM is wired)
+      const llmTradingSignal: LLMTradingSignal = {
         type: action === 'buy' ? 'long' : action === 'sell' ? 'short' : 'hold',
-        strength: strategySignal.strength,
         confidence: strategySignal.confidence,
-        stopLoss: strategySignal.stopLoss,
-        targets: strategySignal.takeProfits,
-        reasoning: Array.isArray(strategySignal.reasoning) 
-          ? strategySignal.reasoning 
-          : [String(strategySignal.reasoning)],
-        riskLevel: strategySignal.confidence > 0.7 ? 'low' : strategySignal.confidence > 0.4 ? 'medium' : 'high',
+        urgency: 'moderate',
+        entry: { price: context.currentPrice },
+        targets: {
+          tp1: { price: strategySignal.takeProfits?.tp1 ?? 0, probability: 0.6, rationale: 'strategy' },
+          tp2: { price: strategySignal.takeProfits?.tp2 ?? 0, probability: 0.4, rationale: 'strategy' },
+          tp3: { price: strategySignal.takeProfits?.tp3 ?? 0, probability: 0.2, rationale: 'strategy' },
+        },
+        stopLoss: { price: strategySignal.stopLoss, rationale: 'strategy' },
+        positionSizing: { recommendation: 'normal', percentage: 10, maxRiskPercent: 2 },
+        reasoning: Array.isArray(strategySignal.reasoning) ? strategySignal.reasoning : [String(strategySignal.reasoning)],
+        warnings: [],
+        alternatives: [],
+        expectedHolding: { min: '1h', max: '24h' },
+      };
+
+      // Fuse strategy signal with LLM signal using IC-weighted fusion
+      const fusionResult = fuseSignals(strategySignal, llmTradingSignal);
+      const fusedSignal = fusionResult.signal;
+
+      return {
+        type: fusedSignal.type === 'long' ? 'long' : fusedSignal.type === 'short' ? 'short' : 'hold',
+        strength: fusedSignal.strength,
+        confidence: fusedSignal.confidence,
+        stopLoss: fusedSignal.stopLoss,
+        targets: fusedSignal.takeProfits,
+        reasoning: Array.isArray(fusedSignal.reasoning) 
+          ? fusedSignal.reasoning 
+          : [String(fusedSignal.reasoning)],
+        riskLevel: fusedSignal.confidence > 0.7 ? 'low' : fusedSignal.confidence > 0.4 ? 'medium' : 'high',
         llmDecision: {
           action,
-          confidence: strategySignal.confidence,
-          reasoning: Array.isArray(strategySignal.reasoning) 
-            ? strategySignal.reasoning.join(', ')
-            : String(strategySignal.reasoning),
+          confidence: fusedSignal.confidence,
+          reasoning: Array.isArray(fusedSignal.reasoning) 
+            ? fusedSignal.reasoning.join(', ')
+            : String(fusedSignal.reasoning),
           keyFactors: [],
         },
       } satisfies LocalStrategySignal;

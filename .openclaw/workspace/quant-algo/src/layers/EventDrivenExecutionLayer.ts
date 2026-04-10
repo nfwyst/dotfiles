@@ -28,6 +28,8 @@ import { RiskGuardChain } from '../risk/RiskGuardChain';
 import { CircuitBreakerGuard, DailyLossLimitGuard } from '../risk/guards';
 import type { TradingContext } from '../risk/types';
 import { loadConfig } from '../config/loader.js';
+import { OrderRetryManager } from '../execution/OrderRetry';
+import { updateICObservation } from '../modules/signalFusion';
 
 // ==================== 类型定义 ====================
 
@@ -60,6 +62,7 @@ export class EventDrivenExecutionLayer {
   // When set, all order operations route through this adapter instead
   // of the exchange directly (used for paper / backtest modes).
   private executionAdapter: ExecutionAdapter | undefined;
+  private orderRetry = new OrderRetryManager();
 
   // ── Integrated risk modules ────────────────────────────────
   private hmmDetector = new HMMRegimeDetector();
@@ -131,6 +134,46 @@ export class EventDrivenExecutionLayer {
     logger.info(`[ExecutionLayer] ExecutionAdapter set (mode=${adapter.mode})`);
   }
 
+  /**
+   * Execute an order through the adapter with automatic retry on failure.
+   * Wraps the given executor function with OrderRetryManager for
+   * exponential backoff, idempotency, and retry tracking.
+   */
+  private async placeOrderWithRetry(
+    type: 'open_long' | 'open_short' | 'close_long' | 'close_short',
+    symbol: string,
+    side: 'BUY' | 'SELL',
+    quantity: number,
+    executor: () => Promise<{ success: boolean; orderId?: string; filledPrice?: number; filledSize?: number; message: string }>,
+  ): Promise<{ success: boolean; orderId?: string; filledPrice?: number; filledSize?: number; message: string }> {
+    const orderId = OrderRetryManager.generateOrderId(type.toUpperCase().slice(0, 4));
+    const request = {
+      orderId,
+      type: type as import('../execution/OrderRetry').OrderType,
+      symbol,
+      side,
+      quantity,
+      timestamp: Date.now(),
+    };
+
+    const result = await this.orderRetry.executeWithRetry(request, async () => {
+      const r = await executor();
+      if (!r.success) throw new Error(r.message || 'Order execution failed');
+      return {
+        id: r.orderId,
+        price: r.filledPrice,
+        quantity: r.filledSize,
+      };
+    });
+
+    return {
+      success: result.success,
+      orderId: result.exchangeOrderId || result.orderId,
+      filledPrice: result.executedPrice,
+      filledSize: result.executedQuantity,
+      message: result.success ? 'Order filled' : (result.lastError || 'Order failed after retries'),
+    };
+  }
   /**
    * 订阅策略层事件
    */
@@ -575,7 +618,8 @@ export class EventDrivenExecutionLayer {
 
       if (this.executionAdapter?.placePartialClose) {
         // Paper/backtest adapter has native partial close
-        const orderResult = await this.executionAdapter.placePartialClose(symbol, closePercent);
+        const partialCloseType = position.side === 'long' ? 'close_long' as const : 'close_short' as const;
+        const orderResult = await this.placeOrderWithRetry(partialCloseType, symbol, position.side === 'long' ? 'SELL' : 'BUY', closeSize, () => this.executionAdapter!.placePartialClose!(symbol, closePercent));
         if (!orderResult.success) {
           return { success: false, action: 'error', message: `Partial close failed: ${orderResult.message}` };
         }
@@ -583,7 +627,7 @@ export class EventDrivenExecutionLayer {
       } else if (this.executionAdapter) {
         // Adapter without partial close — use market order to close portion
         const closeSide = position.side === 'long' ? 'sell' : 'buy';
-        const orderResult = await this.executionAdapter.placeMarketOrder(closeSide, closeSize, symbol);
+        const orderResult = await this.placeOrderWithRetry(position.side === 'long' ? 'close_long' : 'close_short', symbol, closeSide === 'sell' ? 'SELL' : 'BUY', closeSize, () => this.executionAdapter!.placeMarketOrder(closeSide, closeSize, symbol));
         if (!orderResult.success) {
           return { success: false, action: 'error', message: `Partial close failed: ${orderResult.message}` };
         }
@@ -791,7 +835,7 @@ export class EventDrivenExecutionLayer {
       if (side === 'buy') {
         // FIX BUG 1: Route through adapter when set
         if (this.executionAdapter) {
-          const orderResult = await this.executionAdapter.placeMarketOrder('buy', positionSize, symbol);
+          const orderResult = await this.placeOrderWithRetry('open_long', symbol, 'BUY', positionSize, () => this.executionAdapter!.placeMarketOrder('buy', positionSize, symbol));
           if (!orderResult.success) {
             return {
               success: false,
@@ -825,7 +869,7 @@ export class EventDrivenExecutionLayer {
       } else if (side === 'sell') {
         // FIX BUG 1: Route through adapter when set
         if (this.executionAdapter) {
-          const orderResult = await this.executionAdapter.placeMarketOrder('sell', positionSize, symbol);
+          const orderResult = await this.placeOrderWithRetry('open_short', symbol, 'SELL', positionSize, () => this.executionAdapter!.placeMarketOrder('sell', positionSize, symbol));
           if (!orderResult.success) {
             return {
               success: false,
@@ -902,7 +946,8 @@ export class EventDrivenExecutionLayer {
         if (this.executionAdapter) {
           const closeSide = position.side === 'long' ? 'sell' : 'buy';
           const symbol = loadConfig('live').symbol.binance;
-          const orderResult = await this.executionAdapter.placeMarketOrder(closeSide, position.size, symbol);
+          const closeType = position.side === 'long' ? 'close_long' as const : 'close_short' as const;
+          const orderResult = await this.placeOrderWithRetry(closeType, symbol, closeSide === 'sell' ? 'SELL' : 'BUY', position.size, () => this.executionAdapter!.placeMarketOrder(closeSide, position.size, symbol));
           if (!orderResult.success) {
             return {
               success: false,
@@ -932,6 +977,13 @@ export class EventDrivenExecutionLayer {
         size: position.size,
         price: fillPrice,
       };
+
+      // Update IC trackers for signal fusion (Grinold & Kahn)
+      // strategyPrediction: +1 for long, -1 for short (direction signal)
+      // actualReturn: normalised PnL (positive = correct direction)
+      const direction = position.side === 'long' ? 1 : -1;
+      const normReturn = position.entryPrice > 0 ? (fillPrice - position.entryPrice) / position.entryPrice * direction : 0;
+      updateICObservation(direction, direction, normReturn);
 
       // 发送通知
       await this.notificationManager.notifyClosePosition(

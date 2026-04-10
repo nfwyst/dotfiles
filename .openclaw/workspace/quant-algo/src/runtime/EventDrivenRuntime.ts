@@ -35,6 +35,7 @@ import type { DataFeed, ExecutionAdapter, TradingMode } from '../feeds/types';
 import { AlertManager } from '../monitoring/alertManager';
 import type { Alert } from '../monitoring/alertManager';
 import logger from '../logger';
+import { KillSwitch } from '../safety/KillSwitch';
 import { loadConfig } from '../config/loader.js';
 
 // ==================== Configuration ====================
@@ -687,6 +688,20 @@ export class EventDrivenRuntime {
     // Fire immediately on start, then repeat at interval
     const poll = async (): Promise<void> => {
       if (!this.isRunning || this.shuttingDown) return;
+
+      // KillSwitch check — block trading when emergency stop is active
+      try {
+        const ks = KillSwitch.getInstance();
+        const check = await ks.checkFull();
+        if (check.blocked) {
+          logger.warn(`[Runtime] KillSwitch ACTIVE (${check.source}): ${check.reason} — skipping cycle`);
+          return;
+        }
+      } catch (ksErr) {
+        // KillSwitch failure should NOT block trading — log and continue
+        logger.warn('[Runtime] KillSwitch check failed, proceeding with cycle:', ksErr);
+      }
+
       try {
         await this.dataLayer.gatherDataAndEmit();
       } catch (err) {
@@ -780,6 +795,11 @@ export class EventDrivenRuntime {
   /** Retrieve recent alerts, optionally filtered by a timestamp threshold. */
   getRecentAlerts(since?: number): Alert[] {
     return this.alertManager.getRecentAlerts(since);
+  }
+
+  /** Access the KillSwitch singleton for emergency stop control. */
+  getKillSwitch(): KillSwitch {
+    return KillSwitch.getInstance();
   }
 }
 
