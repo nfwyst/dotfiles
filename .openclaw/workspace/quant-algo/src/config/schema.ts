@@ -186,9 +186,9 @@ export const BacktestSchema = z.object({
   initialBalance: z.number().positive().default(10000),
   /** Trading days per year (crypto = 365, used for annualized return calc) */
   tradingDaysPerYear: z.number().int().positive().default(365),
-  /** Start date (ISO 8601 date string, e.g. '2026-04-03') */
+  /** Start date (ISO 8601 date string YYYY-MM-DD). Configured in overlays.ts or via BT_START_DATE env. */
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
-  /** End date (ISO 8601 date string, e.g. '2026-04-10') */
+  /** End date (ISO 8601 date string YYYY-MM-DD). Configured in overlays.ts or via BT_END_DATE env. */
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
 });
 export type BacktestSpecConfig = z.infer<typeof BacktestSchema>;
@@ -232,17 +232,7 @@ export const UnifiedConfigSchema = z.object({
   /** Trading costs */
   cost: CostSchema.default({}),
   /** Backtest-specific settings */
-  backtest: BacktestSchema.default(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setUTCDate(start.getUTCDate() - 7);
-    return {
-      initialBalance: 10000,
-      tradingDaysPerYear: 365,
-      startDate: start.toISOString().split('T')[0]!,
-      endDate: end.toISOString().split('T')[0]!,
-    };
-  }),
+  backtest: BacktestSchema.default({}),
   /** Exchange connectivity */
   exchange: ExchangeSchema.default({}),
 });

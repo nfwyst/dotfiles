@@ -45,6 +45,13 @@ export const BACKTEST_OVERLAY: ConfigOverlay = {
   backtest: {
     initialBalance: 10000,
     tradingDaysPerYear: 365,
+    // ★ 回测时间范围 — 修改这里即可 ★
+    // 默认: 最近 365 天。也可通过环境变量 BT_START_DATE / BT_END_DATE 临时覆盖
+    startDate: (() => {
+      const d = new Date(); d.setUTCDate(d.getUTCDate() - 365);
+      return d.toISOString().split('T')[0]!;
+    })(),
+    endDate: new Date().toISOString().split('T')[0]!,
   },
 };
 

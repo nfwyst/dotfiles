@@ -96,11 +96,9 @@ export const BASE_DEFAULTS: z.input<typeof UnifiedConfigSchema> = {
   backtest: {
     initialBalance: 10000,
     tradingDaysPerYear: 365,
-    startDate: (() => {
-      const d = new Date();
-      d.setUTCDate(d.getUTCDate() - 7);
-      return d.toISOString().split('T')[0]!;
-    })(),
+    // startDate/endDate: 由 overlays.ts 的 BACKTEST_OVERLAY 提供 (默认 365 天)
+    // 此处提供最小化 fallback, 防止非 backtest 模式下 Zod 验证失败
+    startDate: new Date().toISOString().split('T')[0]!,
     endDate: new Date().toISOString().split('T')[0]!,
   },
 
