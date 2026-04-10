@@ -26,7 +26,7 @@ import { OCSLayer4 } from './src/ocs/layer4';
 import { OCSEnhanced } from './src/ocs/enhanced';
 import type { OCSEnhancedOutput } from './src/ocs/enhanced';
 import { calculatePositionSize } from './src/risk/positionSizing';
-import { TradingCostConfig, DEFAULT_TRADING_COSTS, getTotalCostBps } from './src/config/tradingCosts';
+
 import { RiskGuardChain } from './src/risk/RiskGuardChain';
 import { CircuitBreakerGuard, DailyLossLimitGuard, CooldownGuard, ConsecutiveLossGuard } from './src/risk/guards';
 import type { TradingContext } from './src/risk/types';
@@ -72,9 +72,9 @@ export interface BacktestConfig {
   initialBalance: number;
   positionSize: number;  // 仓位比例 (0-1)
   leverage: number;
-  /** Unified trading cost configuration. If omitted, uses DEFAULT_TRADING_COSTS. */
-  costConfig?: TradingCostConfig;
-  // Legacy fields kept for backward compatibility — derived from costConfig at runtime
+  /** Unified trading cost configuration. If omitted, reads from unified config. */
+  costConfig?: { feeRate: number; makerRebate: number; slippageBps: number };
+  // Cost fields — derived from costConfig at runtime
   feeRate: number;       // 手续费率
   slippage: number;      // 滑点
 }
@@ -122,7 +122,7 @@ export interface BacktestResult {
 
 export class BacktestEngine {
   private config: BacktestConfig;
-  private costConfig: TradingCostConfig;
+  private costConfig: { feeRate: number; makerRebate: number; slippageBps: number };
   private ohlcv: OHLCV[] = [];
 
   /** Expose loaded OHLCV data for external consumers (e.g. Phase B/C) */
@@ -200,7 +200,8 @@ export class BacktestEngine {
 
   constructor(config: BacktestConfig) {
     this.config = config;
-    // Resolve cost configuration: explicit costConfig > legacy feeRate/slippage > defaults
+    this.unifiedConfig = loadConfig('backtest');
+    // Resolve cost configuration: explicit costConfig > unified config defaults
     if (config.costConfig) {
       this.costConfig = config.costConfig;
       // Sync legacy fields from costConfig so the rest of the engine uses consistent values
@@ -209,11 +210,11 @@ export class BacktestEngine {
     } else {
       // Build costConfig from legacy fields if provided, otherwise use defaults
       this.costConfig = {
-        feeRate: config.feeRate ?? DEFAULT_TRADING_COSTS.feeRate,
-        makerRebate: DEFAULT_TRADING_COSTS.makerRebate,
+        feeRate: config.feeRate ?? this.unifiedConfig.cost.feeRate,
+        makerRebate: this.unifiedConfig.cost.makerRebate,
         slippageBps: config.slippage !== undefined
           ? config.slippage * 10000
-          : DEFAULT_TRADING_COSTS.slippageBps,
+          : this.unifiedConfig.cost.slippageBps,
       };
       // Ensure legacy fields are set
       this.config.feeRate = this.costConfig.feeRate;
@@ -230,7 +231,6 @@ export class BacktestEngine {
     this.ocsLayer3 = new OCSLayer3();
     this.ocsLayer4 = new OCSLayer4();
     this.ocsEnhanced = new OCSEnhanced();
-    this.unifiedConfig = loadConfig('backtest');
     this.dailyLossLimit = this.unifiedConfig.risk.maxDailyLoss;
     this.tradeCooldownBars = this.unifiedConfig.risk.cooldownBars;
     this.sltpCalculator = new SLTPCalculator();
@@ -251,7 +251,7 @@ export class BacktestEngine {
   }
 
   /** Get the resolved trading cost config */
-  getTradingCostConfig(): TradingCostConfig {
+  getTradingCostConfig(): { feeRate: number; makerRebate: number; slippageBps: number } {
     return { ...this.costConfig };
   }
 
@@ -593,7 +593,7 @@ export class BacktestEngine {
     if (!firstCandle || !lastOhlcv) throw new Error('No OHLCV data loaded');
     console.log(`   时间范围: ${new Date(firstCandle.timestamp).toLocaleDateString()} - ${new Date(lastOhlcv.timestamp).toLocaleDateString()}`);
     console.log(`   初始资金: $${this.config.initialBalance.toLocaleString()}`);
-    console.log(`   交易成本: fee=${(this.costConfig.feeRate * 10000).toFixed(1)}bps, slippage=${this.costConfig.slippageBps.toFixed(1)}bps, total=${getTotalCostBps(this.costConfig).toFixed(1)}bps`);
+    console.log(`   交易成本: fee=${(this.costConfig.feeRate * 10000).toFixed(1)}bps, slippage=${this.costConfig.slippageBps.toFixed(1)}bps, total=${(this.costConfig.feeRate * 10000 + this.costConfig.slippageBps).toFixed(1)}bps`);
 
     // 预计算所有指标和OCS特征
     this.precomputeAll();
@@ -804,7 +804,7 @@ export class BacktestEngine {
     // Uses unified costConfig for consistent cost calculation.
     const entryP = l4.setup.entryPrice;
     const tp1Distance = Math.abs(computedTP.tp1 - entryP);
-    const roundTripCostBps = getTotalCostBps(this.costConfig) * 2; // round-trip = 2x one-way
+    const roundTripCostBps = (this.costConfig.feeRate * 10000 + this.costConfig.slippageBps) * 2; // round-trip = 2x one-way
     const roundTripCost = entryP * (roundTripCostBps / 10000);
     if (tp1Distance < 2.0 * roundTripCost) {
       console.log(`  ⏭️ 奖励/成本过低: TP1距离 ${tp1Distance.toFixed(2)} < 2x成本 ${(2 * roundTripCost).toFixed(2)}, 跳过`);

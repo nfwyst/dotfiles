@@ -21,7 +21,7 @@
  */
 import { ExecutionAdapter, OrderResult, TradingMode } from './types';
 import { Position } from '../events/types';
-import { TradingCostConfig, DEFAULT_TRADING_COSTS } from '../config/tradingCosts';
+import { loadConfig } from '../config/loader.js';
 import {
   roundTo,
   safeAdd,
@@ -36,8 +36,8 @@ export interface PaperTradingConfig {
   initialBalance: number; // default: 10000
   maxPositionSize: number; // default: 1.0
   leverage: number; // default: 1
-  /** Trading cost configuration. If omitted, uses DEFAULT_TRADING_COSTS. */
-  costConfig?: TradingCostConfig;
+  /** Trading cost configuration. If omitted, reads from unified config. */
+  costConfig?: { feeRate: number; makerRebate: number; slippageBps: number };
 }
 
 export interface PaperTrade {
@@ -68,7 +68,7 @@ const DEFAULT_LIMIT_ORDER_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class PaperExecutionAdapter implements ExecutionAdapter {
   readonly mode: TradingMode = 'paper';
-  private config: Required<Omit<PaperTradingConfig, 'costConfig'>> & { costConfig: TradingCostConfig };
+  private config: Required<Omit<PaperTradingConfig, 'costConfig'>> & { costConfig: { feeRate: number; makerRebate: number; slippageBps: number } };
   private balance: number;
   private position: Position | null = null;
   private tradeHistory: PaperTrade[] = [];
@@ -83,7 +83,7 @@ export class PaperExecutionAdapter implements ExecutionAdapter {
       initialBalance: 10000,
       maxPositionSize: 1.0,
       leverage: 1,
-      costConfig: DEFAULT_TRADING_COSTS,
+      costConfig: loadConfig('paper').cost,
       ...config,
     };
     this.balance = this.config.initialBalance;
