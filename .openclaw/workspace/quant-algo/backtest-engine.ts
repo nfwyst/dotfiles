@@ -353,28 +353,47 @@ export class BacktestEngine {
     const WARMUP_BARS = 250; // > LOOKBACK + margin
     const barMs = this.getBarDurationMs();
 
-    // Estimate how many bars the user's date range contains
-    const rangeMs = this.config.endDate.getTime() - this.config.startDate.getTime();
-    const estimatedBars = Math.floor(rangeMs / barMs);
+    // ── Step 1: Load data for the exact user-requested range ──
+    const cacheFile = this.getCacheFile();
+    const cacheDir = path.dirname(cacheFile);
 
-    // Only extend warmup if the user's range is too short for the lookback period.
-    // For long backtests (e.g. 365 days ≈ 105K bars), no warmup extension —
-    // this preserves exact result parity with the pre-warmup behavior.
-    const needsWarmup = estimatedBars < WARMUP_BARS;
+    if (fs.existsSync(cacheFile)) {
+      console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
+      const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      this.ohlcv = data.ohlcv || data;
+    } else {
+      this.ohlcv = await this.fetchFromBinance();
+      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+      fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
+      console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
+    }
 
-    if (needsWarmup) {
-      // ── Short range: extend fetch backward for indicator warmup ──
+    // Sort and filter to exact date range
+    this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
+    const startTs = this.config.startDate.getTime();
+    const endTs = this.config.endDate.getTime();
+    this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp >= startTs && c.timestamp <= endTs);
+
+    // ── Step 2: Check if actual data is sufficient for lookback ──
+    if (this.ohlcv.length >= WARMUP_BARS) {
+      // Enough data — no warmup needed (preserves exact parity with pre-warmup behavior)
+      this.tradingStartIdx = 0;
+      console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]})`);
+    } else {
+      // ── Step 3: Not enough data — extend backward for warmup ──
+      console.log(`⚠️  实际数据 ${this.ohlcv.length} 根 < ${WARMUP_BARS}, 自动扩展加载历史数据用于指标预热...`);
+
       const warmupMs = WARMUP_BARS * barMs;
       const fetchStart = new Date(this.config.startDate.getTime() - warmupMs);
 
-      const cacheDir = path.join(process.cwd(), 'backtest-cache');
+      const warmupCacheDir = path.join(process.cwd(), 'backtest-cache');
       const cacheStartStr = fetchStart.toISOString().split('T')[0];
       const cacheEndStr = this.config.endDate.toISOString().split('T')[0];
-      const cacheFile = path.join(cacheDir, `${this.config.symbol}-${this.config.timeframe}-${cacheStartStr}-${cacheEndStr}-warmup.json`);
+      const warmupCacheFile = path.join(warmupCacheDir, `${this.config.symbol}-${this.config.timeframe}-${cacheStartStr}-${cacheEndStr}-warmup.json`);
 
-      if (fs.existsSync(cacheFile)) {
-        console.log(`📂 读取缓存 (warmup): ${path.basename(cacheFile)}`);
-        const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      if (fs.existsSync(warmupCacheFile)) {
+        console.log(`📂 读取缓存 (warmup): ${path.basename(warmupCacheFile)}`);
+        const data = JSON.parse(fs.readFileSync(warmupCacheFile, 'utf-8'));
         this.ohlcv = data.ohlcv || data;
       } else {
         const origStart = this.config.startDate;
@@ -382,17 +401,16 @@ export class BacktestEngine {
         this.ohlcv = await this.fetchFromBinance();
         this.config.startDate = origStart;
 
-        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-        fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
-        console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
+        if (!fs.existsSync(warmupCacheDir)) fs.mkdirSync(warmupCacheDir, { recursive: true });
+        fs.writeFileSync(warmupCacheFile, JSON.stringify(this.ohlcv, null, 2));
+        console.log(`   💾 已缓存至 ${path.basename(warmupCacheFile)}`);
       }
 
       // Sort and filter up to endDate (keep warmup bars before startDate)
       this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
-      const endTs = this.config.endDate.getTime();
       this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp <= endTs);
 
-      // Compute tradingStartIdx = first bar at user's startDate
+      // Compute tradingStartIdx = first bar at or after user's startDate
       const userStartTs = this.config.startDate.getTime();
       this.tradingStartIdx = this.ohlcv.findIndex(c => c.timestamp >= userStartTs);
       if (this.tradingStartIdx < 0) this.tradingStartIdx = this.ohlcv.length;
@@ -400,32 +418,6 @@ export class BacktestEngine {
       const warmupBars = this.tradingStartIdx;
       const tradingBars = this.ohlcv.length - this.tradingStartIdx;
       console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${warmupBars} warmup + ${tradingBars} trading) [${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]}]`);
-    } else {
-      // ── Long range: no warmup extension, exact same behavior as pre-warmup code ──
-      const cacheFile = this.getCacheFile();
-      const cacheDir = path.dirname(cacheFile);
-
-      if (fs.existsSync(cacheFile)) {
-        console.log(`📂 读取缓存: ${path.basename(cacheFile)}`);
-        const data = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
-        this.ohlcv = data.ohlcv || data;
-      } else {
-        this.ohlcv = await this.fetchFromBinance();
-        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-        fs.writeFileSync(cacheFile, JSON.stringify(this.ohlcv, null, 2));
-        console.log(`   💾 已缓存至 ${path.basename(cacheFile)}`);
-      }
-
-      // Sort and filter to exact date range (identical to fa1daa0 behavior)
-      this.ohlcv.sort((a: OHLCV, b: OHLCV) => a.timestamp - b.timestamp);
-      const startTs = this.config.startDate.getTime();
-      const endTs = this.config.endDate.getTime();
-      this.ohlcv = this.ohlcv.filter((c: OHLCV) => c.timestamp >= startTs && c.timestamp <= endTs);
-
-      // No warmup: tradingStartIdx = 0, so entryStartIdx in run() falls back to lookback
-      this.tradingStartIdx = 0;
-
-      console.log(`✅ 加载 ${this.ohlcv.length} 根K线 (${this.config.startDate.toISOString().split('T')[0]} → ${this.config.endDate.toISOString().split('T')[0]})`);
     }
 
     if (this.ohlcv.length === 0) {
