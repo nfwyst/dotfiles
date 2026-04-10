@@ -1,6 +1,10 @@
 /**
  * Unified Config — Public API
  *
+ * Two files only:
+ *   schema.ts — Zod validation rules and types (no defaults)
+ *   config.ts — All values, mode configs, env overrides, loadConfig()
+ *
  * Usage:
  *   import { loadConfig, printConfigSummary } from './config/index.js';
  *   const cfg = loadConfig('backtest');
@@ -38,17 +42,10 @@ export {
   type ExchangeConfig,
 } from './schema.js';
 
-// Defaults
-export { BASE_DEFAULTS } from './defaults.js';
-
-// Overlays
+// Config values & loader (primary API)
 export {
-  BACKTEST_OVERLAY,
-  PAPER_OVERLAY,
-  LIVE_OVERLAY,
-  MODE_OVERLAYS,
+  loadConfig,
+  clearConfigCache,
+  printConfigSummary,
   type ConfigOverlay,
-} from './overlays.js';
-
-// Loader (primary API)
-export { loadConfig, clearConfigCache, printConfigSummary } from './loader.js';
+} from './tradingConfig.js';

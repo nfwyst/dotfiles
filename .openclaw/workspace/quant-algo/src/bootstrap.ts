@@ -28,7 +28,7 @@ import NotificationManager from './notifier';
 import { LiveExecutionAdapter } from './feeds/LiveExecutionAdapter';
 import { PaperExecutionAdapter } from './feeds/PaperExecutionAdapter';
 import type { TradingMode } from './feeds/types';
-import { loadConfig } from './config/loader.js';
+import { loadConfig } from './config/tradingConfig.js';
 import logger from './logger';
 
 export interface BootstrapOptions {

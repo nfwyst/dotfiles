@@ -10,7 +10,7 @@
  *   const cfg = loadOCSConfig({ layer1: { vpm: { lookback: 30 } } }); // override
  */
 
-import { loadConfig } from './loader.js';
+import { loadConfig } from './tradingConfig.js';
 import { z } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════

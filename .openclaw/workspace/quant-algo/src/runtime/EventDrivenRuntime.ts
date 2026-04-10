@@ -37,7 +37,7 @@ import { AlertManager } from '../monitoring/alertManager';
 import type { Alert } from '../monitoring/alertManager';
 import logger from '../logger';
 import { KillSwitch } from '../safety/KillSwitch';
-import { loadConfig } from '../config/loader.js';
+import { loadConfig } from '../config/config.js';
 
 // ==================== Configuration ====================
 

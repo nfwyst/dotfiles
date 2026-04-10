@@ -24,7 +24,7 @@ import {
   type EnhancedSignal,
   type TakeProfitLevel,
   } from '../events/types';
-import { loadConfig } from '../config/loader.js';
+import { loadConfig } from '../config/config.js';
 import logger from '../logger';
 import { OrderFlowAnalyzer } from '../signals/orderFlowAnalysis';
 import { MultiTimeframeAggregator } from '../signals/multiTimeframe';

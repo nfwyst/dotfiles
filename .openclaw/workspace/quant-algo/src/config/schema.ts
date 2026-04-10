@@ -1,21 +1,15 @@
 /**
- * Unified Trading Configuration Schema
+ * Unified Config Schema — Pure Validation
  *
- * Single source of truth for ALL trading parameters across live, paper, and backtest modes.
- * Uses Zod for runtime validation + static type inference.
- *
- * Design principles:
- *   1. Every parameter lives in exactly ONE place
- *   2. Zod defaults = production-ready base values
- *   3. Mode overlays (backtest/paper/live) apply on top
- *   4. Environment variables override everything
- *   5. Frozen output — no accidental mutation
+ * This file defines the SHAPE and VALIDATION RULES only.
+ * All default values live in config.ts (the single source of truth).
+ * No .default() on any field — every value must be explicitly provided.
  */
 
 import { z } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════
-// Enums
+// Primitives
 // ═══════════════════════════════════════════════════════════════
 
 export const TradingModeSchema = z.enum(['live', 'paper', 'backtest']);
@@ -25,216 +19,147 @@ export const TimeframeSchema = z.enum(['1m', '5m', '15m', '1h', '4h', '1d']);
 export type Timeframe = z.infer<typeof TimeframeSchema>;
 
 // ═══════════════════════════════════════════════════════════════
-// Symbol
+// Sub-Schemas
 // ═══════════════════════════════════════════════════════════════
 
 export const SymbolConfigSchema = z.object({
-  /** ccxt-format symbol, e.g. 'ETH/USDT:USDT' */
-  ccxt: z.string().default('ETH/USDT:USDT'),
-  /** Binance-format symbol, e.g. 'ETHUSDT' */
-  binance: z.string().default('ETHUSDT'),
+  /** CCXT symbol format (e.g. 'ETH/USDT:USDT') */
+  ccxt: z.string(),
+  /** Binance raw symbol (e.g. 'ETHUSDT') */
+  binance: z.string(),
   /** Price decimal places */
-  pricePrecision: z.number().int().nonnegative().default(2),
+  pricePrecision: z.number().int().nonnegative(),
   /** Quantity decimal places */
-  quantityPrecision: z.number().int().nonnegative().default(3),
+  quantityPrecision: z.number().int().nonnegative(),
 });
 export type SymbolConfig = z.infer<typeof SymbolConfigSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Position Sizing
-// ═══════════════════════════════════════════════════════════════
-
 export const PositionSchema = z.object({
   /** Leverage multiplier */
-  leverage: z.number().int().min(1).max(125).default(50),
-  /** Max position size as fraction of equity */
-  maxSize: z.number().min(0).max(1).default(0.10),
-  /** Risk per trade as fraction of equity */
-  riskPerTrade: z.number().min(0).max(1).default(0.02),
-  /** Position size in base currency (for backtest) */
-  baseSize: z.number().positive().default(0.01),
+  leverage: z.number().int().min(1).max(125),
+  /** Max position size as fraction of portfolio */
+  maxSize: z.number().positive().max(1),
+  /** Risk per trade as fraction of balance */
+  riskPerTrade: z.number().positive().max(1),
+  /** Base position size as fraction of portfolio */
+  baseSize: z.number().positive().max(1),
 });
 export type PositionConfig = z.infer<typeof PositionSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Take Profit Level
-// ═══════════════════════════════════════════════════════════════
-
-export const TakeProfitLevelSchema = z.object({
-  /** Risk-reward ratio for this TP level */
-  rrRatio: z.number().positive(),
-  /** Fraction of position to close at this level (0-1) */
-  closePercent: z.number().min(0).max(1),
-});
-
-// ═══════════════════════════════════════════════════════════════
-// Stop Loss
-// ═══════════════════════════════════════════════════════════════
+const MinStopPercentSchema = z.record(TimeframeSchema, z.number().positive()).optional();
 
 export const StopLossSchema = z.object({
   /** ATR multiplier for stop distance */
-  atrMultiplier: z.number().positive().default(1.5),
-  /** Swing-point buffer (fraction, e.g. 0.002 = 0.2%) */
-  swingBuffer: z.number().min(0).default(0.002),
-  /** Minimum stop distance per timeframe (fraction) */
-  minStopPercent: z.record(TimeframeSchema, z.number().min(0)).default({
-    '1m': 0.003,
-    '5m': 0.005,
-    '15m': 0.008,
-    '1h': 0.01,
-    '4h': 0.015,
-    '1d': 0.02,
-  }),
+  atrMultiplier: z.number().positive(),
+  /** Buffer added to swing level stops */
+  swingBuffer: z.number().nonnegative(),
+  /** Minimum stop percentage per timeframe */
+  minStopPercent: MinStopPercentSchema,
 });
 export type StopLossConfig = z.infer<typeof StopLossSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Take Profit
-// ═══════════════════════════════════════════════════════════════
+export const TakeProfitLevelSchema = z.object({
+  /** Risk:reward ratio for this level */
+  rrRatio: z.number().positive(),
+  /** Fraction of position to close at this level (0-1) */
+  closePercent: z.number().positive().max(1),
+});
 
 export const TakeProfitSchema = z.object({
-  /** Ordered TP levels - evaluated sequentially */
-  levels: z.array(TakeProfitLevelSchema).default([
-    { rrRatio: 1.2, closePercent: 0.50 },
-    { rrRatio: 1.8, closePercent: 0.50 },
-    { rrRatio: 2.5, closePercent: 1.00 },
-  ]),
+  /** Ordered array of take-profit levels */
+  levels: z.array(TakeProfitLevelSchema).min(1),
 });
 export type TakeProfitConfig = z.infer<typeof TakeProfitSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// ATR Fallback (used when swing levels unavailable)
-// ═══════════════════════════════════════════════════════════════
-
 export const AtrFallbackSchema = z.object({
-  /** ATR multiplier for stop loss */
-  slMultiplier: z.number().positive().default(2.0),
-  /** ATR multipliers for each TP level */
-  tpMultipliers: z.array(z.number().positive()).default([2.4, 3.6, 5.0]),
+  /** ATR multiplier for stop loss when swing levels unavailable */
+  slMultiplier: z.number().positive(),
+  /** ATR multipliers for take-profit levels */
+  tpMultipliers: z.array(z.number().positive()).min(1),
 });
 export type AtrFallbackConfig = z.infer<typeof AtrFallbackSchema>;
-
-// ═══════════════════════════════════════════════════════════════
-// Swing Detection (per-timeframe)
-// ═══════════════════════════════════════════════════════════════
 
 export const SwingDetectionEntrySchema = z.object({
   lookback: z.number().int().positive(),
   strength: z.number().int().positive(),
-  minStopPercent: z.number().min(0),
+  minStopPercent: z.number().positive(),
 });
 
-export const SwingDetectionSchema = z.record(
-  TimeframeSchema,
-  SwingDetectionEntrySchema,
-).default({
-  '1m': { lookback: 60, strength: 5, minStopPercent: 0.003 },
-  '5m': { lookback: 48, strength: 3, minStopPercent: 0.005 },
-  '15m': { lookback: 32, strength: 3, minStopPercent: 0.008 },
-  '1h': { lookback: 24, strength: 2, minStopPercent: 0.01 },
-  '4h': { lookback: 30, strength: 2, minStopPercent: 0.015 },
-  '1d': { lookback: 20, strength: 2, minStopPercent: 0.02 },
-});
+export const SwingDetectionSchema = z.record(TimeframeSchema, SwingDetectionEntrySchema);
 export type SwingDetectionConfig = z.infer<typeof SwingDetectionSchema>;
-
-// ═══════════════════════════════════════════════════════════════
-// Risk Management
-// ═══════════════════════════════════════════════════════════════
 
 export const RiskSchema = z.object({
   /** Max daily loss as fraction of equity */
-  maxDailyLoss: z.number().min(0).max(1).default(0.04),
-  /** Max daily trades */
-  maxDailyTrades: z.number().int().positive().default(50),
+  maxDailyLoss: z.number().positive().max(1),
+  /** Max trades per day */
+  maxDailyTrades: z.number().int().positive(),
   /** Max drawdown before circuit breaker */
-  maxDrawdown: z.number().min(0).max(1).default(0.10),
-  /** Cooldown bars between trades (backtest) */
-  cooldownBars: z.number().int().nonnegative().default(18),
-  /** Max consecutive losses before pausing */
-  maxConsecutiveLosses: z.number().int().positive().default(5),
-  /** Pause bars after hitting consecutive loss limit */
-  consecutiveLossPauseBars: z.number().int().nonnegative().default(500),
-  /** Max holding bars before force-close */
-  maxHoldingBars: z.number().int().positive().default(1000),
-  /** Circuit breaker base cooldown bars */
-  circuitBreakerCooldownBars: z.number().int().positive().default(1500),
+  maxDrawdown: z.number().positive().max(1),
+  /** Minimum bars between trades */
+  cooldownBars: z.number().int().nonnegative(),
+  /** Consecutive losses before pause */
+  maxConsecutiveLosses: z.number().int().positive(),
+  /** Pause duration after consecutive losses */
+  consecutiveLossPauseBars: z.number().int().nonnegative(),
+  /** Max bars to hold a position */
+  maxHoldingBars: z.number().int().positive(),
+  /** Circuit breaker cooldown bars */
+  circuitBreakerCooldownBars: z.number().int().nonnegative(),
   /** Circuit breaker max cooldown bars */
-  circuitBreakerMaxCooldownBars: z.number().int().positive().default(4000),
+  circuitBreakerMaxCooldownBars: z.number().int().nonnegative(),
 });
 export type RiskConfig = z.infer<typeof RiskSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Trading Costs
-// ═══════════════════════════════════════════════════════════════
-
 export const CostSchema = z.object({
-  /** Taker fee rate (e.g. 0.0004 = 4 bps) */
-  feeRate: z.number().min(0).default(0.0004),
-  /** Maker rebate (negative = rebate, e.g. -0.0002) */
-  makerRebate: z.number().default(-0.0002),
-  /** Estimated slippage in basis points */
-  slippageBps: z.number().min(0).default(3),
+  /** Taker fee rate */
+  feeRate: z.number().nonnegative(),
+  /** Maker rebate (negative = rebate) */
+  makerRebate: z.number(),
+  /** Slippage in basis points */
+  slippageBps: z.number().nonnegative(),
 });
 export type CostConfig = z.infer<typeof CostSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Backtest-specific
-// ═══════════════════════════════════════════════════════════════
-
 export const BacktestSchema = z.object({
   /** Initial balance in quote currency */
-  initialBalance: z.number().positive().default(10000),
+  initialBalance: z.number().positive(),
   /** Trading days per year (crypto = 365, used for annualized return calc) */
-  tradingDaysPerYear: z.number().int().positive().default(365),
-  /** Start date (ISO 8601 date string YYYY-MM-DD). Configured in overlays.ts or via BT_START_DATE env. */
+  tradingDaysPerYear: z.number().int().positive(),
+  /** Start date (ISO 8601 date string YYYY-MM-DD) */
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
-  /** End date (ISO 8601 date string YYYY-MM-DD). Configured in overlays.ts or via BT_END_DATE env. */
+  /** End date (ISO 8601 date string YYYY-MM-DD) */
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date YYYY-MM-DD'),
 });
 export type BacktestSpecConfig = z.infer<typeof BacktestSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// Exchange Connectivity
-// ═══════════════════════════════════════════════════════════════
-
 export const ExchangeSchema = z.object({
-  id: z.string().default('binance'),
-  sandbox: z.boolean().default(false),
-  enableRateLimit: z.boolean().default(true),
+  /** Exchange identifier */
+  id: z.string(),
+  /** Use sandbox/testnet */
+  sandbox: z.boolean(),
+  /** Enable rate limiting */
+  enableRateLimit: z.boolean(),
 });
 export type ExchangeConfig = z.infer<typeof ExchangeSchema>;
 
 // ═══════════════════════════════════════════════════════════════
-// Top-Level Unified Config
+// Root Schema
 // ═══════════════════════════════════════════════════════════════
 
 export const UnifiedConfigSchema = z.object({
-  /** Trading mode */
-  mode: TradingModeSchema.default('live'),
-  /** Primary timeframe */
-  timeframe: TimeframeSchema.default('5m'),
-  /** Higher timeframe for multi-TF analysis */
-  higherTimeframe: TimeframeSchema.default('1h'),
-  /** Symbol configuration */
-  symbol: SymbolConfigSchema.default({}),
-  /** Position sizing */
-  position: PositionSchema.default({}),
-  /** Stop loss parameters */
-  stopLoss: StopLossSchema.default({}),
-  /** Take profit parameters */
-  takeProfit: TakeProfitSchema.default({}),
-  /** ATR fallback for SL/TP when swing levels unavailable */
-  atrFallback: AtrFallbackSchema.default({}),
-  /** Swing detection per-timeframe config */
-  swingDetection: SwingDetectionSchema.default({}),
-  /** Risk management */
-  risk: RiskSchema.default({}),
-  /** Trading costs */
-  cost: CostSchema.default({}),
-  /** Backtest-specific settings */
-  backtest: BacktestSchema.default({}),
-  /** Exchange connectivity */
-  exchange: ExchangeSchema.default({}),
+  mode: TradingModeSchema,
+  timeframe: TimeframeSchema,
+  higherTimeframe: TimeframeSchema,
+  symbol: SymbolConfigSchema,
+  position: PositionSchema,
+  stopLoss: StopLossSchema,
+  takeProfit: TakeProfitSchema,
+  atrFallback: AtrFallbackSchema,
+  swingDetection: SwingDetectionSchema,
+  risk: RiskSchema,
+  cost: CostSchema,
+  backtest: BacktestSchema,
+  exchange: ExchangeSchema,
 });
 
 export type UnifiedConfig = z.infer<typeof UnifiedConfigSchema>;

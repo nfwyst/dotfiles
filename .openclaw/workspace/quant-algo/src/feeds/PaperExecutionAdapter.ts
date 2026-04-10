@@ -21,7 +21,7 @@
  */
 import { ExecutionAdapter, OrderResult, TradingMode } from './types';
 import { Position } from '../events/types';
-import { loadConfig } from '../config/loader.js';
+import { loadConfig } from '../config/config.js';
 import {
   roundTo,
   safeAdd,

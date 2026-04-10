@@ -1,4 +1,4 @@
-import { loadConfig } from './config/loader.js';
+import { loadConfig } from './config/tradingConfig.js';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import fs from 'fs';
@@ -432,5 +432,5 @@ export { riskConfig, RISK_CONFIG_PATH };
 export default config;
 
 // Re-export unified config for new consumers
-export { loadConfig, printConfigSummary, clearConfigCache } from './config/loader.js';
+export { loadConfig, printConfigSummary, clearConfigCache } from './config/tradingConfig.js';
 export type { UnifiedConfig, TradingMode } from './config/schema.js';

@@ -27,7 +27,7 @@ import { TailRiskModel } from '../risk/tailRiskModel';
 import { RiskGuardChain } from '../risk/RiskGuardChain';
 import { CircuitBreakerGuard, DailyLossLimitGuard } from '../risk/guards';
 import type { TradingContext } from '../risk/types';
-import { loadConfig } from '../config/loader.js';
+import { loadConfig } from '../config/config.js';
 import { OrderRetryManager } from '../execution/OrderRetry';
 import { updateICObservation } from '../modules/signalFusion';
 

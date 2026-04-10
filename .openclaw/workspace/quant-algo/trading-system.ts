@@ -21,7 +21,7 @@ config({ path: process.env.HOME + '/.openclaw/.env' });
 
 import { bootstrap } from './src/bootstrap';
 import { getProcessLock } from './src/utils/processLock';
-import { loadConfig, printConfigSummary } from './src/config/loader.js';
+import { loadConfig, printConfigSummary } from './src/config/tradingConfig.js';
 import logger from './src/logger';
 import type { TradingMode } from './src/feeds/types';
 
