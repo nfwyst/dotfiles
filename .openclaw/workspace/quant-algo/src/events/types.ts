@@ -180,12 +180,12 @@ export interface BaseEvent<T = unknown> {
 
 // ==================== 数据层事件负载 ====================
 
-export interface MarketDataGatheredPayload {
+interface MarketDataGatheredPayload {
   marketData: MarketData;
   gatherDuration: number;
 }
 
-export interface IndicatorsCalculatedPayload {
+interface IndicatorsCalculatedPayload {
   indicators: Indicators;
   price: number;
 }
@@ -195,7 +195,7 @@ export interface SMCAnalyzedPayload {
   microSignal: MicrostructureSignal | null;
 }
 
-export interface DataLayerCompletePayload {
+interface DataLayerCompletePayload {
   marketData: MarketData;
   indicators: Indicators;
   smcAnalysis: SMCAnalysis | null;
@@ -207,7 +207,7 @@ export interface DataLayerCompletePayload {
 
 // ==================== 策略层事件负载 ====================
 
-export interface SignalGeneratedPayload {
+interface SignalGeneratedPayload {
   signal: EnhancedSignal;
   context: {
     currentPrice: number;
@@ -216,12 +216,12 @@ export interface SignalGeneratedPayload {
   };
 }
 
-export interface LLMDecisionPayload {
+interface LLMDecisionPayload {
   llmDecision: EnhancedSignal['llmDecision'];
   signal: EnhancedSignal;
 }
 
-export interface StrategyLayerCompletePayload {
+interface StrategyLayerCompletePayload {
   signal: EnhancedSignal;
   dataContext: DataLayerCompletePayload;
 }
@@ -242,12 +242,12 @@ export interface PositionUpdatedPayload {
   previousPosition: Position | null;
 }
 
-export interface NotificationSentPayload {
+interface NotificationSentPayload {
   message: string;
   type: 'info' | 'warning' | 'error' | 'success';
 }
 
-export interface ExecutionLayerCompletePayload {
+interface ExecutionLayerCompletePayload {
   result: {
     success: boolean;
     action: string;
@@ -285,7 +285,7 @@ export interface SystemErrorPayload {
   recoverable: boolean;
 }
 
-export interface HeartbeatPayload {
+interface HeartbeatPayload {
   pid: number;
   uptime: number;
   lastTradeTime: number | null;
@@ -300,18 +300,18 @@ export type SMCAnalyzedEvent = BaseEvent<SMCAnalyzedPayload>;
 export type DataLayerCompleteEvent = BaseEvent<DataLayerCompletePayload>;
 
 export type SignalGeneratedEvent = BaseEvent<SignalGeneratedPayload>;
-export type LLMDecisionEvent = BaseEvent<LLMDecisionPayload>;
+type LLMDecisionEvent = BaseEvent<LLMDecisionPayload>;
 export type StrategyLayerCompleteEvent = BaseEvent<StrategyLayerCompletePayload>;
 
 export type OrderExecutedEvent = BaseEvent<OrderExecutedPayload>;
 export type PositionUpdatedEvent = BaseEvent<PositionUpdatedPayload>;
-export type NotificationSentEvent = BaseEvent<NotificationSentPayload>;
+type NotificationSentEvent = BaseEvent<NotificationSentPayload>;
 export type ExecutionLayerCompleteEvent = BaseEvent<ExecutionLayerCompletePayload>;
 
 export type SystemStartedEvent = BaseEvent<SystemStartedPayload>;
 export type SystemStoppedEvent = BaseEvent<SystemStoppedPayload>;
 export type SystemErrorEvent = BaseEvent<SystemErrorPayload>;
-export type HeartbeatEvent = BaseEvent<HeartbeatPayload>;
+type HeartbeatEvent = BaseEvent<HeartbeatPayload>;
 
 // ==================== 事件联合类型 ====================
 

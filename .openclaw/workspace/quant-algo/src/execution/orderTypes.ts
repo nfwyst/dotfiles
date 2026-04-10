@@ -63,7 +63,7 @@ export type OrderSide = 'buy' | 'sell';
 /**
  * 时效类型
  */
-export type TimeInForce = 
+type TimeInForce = 
   | 'GTC'  // Good Till Cancel
   | 'IOC'  // Immediate Or Cancel
   | 'FOK'  // Fill Or Kill
@@ -189,14 +189,14 @@ export interface Fill {
   feeCurrency: string;
 }
 
-export interface FeeBreakdown {
+interface FeeBreakdown {
   maker: number;
   taker: number;
   total: number;
   currency: string;
 }
 
-export interface ExecutionError {
+interface ExecutionError {
   code: string;
   message: string;
   retryable: boolean;
@@ -221,7 +221,7 @@ export interface OrderStatus {
   statusHistory: StatusChange[];
 }
 
-export interface StatusChange {
+interface StatusChange {
   from: string;
   to: string;
   timestamp: number;
@@ -466,4 +466,4 @@ export function calculateOrderRisk(
 
 // ==================== 导出 ====================
 
-export const ORDER_VERSION = '2.0.0';
+const ORDER_VERSION = '2.0.0';

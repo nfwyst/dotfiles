@@ -56,7 +56,7 @@ export const aiCircuitBreaker = new CircuitBreaker({
  * - 重置超时：10秒（交易执行需要快速恢复）
  * - 超时时间：10秒（订单执行不能太慢）
  */
-export const executionCircuitBreaker = new CircuitBreaker({
+const executionCircuitBreaker = new CircuitBreaker({
   name: 'order-execution',
   failureThreshold: 2,
   resetTimeout: 10000,       // 10秒
@@ -75,7 +75,7 @@ export const executionCircuitBreaker = new CircuitBreaker({
  * - 重置超时：15秒
  * - 超时时间：5秒
  */
-export const websocketCircuitBreaker = new CircuitBreaker({
+const websocketCircuitBreaker = new CircuitBreaker({
   name: 'websocket',
   failureThreshold: 3,
   resetTimeout: 15000,       // 15秒
@@ -93,7 +93,7 @@ export const websocketCircuitBreaker = new CircuitBreaker({
  * 
  * 统一管理所有熔断器实例，提供批量操作和监控
  */
-export class CircuitBreakerManager {
+class CircuitBreakerManager {
   private static instance: CircuitBreakerManager | null = null;
   
   /** 所有熔断器实例 */
@@ -237,7 +237,7 @@ export class CircuitBreakerManager {
 
 // ==================== 导出 ====================
 
-export const circuitBreakerManager = CircuitBreakerManager.getInstance();
+const circuitBreakerManager = CircuitBreakerManager.getInstance();
 
 export default {
   exchangeCircuitBreaker,

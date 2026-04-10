@@ -15,13 +15,13 @@ import { OHLCV } from '../events/types';
 // Types
 // ────────────────────────────────────────────────────────────────
 
-export interface OrderBook {
+interface OrderBook {
   bids: Array<[number, number]>; // [price, size]
   asks: Array<[number, number]>; // [price, size]
   timestamp: number;
 }
 
-export interface OrderFlowConfig {
+interface OrderFlowConfig {
   /** Number of order book levels to use */
   levels: number; // default: 10
   /** Lookback for rolling normalization */
@@ -30,7 +30,7 @@ export interface OrderFlowConfig {
   emaHalfLife: number; // default: 20
 }
 
-export interface OrderFlowSignal {
+interface OrderFlowSignal {
   /** Order Flow Imbalance [-1, 1] */
   ofi: number;
   /** Trade Flow Imbalance [-1, 1] (from OHLCV proxy: close vs open) */

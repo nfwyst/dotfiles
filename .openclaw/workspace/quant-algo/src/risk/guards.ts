@@ -121,7 +121,7 @@ export class CooldownGuard implements RiskGuard {
  * MaxHoldingTimeGuard — Signals to reduce size or reject when a position
  * has been held for too long (measured in bars).
  */
-export class MaxHoldingTimeGuard implements RiskGuard {
+class MaxHoldingTimeGuard implements RiskGuard {
   readonly name = 'MaxHoldingTime';
 
   constructor(

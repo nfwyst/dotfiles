@@ -104,7 +104,7 @@ export interface BacktestResult {
 }
 
 // FIX: New interface for validated backtest results with CPCV + PBO
-export interface ValidatedBacktestResult extends BacktestResult {
+interface ValidatedBacktestResult extends BacktestResult {
   validation: {
     cpcv: CPCVResult;
     pbo: number;
@@ -114,7 +114,7 @@ export interface ValidatedBacktestResult extends BacktestResult {
 }
 
 // FIX: Configuration for the validation pass
-export interface ValidationConfig {
+interface ValidationConfig {
   /** Number of contiguous groups (default 10). */
   nGroups?: number;
   /** Number of test groups per combination (default 2). */
@@ -136,7 +136,7 @@ export interface Strategy {
 
 // ==================== 默认配置 ====================
 
-export const DEFAULT_BACKTEST_CONFIG: BacktestConfig = {
+const DEFAULT_BACKTEST_CONFIG: BacktestConfig = {
   symbol: 'ETHUSDT',
   startDate: Date.now() - 30 * 24 * 60 * 60 * 1000, // 30 天前
   endDate: Date.now(),

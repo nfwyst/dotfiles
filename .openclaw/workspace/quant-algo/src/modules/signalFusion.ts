@@ -20,7 +20,7 @@
 import { StrategySignal } from './strategyEngine';
 import { LLMTradingSignal } from './llmAnalysis';
 
-export interface FusionResult {
+interface FusionResult {
   signal: StrategySignal;
   fusionInfo: {
     originalStrategy: string;

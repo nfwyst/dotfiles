@@ -169,7 +169,7 @@ function loadRiskConfig(): RiskConfig {
 // 加载风控配置
 const riskConfig = loadRiskConfig();
 
-export interface TradingConfig {
+interface TradingConfig {
   exchange: {
     id: string;
     apiKey: string;

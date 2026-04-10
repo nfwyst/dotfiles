@@ -37,7 +37,7 @@ export type OrderType = 'open_long' | 'open_short' | 'close_long' | 'close_short
 /**
  * 订单请求
  */
-export interface OrderRequest {
+interface OrderRequest {
   orderId: string;           // 幂等性 ID
   type: OrderType;
   symbol: string;
@@ -68,7 +68,7 @@ export interface OrderResult {
 /**
  * 交易所订单返回结果（通用接口）
  */
-export interface ExchangeOrderResult {
+interface ExchangeOrderResult {
   id?: string;
   orderId?: string;
   price?: number;
@@ -79,7 +79,7 @@ export interface ExchangeOrderResult {
 /**
  * 重试记录
  */
-export interface RetryRecord {
+interface RetryRecord {
   attempt: number;
   timestamp: number;
   delay: number;
@@ -116,7 +116,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 /**
  * 指数退避重试策略
  */
-export class ExponentialBackoffStrategy {
+class ExponentialBackoffStrategy {
   private config: RetryConfig;
 
   constructor(config: Partial<RetryConfig> = {}) {
@@ -174,7 +174,7 @@ export class ExponentialBackoffStrategy {
  * 订单幂等性管理器
  * 使用订单ID去重，防止重复提交
  */
-export class IdempotencyManager {
+class IdempotencyManager {
   // 已提交订单缓存 (内存 + 可选持久化)
   private submittedOrders: Map<string, OrderResult> = new Map();
   
@@ -277,7 +277,7 @@ interface RetryQueueItem {
 /**
  * 重试队列管理器
  */
-export class RetryQueue {
+class RetryQueue {
   private queue: RetryQueueItem[] = [];
   private strategy: ExponentialBackoffStrategy;
   private checkInterval: NodeJS.Timeout | null = null;
@@ -457,7 +457,7 @@ export class RetryQueue {
 /**
  * 订单状态跟踪器
  */
-export class OrderTracker {
+class OrderTracker {
   private orders: Map<string, {
     request: OrderRequest;
     status: OrderStatus;

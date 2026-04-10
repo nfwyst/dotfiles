@@ -13,21 +13,21 @@
 import { loadConfig } from '../config/index.js';
 import type { UnifiedConfig, TakeProfitConfig, StopLossConfig, SwingDetectionConfig } from '../config/schema.js';
 
-export interface SwingLevel {
+interface SwingLevel {
   swingHigh: number;
   swingLow: number;
   swingHighIndex: number;
   swingLowIndex: number;
 }
 
-export type TimeFrame = '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+type TimeFrame = '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
 
 const TIMEFRAMES: ReadonlySet<string> = new Set<TimeFrame>(['1m', '5m', '15m', '1h', '4h', '1d']);
 function isTimeFrame(value: string): value is TimeFrame {
   return TIMEFRAMES.has(value);
 }
 
-export interface StopLossTakeProfit {
+interface StopLossTakeProfit {
   entryPrice: number;
   stopLoss: number;
   takeProfits: {
@@ -47,7 +47,7 @@ export interface StopLossTakeProfit {
 }
 
 /** Optional external config to override hardcoded defaults */
-export interface SLTPExternalConfig {
+interface SLTPExternalConfig {
   /** R:R ratios for TP levels, e.g. [1.2, 1.8, 2.5] */
   rrRatios: [number, number, number];
   /** Swing buffer fraction, e.g. 0.002 = 0.2% */

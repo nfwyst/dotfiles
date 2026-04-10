@@ -13,10 +13,10 @@
 import fs from 'fs';
 import path from 'path';
 
-export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
-export type LogOutput = 'console' | 'file' | 'both' | 'none';
+type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
+type LogOutput = 'console' | 'file' | 'both' | 'none';
 
-export interface LogEntry {
+interface LogEntry {
   timestamp: string;
   level: LogLevel;
   module: string;
@@ -25,7 +25,7 @@ export interface LogEntry {
   traceId?: string;
 }
 
-export interface TradeLogEntry {
+interface TradeLogEntry {
   timestamp: string;
   type: 'OPEN' | 'CLOSE' | 'TP1' | 'TP2' | 'TP3' | 'SL' | 'PARTIAL_CLOSE';
   symbol: string;

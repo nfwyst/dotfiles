@@ -71,7 +71,7 @@ export const OPTIMIZER_META_PROMPT = `
  * 动态内容模板
  * 这部分是固定的，运行时注入数据
  */
-export const DYNAMIC_CONTENT_TEMPLATE = `
+const DYNAMIC_CONTENT_TEMPLATE = `
 ## 当前市场数据
 
 ### 价格信息
@@ -170,7 +170,7 @@ export function composePrompt(
 /**
  * 提取静态指令中的可优化部分
  */
-export function extractOptimizableParts(staticInstructions: string): string[] {
+function extractOptimizableParts(staticInstructions: string): string[] {
   // 按段落分割
   const lines = staticInstructions.split('\n').filter(l => l.trim());
   return lines.filter(l => 
@@ -213,4 +213,4 @@ export const REQUIRED_PLACEHOLDERS = [
 
 // ==================== 导出 ====================
 
-export const PROMPT_TEMPLATE_VERSION = '2.0.0';
+const PROMPT_TEMPLATE_VERSION = '2.0.0';

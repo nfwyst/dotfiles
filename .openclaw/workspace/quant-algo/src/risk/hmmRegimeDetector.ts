@@ -15,13 +15,13 @@ import { OHLCV } from '../events/types';
 // Public enums & interfaces
 // ---------------------------------------------------------------------------
 
-export enum MarketRegime {
+enum MarketRegime {
   LOW_VOL = 0,   // Calm / trending
   HIGH_VOL = 1,  // Volatile / uncertain
   CRISIS = 2,    // Crash / extreme risk
 }
 
-export interface RegimeConfig {
+interface RegimeConfig {
   /** Number of HMM states */
   numStates: number;
   /** Lookback for volatility calculation */
@@ -38,7 +38,7 @@ export interface RegimeConfig {
   retrainInterval: number;
 }
 
-export interface RegimeResult {
+interface RegimeResult {
   /** Current detected regime */
   regime: MarketRegime;
   /** Regime label */

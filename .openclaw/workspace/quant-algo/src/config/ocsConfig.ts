@@ -206,7 +206,7 @@ export type Layer1Config = z.infer<typeof Layer1ConfigSchema>;
 export type Layer2Config = z.infer<typeof Layer2ConfigSchema>;
 export type Layer3Config = z.infer<typeof Layer3ConfigSchema>;
 export type Layer4Config = z.infer<typeof Layer4ConfigSchema>;
-export type OCSConfig = z.infer<typeof OCSConfigSchema>;
+type OCSConfig = z.infer<typeof OCSConfigSchema>;
 
 // ── Exported schemas (for external validation / composition) ───
 
@@ -227,7 +227,7 @@ export {
  * @param overrides  Partial config (e.g. loaded from JSON)
  * @returns  Fully resolved, validated OCSConfig
  */
-export function loadOCSConfig(overrides?: Partial<z.input<typeof OCSConfigSchema>>): OCSConfig {
+function loadOCSConfig(overrides?: Partial<z.input<typeof OCSConfigSchema>>): OCSConfig {
   return OCSConfigSchema.parse(overrides ?? {});
 }
 

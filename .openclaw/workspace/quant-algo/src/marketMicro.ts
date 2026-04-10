@@ -1,19 +1,19 @@
 import logger from './logger';
 import { config } from './config';
 
-export interface OrderBookLevel {
+interface OrderBookLevel {
   price: number;
   volume: number;
   side: 'bid' | 'ask';
 }
 
-export interface OrderBookImbalance {
+interface OrderBookImbalance {
   ratio: number;  // 买盘/卖盘比例
   delta: number;  // 买盘-卖盘
   wallStrength: number;  // 0-100
 }
 
-export interface LargeTrade {
+interface LargeTrade {
   price: number;
   size: number;
   side: 'buy' | 'sell';

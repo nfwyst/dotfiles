@@ -8,7 +8,7 @@ import {
 } from '../monitoring/tracing';
 import { llmClient, llmConfigManager } from './index';
 import type { LLMProvider } from './index';
-export interface SentimentResult {
+interface SentimentResult {
   score: number;        // -1 到 1
   confidence: number;   // 0 到 1
   sources: string[];
@@ -22,7 +22,7 @@ export interface AnomalyDetection {
   reason: string;
 }
 
-export interface StrategyRecommendation {
+interface StrategyRecommendation {
   strategy: 'aggressive' | 'conservative' | 'neutral' | 'hold';
   confidence: number;
   parameters: {
@@ -33,7 +33,7 @@ export interface StrategyRecommendation {
   reasoning: string;
 }
 
-export interface AITradeSignal {
+interface AITradeSignal {
   action: 'buy' | 'sell' | 'hold';
   confidence: number;
   timeHorizon: 'short' | 'medium' | 'long';

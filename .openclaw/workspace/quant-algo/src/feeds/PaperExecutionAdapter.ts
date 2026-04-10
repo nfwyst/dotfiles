@@ -32,7 +32,7 @@ import {
 } from '../utils/decimal';
 import logger from '../logger';
 
-export interface PaperTradingConfig {
+interface PaperTradingConfig {
   initialBalance: number; // default: 10000
   maxPositionSize: number; // default: 1.0
   leverage: number; // default: 1
@@ -40,7 +40,7 @@ export interface PaperTradingConfig {
   costConfig?: { feeRate: number; makerRebate: number; slippageBps: number };
 }
 
-export interface PaperTrade {
+interface PaperTrade {
   id: string;
   timestamp: number;
   side: 'buy' | 'sell';
@@ -54,7 +54,7 @@ export interface PaperTrade {
 }
 
 /** Pending limit order waiting for price crossing */
-export interface PendingLimitOrder {
+interface PendingLimitOrder {
   orderId: string;
   side: 'buy' | 'sell';
   size: number;

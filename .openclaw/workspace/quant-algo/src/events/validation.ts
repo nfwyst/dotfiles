@@ -9,7 +9,7 @@ const channelValues = Object.values(EventChannels) as [
   ...typeof EventChannels[keyof typeof EventChannels][],
 ];
 
-export const TradingEventSchema = z.object({
+const TradingEventSchema = z.object({
   id: z.string(),
   channel: z.enum(channelValues),
   timestamp: z.number(),
@@ -46,7 +46,7 @@ export function parseTradingEvent(json: string): TradingEvent | null {
 }
 
 // DLQ Message schema
-export const DLQMessageSchema = z.object({
+const DLQMessageSchema = z.object({
   originalEvent: TradingEventSchema.optional(),
   error: z.string().optional(),
   channel: z.string().optional(),
@@ -54,7 +54,7 @@ export const DLQMessageSchema = z.object({
   retryCount: z.number().optional(),
 });
 
-export type ValidatedDLQMessage = z.infer<typeof DLQMessageSchema>;
+type ValidatedDLQMessage = z.infer<typeof DLQMessageSchema>;
 
 export function parseDLQMessage(json: string): ValidatedDLQMessage | null {
   try {

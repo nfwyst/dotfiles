@@ -43,7 +43,7 @@ export function safeDiv(a: number, b: number, decimals: number = 8, fallback: nu
 /**
  * 将数量调整到交易所最小步进
  */
-export function adjustToStep(value: number, step: number): number {
+function adjustToStep(value: number, step: number): number {
   if (step <= 0) return value;
   return Math.floor(value / step) * step;
 }
@@ -51,7 +51,7 @@ export function adjustToStep(value: number, step: number): number {
 /**
  * 将价格调整到 tick size
  */
-export function adjustToTick(price: number, tickSize: number): number {
+function adjustToTick(price: number, tickSize: number): number {
   if (tickSize <= 0) return price;
   return Math.round(price / tickSize) * tickSize;
 }
@@ -59,7 +59,7 @@ export function adjustToTick(price: number, tickSize: number): number {
 /**
  * 计算百分比变化
  */
-export function percentChange(from: number, to: number): number {
+function percentChange(from: number, to: number): number {
   if (from === 0) return 0;
   return roundTo((to - from) / from, 6);
 }

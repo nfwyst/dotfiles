@@ -22,7 +22,7 @@ import { parseTradingEvent, parseDLQMessage } from './validation';
 
 // ==================== Stream 事件总线配置 ====================
 
-export interface StreamEventBusConfig {
+interface StreamEventBusConfig {
   redis: {
     host: string;
     port: number;
@@ -176,7 +176,7 @@ function asStreamInfo(raw: unknown): Record<string, unknown> {
 
 // ==================== 订阅选项 ====================
 
-export interface SubscribeOptions {
+interface SubscribeOptions {
   groupName?: string;         // 消费者组名
   consumerName?: string;      // 消费者名
   startFrom?: 'beginning' | 'latest' | string;  // 开始位置
@@ -1081,14 +1081,14 @@ export class StreamEventBus extends EventEmitter {
 
 let streamEventBusInstance: StreamEventBus | null = null;
 
-export function getStreamEventBus(config?: Partial<StreamEventBusConfig>): StreamEventBus {
+function getStreamEventBus(config?: Partial<StreamEventBusConfig>): StreamEventBus {
   if (!streamEventBusInstance) {
     streamEventBusInstance = new StreamEventBus(config);
   }
   return streamEventBusInstance;
 }
 
-export function resetStreamEventBus(): void {
+function resetStreamEventBus(): void {
   if (streamEventBusInstance) {
     streamEventBusInstance.close().catch(console.error);
     streamEventBusInstance = null;
