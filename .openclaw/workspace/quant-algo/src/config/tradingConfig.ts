@@ -283,17 +283,6 @@ function readEnvOverrides(): Record<string, unknown> {
 
   // Backtest date range
   const btOverlay: Record<string, unknown> = {};
-  if (env['BT_LAST_DAYS']) {
-    // BT_LAST_DAYS=N → backtest the most recent N days (endDate=tomorrow, startDate=N days ago)
-    const n = parseInt(env['BT_LAST_DAYS'], 10);
-    if (!Number.isNaN(n) && n > 0) {
-      const end = new Date(); end.setUTCDate(end.getUTCDate() + 1); end.setUTCHours(0, 0, 0, 0);
-      const start = new Date(end); start.setUTCDate(start.getUTCDate() - n);
-      btOverlay['startDate'] = start.toISOString().split('T')[0]!;
-      btOverlay['endDate'] = end.toISOString().split('T')[0]!;
-    }
-  }
-  // Explicit dates override BT_LAST_DAYS
   if (env['BT_START_DATE']) btOverlay['startDate'] = env['BT_START_DATE'];
   if (env['BT_END_DATE']) btOverlay['endDate'] = env['BT_END_DATE'];
   if (Object.keys(btOverlay).length > 0) overlay['backtest'] = btOverlay;
