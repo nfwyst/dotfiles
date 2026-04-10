@@ -27,6 +27,7 @@ import { TailRiskModel } from '../risk/tailRiskModel';
 import { RiskGuardChain } from '../risk/RiskGuardChain';
 import { CircuitBreakerGuard, DailyLossLimitGuard } from '../risk/guards';
 import type { TradingContext } from '../risk/types';
+import { loadConfig } from '../config/loader.js';
 
 // ==================== 类型定义 ====================
 
@@ -529,7 +530,7 @@ export class EventDrivenExecutionLayer {
   ): Promise<ExecutionResult> {
     try {
       const side = signal.llmDecision?.action || 'hold';
-      const leverage = Number(process.env.LEVERAGE) || 5;
+      const leverage = loadConfig('live').position.leverage;
       let positionSize = this.riskManager.calculatePositionSize(
         balance,
         signal.stopLoss || currentPrice * 0.02,
@@ -593,7 +594,7 @@ export class EventDrivenExecutionLayer {
       }
 
       let result: ExecutionResult;
-      const symbol = process.env.SYMBOL || 'ETHUSDT';
+      const symbol = loadConfig('live').symbol.binance;
 
       if (side === 'buy') {
         // FIX BUG 1: Route through adapter when set
@@ -705,7 +706,7 @@ export class EventDrivenExecutionLayer {
         // FIX BUG 1: Route close through adapter when set
         if (this.executionAdapter) {
           const closeSide = position.side === 'long' ? 'sell' : 'buy';
-          const symbol = process.env.SYMBOL || 'ETHUSDT';
+          const symbol = loadConfig('live').symbol.binance;
           const orderResult = await this.executionAdapter.placeMarketOrder(closeSide, position.size, symbol);
           if (!orderResult.success) {
             return {
@@ -765,7 +766,7 @@ export class EventDrivenExecutionLayer {
    */
   async getFormattedPosition(): Promise<Position | null> {
     if (this.executionAdapter) {
-      const symbol = process.env.SYMBOL || 'ETHUSDT';
+      const symbol = loadConfig('live').symbol.binance;
       return this.executionAdapter.getPosition(symbol);
     }
     const state = this.stateManager.getState();

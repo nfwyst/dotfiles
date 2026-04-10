@@ -1245,8 +1245,8 @@ export async function main() {
   const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const config: BacktestConfig = {
-    symbol: process.env.BT_SYMBOL   || 'ETHUSDT',
-    timeframe: process.env.BT_TIMEFRAME || '5m',
+    symbol: loadConfig('backtest').symbol.binance,
+    timeframe: loadConfig('backtest').timeframe,
     startDate,
     endDate,
     initialBalance: 10000,

@@ -35,6 +35,7 @@ import type { DataFeed, ExecutionAdapter, TradingMode } from '../feeds/types';
 import { AlertManager } from '../monitoring/alertManager';
 import type { Alert } from '../monitoring/alertManager';
 import logger from '../logger';
+import { loadConfig } from '../config/loader.js';
 
 // ==================== Configuration ====================
 
@@ -285,9 +286,9 @@ export class EventDrivenRuntime {
       correlationId: this.eventBus.generateCorrelationId(),
       payload: {
         config: {
-          symbol: process.env.SYMBOL || 'ETHUSDT',
-          timeframe: process.env.TIMEFRAME || '5m',
-          leverage: Number(process.env.LEVERAGE) || 5,
+          symbol: loadConfig('live').symbol.binance,
+          timeframe: loadConfig('live').timeframe,
+          leverage: loadConfig('live').position.leverage,
         },
         balance: 0, // actual balance fetched by layers on demand
         // mode passed via startConfig

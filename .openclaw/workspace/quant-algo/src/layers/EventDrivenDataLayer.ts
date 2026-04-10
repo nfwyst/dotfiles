@@ -33,6 +33,7 @@ import type {
 import type { DataFeed } from '../feeds/types';
 import logger from '../logger';
 import { computeRSI } from '../indicators/rsi';
+import { loadConfig } from '../config/loader.js';
 // ==================== 类型定义 ====================
 
 export interface DataLayerResult {
@@ -305,8 +306,8 @@ export class EventDrivenDataLayer {
   // ==================== 内部方法 ====================
 
   private async fetchMarketData(): Promise<MarketData> {
-    const timeframe = process.env.TIMEFRAME || '5m';
-    const higherTimeframe = process.env.HIGHER_TF || '15m';
+    const timeframe = loadConfig('live').timeframe;
+    const higherTimeframe = loadConfig('live').higherTimeframe;
 
     // 使用 MarketDataFetcher 获取 K线数据
     const [klinesData, higherTfKlines, currentPrice] = await Promise.all([
