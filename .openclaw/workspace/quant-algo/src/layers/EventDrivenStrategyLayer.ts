@@ -7,6 +7,7 @@ import type { StrategyEngineModule, StrategySignal, StrategyContext as OCSStrate
 import type { TechnicalIndicators } from '../modules/technicalAnalysis';
 import type { LLMAnalysisModule, LLMTradingSignal } from '../modules/llmAnalysis';
 import { fuseSignals, updateICObservation } from '../modules/signalFusion';
+import { marketStateAdaptor } from '../modules/marketStateAdaptor';
 import type { Position } from '../riskManager';
 import { getEventBus } from '../events';
 import {
@@ -382,6 +383,33 @@ export class EventDrivenStrategyLayer {
     // 5. 如果信号为 hold，直接返回
     if (strategySignal.type === 'hold') {
       return this.createHoldSignal('Strategy signal is hold', context);
+    }
+
+    // 5.5. Market state adaptation — adjust confidence & log state
+    if (context.recentCandles && context.recentCandles.length >= 30) {
+      const closes = context.recentCandles.map(c => c.close);
+      const highs = context.recentCandles.map(c => c.high);
+      const lows = context.recentCandles.map(c => c.low);
+      const state = marketStateAdaptor.detectState(closes, highs, lows);
+      const adapted = marketStateAdaptor.getAdaptedParams(state);
+
+      // Apply confidence floor from market state
+      if (strategySignal.confidence * 100 < adapted.minConfidence) {
+        logger.info(
+          `[StrategyLayer] MarketState=${state}: confidence ${(strategySignal.confidence * 100).toFixed(0)}% ` +
+          `< minConfidence ${adapted.minConfidence}% — downgrading to hold`
+        );
+        return this.createHoldSignal(`MarketState ${state}: confidence below threshold`, context);
+      }
+
+      // Adjust confidence by position size multiplier (trending → boost, ranging → dampen)
+      strategySignal.confidence = Math.min(0.95, strategySignal.confidence * adapted.positionSizeMultiplier);
+
+      logger.info(
+        `[StrategyLayer] MarketState=${state}: zThresh=${adapted.zScoreThreshold}, ` +
+        `knnThresh=${adapted.knnThreshold}, slMult=${adapted.stopLossMultiplier}, ` +
+        `posMult=${adapted.positionSizeMultiplier}`
+      );
     }
 
     // 6. 调用 LLM 进行最终决策（作为 OCS 信号的确认层）
