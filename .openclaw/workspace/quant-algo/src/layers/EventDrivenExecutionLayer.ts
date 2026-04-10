@@ -467,20 +467,13 @@ export class EventDrivenExecutionLayer {
     const tpResult = await this.checkTakeProfitLevels(position, currentPrice);
     if (tpResult) return tpResult;
 
-    // 3. Legacy single-TP fallback (for signals without takeProfitLevels)
-    if (!position.takeProfitLevels?.length) {
-      if (this.isSingleTpHit(position, currentPrice)) {
-        return this.closePosition(position, 'Take profit triggered (legacy single TP)');
-      }
-    }
-
-    // 4. Signal reversal → full close
+    // 3. Signal reversal → full close
     if (this.shouldCloseOnSignalReversal(position, signal)) {
       return this.closePosition(position, 'Signal reversal detected');
     }
 
     // 5. Update SL/TP from new signal if changed
-    if (signal.stopLoss && signal.takeProfit) {
+    if (signal.stopLoss || signal.takeProfitLevels?.length) {
       const updateResult = await this.updateStopLossTakeProfit(position, signal);
       if (updateResult) return updateResult;
     }
@@ -495,16 +488,6 @@ export class EventDrivenExecutionLayer {
     if (!position.stopLoss) return false;
     if (position.side === 'long' && currentPrice <= position.stopLoss) return true;
     if (position.side === 'short' && currentPrice >= position.stopLoss) return true;
-    return false;
-  }
-
-  /**
-   * Legacy single-TP check (when takeProfitLevels is not set).
-   */
-  private isSingleTpHit(position: Position, currentPrice: number): boolean {
-    if (!position.takeProfit) return false;
-    if (position.side === 'long' && currentPrice >= position.takeProfit) return true;
-    if (position.side === 'short' && currentPrice <= position.takeProfit) return true;
     return false;
   }
 
@@ -691,12 +674,16 @@ export class EventDrivenExecutionLayer {
     signal: EnhancedSignal
   ): Promise<ExecutionResult | null> {
     const slChanged = signal.stopLoss && signal.stopLoss !== position.stopLoss;
-    const tpChanged = signal.takeProfit && signal.takeProfit !== position.takeProfit;
+    const tpChanged = signal.takeProfitLevels?.length &&
+      JSON.stringify(signal.takeProfitLevels.map(l => l.price)) !==
+      JSON.stringify((position.takeProfitLevels ?? []).map(l => l.price));
 
     if (!slChanged && !tpChanged) return null;
 
     position.stopLoss = signal.stopLoss || position.stopLoss;
-    position.takeProfit = signal.takeProfit || position.takeProfit;
+    if (tpChanged && signal.takeProfitLevels) {
+      position.takeProfitLevels = signal.takeProfitLevels.map(l => ({ ...l }));
+    }
 
     this.stateManager.updatePosition({
       side: position.side,
@@ -706,19 +693,21 @@ export class EventDrivenExecutionLayer {
       unrealizedPnl: position.unrealizedPnl,
       markPrice: position.markPrice,
       stopLoss: position.stopLoss,
-      takeProfit: position.takeProfit,
       takeProfitLevels: position.takeProfitLevels,
     });
 
+    const tpSummary = (position.takeProfitLevels ?? [])
+      .map((l, i) => `TP${i+1}=${l.price.toFixed(2)}`)
+      .join(', ');
     await this.notificationManager.notifyAlert(
       'SL/TP Updated',
-      `SL=${position.stopLoss}, TP=${position.takeProfit}`
+      `SL=${position.stopLoss}, ${tpSummary}`
     );
 
     return {
       success: true,
       action: 'update_sltp',
-      message: `Stop loss: ${position.stopLoss}, Take profit: ${position.takeProfit}`,
+      message: `Stop loss: ${position.stopLoss}, ${tpSummary}`,
     };
   }
 
@@ -818,10 +807,11 @@ export class EventDrivenExecutionLayer {
             price: orderResult.filledPrice,
           };
         } else {
+          const tp1Price = signal.takeProfitLevels?.[0]?.price;
           const order = await this.exchange.openLong(
             positionSize,
             signal.stopLoss,
-            signal.takeProfit
+            tp1Price
           );
           await this.exchange.setLeverage(leverage);
           result = {
@@ -851,10 +841,11 @@ export class EventDrivenExecutionLayer {
             price: orderResult.filledPrice,
           };
         } else {
+          const tp1Price = signal.takeProfitLevels?.[0]?.price;
           const order = await this.exchange.openShort(
             positionSize,
             signal.stopLoss,
-            signal.takeProfit
+            tp1Price
           );
           await this.exchange.setLeverage(leverage);
           result = {
@@ -887,8 +878,7 @@ export class EventDrivenExecutionLayer {
         unrealizedPnl: 0,
         markPrice: result.price,
         stopLoss: signal.stopLoss,
-        takeProfit: signal.takeProfit,
-        takeProfitLevels: signal.takeProfitLevels?.map(l => ({ ...l, hit: false })),
+        takeProfitLevels: signal.takeProfitLevels.map(l => ({ ...l, hit: false })),
       });
 
       return result;

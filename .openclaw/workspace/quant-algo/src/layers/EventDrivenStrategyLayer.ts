@@ -48,7 +48,6 @@ export interface LocalStrategySignal {
   strength: number;
   confidence: number;
   stopLoss?: number;
-  takeProfit?: number;
   targets?: {
     tp1: number;
     tp2: number;
@@ -626,7 +625,6 @@ export class EventDrivenStrategyLayer {
         strength: strategySignal.strength,
         confidence: strategySignal.confidence,
         stopLoss: strategySignal.stopLoss,
-        takeProfit: strategySignal.takeProfits?.tp1 ?? 0,
         targets: strategySignal.takeProfits,
         reasoning: Array.isArray(strategySignal.reasoning) 
           ? strategySignal.reasoning 
@@ -656,7 +654,6 @@ export class EventDrivenStrategyLayer {
         strength: strategySignal.strength,
         confidence: strategySignal.confidence,
         stopLoss: strategySignal.stopLoss,
-        takeProfit: strategySignal.takeProfits?.tp1 ?? 0,
         targets: strategySignal.takeProfits,
         reasoning: ['LLM decision failed, using strategy signal'],
         riskLevel: 'medium',
@@ -700,8 +697,7 @@ export class EventDrivenStrategyLayer {
       strength: signal.strength,
       confidence: signal.confidence,
       stopLoss: signal.stopLoss,
-      takeProfit: signal.takeProfits?.tp1 ?? 0,
-      takeProfitLevels: this.buildTakeProfitLevels(signal.takeProfits),
+      takeProfitLevels: this.buildTakeProfitLevels(signal.takeProfits) ?? [],
       riskRewardRatio: signal.takeProfits?.tp1 && signal.stopLoss
         ? Math.abs(signal.takeProfits.tp1 - currentPrice) / Math.abs(currentPrice - signal.stopLoss)
         : 0,
@@ -754,8 +750,7 @@ export class EventDrivenStrategyLayer {
       strength: signal.strength,
       confidence: signal.confidence,
       stopLoss: signal.stopLoss ?? 0,
-      takeProfit: signal.takeProfit ?? 0,
-      takeProfitLevels,
+      takeProfitLevels: takeProfitLevels ?? [],
       riskRewardRatio: signal.riskRewardRatio ?? 0,
       llmDecision,
     };

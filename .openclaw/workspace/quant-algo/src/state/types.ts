@@ -127,7 +127,7 @@ export function migratePosition(raw: unknown): Position | null {
       markPrice: optionalNum(rec.markPrice),
       liquidationPrice: optionalNum(rec.liquidationPrice),
       stopLoss: optionalNum(rec.stopLoss),
-      takeProfit: optionalNum(rec.takeProfit),
+      takeProfitLevels: Array.isArray(rec.takeProfitLevels) ? rec.takeProfitLevels as Position['takeProfitLevels'] : undefined,
     };
   }
 
@@ -142,7 +142,7 @@ export function migratePosition(raw: unknown): Position | null {
       markPrice: optionalNum(rec.markPrice),
       liquidationPrice: optionalNum(rec.liquidationPrice),
       stopLoss: optionalNum(rec.stopLoss),
-      takeProfit: optionalNum(rec.takeProfit),
+      takeProfitLevels: Array.isArray(rec.takeProfitLevels) ? rec.takeProfitLevels as Position['takeProfitLevels'] : undefined,
     };
   }
 
