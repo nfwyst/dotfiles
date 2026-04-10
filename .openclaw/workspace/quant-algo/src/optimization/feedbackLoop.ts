@@ -5,12 +5,12 @@
 
 import { PerformanceMetrics, OptimizationResult } from './types';
 import { AdaptiveOPRO } from './adaptiveOPRO';
-import { TradingBotRuntime } from '../execution/tradingBot';
+import type { PerformanceProvider } from '../execution/sharedTypes';
 import logger from '../logger';
 
 export class FeedbackLoop {
   private opro: AdaptiveOPRO;
-  private tradingBot: TradingBotRuntime | null = null;
+  private performanceProvider: PerformanceProvider | null = null;
   
   // 窗口追踪
   private windowStart: number;
@@ -29,8 +29,16 @@ export class FeedbackLoop {
   /**
    * 设置交易机器人
    */
-  setTradingBot(bot: TradingBotRuntime): void {
-    this.tradingBot = bot;
+  /**
+   * 设置性能数据提供者
+   */
+  setPerformanceProvider(provider: PerformanceProvider): void {
+    this.performanceProvider = provider;
+  }
+
+  /** @deprecated Use setPerformanceProvider() instead */
+  setTradingBot(bot: PerformanceProvider): void {
+    this.performanceProvider = bot;
   }
   
   /**
@@ -71,8 +79,8 @@ export class FeedbackLoop {
     let losingTrades = 0;
     let balance = 1000;
     
-    if (this.tradingBot) {
-      const perfMetrics = this.tradingBot.getPerformanceMetrics();
+    if (this.performanceProvider) {
+      const perfMetrics = this.performanceProvider.getPerformanceMetrics();
       tradeCount = perfMetrics.tradeCount;
       totalPnl = perfMetrics.totalPnl;
       winningTrades = perfMetrics.winningTrades;

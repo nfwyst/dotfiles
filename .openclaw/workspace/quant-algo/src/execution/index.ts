@@ -3,7 +3,6 @@
  * 策略-执行解耦架构
  */
 
-export { TradingBotRuntime } from './tradingBot';
 export { OrderGenerator } from './orderGenerator';
 export { validateOrder, calculateOrderRisk, OrderBuilder } from './orderTypes';
 
@@ -21,7 +20,11 @@ export type {
 
 export type {
   TradingBotConfig,
-} from './tradingBot';
+  SimpleOrderSpec,
+  Position,
+  PerformanceMetrics,
+  TradeRecord,
+} from './sharedTypes';
 
 export type {
   AgentDecision,

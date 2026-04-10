@@ -1,4 +1,4 @@
-import type { TradingBotConfig } from '../execution/tradingBot';
+import type { TradingBotConfig } from '../execution/sharedTypes';
 /**
  * Runtime type-guard utilities used across the codebase.
  *

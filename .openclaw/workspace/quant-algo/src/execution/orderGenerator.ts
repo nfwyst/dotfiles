@@ -5,10 +5,7 @@
  * 基于 ATLAS 论文的订单级动作空间
  */
 
-import {
-  OrderSpec,
-  TradingBotConfig,
-} from './tradingBot';
+import type { SimpleOrderSpec as OrderSpec, TradingBotConfig } from './sharedTypes';
 
 export interface AgentDecision {
   action: 'buy' | 'sell' | 'hold';

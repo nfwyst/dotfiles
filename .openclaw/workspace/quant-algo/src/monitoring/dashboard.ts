@@ -5,7 +5,7 @@
 
 import { PerformanceTracker, PerformanceReport, TradeRecord, PerformanceMetrics } from './performanceTracker';
 import { AdaptiveOPRO, OPROStatus, OptimizationHistory } from '../optimization/adaptiveOPRO';
-import { TradingBotRuntime } from '../execution/tradingBot';
+import type { PerformanceProvider } from '../execution/sharedTypes';
 import { MarketIntelligencePipeline } from '../agents/marketIntelligence';
 import { CentralTradingAgent } from '../agents/centralTradingAgent';
 import type { AgentStatus } from '../agents/centralTradingAgent/types';
@@ -66,7 +66,7 @@ export interface SystemAlert {
 export class MonitoringDashboard {
   private performanceTracker: PerformanceTracker;
   private opro: AdaptiveOPRO;
-  private tradingBot: TradingBotRuntime | null = null;
+  private performanceProvider: PerformanceProvider | null = null;
   private marketIntelligence: MarketIntelligencePipeline | null = null;
   private centralTradingAgent: CentralTradingAgent | null = null;
   
@@ -85,8 +85,16 @@ export class MonitoringDashboard {
   /**
    * 设置交易机器人
    */
-  setTradingBot(bot: TradingBotRuntime): void {
-    this.tradingBot = bot;
+  /**
+   * 设置性能数据提供者（TradingBotRuntime 或 EventDrivenRuntime）
+   */
+  setPerformanceProvider(provider: PerformanceProvider): void {
+    this.performanceProvider = provider;
+  }
+
+  /** @deprecated Use setPerformanceProvider() instead */
+  setTradingBot(bot: PerformanceProvider): void {
+    this.performanceProvider = bot;
   }
   
   /**
@@ -210,7 +218,7 @@ export class MonitoringDashboard {
   // ==================== 私有方法 ====================
   
   private getTradingBotStatus(): SystemStatus['components']['tradingBot'] {
-    if (!this.tradingBot) {
+    if (!this.performanceProvider) {
       return {
         running: false,
         position: 'N/A',
@@ -219,7 +227,7 @@ export class MonitoringDashboard {
       };
     }
     
-    const metrics = this.tradingBot.getPerformanceMetrics();
+    const metrics = this.performanceProvider.getPerformanceMetrics();
     const balance = this.performanceTracker.getBalance();
     
     return {

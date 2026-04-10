@@ -31,6 +31,7 @@ import type { EventDrivenDataLayer } from '../layers/EventDrivenDataLayer';
 import type { EventDrivenStrategyLayer } from '../layers/EventDrivenStrategyLayer';
 import type { EventDrivenExecutionLayer } from '../layers/EventDrivenExecutionLayer';
 import type { StateManager } from '../state';
+import type { PerformanceMetrics } from '../execution/sharedTypes';
 import type { DataFeed, ExecutionAdapter, TradingMode } from '../feeds/types';
 import { AlertManager } from '../monitoring/alertManager';
 import type { Alert } from '../monitoring/alertManager';
@@ -800,6 +801,30 @@ export class EventDrivenRuntime {
   /** Access the KillSwitch singleton for emergency stop control. */
   getKillSwitch(): KillSwitch {
     return KillSwitch.getInstance();
+  }
+
+  /**
+   * Aggregate performance metrics from StateManager.
+   * Provides a PerformanceMetrics-compatible snapshot for dashboard/feedbackLoop.
+   */
+  getPerformanceMetrics(): PerformanceMetrics {
+    const state = this.stateManager.getState();
+    const t = state.trading;
+    const initialBalance = t.balance - t.totalPnL;
+    const roi = initialBalance > 0 ? (t.totalPnL / initialBalance) * 100 : 0;
+    return {
+      roi,
+      dailyReturns: [],
+      maxDrawdown: 0,
+      sharpeRatio: 0,
+      winRate: 0,
+      profitFactor: 0,
+      tradeCount: t.tradeCount,
+      avgTradeDuration: 0,
+      totalPnl: t.totalPnL,
+      winningTrades: 0,
+      losingTrades: 0,
+    };
   }
 }
 
