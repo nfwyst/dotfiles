@@ -77,15 +77,18 @@ export type {
   PerformanceReport,
 } from './monitoring';
 
-// Backtest
+// Backtest (CPCV/PBO validation — public API)
 export {
-  LeakageControlledBacktest,
+  combinatorialPurgedCV,
+  probabilityOfBacktestOverfitting,
+  validateBacktest,
 } from './backtest';
 
 export type {
-  BacktestConfig,
-  BacktestResult,
-  Strategy as BacktestStrategy,
+  CPCVConfig,
+  CPCVResult,
+  PBOResult,
+  BacktestValidationResult,
 } from './backtest';
 
 // ==================== Event-driven runtime ====================

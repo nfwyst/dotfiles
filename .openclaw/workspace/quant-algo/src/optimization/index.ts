@@ -19,22 +19,6 @@ export { composePrompt, validatePromptTemplate, REQUIRED_PLACEHOLDERS } from './
 export { AdaptiveOPRO } from './adaptiveOPRO';
 export { FeedbackLoop } from './feedbackLoop';
 
-// ── Parameter sensitivity & walk-forward validation (M4 fix) ──
-export type {
-  BacktestMetrics,
-  TunableParameter,
-  SensitivityResult,
-  WalkForwardConfig,
-  WalkForwardFold,
-  WalkForwardResult,
-} from './parameterSensitivity';
-
-export {
-  ParameterRegistry,
-  SensitivityAnalyzer,
-  WalkForwardValidator,
-} from './parameterSensitivity';
-
 // 单例实例
 import { AdaptiveOPRO } from './adaptiveOPRO';
 import { FeedbackLoop } from './feedbackLoop';

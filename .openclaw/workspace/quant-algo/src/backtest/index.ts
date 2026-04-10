@@ -1,6 +1,7 @@
 /**
  * 回测框架入口
- * FIX: Cleaned up exports — no wildcard re-exports, no redundant duplicates.
+ * Phase 3: Cleaned up exports. LeakageControlledBacktest kept for Phase B
+ * of backtest-runner.ts.
  */
 
 export {
@@ -9,14 +10,13 @@ export {
   type BacktestConfig,
   type Strategy,
   type BacktestTrade,
-  type ValidatedBacktestResult,
-  type ValidationConfig,
 } from './leakageControlledBacktest';
 
 export {
   combinatorialPurgedCV,
   probabilityOfBacktestOverfitting,
   walkForwardValidation,
+  validateBacktest,
   type CPCVConfig,
   type CPCVResult,
   type CPCVFoldResult,
@@ -24,6 +24,8 @@ export {
   type TimeSeriesObservation,
   type WalkForwardConfig,
   type WalkForwardResult,
+  type BacktestValidationResult,
+  type BacktestValidationConfig,
 } from './cpcvValidation';
 
 export {
