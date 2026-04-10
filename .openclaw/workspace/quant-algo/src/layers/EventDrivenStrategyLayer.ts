@@ -20,7 +20,9 @@ import {
   type RiskForecast,
   type LLMDecision,
   type EnhancedSignal,
+  type TakeProfitLevel,
   } from '../events/types';
+import { loadConfig } from '../config/loader.js';
 import logger from '../logger';
 import { OrderFlowAnalyzer } from '../signals/orderFlowAnalysis';
 import { MultiTimeframeAggregator } from '../signals/multiTimeframe';
@@ -625,6 +627,7 @@ export class EventDrivenStrategyLayer {
         confidence: strategySignal.confidence,
         stopLoss: strategySignal.stopLoss,
         takeProfit: strategySignal.takeProfits?.tp1 ?? 0,
+        targets: strategySignal.takeProfits,
         reasoning: Array.isArray(strategySignal.reasoning) 
           ? strategySignal.reasoning 
           : [String(strategySignal.reasoning)],
@@ -654,6 +657,7 @@ export class EventDrivenStrategyLayer {
         confidence: strategySignal.confidence,
         stopLoss: strategySignal.stopLoss,
         takeProfit: strategySignal.takeProfits?.tp1 ?? 0,
+        targets: strategySignal.takeProfits,
         reasoning: ['LLM decision failed, using strategy signal'],
         riskLevel: 'medium',
         llmDecision: {
@@ -669,6 +673,26 @@ export class EventDrivenStrategyLayer {
   /**
    * 将本地信号转换为事件类型
    */
+  /**
+   * Build multi-level TakeProfitLevel[] from StrategySignal.takeProfits + unified config.
+   * Mirrors the backtest-engine's partial close structure so the execution layer
+   * can apply the same TP1→50%/TP2→50%/TP3→100% logic in live/paper trading.
+   */
+  private buildTakeProfitLevels(
+    takeProfits: { tp1: number; tp2: number; tp3: number } | undefined,
+  ): TakeProfitLevel[] | undefined {
+    if (!takeProfits) return undefined;
+    const cfg = loadConfig('live');
+    const levels = cfg.takeProfit.levels;
+    // Map each TP price to the corresponding closePercent from unified config
+    const tpPrices = [takeProfits.tp1, takeProfits.tp2, takeProfits.tp3];
+    return tpPrices.map((price, i) => ({
+      price,
+      closePercent: levels[i]?.closePercent ?? (i === 2 ? 1.0 : 0.5),
+      hit: false,
+    }));
+  }
+
   private toEnhancedSignal(signal: StrategySignal, currentPrice: number): EnhancedSignal {
     const type = signal.type === 'long' ? 'long' : signal.type === 'short' ? 'short' : 'hold';
     return {
@@ -677,6 +701,7 @@ export class EventDrivenStrategyLayer {
       confidence: signal.confidence,
       stopLoss: signal.stopLoss,
       takeProfit: signal.takeProfits?.tp1 ?? 0,
+      takeProfitLevels: this.buildTakeProfitLevels(signal.takeProfits),
       riskRewardRatio: signal.takeProfits?.tp1 && signal.stopLoss
         ? Math.abs(signal.takeProfits.tp1 - currentPrice) / Math.abs(currentPrice - signal.stopLoss)
         : 0,
@@ -719,12 +744,18 @@ export class EventDrivenStrategyLayer {
     // For 'hold' signals we intentionally leave llmDecision undefined —
     // the ExecutionLayer will correctly hold without it.
 
+    // Build takeProfitLevels from targets (tp1/tp2/tp3) if present on the local signal
+    const takeProfitLevels = signal.targets
+      ? this.buildTakeProfitLevels(signal.targets)
+      : undefined;
+
     return {
       type: signal.type,
       strength: signal.strength,
       confidence: signal.confidence,
       stopLoss: signal.stopLoss ?? 0,
       takeProfit: signal.takeProfit ?? 0,
+      takeProfitLevels,
       riskRewardRatio: signal.riskRewardRatio ?? 0,
       llmDecision,
     };

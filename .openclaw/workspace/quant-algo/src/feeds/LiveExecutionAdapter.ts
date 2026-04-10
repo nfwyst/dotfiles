@@ -56,6 +56,28 @@ export class LiveExecutionAdapter implements ExecutionAdapter {
     return this.exchange.getPosition(symbol || this.symbol);
   }
 
+  /**
+   * Partial close: reduce existing position by closePercent (0..1).
+   * On a real exchange this places a reduce-only market order for
+   * the calculated portion of the current position size.
+   */
+  async placePartialClose(symbol: string, closePercent: number): Promise<OrderResult> {
+    const position = await this.getPosition(symbol || this.symbol);
+    if (!position || position.side === 'none' || position.size === 0) {
+      return { success: false, message: 'No position to partially close', timestamp: Date.now() };
+    }
+    const closeSize = position.size * closePercent;
+    if (closeSize <= 0) {
+      return { success: false, message: 'Close size is zero', timestamp: Date.now() };
+    }
+    const closeSide: 'buy' | 'sell' = position.side === 'long' ? 'sell' : 'buy';
+    logger.info(
+      `[LiveExecution] Partial close: ${closeSide} ${closeSize} ${symbol || this.symbol} ` +
+      `(${(closePercent * 100).toFixed(0)}% of ${position.size})`
+    );
+    return this.exchange.placeMarketOrder(closeSide, closeSize, symbol || this.symbol);
+  }
+
   async close(): Promise<void> {
     logger.info('[LiveExecution] Adapter closed');
     return this.exchange.close();

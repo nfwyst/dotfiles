@@ -3,6 +3,21 @@
  * 定义事件驱动架构中所有事件的类型和数据结构
  */
 
+// ==================== 分批止盈级别 ====================
+
+/**
+ * A single take-profit level used for multi-level partial close.
+ * Mirrors the unified config's `takeProfit.levels` schema.
+ */
+export interface TakeProfitLevel {
+  /** Absolute price at which this TP triggers */
+  price: number;
+  /** Fraction of *remaining* position to close (0..1) */
+  closePercent: number;
+  /** Whether this level has already been hit (runtime state) */
+  hit?: boolean;
+}
+
 export interface Position {
   side: 'long' | 'short' | 'none';
   size: number;
@@ -12,7 +27,14 @@ export interface Position {
   markPrice?: number;
   liquidationPrice?: number;
   stopLoss?: number;
+  /** @deprecated Use takeProfitLevels for multi-level TP. Kept for backward compat. */
   takeProfit?: number;
+  /**
+   * Multi-level take-profit with partial close support.
+   * When set, the execution layer uses these instead of the single `takeProfit`.
+   * Each level carries a `hit` flag so the execution layer knows which have already fired.
+   */
+  takeProfitLevels?: TakeProfitLevel[];
 }
 
 // ==================== 共享类型定义 ====================
@@ -104,7 +126,14 @@ export interface EnhancedSignal {
   strength: number;
   confidence: number;
   stopLoss: number;
+  /** @deprecated Use takeProfitLevels for multi-level TP. Kept for backward compat. */
   takeProfit: number;
+  /**
+   * Multi-level take-profit levels with partial close percentages.
+   * Populated from StrategySignal.takeProfits + unified config closePercent.
+   * When present, the execution layer uses these for partial close logic.
+   */
+  takeProfitLevels?: TakeProfitLevel[];
   llmDecision?: LLMDecision;
   smcAlignment?: {
     hasOrderBlock: boolean;

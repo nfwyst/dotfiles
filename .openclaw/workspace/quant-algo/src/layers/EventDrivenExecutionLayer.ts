@@ -9,7 +9,7 @@ import type { NotificationManager } from '../notifier';
 // FIX M1: Import from refactored state module instead of god object
 import type { StateManager } from '../state';
 // FIX H7: Import canonical Position from events/types (single source of truth)
-import type { Position } from '../events/types';
+import type { Position, TakeProfitLevel } from '../events/types';
 import type { ExecutionAdapter } from '../feeds/types';
 import { getEventBus } from '../events';
 import {
@@ -443,38 +443,240 @@ export class EventDrivenExecutionLayer {
     return pnlPercent < -10;
   }
 
+  /**
+   * Unified position management with multi-level TP partial close.
+   *
+   * Execution logic mirrors backtest-engine.checkPosition():
+   *   TP1 hit → close 50% of position, move SL to breakeven (entry price)
+   *   TP2 hit → close 50% of remaining, trail SL to TP1 price
+   *   TP3 hit → close 100% of remaining (full exit)
+   *   SL hit  → close 100% (full exit)
+   *
+   * Close percentages come from the unified config `takeProfit.levels`.
+   */
   private async managePosition(context: ExecutionContext): Promise<ExecutionResult> {
     const { position, signal, currentPrice, balance } = context;
     if (!position) return this.createHoldResult('No position to manage');
 
-    const shouldClose = this.checkStopLossTakeProfit(position, currentPrice);
-    if (shouldClose) {
-      return this.closePosition(position, 'Stop loss or take profit triggered');
+    // 1. Check stop loss first (full close)
+    if (this.isStopLossHit(position, currentPrice)) {
+      return this.closePosition(position, 'Stop loss triggered');
     }
 
+    // 2. Multi-level TP partial close logic
+    const tpResult = await this.checkTakeProfitLevels(position, currentPrice);
+    if (tpResult) return tpResult;
+
+    // 3. Legacy single-TP fallback (for signals without takeProfitLevels)
+    if (!position.takeProfitLevels?.length) {
+      if (this.isSingleTpHit(position, currentPrice)) {
+        return this.closePosition(position, 'Take profit triggered (legacy single TP)');
+      }
+    }
+
+    // 4. Signal reversal → full close
     if (this.shouldCloseOnSignalReversal(position, signal)) {
       return this.closePosition(position, 'Signal reversal detected');
     }
 
+    // 5. Update SL/TP from new signal if changed
     if (signal.stopLoss && signal.takeProfit) {
       const updateResult = await this.updateStopLossTakeProfit(position, signal);
-      if (updateResult) {
-        return updateResult;
-      }
+      if (updateResult) return updateResult;
     }
 
     return this.createHoldResult('Position maintained');
   }
 
-  private checkStopLossTakeProfit(position: Position, currentPrice: number): boolean {
-    if (position.side === 'long') {
-      if (position.stopLoss && currentPrice <= position.stopLoss) return true;
-      if (position.takeProfit && currentPrice >= position.takeProfit) return true;
-    } else {
-      if (position.stopLoss && currentPrice >= position.stopLoss) return true;
-      if (position.takeProfit && currentPrice <= position.takeProfit) return true;
-    }
+  /**
+   * Check if stop loss is hit.
+   */
+  private isStopLossHit(position: Position, currentPrice: number): boolean {
+    if (!position.stopLoss) return false;
+    if (position.side === 'long' && currentPrice <= position.stopLoss) return true;
+    if (position.side === 'short' && currentPrice >= position.stopLoss) return true;
     return false;
+  }
+
+  /**
+   * Legacy single-TP check (when takeProfitLevels is not set).
+   */
+  private isSingleTpHit(position: Position, currentPrice: number): boolean {
+    if (!position.takeProfit) return false;
+    if (position.side === 'long' && currentPrice >= position.takeProfit) return true;
+    if (position.side === 'short' && currentPrice <= position.takeProfit) return true;
+    return false;
+  }
+
+  /**
+   * Multi-level take-profit with partial close + SL trailing.
+   * Processes levels from highest (TP3) to lowest (TP1) to handle
+   * gap scenarios where price jumps past multiple levels.
+   *
+   * After TP1 hit → move SL to breakeven (entry price)
+   * After TP2 hit → trail SL to TP1 price
+   * After TP3 hit → full close (100%)
+   */
+  private async checkTakeProfitLevels(
+    position: Position,
+    currentPrice: number,
+  ): Promise<ExecutionResult | null> {
+    const levels = position.takeProfitLevels;
+    if (!levels || levels.length === 0) return null;
+
+    // Process from highest level to lowest (TP3 → TP2 → TP1)
+    // This way if price gaps past multiple levels we handle the highest first
+    for (let i = levels.length - 1; i >= 0; i--) {
+      const level = levels[i]!;
+      if (level.hit) continue; // Already triggered
+
+      const isHit = position.side === 'long'
+        ? currentPrice >= level.price
+        : currentPrice <= level.price;
+
+      if (!isHit) continue;
+
+      // Mark this level (and all lower levels) as hit
+      for (let j = 0; j <= i; j++) {
+        levels[j]!.hit = true;
+      }
+
+      const levelLabel = `TP${i + 1}`;
+      const closePercent = level.closePercent;
+
+      logger.info(
+        `[ExecutionLayer] ${levelLabel} hit @ ${level.price} (current: ${currentPrice}), ` +
+        `closing ${(closePercent * 100).toFixed(0)}% of position (size: ${position.size})`
+      );
+
+      // Is this the final level (closePercent === 1.0 or last level)?
+      const isFinalLevel = closePercent >= 1.0 || i === levels.length - 1;
+
+      if (isFinalLevel) {
+        // Full close
+        const result = await this.closePosition(position, `${levelLabel} hit — full close`);
+        return result;
+      }
+
+      // Partial close
+      const partialResult = await this.executePartialClose(position, closePercent, levelLabel);
+
+      // Trail stop loss after partial close
+      if (partialResult.success && this.getPositionFromState()) {
+        const updatedPosition = this.getPositionFromState()!;
+        this.trailStopLossAfterTp(updatedPosition, position.entryPrice, levels, i);
+        // Persist updated SL and TP level hit states
+        this.stateManager.updatePosition(updatedPosition);
+      }
+
+      return partialResult;
+    }
+
+    return null;
+  }
+
+  /**
+   * Execute a partial close via the execution adapter or exchange.
+   */
+  private async executePartialClose(
+    position: Position,
+    closePercent: number,
+    label: string,
+  ): Promise<ExecutionResult> {
+    const closeSize = position.size * closePercent;
+    const symbol = loadConfig('live').symbol.binance;
+
+    try {
+      let fillPrice: number;
+      let pnl: number;
+
+      if (this.executionAdapter?.placePartialClose) {
+        // Paper/backtest adapter has native partial close
+        const orderResult = await this.executionAdapter.placePartialClose(symbol, closePercent);
+        if (!orderResult.success) {
+          return { success: false, action: 'error', message: `Partial close failed: ${orderResult.message}` };
+        }
+        fillPrice = orderResult.filledPrice ?? 0;
+      } else if (this.executionAdapter) {
+        // Adapter without partial close — use market order to close portion
+        const closeSide = position.side === 'long' ? 'sell' : 'buy';
+        const orderResult = await this.executionAdapter.placeMarketOrder(closeSide, closeSize, symbol);
+        if (!orderResult.success) {
+          return { success: false, action: 'error', message: `Partial close failed: ${orderResult.message}` };
+        }
+        fillPrice = orderResult.filledPrice ?? 0;
+      } else {
+        // Direct exchange — place a reduce-only market order
+        const closeSide = position.side === 'long' ? 'sell' : 'buy';
+        const order = await this.exchange.closePosition(closeSide as 'long' | 'short', closeSize);
+        fillPrice = order.price;
+      }
+
+      pnl = position.side === 'long'
+        ? (fillPrice - position.entryPrice) * closeSize
+        : (position.entryPrice - fillPrice) * closeSize;
+
+      // Update position size in state
+      const remainingSize = position.size - closeSize;
+      const updatedPosition: Position = {
+        ...position,
+        size: remainingSize,
+      };
+      this.stateManager.updatePosition(updatedPosition);
+
+      await this.notificationManager.notifyAlert(
+        `${label} Partial Close`,
+        `Closed ${(closePercent * 100).toFixed(0)}% (${closeSize.toFixed(4)}) @ ${fillPrice.toFixed(2)} | PnL: ${pnl.toFixed(2)} | Remaining: ${remainingSize.toFixed(4)}`
+      );
+
+      logger.info(
+        `[ExecutionLayer] ${label} partial close: ${closeSize.toFixed(4)} @ ${fillPrice.toFixed(2)} | ` +
+        `PnL: ${pnl.toFixed(2)} | Remaining: ${remainingSize.toFixed(4)}`
+      );
+
+      return {
+        success: true,
+        action: position.side === 'long' ? 'close_long' : 'close_short',
+        message: `${label} partial close: ${(closePercent * 100).toFixed(0)}% @ ${fillPrice.toFixed(2)}`,
+        pnl,
+        size: closeSize,
+        price: fillPrice,
+      };
+    } catch (error) {
+      logger.error(`[ExecutionLayer] ${label} partial close failed:`, error);
+      return { success: false, action: 'error', message: `${label} partial close failed: ${error}` };
+    }
+  }
+
+  /**
+   * Trail stop loss after a TP level is hit, matching backtest-engine logic:
+   *   After TP1 → SL moves to breakeven (entry price)
+   *   After TP2 → SL moves to TP1 price
+   */
+  private trailStopLossAfterTp(
+    position: Position,
+    entryPrice: number,
+    levels: TakeProfitLevel[],
+    hitLevelIndex: number,
+  ): void {
+    if (hitLevelIndex === 0) {
+      // TP1 hit → move SL to breakeven
+      position.stopLoss = entryPrice;
+      logger.info(`[ExecutionLayer] SL trailed to breakeven: ${entryPrice}`);
+    } else if (hitLevelIndex === 1 && levels[0]) {
+      // TP2 hit → trail SL to TP1 price
+      position.stopLoss = levels[0].price;
+      logger.info(`[ExecutionLayer] SL trailed to TP1: ${levels[0].price}`);
+    }
+    // TP3 is a full close so no SL trail needed
+  }
+
+  /**
+   * Get position from state manager (for reading back after partial close).
+   */
+  private getPositionFromState(): Position | null {
+    const state = this.stateManager.getState();
+    return state.trading.position ?? null;
   }
 
   private shouldCloseOnSignalReversal(position: Position, signal: EnhancedSignal): boolean {
@@ -505,6 +707,7 @@ export class EventDrivenExecutionLayer {
       markPrice: position.markPrice,
       stopLoss: position.stopLoss,
       takeProfit: position.takeProfit,
+      takeProfitLevels: position.takeProfitLevels,
     });
 
     await this.notificationManager.notifyAlert(
@@ -675,6 +878,7 @@ export class EventDrivenExecutionLayer {
       );
 
       // FIX H7: Save canonical Position directly
+      // Include takeProfitLevels for multi-level partial close support
       this.stateManager.updatePosition({
         side: side === 'buy' ? 'long' : 'short',
         size: positionSize,
@@ -684,6 +888,7 @@ export class EventDrivenExecutionLayer {
         markPrice: result.price,
         stopLoss: signal.stopLoss,
         takeProfit: signal.takeProfit,
+        takeProfitLevels: signal.takeProfitLevels?.map(l => ({ ...l, hit: false })),
       });
 
       return result;
