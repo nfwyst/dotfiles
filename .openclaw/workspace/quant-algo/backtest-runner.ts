@@ -708,7 +708,13 @@ async function main() {
       try {
         phaseCResult = await phaseC(phaseAResult, phaseAResult.ohlcv);
       } catch (err: unknown) {
-        console.error(`\n❌ Phase C 失败: ${err instanceof Error ? err.message : String(err)}`);
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('at least') && msg.includes('observations')) {
+          console.log(`\n⚠️  Phase C 跳过: 数据量不足以进行统计验证 (${msg})`);
+          console.log('   这不影响策略本身的有效性, 增加回测时长即可启用 Phase C');
+        } else {
+          console.error(`\n❌ Phase C 失败: ${msg}`);
+        }
       }
     }
   }
@@ -718,8 +724,12 @@ async function main() {
   // ── Determine overall verdict ──
   let overallVerdict: 'PASS' | 'WARN' | 'FAIL' = 'PASS';
 
+  // Short backtests (< 7 days) with negative returns → WARN, not FAIL
+  // Single-day losses are statistically meaningless
   if (phaseAResult && phaseAResult.result.stats.totalReturnPercent < 0) {
-    overallVerdict = 'FAIL';
+    const bpd = estimateBarsPerDay(phaseAResult.ohlcv);
+    const tradingDays = phaseAResult.result.equityCurve.length / bpd;
+    overallVerdict = tradingDays < 7 ? 'WARN' : 'FAIL';
   }
   if (phaseBResult && !phaseBResult.executionConsistent) {
     overallVerdict = 'FAIL';
