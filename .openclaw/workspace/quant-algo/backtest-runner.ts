@@ -360,7 +360,7 @@ async function phaseB(config: BacktestConfig, phaseAResult: PhaseAResult): Promi
   console.log(`   P&L 偏差: ${pnlDivergence.toFixed(2)}% (信息参考, 因部分平仓机制差异预期偏差较大)`);
   console.log(`   入场匹配率: ${(entryMatchRate * 100).toFixed(1)}% (${entryMatched}/${entryTotal})`);
   console.log(`   仓位覆盖率: ${(positionCoverage * 100).toFixed(1)}% (${phaseBTrades.length}/${phaseAPositions.length})`);
-  console.log(`   Phase A 仓位数: ${phaseAPositions.length} (聚合自 ${phaseAResult.result.trades.length} 笔交易)`);
+  console.log(`   Phase A 仓位数: ${phaseAPositions.length}`);
   console.log(`   Phase B 交易数: ${lcbResult.totalTrades}`);
   console.log(`   Phase B 胜率: ${lcbResult.winRate.toFixed(2)}%`);
   console.log(`   Phase B 最大回撤: ${lcbResult.maxDrawdownPercent.toFixed(2)}%`);
@@ -467,8 +467,9 @@ async function phaseC(
     console.log(`\n⚠️  日收益观测值不足 (${observations.length} < 30), 统计验证不可靠`);
     console.log(`   建议: 增加回测时长至 60+ 天 (设置 BT_START_DATE/BT_END_DATE)`);
   }
-  if (tradeCount < 30) {
-    console.log(`\n⚠️  交易笔数不足 (${tradeCount} < 30), 统计结论仅供参考`);
+  const positionCount = phaseAResult.result.stats.totalPositions;
+  if (positionCount < 30) {
+    console.log(`\n⚠️  仓位数不足 (${positionCount} < 30), 统计结论仅供参考`);
     console.log(`   建议: 增加回测时长或降低策略触发阈值`);
   }
 
@@ -565,7 +566,6 @@ function printFinalReport(report: RunnerReport): void {
     rows.push(['A: 胜率', `${s.winRate.toFixed(1)}%`, s.winRate > 50 ? '✅' : '⚠️']);
     rows.push(['A: 最大回撤', `${s.maxDrawdown.toFixed(2)}%`, s.maxDrawdown < 15 ? '✅' : s.maxDrawdown < 25 ? '⚠️' : '❌']);
     rows.push(['A: 仓位数', String(s.totalPositions), s.totalPositions >= 10 ? '✅' : '⚠️']);
-    rows.push(['A: 交易笔数', String(s.totalTrades), s.totalTrades >= 10 ? '✅' : '⚠️']);
   }
 
   if (report.phaseB) {

@@ -98,7 +98,6 @@ export interface BacktestResult {
   config: BacktestConfig;
   trades: Trade[];
   stats: {
-    totalTrades: number;
     totalPositions: number;
     winningTrades: number;
     losingTrades: number;
@@ -1229,7 +1228,6 @@ export class BacktestEngine {
     const gtScore = sharpeRatio * (1 - maxDrawdown / 100) * 10;
 
     const stats = {
-      totalTrades: this.trades.length,
       totalPositions: this.countPositions(),
       winningTrades: winningTrades.length,
       losingTrades: losingTrades.length,
@@ -1287,7 +1285,6 @@ export class BacktestEngine {
     console.log('='.repeat(60));
     console.log(`\n📈 交易统计:`);
     console.log(`   总仓位数: ${stats.totalPositions}`);
-    console.log(`   总交易笔数: ${stats.totalTrades} (含部分止盈)`);
     console.log(`   胜率: ${stats.winRate.toFixed(2)}%`);
     console.log(`   盈利交易: ${stats.winningTrades} | 亏损交易: ${stats.losingTrades}`);
     
