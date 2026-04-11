@@ -140,8 +140,11 @@ const BACKTEST_CONFIG = {
     initialBalance: 10000,
     tradingDaysPerYear: 365,
     // ★ 回测时间范围 — 修改这里 ★
-    startDate: daysAgo(365),
-    endDate: today(),
+    // Fixed baseline dates for reproducible results.
+    // Override with BT_START_DATE / BT_END_DATE env vars for different windows.
+    // Use BT_MONTE_CARLO=10 to validate robustness across shifted windows.
+    startDate: '2025-04-10',
+    endDate: '2026-04-10',
   },
 };
 
