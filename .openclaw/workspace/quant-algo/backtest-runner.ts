@@ -867,14 +867,54 @@ async function monteCarloMain(count: number) {
   printMCReport(results);
   console.log(`\n⏱  Monte Carlo 总耗时: ${(totalMs / 1000).toFixed(1)}s`);
 
+  // MC Robustness Verdict
+  const mcReturns = results.map(r => r.totalReturn);
+  const mcMean = mcReturns.reduce((a, b) => a + b, 0) / mcReturns.length;
+  const mcStd = Math.sqrt(mcReturns.reduce((a, b) => a + (b - mcMean) ** 2, 0) / mcReturns.length);
+  const mcCV = mcMean !== 0 ? (mcStd / Math.abs(mcMean)) * 100 : Infinity;
+  const mcPassRate = results.filter(r => r.verdict === 'PASS').length / results.length;
+  const mcAllProfitable = mcReturns.every(r => r > 0);
+  const mcP5 = percentile(mcReturns, 5);
+
+  console.log('\n' + '═'.repeat(60));
+  console.log('🏆 Monte Carlo 稳健性判定');
+  console.log('═'.repeat(60));
+
+  const mcRobust = mcAllProfitable && mcCV < 30 && mcP5 > 50;
+  if (mcRobust) {
+    console.log(`\n✅ 窗口稳健性: PASS`);
+    console.log(`   所有窗口盈利: ${mcAllProfitable ? 'Yes' : 'No'}`);
+    console.log(`   P5 收益: +${mcP5.toFixed(1)}% (> 50%)`);
+    console.log(`   CV: ${mcCV.toFixed(1)}% (< 30%)`);
+    console.log(`   PASS率: ${(mcPassRate * 100).toFixed(0)}%`);
+    console.log(`\n   策略在不同窗口下表现稳健，可进入 Paper Trading。`);
+  } else {
+    console.log(`\n⚠️  窗口稳健性: 需关注`);
+    console.log(`   所有窗口盈利: ${mcAllProfitable ? 'Yes' : 'No'}`);
+    console.log(`   P5 收益: +${mcP5.toFixed(1)}%`);
+    console.log(`   CV: ${mcCV.toFixed(1)}%`);
+    console.log(`   PASS率: ${(mcPassRate * 100).toFixed(0)}%`);
+    if (!mcAllProfitable) console.log(`   ❌ 存在亏损窗口`);
+    if (mcCV >= 30) console.log(`   ❌ CV ≥ 30% — 窗口敏感性过高`);
+    if (mcP5 <= 50) console.log(`   ⚠️  P5 收益偏低`);
+  }
+
   // Save MC report
   const mcReportPath = path.join(
     process.cwd(), 'backtest-reports',
     `mc-report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
   );
-  fs.writeFileSync(mcReportPath, JSON.stringify(results, null, 2));
-  console.log(`📄 MC报告已保存: ${mcReportPath}`);
-  process.exit(0);
+  const mcReport = {
+    results,
+    summary: {
+      mean: mcMean, std: mcStd, cv: mcCV,
+      passRate: mcPassRate, allProfitable: mcAllProfitable, p5: mcP5,
+      robust: mcRobust,
+    },
+  };
+  fs.writeFileSync(mcReportPath, JSON.stringify(mcReport, null, 2));
+  console.log(`\n📄 MC报告已保存: ${mcReportPath}`);
+  process.exit(mcRobust ? 0 : 1);
 }
 
 async function main() {
@@ -991,6 +1031,12 @@ async function main() {
 
   printFinalReport(report);
   saveRunnerReport(report);
+
+  // Recommend MC scan for robustness validation
+  console.log('');
+  console.log('💡 建议: 运行 BT_MONTE_CARLO=10 验证窗口稳健性');
+  console.log('   "一次一仓位"策略对起始日期有固有敏感性,');
+  console.log('   MC 扫描可量化不同窗口下的收益分布和变异系数。');
 
   // Exit with non-zero if FAIL
   if (overallVerdict === 'FAIL') {
