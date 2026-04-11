@@ -75,12 +75,12 @@ const SHARED_DEFAULTS = {
     maxDailyLoss: 0.04,
     maxDailyTrades: 50,
     maxDrawdown: 0.10,
-    cooldownBars: 18,
+    cooldownBars: barsForHours(1.5, '5m'),                  // 1.5h → 18 bars @5m
     maxConsecutiveLosses: 5,
-    consecutiveLossPauseBars: 500,
-    maxHoldingBars: 1000,
-    circuitBreakerCooldownBars: 1500,
-    circuitBreakerMaxCooldownBars: 4000,
+    consecutiveLossPauseBars: barsForHours(12, '5m'),        // 12h  → 144 bars @5m
+    maxHoldingBars: barsForHours(24, '5m'),                  // 24h  → 288 bars @5m
+    circuitBreakerCooldownBars: barsForHours(48, '5m'),      // 48h  → 576 bars @5m
+    circuitBreakerMaxCooldownBars: barsForHours(120, '5m'),  // 120h → 1440 bars @5m
   },
 
   exchange: {
@@ -103,6 +103,19 @@ function daysAgo(n: number): string {
 
 function today(): string {
   return new Date().toISOString().split('T')[0]!;
+}
+
+/**
+ * Convert a duration in hours to bar count for a given timeframe.
+ * Example: barsForHours(24, '5m') → 288 bars (one day on 5m)
+ */
+function barsForHours(hours: number, tf: string): number {
+  const tfMinutes: Record<string, number> = {
+    '1m': 1, '3m': 3, '5m': 5, '15m': 15, '30m': 30,
+    '1h': 60, '2h': 120, '4h': 240, '1d': 1440,
+  };
+  const mins = tfMinutes[tf] ?? 5;
+  return Math.round((hours * 60) / mins);
 }
 
 const BACKTEST_CONFIG = {

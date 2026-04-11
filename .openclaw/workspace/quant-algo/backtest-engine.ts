@@ -703,8 +703,10 @@ export class BacktestEngine {
       if (currentDrawdown > 0.10 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.cbTriggerCount++;
-        // Escalating cooldown: 1st=1500 bars (~5d), 2nd=3000 (~10d), 3rd+=4000 (~14d)
-        const cooldownBars = Math.min(4000, 1500 * this.cbTriggerCount);
+        // Escalating cooldown: base × trigger count, capped at max
+        const cbBase = this.unifiedConfig.risk.circuitBreakerCooldownBars;
+        const cbMax = this.unifiedConfig.risk.circuitBreakerMaxCooldownBars;
+        const cooldownBars = Math.min(cbMax, cbBase * this.cbTriggerCount);
         this.circuitBreakerCooldownEnd = i + cooldownBars;
         if (this.position) {
           console.log(`  🔴 熔断器: 强制平仓以阻止回撤扩大`);
