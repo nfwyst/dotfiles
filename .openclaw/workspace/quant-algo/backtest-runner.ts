@@ -681,7 +681,208 @@ function saveRunnerReport(report: RunnerReport): void {
 // Main orchestrator
 // ────────────────────────────────────────────────────────────
 
+
+// ────────────────────────────────────────────────────────────
+// Monte Carlo window scan — robustness evaluation
+// ────────────────────────────────────────────────────────────
+
+/**
+ * Run multiple backtests with shifted start/end dates to assess
+ * how sensitive results are to the choice of window.
+ *
+ * Usage: BT_MONTE_CARLO=7 bun run backtest
+ *
+ * This runs 7 backtests, each shifted by +1 day from the previous.
+ * Reports the median, P5, and P95 of key metrics.
+ */
+interface MCResult {
+  offset: number;
+  totalReturn: number;
+  sharpe: number;
+  maxDrawdown: number;
+  pbo: number;
+  positions: number;
+  pnlDeviation: number;
+  verdict: string;
+}
+
+function getMonteCarloCount(): number {
+  const raw = process.env.BT_MONTE_CARLO;
+  if (!raw) return 0;
+  const n = parseInt(raw, 10);
+  return isNaN(n) || n < 2 ? 0 : Math.min(n, 30); // cap at 30
+}
+
+function percentile(arr: number[], p: number): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo]!;
+  return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (idx - lo);
+}
+
+function printMCReport(results: MCResult[]) {
+  console.log('\n' + '═'.repeat(60));
+  console.log('🎲 Monte Carlo 窗口扫描报告');
+  console.log('═'.repeat(60));
+
+  const returns = results.map(r => r.totalReturn);
+  const sharpes = results.map(r => r.sharpe);
+  const mdds = results.map(r => r.maxDrawdown);
+  const pbos = results.map(r => r.pbo);
+  const devs = results.map(r => r.pnlDeviation).filter(v => v >= 0);
+  const passes = results.filter(r => r.verdict === 'PASS').length;
+
+  console.log(`\n📊 ${results.length} 次回测结果:`);
+  console.log(`   PASS: ${passes}/${results.length} (${(passes/results.length*100).toFixed(0)}%)`);
+  console.log('');
+
+  const metrics: Array<{ name: string; values: number[]; fmt: (v: number) => string }> = [
+    { name: '总收益%', values: returns, fmt: v => `${v.toFixed(2)}%` },
+    { name: 'Sharpe', values: sharpes, fmt: v => v.toFixed(2) },
+    { name: '最大回撤%', values: mdds, fmt: v => `${v.toFixed(2)}%` },
+    { name: 'PBO', values: pbos, fmt: v => v.toFixed(4) },
+    { name: 'P&L偏差%', values: devs, fmt: v => `${v.toFixed(2)}%` },
+  ];
+
+  console.log(`+${'─'.repeat(14)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+`);
+  console.log(`| ${'指标'.padEnd(12)} | ${'P5'.padStart(10)} | ${'P25'.padStart(10)} | ${'中位数'.padStart(8)} | ${'P75'.padStart(10)} | ${'P95'.padStart(10)} |`);
+  console.log(`+${'─'.repeat(14)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+`);
+  for (const m of metrics) {
+    const p5  = m.fmt(percentile(m.values, 5));
+    const p25 = m.fmt(percentile(m.values, 25));
+    const med = m.fmt(percentile(m.values, 50));
+    const p75 = m.fmt(percentile(m.values, 75));
+    const p95 = m.fmt(percentile(m.values, 95));
+    console.log(`| ${m.name.padEnd(12)} | ${p5.padStart(10)} | ${p25.padStart(10)} | ${med.padStart(10)} | ${p75.padStart(10)} | ${p95.padStart(10)} |`);
+  }
+  console.log(`+${'─'.repeat(14)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+${'─'.repeat(12)}+`);
+
+  // Stability score: coefficient of variation of returns
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const std = Math.sqrt(returns.reduce((a, b) => a + (b - mean) ** 2, 0) / returns.length);
+  const cv = mean !== 0 ? (std / Math.abs(mean)) * 100 : 0;
+  console.log(`\n📈 收益稳定性: 均值=${mean.toFixed(2)}% 标准差=${std.toFixed(2)}% CV=${cv.toFixed(1)}%`);
+  if (cv < 10) {
+    console.log('   ✅ 窗口敏感度: 低 (CV < 10%) — 策略对起始日期不敏感');
+  } else if (cv < 25) {
+    console.log('   ⚠️  窗口敏感度: 中 (10% ≤ CV < 25%) — 策略对起始日期有一定敏感性');
+  } else {
+    console.log('   ❌ 窗口敏感度: 高 (CV ≥ 25%) — 策略对起始日期高度敏感');
+  }
+
+  // Per-run detail table
+  console.log('\n📋 各偏移量明细:');
+  console.log(`+${'─'.repeat(8)}+${'─'.repeat(12)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(8)}+`);
+  console.log(`| ${'偏移'.padStart(6)} | ${'收益%'.padStart(10)} | ${'Sharpe'.padStart(8)} | ${'MDD%'.padStart(8)} | ${'PBO'.padStart(8)} | ${'判定'.padStart(6)} |`);
+  console.log(`+${'─'.repeat(8)}+${'─'.repeat(12)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(8)}+`);
+  for (const r of results) {
+    const icon = r.verdict === 'PASS' ? '✅' : r.verdict === 'WARN' ? '⚠️' : '❌';
+    console.log(`| ${('+' + r.offset + 'd').padStart(6)} | ${(r.totalReturn.toFixed(2) + '%').padStart(10)} | ${r.sharpe.toFixed(2).padStart(8)} | ${r.maxDrawdown.toFixed(2).padStart(8)} | ${r.pbo.toFixed(4).padStart(8)} | ${icon.padStart(4)} |`);
+  }
+  console.log(`+${'─'.repeat(8)}+${'─'.repeat(12)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(10)}+${'─'.repeat(8)}+`);
+}
+
+
+async function monteCarloMain(count: number) {
+  const phases = getPhases();
+  const baseConfig = makeConfig();
+  const unifiedCfg = loadConfig('backtest');
+
+  console.log('╔════════════════════════════════════════════════════════════╗');
+  console.log('║    Quant-Algo Monte Carlo 窗口扫描 v1.0                   ║');
+  console.log('╚════════════════════════════════════════════════════════════╝');
+  console.log(`📌 标的: ${baseConfig.symbol} | 周期: ${baseConfig.timeframe}`);
+  console.log(`📅 基准: ${baseConfig.startDate.toISOString().split('T')[0]} → ${baseConfig.endDate.toISOString().split('T')[0]}`);
+  console.log(`🎲 Monte Carlo: ${count} 次窗口偏移扫描`);
+  console.log('');
+
+  const results: MCResult[] = [];
+  const t0 = Date.now();
+
+  for (let offset = 0; offset < count; offset++) {
+    const shiftedStart = new Date(baseConfig.startDate.getTime() + offset * 86400000);
+    const shiftedEnd = new Date(baseConfig.endDate.getTime() + offset * 86400000);
+    const config = { ...baseConfig, startDate: shiftedStart, endDate: shiftedEnd };
+
+    console.log(`\n${'─'.repeat(60)}`);
+    console.log(`🎲 MC Run #${offset + 1}/${count}: ${shiftedStart.toISOString().split('T')[0]} → ${shiftedEnd.toISOString().split('T')[0]}`);
+    console.log('─'.repeat(60));
+
+    try {
+      // Phase A
+      const phaseAResult = await phaseA(config);
+
+      // Phase B
+      let phaseBResult: PhaseBResult | undefined;
+      if (phases.has('B') && phaseAResult.result.trades.length > 0) {
+        try {
+          phaseBResult = await phaseB(config, phaseAResult);
+        } catch { /* skip */ }
+      }
+
+      // Phase C
+      let phaseCResult: PhaseCResult | undefined;
+      if (phases.has('C') && phaseAResult.result.equityCurve.length >= 50) {
+        try {
+          phaseCResult = await phaseC(phaseAResult, phaseAResult.ohlcv);
+        } catch { /* skip */ }
+      }
+
+      // Verdict
+      let verdict: 'PASS' | 'WARN' | 'FAIL' = 'PASS';
+      if (phaseAResult.result.stats.totalReturnPercent < 0) {
+        const bpd = estimateBarsPerDay(phaseAResult.ohlcv);
+        verdict = (phaseAResult.result.equityCurve.length / bpd) < 7 ? 'WARN' : 'FAIL';
+      }
+      if (phaseBResult && !phaseBResult.executionConsistent) verdict = 'FAIL';
+      if (phaseCResult && !phaseCResult.validation.overallPass) {
+        const bpd2 = estimateBarsPerDay(phaseAResult.ohlcv);
+        const days = phaseAResult.result.equityCurve.length / bpd2;
+        if (days >= 30) {
+          verdict = phaseCResult.validation.pbo.pbo >= 0.5 ? 'FAIL' : 'WARN';
+        } else {
+          verdict = verdict === 'FAIL' ? 'FAIL' : 'WARN';
+        }
+      }
+      if (phaseAResult.result.trades.length === 0) verdict = 'WARN';
+
+      results.push({
+        offset,
+        totalReturn: phaseAResult.result.stats.totalReturnPercent,
+        sharpe: phaseAResult.result.stats.sharpeRatio,
+        maxDrawdown: phaseAResult.result.stats.maxDrawdownPercent,
+        pbo: phaseCResult?.validation?.pbo?.pbo ?? -1,
+        positions: phaseAResult.result.stats.totalPositions,
+        pnlDeviation: phaseBResult?.pnlDivergence ?? -1,
+        verdict,
+      });
+    } catch (err) {
+      console.error(`  ❌ MC Run #${offset + 1} failed: ${err}`);
+    }
+  }
+
+  const totalMs = Date.now() - t0;
+  printMCReport(results);
+  console.log(`\n⏱  Monte Carlo 总耗时: ${(totalMs / 1000).toFixed(1)}s`);
+
+  // Save MC report
+  const mcReportPath = path.join(
+    process.cwd(), 'backtest-reports',
+    `mc-report-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  );
+  fs.writeFileSync(mcReportPath, JSON.stringify(results, null, 2));
+  console.log(`📄 MC报告已保存: ${mcReportPath}`);
+  process.exit(0);
+}
+
 async function main() {
+  const mcCount = getMonteCarloCount();
+  if (mcCount >= 2) {
+    return monteCarloMain(mcCount);
+  }
+
   const phases = getPhases();
   const config = makeConfig();
 
