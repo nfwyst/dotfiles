@@ -126,7 +126,7 @@ const BACKTEST_CONFIG = {
   position: {
     leverage: 1,
     baseSize: 0.010,
-    maxSize: 0.50,
+    maxSize: 0.45,
     riskPerTrade: 0.02,
   },
 
