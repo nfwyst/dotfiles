@@ -1016,7 +1016,7 @@ export class BacktestEngine {
       stopLossPrice: stopLoss ?? 0,
       maxRiskPerTrade: this.config.positionSize,
       leverage: this.config.leverage,
-      maxLeverageUtil: this.unifiedConfig.position.maxSize,  // cap notional at maxSize% of balance
+      maxLeverageUtil: 1.0,  // restored to baseline — no leverage cap needed
     });
     const size = psResult.size;
 

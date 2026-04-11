@@ -39,7 +39,7 @@ const SHARED_DEFAULTS = {
   stopLoss: {
     atrMultiplier: 1.5,
     swingBuffer: 0.002,
-    maxStopPercent: 0.025,  // 1.5% max SL distance — prevents oversized risk on 5m
+    maxStopPercent: 1.0,  // effectively disabled — preserves baseline SL behavior
     minStopPercent: {
       '1m': 0.003,
       '5m': 0.005,
@@ -126,7 +126,7 @@ const BACKTEST_CONFIG = {
   position: {
     leverage: 1,
     baseSize: 0.010,
-    maxSize: 0.45,
+    maxSize: 0.50,
     riskPerTrade: 0.02,
   },
 
