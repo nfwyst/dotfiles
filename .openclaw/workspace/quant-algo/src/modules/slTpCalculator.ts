@@ -52,6 +52,8 @@ interface SLTPExternalConfig {
   rrRatios: [number, number, number];
   /** Swing buffer fraction, e.g. 0.002 = 0.2% */
   swingBuffer: number;
+  /** Max stop percentage — caps SL distance */
+  maxStopPercent: number;
   /** Per-timeframe swing detection params */
   timeframeConfig: Record<TimeFrame, { lookback: number; strength: number; minStopPercent: number }>;
 }
@@ -88,6 +90,7 @@ export class SLTPCalculator {
           tpLevels[2]?.rrRatio ?? 2.5,
         ],
         swingBuffer: unified.stopLoss.swingBuffer,
+        maxStopPercent: unified.stopLoss.maxStopPercent,
         timeframeConfig: { ...SLTPCalculator.TIMEFRAME_CONFIG },
       };
       // Override TIMEFRAME_CONFIG from unified config if swingDetection is available
@@ -283,6 +286,19 @@ export class SLTPCalculator {
           stopLoss = entryPrice + stopDistance;
         }
         reasoning.push(`止损距离小于${tf}最小要求${(minStopPercent * 100).toFixed(2)}%，已调整`);
+      }
+
+      // 最大止损距离限制 — 防止 swing point 过远导致风险过大
+      const maxStopPercent = this.externalConfig.maxStopPercent;
+      const maxStopDistance = entryPrice * maxStopPercent;
+      if (stopDistance > maxStopDistance) {
+        stopDistance = maxStopDistance;
+        if (side === 'long') {
+          stopLoss = entryPrice - stopDistance;
+        } else {
+          stopLoss = entryPrice + stopDistance;
+        }
+        reasoning.push(`止损距离超过最大限制${(maxStopPercent * 100).toFixed(2)}%，已收紧`);
       }
 
       // 计算 TP (基于风险回报比)

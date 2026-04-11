@@ -703,7 +703,7 @@ export class BacktestEngine {
       if (currentDrawdown > 0.10 && !this.circuitBreakerActive) {
         this.circuitBreakerActive = true;
         this.cbTriggerCount++;
-        // Escalating cooldown: base × trigger count, capped at max
+        // Escalating cooldown: base(1500) × trigger count, capped at max(4000)
         const cbBase = this.unifiedConfig.risk.circuitBreakerCooldownBars;
         const cbMax = this.unifiedConfig.risk.circuitBreakerMaxCooldownBars;
         const cooldownBars = Math.min(cbMax, cbBase * this.cbTriggerCount);
@@ -860,6 +860,15 @@ export class BacktestEngine {
       return null;
     }
 
+    // Cap ATR-fallback SL distance at maxStopPercent (SLTP calculator handles its own cap)
+    const maxSLDist = currentPrice * this.unifiedConfig.stopLoss.maxStopPercent;
+    let cappedSL = computedSL;
+    if (Math.abs(computedSL - currentPrice) > maxSLDist) {
+      cappedSL = finalDirection === 'long'
+        ? currentPrice - maxSLDist
+        : currentPrice + maxSLDist;
+    }
+
     // Minimum reward-to-cost filter: skip trades where TP1 is too close to entry
     // relative to round-trip transaction costs (2x fees + 2x slippage).
     // This filters out thin-edge trades that erode Sharpe.
@@ -876,7 +885,7 @@ export class BacktestEngine {
     return {
       type: finalDirection === 'long' ? 'long' : 'short',
       entryPrice: l4.setup.entryPrice,
-      stopLoss: computedSL,
+      stopLoss: cappedSL,
       takeProfits: computedTP,
       confidence: finalConfidence,
       strategy: 'OCS',

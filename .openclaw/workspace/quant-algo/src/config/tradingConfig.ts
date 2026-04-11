@@ -39,6 +39,7 @@ const SHARED_DEFAULTS = {
   stopLoss: {
     atrMultiplier: 1.5,
     swingBuffer: 0.002,
+    maxStopPercent: 0.025,  // 1.5% max SL distance — prevents oversized risk on 5m
     minStopPercent: {
       '1m': 0.003,
       '5m': 0.005,
@@ -75,12 +76,12 @@ const SHARED_DEFAULTS = {
     maxDailyLoss: 0.04,
     maxDailyTrades: 50,
     maxDrawdown: 0.10,
-    cooldownBars: barsForHours(1.5, '5m'),                  // 1.5h → 18 bars @5m
+    cooldownBars: 18,
     maxConsecutiveLosses: 5,
-    consecutiveLossPauseBars: barsForHours(12, '5m'),        // 12h  → 144 bars @5m
-    maxHoldingBars: barsForHours(24, '5m'),                  // 24h  → 288 bars @5m
-    circuitBreakerCooldownBars: barsForHours(48, '5m'),      // 48h  → 576 bars @5m
-    circuitBreakerMaxCooldownBars: barsForHours(120, '5m'),  // 120h → 1440 bars @5m
+    consecutiveLossPauseBars: 500,
+    maxHoldingBars: 1000,
+    circuitBreakerCooldownBars: 1500,
+    circuitBreakerMaxCooldownBars: 4000,
   },
 
   exchange: {

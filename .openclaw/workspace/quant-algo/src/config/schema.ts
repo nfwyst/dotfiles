@@ -55,6 +55,8 @@ export const StopLossSchema = z.object({
   swingBuffer: z.number().nonnegative(),
   /** Minimum stop percentage per timeframe */
   minStopPercent: MinStopPercentSchema,
+  /** Maximum stop percentage — caps SL distance to prevent oversized risk */
+  maxStopPercent: z.number().positive(),
 });
 export type StopLossConfig = z.infer<typeof StopLossSchema>;
 
