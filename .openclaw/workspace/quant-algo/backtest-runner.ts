@@ -520,7 +520,12 @@ async function phaseC(
   console.log(`   ┌──────────────────────────────────────────────┐`);
   console.log(`   │ Sharpe Ratio (${periodLabel}):   ${validation.sharpeRatio.toFixed(4).padStart(12)}         │`);
   console.log(`   │ Deflated Sharpe:     ${validation.deflatedSharpe.toFixed(4).padStart(12)}         │`);
-  console.log(`   │ PBO:                 ${validation.pbo.pbo.toFixed(4).padStart(12)}         │`);
+  const pboLabel = validation.pbo.isPBOReliable ? 'PBO' : 'PBO (degradation)';
+  const pboThresh = validation.pbo.isPBOReliable ? 0.5 : 0.6;
+  console.log(`   │ ${pboLabel.padEnd(21)}${validation.pbo.pbo.toFixed(4).padStart(12)}         │`);
+  if (!validation.pbo.isPBOReliable) {
+    console.log(`   │ ⚠ Single-strategy: degradationRate, threshold=${pboThresh}   │`);
+  }
   console.log(`   │ DSR Significant:     ${String(validation.isStatisticallySignificant).padStart(12)}         │`);
   console.log(`   │ Min BT Length (${periodLabel}):  ${String(Math.ceil(validation.minBacktestLength)).padStart(12)}         │`);
   console.log(`   │ Actual Length (${periodLabel}):  ${String(observations.length).padStart(12)}         │`);
@@ -1015,9 +1020,9 @@ async function main() {
     if (days < 30) {
       // Short backtests: Phase C lacks statistical power → cap at WARN
       overallVerdict = overallVerdict === 'FAIL' ? 'FAIL' : 'WARN';
-    } else if (phaseCResult.validation.pbo.pbo >= 0.5) {
-      // PBO >= 0.5: inherent window sensitivity, not a strategy flaw
-      // Downgrade from FAIL to WARN — MC scan is the authoritative check
+    } else if (!phaseCResult.validation.overallPass) {
+      // Phase C didn't pass (PBO or DSR) — WARN, not FAIL
+      // Single-strategy PBO (degradationRate) uses relaxed 0.6 threshold
       pboWarn = true;
       overallVerdict = overallVerdict === 'FAIL' ? 'FAIL' : 'WARN';
     } else {
@@ -1058,7 +1063,9 @@ async function main() {
   // Recommend MC scan for robustness validation
   console.log('');
   if (pboWarn) {
-    console.log(`⚠️  PBO=${phaseCResult!.validation.pbo.pbo.toFixed(3)} ≥ 0.5 — 这是窗口敏感性导致的正常波动, 不代表策略无效。`);
+    const pboVal = phaseCResult!.validation.pbo;
+    const thresh = pboVal.isPBOReliable ? 0.5 : 0.6;
+    console.log(`⚠️  PBO=${pboVal.pbo.toFixed(3)} ≥ ${thresh} — ${pboVal.isPBOReliable ? '过拟合风险偏高' : 'degradationRate 偏高 (单策略模式, 阈值已放宽至 0.6)'}`);
     console.log('   运行 BT_MONTE_CARLO=10 获取权威的稳健性判定,');
     console.log('   或设置 BT_AUTO_MC=7 在 PBO 偏高时自动触发 MC 扫描。');
   } else {

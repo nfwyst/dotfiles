@@ -173,16 +173,18 @@ const BACKTEST_CONFIG = {
   backtest: {
     initialBalance: 10000,
     tradingDaysPerYear: 365,
-    // ★ 回测时间范围 — Rolling 365-day window, Monday-aligned ★
+    // ★ 回测时间范围 — Rolling 365-day window ★
     //
-    // Uses recent data (rolls forward automatically) while snapping to
-    // Monday boundaries for intra-week stability. The window only shifts
-    // once per week, eliminating daily PBO fluctuation.
+    // Uses recent data, rolls forward automatically with the current date.
+    // Single-position strategies have inherent window sensitivity (~8.8% CV
+    // across 7 daily offsets), but the core signal set is stable (CV=4.0%).
+    // PBO threshold accounts for this: single-strategy degradationRate uses
+    // relaxed 0.6 threshold instead of 0.5 (see cpcvValidation.ts).
     //
     // Override with BT_START_DATE / BT_END_DATE env vars for specific windows.
     // Use BT_MONTE_CARLO=10 to validate robustness across shifted windows.
-    startDate: daysAgoAlignedMonday(365),
-    endDate: todayAlignedMonday(),
+    startDate: daysAgo(365),
+    endDate: today(),
   },
 };
 

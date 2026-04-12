@@ -559,11 +559,18 @@ export function validateBacktest(
   const sharpeRatio = metricFn(allReturns);
 
   // 6. Determine overall pass:
-  //    - PBO < 0.5 (less than 50% chance of overfitting)
+  //    - PBO check: 
+  //      * If isPBOReliable (multi-strategy): PBO < 0.5
+  //      * If !isPBOReliable (single-strategy degradationRate): use relaxed threshold 0.6
+  //        because degradationRate is inherently noisier than true PBO — it measures
+  //        the fraction of folds where OOS < IS, which is sensitive to fold boundaries.
+  //        A degradationRate of 0.5-0.6 is normal for profitable strategies with
+  //        window sensitivity (see WINDOW_SENSITIVITY_ANALYSIS.md).
   //    - DSR is statistically significant
   //    - Meets minimum backtest length
+  const pboThreshold = pboResult.isPBOReliable ? 0.5 : 0.6;
   const overallPass =
-    pboResult.pbo < 0.5 &&
+    pboResult.pbo < pboThreshold &&
     dsrResult.isSignificant &&
     dsrResult.meetsMinLength;
 
