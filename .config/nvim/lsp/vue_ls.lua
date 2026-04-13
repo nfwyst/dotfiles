@@ -1,4 +1,8 @@
 --- @type vim.lsp.Config
+--- vue-language-server: Vue SFC (.vue) language support
+--- Provides template type-checking, <style> intellisense, and Vue-specific features.
+--- Works alongside vtsls in Vue projects (hybrid mode).
+--- Note: Volar 2.x uses hybrid mode by default, so no explicit setting needed.
 return {
   cmd = { "vue-language-server", "--stdio" },
   filetypes = { "vue" },
@@ -12,7 +16,9 @@ return {
       tsdk = (function()
         local lib = "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"
         local p = vim.fn.stdpath("data") .. lib
-        if vim.fn.isdirectory(p) == 1 then return p end
+        if vim.fn.isdirectory(p) == 1 then
+          return p
+        end
         return ""
       end)(),
     },

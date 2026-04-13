@@ -375,9 +375,6 @@ end, { desc = "Visual selection or word (Root Dir)" })
 map("n", "gd", function()
   Snacks.picker.lsp_definitions()
 end, { desc = "Goto Definition" })
-map("n", "gD", function()
-  Snacks.picker.lsp_declarations()
-end, { desc = "Goto Declaration" })
 map("n", "grr", function()
   Snacks.picker.lsp_references()
 end, { nowait = true, desc = "References" })
@@ -473,6 +470,67 @@ end, { desc = "Incoming Calls" })
 map("n", "gao", function()
   Snacks.picker.lsp_outgoing_calls()
 end, { desc = "Outgoing Calls" })
+
+-- File References (gR) — find all files that import the current file.
+-- Uses ripgrep for speed and LSP-independence; works with tsgo, vtsls, or any server.
+-- This restores LazyVim's gR which called vtsls's typescript.findAllFileReferences.
+map("n", "gR", function()
+  require("config.ts_util").find_file_references()
+end, { desc = "File References" })
+
+-- Go to Source Definition (gD) — jump to .ts source instead of .d.ts
+-- tsgo: uses custom/sourceDefinition request
+-- vtsls: uses typescript.goToSourceDefinition command
+map("n", "gD", function()
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  for _, client in ipairs(clients) do
+    if client.name == "tsgo" then
+      local win = vim.api.nvim_get_current_win()
+      local params = vim.lsp.util.make_position_params(win, "utf-16")
+      client:request("custom/sourceDefinition", params, function(err, result)
+        if err or not result or #result == 0 then
+          -- Fallback to normal definition
+          Snacks.picker.lsp_definitions()
+          return
+        end
+        vim.lsp.util.show_document(result[1], "utf-16", { focus = true })
+      end, 0)
+      return
+    elseif client.name == "vtsls" then
+      local win = vim.api.nvim_get_current_win()
+      local params = vim.lsp.util.make_position_params(win, "utf-16")
+      client:request("workspace/executeCommand", {
+        command = "typescript.goToSourceDefinition",
+        arguments = { params.textDocument.uri, params.position },
+      }, function(err, result)
+        if err or not result or #result == 0 then
+          Snacks.picker.lsp_definitions()
+          return
+        end
+        vim.lsp.util.show_document(result[1], "utf-16", { focus = true })
+      end, 0)
+      return
+    end
+  end
+  -- No TS server attached, fallback to standard definition
+  Snacks.picker.lsp_definitions()
+end, { desc = "Goto Source Definition" })
+
+-- Add Missing Imports (<leader>cM) — via source code action (works with both tsgo and vtsls)
+map("n", "<leader>cM", function()
+  vim.lsp.buf.code_action({
+    context = { only = { "source.addMissingImports.ts" }, diagnostics = {} },
+    apply = true,
+  })
+end, { desc = "Add Missing Imports" })
+
+-- Fix All Diagnostics (<leader>cD) — via source code action (works with both tsgo and vtsls)
+map("n", "<leader>cD", function()
+  vim.lsp.buf.code_action({
+    context = { only = { "source.fixAll.ts" }, diagnostics = {} },
+    apply = true,
+  })
+end, { desc = "Fix All Diagnostics" })
 
 -- Word/reference navigation (Snacks.words)
 map("n", "]]", function()

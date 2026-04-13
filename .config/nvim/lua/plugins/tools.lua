@@ -10,6 +10,7 @@ require("mason").setup({
   ensure_installed = {
     "lua-language-server",
     "vtsls",
+    "tsgo",
     "html-lsp",
     "css-lsp",
     "css-variables-language-server",
@@ -340,4 +341,3 @@ if vim.fn.executable("uv") == 1 and vim.fn.executable("python3") == 1 then
     })
   end)
 end
-
