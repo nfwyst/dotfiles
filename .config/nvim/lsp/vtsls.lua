@@ -1,7 +1,10 @@
 --- @type vim.lsp.Config
 --- vtsls: TypeScript/JavaScript LSP (via vtsls wrapping tsserver)
---- Only activated in Vue projects where @vue/typescript-plugin is needed.
---- For non-Vue projects, tsgo is used instead for better performance.
+--- Activated in Vue projects (for @vue/typescript-plugin) and projects
+--- with non-trivial baseUrl (tsgo dropped baseUrl support).
+--- For all other TS/JS projects, tsgo is used for better performance.
+local ts_util = require("config.ts_util")
+
 local lib = "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"
 local tsdk_path = vim.fn.stdpath("data") .. lib
 local tsdk = nil
@@ -32,7 +35,23 @@ return {
     "mdx",
     "vue",
   },
-  root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
+  -- Use root_dir function to only start vtsls where it's actually needed.
+  -- This is the complement of tsgo.lua's root_dir — they are mutually exclusive.
+  root_dir = function(bufnr, cb)
+    local root = vim.fs.root(bufnr, ts_util.root_markers)
+    if not root then
+      return
+    end
+    -- Skip: Deno projects (handled by Deno LSP)
+    if ts_util.is_deno_project(root) then
+      return
+    end
+    -- Start vtsls for Vue projects OR projects with non-trivial baseUrl
+    if ts_util.is_vue_project(root) or ts_util.needs_baseurl_fallback(root) then
+      cb(root)
+    end
+    -- Otherwise: tsgo handles this project, don't start vtsls
+  end,
   get_language_id = function(_, filetype)
     -- Tell vtsls to treat MDX as native TSX so tsserver provides completions
     -- without relying on @mdx-js/typescript-plugin (which has a completion bug).
