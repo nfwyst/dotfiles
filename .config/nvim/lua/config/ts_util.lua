@@ -113,14 +113,18 @@ function M.find_file_references()
   local pattern
   if stem == "index" then
     -- For index files: match "Button" or "Button/index" with optional extension
-    pattern = string.format(
-      [[['"][^'"]*[/]%s(?:/index)?(?:\.%s)?['"]]], escaped, ext
-    )
+    pattern = "['\"][^'\"]*[/]"
+      .. escaped
+      .. "(?:/index)?(?:\\."
+      .. ext
+      .. ")?['\"]"
   else
     -- For normal files: match "Button" with optional extension
-    pattern = string.format(
-      [[['"][^'"]*[/]%s(?:\.%s)?['"]]], escaped, ext
-    )
+    pattern = "['\"][^'\"]*[/]"
+      .. escaped
+      .. "(?:\\."
+      .. ext
+      .. ")?['\"]"
   end
 
   -- Use Snacks.picker.grep if available (consistent with user's existing keymaps)
@@ -130,7 +134,6 @@ function M.find_file_references()
       search = pattern,
       regex = true,
       dirs = { root },
-      ft = { "ts", "tsx", "js", "jsx", "mjs", "cjs", "vue", "svelte", "mdx", "astro" },
     })
     return
   end
