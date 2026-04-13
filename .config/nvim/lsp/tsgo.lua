@@ -4,20 +4,8 @@
 --- For Vue projects, vtsls is used instead (tsgo lacks Vue plugin support).
 local ts_util = require("config.ts_util")
 
--- Prefer project-local tsgo (monorepo version consistency)
-local function get_cmd(dispatched_bufnr)
-  local root = vim.fs.root(dispatched_bufnr, ts_util.root_markers)
-  if root then
-    local local_bin = root .. "/node_modules/.bin/tsgo"
-    if vim.uv.fs_stat(local_bin) then
-      return { local_bin, "--lsp", "--stdio" }
-    end
-  end
-  return { "tsgo", "--lsp", "--stdio" }
-end
-
 return {
-  cmd = get_cmd,
+  cmd = { "tsgo", "--lsp", "--stdio" },
   filetypes = {
     "javascript",
     "javascriptreact",
@@ -27,6 +15,13 @@ return {
     "typescript.tsx",
   },
   root_markers = ts_util.root_markers,
+  on_new_config = function(new_config, root_dir)
+    -- Prefer project-local tsgo for monorepo version consistency
+    local local_bin = root_dir .. "/node_modules/.bin/tsgo"
+    if vim.uv.fs_stat(local_bin) then
+      new_config.cmd = { local_bin, "--lsp", "--stdio" }
+    end
+  end,
   settings = {
     typescript = {
       inlayHints = {
