@@ -95,13 +95,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local root = client.root_dir
     local wanted = pick_ts_server(root)
     if name ~= wanted then
-      -- Wrong server for this project; detach immediately (Neovim 0.12 API)
-      client:buf_detach(event.buf)
-      -- Stop the client if no buffers remain
+      -- Wrong server for this project; detach and stop it
+      vim.lsp.buf_detach_client(event.buf, client.id)
       vim.defer_fn(function()
-        if client.attached_buffers and vim.tbl_isempty(client.attached_buffers) then
-          client:stop()
-        end
+        client:stop()
       end, 100)
     end
   end,
