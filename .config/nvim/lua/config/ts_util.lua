@@ -93,7 +93,8 @@ local function read_file(path)
   return data
 end
 
---- Strip single-line (//) and block (/* */) comments from JSONC content.
+--- Strip single-line (//) and block (/* */) comments from JSONC content,
+--- then remove trailing commas for valid JSON parsing.
 --- @param text string
 --- @return string
 local function strip_jsonc_comments(text)
@@ -101,72 +102,98 @@ local function strip_jsonc_comments(text)
   text = text:gsub("//[^\r\n]*", "")
   -- Remove block comments (/* ... */)
   text = text:gsub("/%*.-%*/", "")
+  -- Remove trailing commas before } or ]
+  text = text:gsub(",%s*([}%]])", "%1")
   return text
 end
 
---- Check if a tsconfig/jsconfig file at root uses the deprecated "baseUrl" option.
---- Also follows "extends" chains (up to 3 levels) to catch inherited baseUrl.
+--- Safely decode a JSONC (JSON with comments) string.
+--- @param text string
+--- @return table|nil
+local function safe_json_decode(text)
+  local clean = strip_jsonc_comments(text)
+  local ok, result = pcall(vim.json.decode, clean)
+  if ok and type(result) == "table" then
+    return result
+  end
+  return nil
+end
+
+--- Analyze a tsconfig/jsconfig file and its extends chain for baseUrl.
+--- Returns the effective baseUrl value (or nil if not set).
+--- @param config_path string absolute path to the config file
+--- @param depth number remaining recursion depth
+--- @return string|nil baseUrl value if found
+function M._find_baseurl_in_config(config_path, depth)
+  if depth <= 0 then
+    return nil
+  end
+
+  local data = read_file(config_path)
+  if not data then
+    return nil
+  end
+
+  local config = safe_json_decode(data)
+  if not config then
+    return nil
+  end
+
+  -- Check if this file directly sets baseUrl
+  local compiler_opts = config.compilerOptions or {}
+  if compiler_opts.baseUrl then
+    return compiler_opts.baseUrl
+  end
+
+  -- Follow "extends" to parent config (supports string or array)
+  local extends = config.extends
+  if type(extends) == "string" then
+    extends = { extends }
+  end
+  if type(extends) == "table" then
+    local config_dir = vim.fn.fnamemodify(config_path, ":h")
+    for _, ext in ipairs(extends) do
+      if type(ext) == "string" then
+        local parent_path
+        if ext:sub(1, 1) == "." then
+          parent_path = config_dir .. "/" .. ext
+        else
+          parent_path = config_dir .. "/node_modules/" .. ext
+        end
+        if not parent_path:match("%.json$") then
+          parent_path = parent_path .. ".json"
+        end
+        parent_path = vim.fn.fnamemodify(parent_path, ":p")
+        local base_url = M._find_baseurl_in_config(parent_path, depth - 1)
+        if base_url then
+          return base_url
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
+--- Check if a project needs vtsls fallback due to non-trivial baseUrl usage.
+--- Returns true only when baseUrl is set to something other than "." or "./"
+--- (meaning bare module specifiers and paths resolution depend on it).
+--- "baseUrl": "." is safe because it equals the tsconfig location — tsgo
+--- resolves paths relative to tsconfig by default, so the behavior is identical.
 --- @param root string absolute path to project root
 --- @return boolean
-function M.uses_baseurl(root)
+function M.needs_baseurl_fallback(root)
   if not root then
     return false
   end
 
   local config_names = { "tsconfig.json", "jsconfig.json" }
   for _, name in ipairs(config_names) do
-    if M._check_baseurl_in_config(root .. "/" .. name, 3) then
+    local base_url = M._find_baseurl_in_config(root .. "/" .. name, 3)
+    if base_url and base_url ~= "." and base_url ~= "./" then
       return true
     end
   end
-  return false
-end
-
---- Recursively check a tsconfig file and its "extends" chain for baseUrl.
---- @param config_path string absolute path to the config file
---- @param depth number remaining recursion depth
---- @return boolean
-function M._check_baseurl_in_config(config_path, depth)
-  if depth <= 0 then
-    return false
-  end
-
-  local data = read_file(config_path)
-  if not data then
-    return false
-  end
-
-  local clean = strip_jsonc_comments(data)
-
-  -- Check if this file directly sets "baseUrl"
-  if clean:find('"baseUrl"') then
-    return true
-  end
-
-  -- Follow "extends" to parent config
-  local extends = clean:match('"extends"%s*:%s*"([^"]+)"')
-  if extends then
-    local config_dir = vim.fn.fnamemodify(config_path, ":h")
-    local parent_path
-    if extends:sub(1, 1) == "." then
-      -- Relative path
-      parent_path = config_dir .. "/" .. extends
-    else
-      -- Package reference (e.g., "@tsconfig/node20/tsconfig.json")
-      -- Resolve from node_modules
-      parent_path = config_dir .. "/node_modules/" .. extends
-    end
-    -- Add .json extension if missing
-    if not parent_path:match("%.json$") then
-      parent_path = parent_path .. ".json"
-    end
-    -- Normalize path
-    parent_path = vim.fn.fnamemodify(parent_path, ":p")
-    if M._check_baseurl_in_config(parent_path, depth - 1) then
-      return true
-    end
-  end
-
   return false
 end
 
