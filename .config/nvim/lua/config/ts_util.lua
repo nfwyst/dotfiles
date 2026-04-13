@@ -76,6 +76,100 @@ function M.is_deno_project(root)
   return true
 end
 
+--- Read a file's content synchronously.
+--- @param path string
+--- @return string|nil
+local function read_file(path)
+  local stat = vim.uv.fs_stat(path)
+  if not stat then
+    return nil
+  end
+  local fd = vim.uv.fs_open(path, "r", 438)
+  if not fd then
+    return nil
+  end
+  local data = vim.uv.fs_read(fd, stat.size, 0)
+  vim.uv.fs_close(fd)
+  return data
+end
+
+--- Strip single-line (//) and block (/* */) comments from JSONC content.
+--- @param text string
+--- @return string
+local function strip_jsonc_comments(text)
+  -- Remove single-line comments (// ...)
+  text = text:gsub("//[^\r\n]*", "")
+  -- Remove block comments (/* ... */)
+  text = text:gsub("/%*.-%*/", "")
+  return text
+end
+
+--- Check if a tsconfig/jsconfig file at root uses the deprecated "baseUrl" option.
+--- Also follows "extends" chains (up to 3 levels) to catch inherited baseUrl.
+--- @param root string absolute path to project root
+--- @return boolean
+function M.uses_baseurl(root)
+  if not root then
+    return false
+  end
+
+  local config_names = { "tsconfig.json", "jsconfig.json" }
+  for _, name in ipairs(config_names) do
+    if M._check_baseurl_in_config(root .. "/" .. name, 3) then
+      return true
+    end
+  end
+  return false
+end
+
+--- Recursively check a tsconfig file and its "extends" chain for baseUrl.
+--- @param config_path string absolute path to the config file
+--- @param depth number remaining recursion depth
+--- @return boolean
+function M._check_baseurl_in_config(config_path, depth)
+  if depth <= 0 then
+    return false
+  end
+
+  local data = read_file(config_path)
+  if not data then
+    return false
+  end
+
+  local clean = strip_jsonc_comments(data)
+
+  -- Check if this file directly sets "baseUrl"
+  if clean:find('"baseUrl"') then
+    return true
+  end
+
+  -- Follow "extends" to parent config
+  local extends = clean:match('"extends"%s*:%s*"([^"]+)"')
+  if extends then
+    local config_dir = vim.fn.fnamemodify(config_path, ":h")
+    local parent_path
+    if extends:sub(1, 1) == "." then
+      -- Relative path
+      parent_path = config_dir .. "/" .. extends
+    else
+      -- Package reference (e.g., "@tsconfig/node20/tsconfig.json")
+      -- Resolve from node_modules
+      parent_path = config_dir .. "/node_modules/" .. extends
+    end
+    -- Add .json extension if missing
+    if not parent_path:match("%.json$") then
+      parent_path = parent_path .. ".json"
+    end
+    -- Normalize path
+    parent_path = vim.fn.fnamemodify(parent_path, ":p")
+    if M._check_baseurl_in_config(parent_path, depth - 1) then
+      return true
+    end
+  end
+
+  return false
+end
+
 M.root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" }
 
 --- Find all files that import/require the current file (File References).

@@ -54,7 +54,7 @@ vim.lsp.log.set_level(vim.log.levels.OFF)
 -- Both tsgo and vtsls are enabled globally; the guard below detects the
 -- project type on LspAttach and detaches the wrong server immediately.
 -- tsgo is preferred (faster, Go-native); vtsls activates only in Vue
--- projects where @vue/typescript-plugin is required.
+-- projects or projects using deprecated baseUrl (unsupported by tsgo).
 -- ===================================================================
 
 local ts_server_for_root = {} -- cache: root_dir → "tsgo" | "vtsls"
@@ -75,7 +75,16 @@ local function pick_ts_server(root)
     ts_server_for_root[root] = "tsgo"
     return "tsgo"
   end
-  local server = ts_util.is_vue_project(root) and "vtsls" or "tsgo"
+  local server
+  if ts_util.is_vue_project(root) then
+    -- Vue projects need vtsls for @vue/typescript-plugin
+    server = "vtsls"
+  elseif ts_util.uses_baseurl(root) then
+    -- Projects using deprecated baseUrl need vtsls (tsgo dropped baseUrl support)
+    server = "vtsls"
+  else
+    server = "tsgo"
+  end
   ts_server_for_root[root] = server
   return server
 end
