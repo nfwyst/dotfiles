@@ -173,6 +173,7 @@ $env.NODE_OPTIONS = "--openssl-legacy-provider"
 # 为当前 shell 启用 web search
 $env.OPENCODE_ENABLE_EXA = 1
 $env.METRICS_LOG_LEVEL = "error"
+$env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
 
 # ── Auto-install missing tools ──────────────────────────────────
 if (which nufmt | is-empty) and (which cargo | is-not-empty) {

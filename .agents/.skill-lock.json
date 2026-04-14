@@ -71,6 +71,15 @@
       "skillFolderHash": "",
       "installedAt": "2026-04-05T14:28:11.504Z",
       "updatedAt": "2026-04-05T14:28:11.504Z"
+    },
+    "caveman": {
+      "source": "JuliusBrussee/caveman",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/JuliusBrussee/caveman.git",
+      "skillPath": "caveman/SKILL.md",
+      "skillFolderHash": "1db53f52d7d893a1a5450d3452d6009d1080e8c5",
+      "installedAt": "2026-04-09T03:33:32.648Z",
+      "updatedAt": "2026-04-09T03:33:32.648Z"
     }
   },
   "dismissed": {
@@ -83,6 +92,7 @@
     "codex",
     "cursor",
     "deepagents",
+    "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",

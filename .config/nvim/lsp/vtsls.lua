@@ -23,6 +23,36 @@ if vim.fn.isdirectory(vue_plugin_path) == 1 then
   vue_plugin = vue_plugin_path
 end
 
+local config = {
+  npm = bun_path,
+  tsdk = tsdk,
+  updateImportsOnFileMove = { enabled = "always" },
+  suggest = {
+    completeFunctionCalls = true,
+  },
+  referencesCodeLens = {
+    enabled = true,
+    showOnAllFunctions = true,
+  },
+  implementationsCodeLens = {
+    enabled = true,
+    showOnInterfaceMethods = true,
+    showOnAllClassMethods = true,
+  },
+  inlayHints = {
+    enumMemberValues = { enabled = true },
+    functionLikeReturnTypes = { enabled = true },
+    parameterNames = { enabled = "literals" },
+    parameterTypes = { enabled = true },
+    propertyDeclarationTypes = { enabled = true },
+    variableTypes = { enabled = false },
+  },
+  tsserver = {
+    maxTsServerMemory = 1024 * 8,
+    nodePath = bun_path,
+  },
+}
+
 return {
   cmd = { "bun", "run", "--bun", "vtsls", "--stdio" },
   filetypes = {
@@ -123,26 +153,8 @@ return {
   end,
   settings = {
     complete_function_calls = true,
-    typescript = {
-      npm = bun_path,
-      tsdk = tsdk,
-      updateImportsOnFileMove = { enabled = "always" },
-      suggest = {
-        completeFunctionCalls = true,
-      },
-      inlayHints = {
-        enumMemberValues = { enabled = true },
-        functionLikeReturnTypes = { enabled = true },
-        parameterNames = { enabled = "literals" },
-        parameterTypes = { enabled = true },
-        propertyDeclarationTypes = { enabled = true },
-        variableTypes = { enabled = false },
-      },
-      tsserver = {
-        maxTsServerMemory = 1024 * 8,
-        nodePath = bun_path,
-      },
-    },
+    typescript = config,
+    javascript = config,
     vtsls = {
       typescript = { globalTsdk = tsdk },
       enableMoveToFileCodeAction = true,

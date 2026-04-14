@@ -53,9 +53,6 @@ end
 
 local exclude = {
   "**/.git/*",
-  "node_modules",
-  "dist",
-  "log",
   ".vscode",
   ".DS_Store",
   "thumbs.db",

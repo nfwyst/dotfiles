@@ -45,6 +45,21 @@ vim.lsp.config("*", {
 })
 
 vim.lsp.log.set_level(vim.log.levels.OFF)
+vim.lsp.commands["editor.action.showReferences"] = function(command, ctx)
+  ---@type lsp.Location[]
+  local locations = command.arguments[3]
+  if not locations or #locations == 0 then
+    vim.notify("No references found", vim.log.levels.INFO)
+    return
+  end
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  if not client then
+    return
+  end
+  local items = vim.lsp.util.locations_to_items(locations, client.offset_encoding)
+  vim.fn.setqflist({}, " ", { title = "References", items = items })
+  vim.cmd("Trouble qflist open")
+end
 
 -- ===================================================================
 -- TS server selection: tsgo vs vtsls

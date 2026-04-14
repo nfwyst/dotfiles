@@ -20,16 +20,13 @@
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
     "opencode-mem@latest",
-    "oh-my-openagent@latest"
+    "oh-my-openagent@latest",
+    "opencode-plugin-openspec@latest"
   ],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "@byted/codin-d2c-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "@byted/codin-d2c-mcp@latest"],
       "environment": {
         "CODIN_D2C_TOKEN": "{env:CODIN_D2C_TOKEN}",
         "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
@@ -40,21 +37,13 @@
     },
     "tradingview-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "tradingview-mcp-server@latest"
-      ],
+      "command": ["bunx", "-y", "tradingview-mcp-server@latest"],
       "timeout": 120000,
       "enabled": true
     },
     "alpha-vantage-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "alpha-vantage-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "alpha-vantage-mcp@latest"],
       "environment": {
         "ALPHA_VANTAGE_API_KEY": "{env:ALPHA_VANTAGE_API_KEY}"
       },
@@ -63,11 +52,7 @@
     },
     "yahoo-finance-mcp": {
       "type": "local",
-      "command": [
-        "bunx",
-        "-y",
-        "yahoo-finance-mcp@latest"
-      ],
+      "command": ["bunx", "-y", "yahoo-finance-mcp@latest"],
       "timeout": 120000,
       "enabled": true
     },
@@ -76,16 +61,6 @@
       "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
       "timeout": 120000,
       "enabled": true
-    }
-  },
-  "lsp": {
-    "biome": {
-      "command": [
-        "bunx",
-        "@biomejs/biome",
-        "lsp-proxy",
-        "--stdio"
-      ]
     }
   },
   "provider": {
@@ -115,6 +90,50 @@
           }
         }
       }
+    },
+    "opencode": {
+      "blacklist": [
+        "big-pickle",
+        "claude-3-5-haiku",
+        "claude-haiku-4-5",
+        "claude-opus-4-1",
+        "claude-opus-4-5",
+        "claude-sonnet-4",
+        "claude-sonnet-4-5",
+        "claude-sonnet-4-6",
+        "claude-opus-4-6",
+        "gemini-3.1-pro",
+        "glm-5",
+        "glm-5.1",
+        "gpt-5",
+        "gpt-5-codex",
+        "gpt-5-nano",
+        "gpt-5.1",
+        "gpt-5.1-codex",
+        "gpt-5.1-codex-max",
+        "gpt-5.1-codex-mini",
+        "gpt-5.2",
+        "gpt-5.2-codex",
+        "gpt-5.3-codex",
+        "gpt-5.3-codex-spark",
+        "gpt-5.4",
+        "gpt-5.4-nano",
+        "gpt-5.4-pro",
+        "gpt-5.4-mini",
+        "kimi-k2.5",
+        "minimax-m2.5",
+        "minimax-m2.5-free",
+        "nemotron-3-super-free"
+      ]
+    },
+    "opencode-go": {
+      "blacklist": ["mimo-v2-omni", "minimax-m2.5"]
     }
-  }
+  },
+  "disabled_providers": [
+    "zhipuai-coding-plan",
+    "kimi-for-coding",
+    "baiduqianfancodingplan",
+    "deepseek"
+  ]
 }
