@@ -58,6 +58,13 @@ local exclude = {
   "thumbs.db",
 }
 
+-- picker (files / grep) exclude: additionally skip heavy dirs
+local picker_exclude = vim.list_extend({
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/log/**",
+}, exclude)
+
 local function gen_get_todo(global)
   return function()
     local todopath = vim.g.todopath
@@ -107,7 +114,7 @@ require("snacks").setup({
   picker = {
     hidden = true,
     ignored = true,
-    exclude = exclude,
+    exclude = picker_exclude,
     actions = {
       toggle_cwd = function(p)
         local root = vim.fs.normalize(require("config.util").root())
@@ -135,9 +142,10 @@ require("snacks").setup({
     },
     formatters = { file = { truncate = 160 } },
     sources = {
-      files = { hidden = true, ignored = true, exclude = exclude },
+      files = { hidden = true, ignored = true, exclude = picker_exclude },
       explorer = {
         ignored = true,
+        exclude = exclude,
         watch = true,
         follow_file = true,
         diagnostics = false,

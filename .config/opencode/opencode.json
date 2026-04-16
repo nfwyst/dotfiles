@@ -101,6 +101,7 @@
         "claude-sonnet-4",
         "claude-sonnet-4-5",
         "claude-sonnet-4-6",
+        "claude-opus-4-6",
         "gemini-3.1-pro",
         "glm-5",
         "glm-5.1",
@@ -121,11 +122,12 @@
         "kimi-k2.5",
         "minimax-m2.5",
         "minimax-m2.5-free",
-        "nemotron-3-super-free"
+        "nemotron-3-super-free",
+        "gemini-3-flash"
       ]
     },
     "opencode-go": {
-      "blacklist": ["mimo-v2-omni", "minimax-m2.5"]
+      "blacklist": ["mimo-v2-omni", "minimax-m2.5", "glm-5", "kimi-k2.5"]
     }
   },
   "disabled_providers": [

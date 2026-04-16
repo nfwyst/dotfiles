@@ -2,154 +2,65 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "opencode/gemini-3-flash",
+      "model": "opencode/gpt-5.4",
       "variant": "high"
     },
     "hephaestus": {
-      "model": "opencode/gemini-3-flash",
-      "variant": "high"
+      "model": "opencode-go/mimo-v2-pro"
     },
     "oracle": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "librarian": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/minimax-m2.7"
     },
     "explore": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/minimax-m2.7"
     },
     "multimodal-looker": {
       "model": "opencode-go/kimi-k2.5"
     },
     "prometheus": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "metis": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        },
-        {
-          "model": "opencode-go/kimi-k2.5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "momus": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "atlas": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/kimi-k2.5"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/glm-5.1"
     },
     "sisyphus-junior": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/kimi-k2.5"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/glm-5.1"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        },
-        {
-          "model": "opencode-go/kimi-k2.5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "ultrabrain": {
-      "model": "opencode/gemini-3-flash",
-      "variant": "high"
+      "model": "opencode/gpt-5.4",
+      "variant": "xhigh"
     },
     "deep": {
-      "model": "opencode/gemini-3-flash",
-      "variant": "high"
+      "model": "opencode-go/mimo-v2-pro"
     },
     "artistry": {
-      "model": "opencode/gemini-3-flash",
-      "variant": "high"
+      "model": "opencode-go/mimo-v2-pro"
     },
     "quick": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/kimi-k2.5"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/minimax-m2.7"
     },
     "unspecified-low": {
-      "model": "opencode-go/mimo-v2-pro",
-      "fallback_models": [
-        {
-          "model": "opencode-go/kimi-k2.5"
-        },
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/minimax-m2.7"
     },
     "unspecified-high": {
-      "model": "opencode-go/glm-5.1",
-      "fallback_models": [
-        {
-          "model": "opencode-go/glm-5"
-        },
-        {
-          "model": "opencode-go/kimi-k2.5"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     },
     "writing": {
-      "model": "opencode-go/kimi-k2.5",
-      "fallback_models": [
-        {
-          "model": "opencode-go/minimax-m2.7"
-        }
-      ]
+      "model": "opencode-go/mimo-v2-pro"
     }
   }
 }
