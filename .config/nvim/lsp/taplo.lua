@@ -1,8 +1,5 @@
 --- @type vim.lsp.Config
-local schemas = {}
-pcall(function()
-  schemas = require("schemastore").json.schemas()
-end)
+local util = require("config.util")
 
 return {
   cmd = { "taplo", "lsp", "stdio" },
@@ -10,7 +7,7 @@ return {
   root_markers = { ".taplo.toml", "taplo.toml", ".git" },
   settings = {
     toml = {
-      schemas = schemas,
+      schemas = util.schemastore("json"),
       validate = { enable = true },
     },
   },

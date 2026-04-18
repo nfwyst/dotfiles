@@ -58,7 +58,7 @@ local user_agents = {
 local function update_cache(price)
   if price then
     cache.price = price
-    cache.timestamp = vim.loop.hrtime() / 1e6
+    cache.timestamp = vim.uv.hrtime() / 1e6
   end
 end
 
@@ -95,7 +95,7 @@ local function fetch_price(callback)
 end
 
 function M.get_price(callback)
-  local now = vim.loop.hrtime() / 1e6
+  local now = vim.uv.hrtime() / 1e6
   if cache.price and (now - cache.timestamp) < config.refresh_interval then
     callback(cache.price)
     return

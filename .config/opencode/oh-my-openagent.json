@@ -2,14 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "opencode/gpt-5.4",
-      "variant": "high"
+      "model": "opencode-go/qwen3.6-plus"
     },
     "hephaestus": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/qwen3.6-plus"
     },
     "oracle": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/glm-5.1"
     },
     "librarian": {
       "model": "opencode-go/minimax-m2.7"
@@ -21,46 +20,70 @@
       "model": "opencode-go/kimi-k2.5"
     },
     "prometheus": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/glm-5.1"
     },
     "metis": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/glm-5.1"
     },
     "momus": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/glm-5.1"
     },
     "atlas": {
-      "model": "opencode-go/glm-5.1"
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7"
+        }
+      ]
     },
     "sisyphus-junior": {
-      "model": "opencode-go/glm-5.1"
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7"
+        }
+      ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/glm-5.1"
     },
     "ultrabrain": {
-      "model": "opencode/gpt-5.4",
-      "variant": "xhigh"
+      "model": "opencode-go/glm-5.1"
     },
     "deep": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/qwen3.6-plus"
     },
     "artistry": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/qwen3.6-plus"
     },
     "quick": {
       "model": "opencode-go/minimax-m2.7"
     },
     "unspecified-low": {
-      "model": "opencode-go/minimax-m2.7"
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7"
+        }
+      ]
     },
     "unspecified-high": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7"
+        }
+      ]
     },
     "writing": {
-      "model": "opencode-go/mimo-v2-pro"
+      "model": "opencode-go/kimi-k2.5",
+      "fallback_models": [
+        {
+          "model": "opencode-go/minimax-m2.7"
+        }
+      ]
     }
   }
 }

@@ -16,6 +16,37 @@ local deno_markers = {
   "deno.lock",
 }
 
+--- Scan a directory (non-recursively) for .vue files.
+--- @param dir string absolute path
+--- @return boolean
+local function has_vue_files(dir)
+  if not vim.uv.fs_stat(dir) then
+    return false
+  end
+  local handle = vim.uv.fs_scandir(dir)
+  if not handle then
+    return false
+  end
+  while true do
+    local name, typ = vim.uv.fs_scandir_next(handle)
+    if not name then break end
+    if name:match("%.vue$") then return true end
+    -- Scan one level of subdirectories (e.g., src/components/*.vue)
+    if typ == "directory" and name ~= "node_modules" and name ~= ".git" then
+      local sub = dir .. "/" .. name
+      local sub_handle = vim.uv.fs_scandir(sub)
+      if sub_handle then
+        while true do
+          local sub_name = vim.uv.fs_scandir_next(sub_handle)
+          if not sub_name then break end
+          if sub_name:match("%.vue$") then return true end
+        end
+      end
+    end
+  end
+  return false
+end
+
 --- Check if a given project root is a Vue project.
 --- Uses absolute paths — never changes CWD.
 --- @param root string absolute path to project root
@@ -38,10 +69,16 @@ function M.is_vue_project(root)
     if fd then
       local data = vim.uv.fs_read(fd, stat.size, 0)
       vim.uv.fs_close(fd)
-      if data and (data:find('"vue"') or data:find('"nuxt"')) then
+      if data and (data:find('"vue"') or data:find('"nuxt"') or data:find('"@vue/')) then
         return true
       end
     end
+  end
+  -- Fallback: check if any .vue files exist under src/ (handles monorepos
+  -- where vue dependency is hoisted to a parent package.json).
+  -- Scans src/ and one level of its subdirectories (e.g., src/components/).
+  if has_vue_files(root .. "/src") then
+    return true
   end
   return false
 end
@@ -199,6 +236,24 @@ end
 
 M.root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" }
 
+--- Find the most precise project root for TS/JS LSP servers.
+--- In monorepo setups, sub-projects may have their own tsconfig.json without
+--- a package.json. This two-phase lookup ensures we anchor to the sub-project
+--- rather than the monorepo root:
+---   Phase 1: find the nearest tsconfig.json / jsconfig.json (precise boundary)
+---   Phase 2: fallback to package.json / .git (broad boundary)
+--- @param bufnr number buffer number
+--- @return string|nil root absolute path to the project root
+function M.find_project_root(bufnr)
+  -- Phase 1: precise boundary — tsconfig/jsconfig defines a TS project scope
+  local precise = vim.fs.root(bufnr, { "tsconfig.json", "jsconfig.json" })
+  if precise then
+    return precise
+  end
+  -- Phase 2: broad boundary — package.json or repo root
+  return vim.fs.root(bufnr, { "package.json", ".git" })
+end
+
 --- Find all files that import/require the current file (File References).
 --- Uses ripgrep for speed; works with any LSP or none at all.
 --- Results are displayed via Snacks.picker.grep or quickfix as fallback.
@@ -294,6 +349,40 @@ function M.find_file_references()
       vim.cmd.copen()
     end)
   end)
+end
+
+
+-- ===================================================================
+-- Mason / bun helpers (shared by multiple LSP configs)
+-- ===================================================================
+
+--- Build a bun-optimized cmd for a Mason-installed JS language server.
+--- Mason's bin wrappers are #!/usr/bin/env node scripts; bun resolves them
+--- as package script names, not file paths. This function resolves the actual
+--- JS entry point and runs it directly via bun.
+--- @param mason_pkg string Mason package name, also used as fallback binary
+--- @param js_entry string relative path from mason package dir to JS entry
+--- @param extra_args? string[] additional args after the JS entry (e.g., {"--stdio"})
+--- @return string[] cmd
+function M.bun_cmd(mason_pkg, js_entry, extra_args)
+  local js = vim.fn.stdpath("data") .. "/mason/packages/" .. mason_pkg .. "/" .. js_entry
+  local args = extra_args or {}
+  if vim.uv.fs_stat(js) then
+    return vim.list_extend({ "bun", "run", "--bun", js }, args)
+  end
+  return vim.list_extend({ mason_pkg }, args)
+end
+
+--- Resolve TypeScript SDK path from Mason's vtsls bundle.
+--- Used by both vtsls.lua and vue_ls.lua.
+--- @return string|nil tsdk absolute path or nil if not found
+function M.mason_tsdk()
+  local lib = "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"
+  local p = vim.fn.stdpath("data") .. lib
+  if vim.fn.isdirectory(p) == 1 then
+    return p
+  end
+  return nil
 end
 
 return M

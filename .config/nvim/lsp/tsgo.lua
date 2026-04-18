@@ -78,7 +78,7 @@ return {
     end
   end,
   root_dir = function(bufnr, cb)
-    local root = vim.fs.root(bufnr, ts_util.root_markers)
+    local root = ts_util.find_project_root(bufnr)
     if not root then
       return
     end

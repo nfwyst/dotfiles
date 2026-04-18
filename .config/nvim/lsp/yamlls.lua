@@ -1,8 +1,5 @@
 --- @type vim.lsp.Config
-local schemas = {}
-pcall(function()
-  schemas = require("schemastore").yaml.schemas()
-end)
+local util = require("config.util")
 
 return {
   cmd = { "yaml-language-server", "--stdio" },
@@ -11,11 +8,10 @@ return {
   settings = {
     yaml = {
       schemaStore = {
-        -- Disable built-in schemaStore to use SchemaStore.nvim
         enable = false,
         url = "",
       },
-      schemas = schemas,
+      schemas = util.schemastore("yaml"),
       validate = true,
       keyOrdering = false,
     },

@@ -636,11 +636,7 @@ set({ "n", "x", "s" }, "m", toggle_mark)
 
 -- Format
 set({ "n", "v" }, "<leader>cf", function()
-  local name = ".prettierrc.json"
-  if vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() }) == 4 then
-    name = ".prettierrc_tab.json"
-  end
-  vim.env.PRETTIERD_DEFAULT_CONFIG = vim.fn.expand("~") .. "/.config/" .. name
+  vim.env.PRETTIERD_DEFAULT_CONFIG = util.prettierrc_config()
   require("conform").format({ timeout_ms = 3000, async = false, lsp_fallback = true })
 end, { desc = "Format" })
 

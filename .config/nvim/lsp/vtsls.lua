@@ -5,12 +5,7 @@
 --- For all other TS/JS projects, tsgo is used for better performance.
 local ts_util = require("config.ts_util")
 
-local lib = "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"
-local tsdk_path = vim.fn.stdpath("data") .. lib
-local tsdk = nil
-if vim.fn.isdirectory(tsdk_path) == 1 then
-  tsdk = tsdk_path
-end
+local tsdk = ts_util.mason_tsdk()
 local bun_path = vim.fn.exepath("bun")
 
 -- Resolve @vue/typescript-plugin from Mason-installed vue-language-server.
@@ -18,10 +13,7 @@ local bun_path = vim.fn.exepath("bun")
 -- when vtsls is the TypeScript server.
 local vue_plugin_path = vim.fn.stdpath("data")
   .. "/mason/packages/vue-language-server/node_modules/@vue/language-server"
-local vue_plugin = nil
-if vim.fn.isdirectory(vue_plugin_path) == 1 then
-  vue_plugin = vue_plugin_path
-end
+local vue_plugin = vim.fn.isdirectory(vue_plugin_path) == 1 and vue_plugin_path or nil
 
 local config = {
   npm = bun_path,
@@ -54,7 +46,11 @@ local config = {
 }
 
 return {
-  cmd = { "bun", "run", "--bun", "vtsls", "--stdio" },
+  cmd = ts_util.bun_cmd(
+    "vtsls",
+    "node_modules/@vtsls/language-server/bin/vtsls.js",
+    { "--stdio" }
+  ),
   filetypes = {
     "javascript",
     "javascriptreact",
@@ -68,7 +64,7 @@ return {
   -- Use root_dir function to only start vtsls where it's actually needed.
   -- This is the complement of tsgo.lua's root_dir — they are mutually exclusive.
   root_dir = function(bufnr, cb)
-    local root = vim.fs.root(bufnr, ts_util.root_markers)
+    local root = ts_util.find_project_root(bufnr)
     if not root then
       return
     end
@@ -83,8 +79,6 @@ return {
     -- Otherwise: tsgo handles this project, don't start vtsls
   end,
   get_language_id = function(_, filetype)
-    -- Tell vtsls to treat MDX as native TSX so tsserver provides completions
-    -- without relying on @mdx-js/typescript-plugin (which has a completion bug).
     if filetype == "mdx" then
       return "typescriptreact"
     end
@@ -92,13 +86,11 @@ return {
   end,
   on_attach = function(client, bufnr)
     if vim.bo[bufnr].filetype == "mdx" then
-      -- MDX contains markdown prose that generates false positive TS parse
-      -- errors when treated as TSX. Suppress vtsls diagnostics for MDX.
       local ns = vim.lsp.diagnostic.get_namespace(client.id)
       vim.diagnostic.enable(false, { bufnr = bufnr, ns_id = ns })
     end
 
-    -- Register moveToFile refactoring command handler (from LazyVim vtsls extra)
+    -- Register moveToFile refactoring command handler
     client.commands = client.commands or {}
     if not client.commands["_typescript.moveToFileRefactoring"] then
       client.commands["_typescript.moveToFileRefactoring"] = function(command, ctx)
@@ -175,9 +167,6 @@ return {
         completion = {
           enableServerSideFuzzyMatch = true,
         },
-        -- Disabled for Vue projects to improve performance.
-        -- Vue projects are typically large and project diagnostics
-        -- cause significant slowdowns with @vue/typescript-plugin.
         enableProjectDiagnostics = false,
       },
     },

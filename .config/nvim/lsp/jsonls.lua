@@ -1,8 +1,5 @@
 --- @type vim.lsp.Config
-local schemas = {}
-pcall(function()
-  schemas = require("schemastore").json.schemas()
-end)
+local util = require("config.util")
 
 return {
   cmd = { "vscode-json-language-server", "--stdio" },
@@ -13,7 +10,7 @@ return {
   },
   settings = {
     json = {
-      schemas = schemas,
+      schemas = util.schemastore("json"),
       validate = { enable = true },
     },
   },

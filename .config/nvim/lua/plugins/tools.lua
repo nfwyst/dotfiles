@@ -112,13 +112,11 @@ require("conform").setup({
 
   },
   format_on_save = function(bufnr)
-    if vim.b[bufnr].autoformat == false then return end
-    if vim.b[bufnr].autoformat == nil and not vim.g.autoformat then return end
+    if not util.autoformat_enabled(bufnr) then return end
     return { timeout_ms = 3000, lsp_fallback = true }
   end,
   format_after_save = function(bufnr)
-    if vim.b[bufnr].autoformat == false then return end
-    if vim.b[bufnr].autoformat == nil and not vim.g.autoformat then return end
+    if not util.autoformat_enabled(bufnr) then return end
     -- retab: convert tabs to spaces according to buffer settings
     vim.api.nvim_buf_call(bufnr, function()
       vim.cmd.retab()
@@ -134,11 +132,7 @@ vim.keymap.set({ "n", "v" }, "<leader>ci", function()
 end, { desc = "Format With Eslint" })
 
 vim.keymap.set({ "n", "v" }, "<leader>cF", function()
-  local name = ".prettierrc.json"
-  if vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() }) == 4 then
-    name = ".prettierrc_tab.json"
-  end
-  vim.env.PRETTIERD_DEFAULT_CONFIG = vim.fn.expand("~") .. "/.config/" .. name
+  vim.env.PRETTIERD_DEFAULT_CONFIG = util.prettierrc_config()
   require("conform").format({ formatters = { "injected" }, timeout_ms = 3000 })
 end, { desc = "Format Injected Langs" })
 

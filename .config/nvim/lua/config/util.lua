@@ -105,4 +105,47 @@ function M.set_hl(hl, delay)
   end)
 end
 
+
+--- Load JSON schemas from SchemaStore.nvim (safe, returns {} on failure).
+--- @param fmt "json"|"yaml" schema format
+--- @return table schemas
+function M.schemastore(fmt)
+  local ok, store = pcall(require, "schemastore")
+  if ok and store[fmt] then
+    return store[fmt].schemas()
+  end
+  return {}
+end
+
+--- Extract foreground color from a highlight group as "#rrggbb".
+--- Returns nil if the group has no fg.
+--- @param group string highlight group name
+--- @return string|nil hex
+function M.hl_fg(group)
+  local hl = vim.api.nvim_get_hl(0, { name = group })
+  if hl.fg then
+    return string.format("#%06x", hl.fg)
+  end
+  return nil
+end
+
+--- Resolve prettierrc config path based on current buffer's shiftwidth.
+--- @return string absolute path to prettierrc config
+function M.prettierrc_config()
+  local name = ".prettierrc.json"
+  if vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() }) == 4 then
+    name = ".prettierrc_tab.json"
+  end
+  return vim.fn.expand("~") .. "/.config/" .. name
+end
+
+--- Check if autoformat is enabled for a buffer.
+--- @param bufnr number buffer number
+--- @return boolean
+function M.autoformat_enabled(bufnr)
+  if vim.b[bufnr].autoformat == false then return false end
+  if vim.b[bufnr].autoformat == nil and not vim.g.autoformat then return false end
+  return true
+end
+
 return M

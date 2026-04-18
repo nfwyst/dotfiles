@@ -340,8 +340,7 @@ local filename = {
   shorting_target = 0,
   symbols = { modified = "", readonly = "󰌾", unnamed = "[No Name]", newfile = "[New]" },
   color = function()
-    local hl = vim.api.nvim_get_hl(0, { name = "Special" })
-    return { fg = hl.fg and string.format("#%06x", hl.fg), italic = true }
+    return { fg = util.hl_fg("Special"), italic = true }
   end,
   cond = file_cond,
   padding = 0,
@@ -447,8 +446,7 @@ require("lualine").setup({
           return vim.v.hlsearch > 0 and file_cond()
         end,
         color = function()
-          local hl = vim.api.nvim_get_hl(0, { name = "Constant" })
-          return { fg = hl.fg and string.format("#%06x", hl.fg) }
+          return { fg = util.hl_fg("Constant") }
         end,
         padding = 0,
       },
