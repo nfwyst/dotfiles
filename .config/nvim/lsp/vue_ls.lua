@@ -5,6 +5,11 @@
 --- Note: Volar 2.x uses hybrid mode by default, so no explicit setting needed.
 local ts_util = require("config.ts_util")
 
+local tsdk = ts_util.mason_tsdk()
+if not tsdk then
+  vim.notify_once("vue_ls: TypeScript SDK not found in Mason, run :MasonInstall vtsls", vim.log.levels.WARN)
+end
+
 return {
   cmd = { "vue-language-server", "--stdio" },
   filetypes = { "vue" },
@@ -22,7 +27,7 @@ return {
   end,
   init_options = {
     typescript = {
-      tsdk = ts_util.mason_tsdk() or "",
+      tsdk = tsdk or "",
     },
   },
 }

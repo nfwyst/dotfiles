@@ -40,7 +40,7 @@ end
 
 function M.get_file_path(filenames, opts)
   local bufnr = vim.api.nvim_get_current_buf()
-  local stop_home = vim.fn.expand("~")
+  local stop_home = vim.env.HOME
   local buflisted = vim.bo[bufnr].buflisted
   local start_path = opts.start_path
   if not start_path and buflisted then
@@ -133,10 +133,10 @@ end
 --- @return string absolute path to prettierrc config
 function M.prettierrc_config()
   local name = ".prettierrc.json"
-  if vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() }) == 4 then
+  if vim.bo[vim.api.nvim_get_current_buf()].shiftwidth == 4 then
     name = ".prettierrc_tab.json"
   end
-  return vim.fn.expand("~") .. "/.config/" .. name
+  return vim.env.HOME .. "/.config/" .. name
 end
 
 --- Check if autoformat is enabled for a buffer.

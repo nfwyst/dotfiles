@@ -13,13 +13,17 @@ local vue_config_markers = {
 local deno_markers = {
   "deno.json",
   "deno.jsonc",
-  "deno.lock",
 }
+
+-- Cache expensive lookups
+local _vue_cache = {}
+local _cmd_cache = {}
+local _data_dir = vim.fn.stdpath("data")
 
 --- Scan a directory (non-recursively) for .vue files.
 --- @param dir string absolute path
 --- @return boolean
-local function has_vue_files(dir)
+local function dir_has_vue(dir)
   if not vim.uv.fs_stat(dir) then
     return false
   end
@@ -27,12 +31,16 @@ local function has_vue_files(dir)
   if not handle then
     return false
   end
+  local subdirs_scanned = 0
   while true do
     local name, typ = vim.uv.fs_scandir_next(handle)
     if not name then break end
     if name:match("%.vue$") then return true end
     -- Scan one level of subdirectories (e.g., src/components/*.vue)
+    -- Limit to 50 subdirs to avoid slowdowns in large monorepos
     if typ == "directory" and name ~= "node_modules" and name ~= ".git" then
+      subdirs_scanned = subdirs_scanned + 1
+      if subdirs_scanned > 50 then break end
       local sub = dir .. "/" .. name
       local sub_handle = vim.uv.fs_scandir(sub)
       if sub_handle then
@@ -48,17 +56,25 @@ local function has_vue_files(dir)
 end
 
 --- Check if a given project root is a Vue project.
---- Uses absolute paths — never changes CWD.
+--- Uses absolute paths — never changes CWD. Results are cached per root.
 --- @param root string absolute path to project root
 --- @return boolean
 function M.is_vue_project(root)
   if not root then
     return false
   end
+  if _vue_cache[root] ~= nil then
+    return _vue_cache[root]
+  end
+
+  local result = false
+
   -- Fast check: vue/nuxt config files
   for _, name in ipairs(vue_config_markers) do
     if vim.uv.fs_stat(root .. "/" .. name) then
-      return true
+      result = true
+      _vue_cache[root] = result
+      return result
     end
   end
   -- Check package.json for vue/nuxt dependency
@@ -70,43 +86,42 @@ function M.is_vue_project(root)
       local data = vim.uv.fs_read(fd, stat.size, 0)
       vim.uv.fs_close(fd)
       if data and (data:find('"vue"') or data:find('"nuxt"') or data:find('"@vue/')) then
-        return true
+        result = true
+        _vue_cache[root] = result
+        return result
       end
     end
   end
   -- Fallback: check if any .vue files exist under src/ (handles monorepos
   -- where vue dependency is hoisted to a parent package.json).
   -- Scans src/ and one level of its subdirectories (e.g., src/components/).
-  if has_vue_files(root .. "/src") then
-    return true
+  if dir_has_vue(root .. "/src") then
+    result = true
   end
-  return false
+
+  _vue_cache[root] = result
+  return result
 end
 
 --- Check if a given project root is a Deno project.
---- Deno projects should not start tsgo or vtsls.
---- Logic: if deno markers are found closer to (or at the same level as) the
---- root than any npm/bun/yarn/pnpm lock file, treat it as Deno.
+--- Uses vim.fs.root() for upward traversal — correctly detects Deno even when
+--- deno.json is in a parent directory (e.g., monorepo root).
 --- @param root string absolute path to project root
 --- @return boolean
 function M.is_deno_project(root)
   if not root then
     return false
   end
-  local has_deno = false
-  for _, name in ipairs(deno_markers) do
-    if vim.uv.fs_stat(root .. "/" .. name) then
-      has_deno = true
-      break
-    end
-  end
-  if not has_deno then
+  -- Use vim.fs.root() to search upward for deno markers
+  local deno_root = vim.fs.root(root, deno_markers)
+  if not deno_root then
     return false
   end
-  -- If npm/yarn/pnpm/bun lock files also exist at root, it's NOT a pure Deno project
+  -- If npm/yarn/pnpm/bun lock files exist at the deno marker location,
+  -- it's a hybrid project — NOT a pure Deno project
   local npm_locks = { "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "bun.lock" }
   for _, name in ipairs(npm_locks) do
-    if vim.uv.fs_stat(root .. "/" .. name) then
+    if vim.uv.fs_stat(deno_root .. "/" .. name) then
       return false
     end
   end
@@ -359,16 +374,20 @@ end
 --- Build a bun-optimized cmd for a Mason-installed JS language server.
 --- Mason's bin wrappers are #!/usr/bin/env node scripts; bun resolves them
 --- as package script names, not file paths. This function resolves the actual
---- JS entry point and runs it directly via bun.
+--- JS entry point and runs it directly via bun. Results are cached.
 --- @param mason_pkg string Mason package name, also used as fallback binary
 --- @param js_entry string relative path from mason package dir to JS entry
 --- @param extra_args? string[] additional args after the JS entry (e.g., {"--stdio"})
 --- @return string[] cmd
 function M.bun_cmd(mason_pkg, js_entry, extra_args)
-  local js = vim.fn.stdpath("data") .. "/mason/packages/" .. mason_pkg .. "/" .. js_entry
+  local cache_key = mason_pkg .. "|" .. js_entry
   local args = extra_args or {}
-  if vim.uv.fs_stat(js) then
-    return vim.list_extend({ "bun", "run", "--bun", js }, args)
+  if _cmd_cache[cache_key] == nil then
+    local js = _data_dir .. "/mason/packages/" .. mason_pkg .. "/" .. js_entry
+    _cmd_cache[cache_key] = vim.uv.fs_stat(js) and js or false
+  end
+  if _cmd_cache[cache_key] then
+    return vim.list_extend({ "bun", "run", "--bun", _cmd_cache[cache_key] }, args)
   end
   return vim.list_extend({ mason_pkg }, args)
 end
@@ -378,7 +397,7 @@ end
 --- @return string|nil tsdk absolute path or nil if not found
 function M.mason_tsdk()
   local lib = "/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"
-  local p = vim.fn.stdpath("data") .. lib
+  local p = _data_dir .. lib
   if vim.fn.isdirectory(p) == 1 then
     return p
   end

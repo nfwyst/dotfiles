@@ -102,7 +102,7 @@ require("conform").setup({
   },
   formatters = {
     beautysh = function()
-      local shiftwidth = vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
+      local shiftwidth = vim.bo[vim.api.nvim_get_current_buf()].shiftwidth
       return {
         command = "beautysh",
         args = { "-i", tostring(shiftwidth), "$FILENAME" },
