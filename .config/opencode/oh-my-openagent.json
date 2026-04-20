@@ -2,86 +2,270 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/qwen3.6-plus"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        }
+      ]
     },
     "hephaestus": {
-      "model": "opencode-go/qwen3.6-plus"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [{ "model": "opencode-go/mimo-v2-pro" }]
     },
     "oracle": {
-      "model": "opencode-go/glm-5.1"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
     },
     "librarian": {
-      "model": "opencode-go/minimax-m2.7"
+      "model": "opencode-go/minimax-m2.7",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
     },
     "explore": {
-      "model": "opencode-go/minimax-m2.7"
+      "model": "opencode-go/minimax-m2.7",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
     },
     "multimodal-looker": {
       "model": "opencode-go/kimi-k2.5"
     },
     "prometheus": {
-      "model": "opencode-go/glm-5.1"
-    },
-    "metis": {
-      "model": "opencode-go/glm-5.1"
-    },
-    "momus": {
-      "model": "opencode-go/glm-5.1"
-    },
-    "atlas": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/qwen3.6-plus",
       "fallback_models": [
         {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
+    },
+    "metis": {
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
+    },
+    "momus": {
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
+    },
+    "atlas": {
+      "model": "opencode-go/glm-5.1",
+      "fallback_models": [
+        {
+          "model": "opencode-go/glm-5"
+        },
+        {
           "model": "opencode-go/minimax-m2.7"
+        },
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
         }
       ]
     },
     "sisyphus-junior": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/glm-5.1",
       "fallback_models": [
         {
+          "model": "opencode-go/glm-5"
+        },
+        {
           "model": "opencode-go/minimax-m2.7"
+        },
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
         }
       ]
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "opencode-go/glm-5.1"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
     },
     "ultrabrain": {
-      "model": "opencode-go/glm-5.1"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        },
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        }
+      ]
     },
     "deep": {
-      "model": "opencode-go/qwen3.6-plus"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
     },
     "artistry": {
-      "model": "opencode-go/qwen3.6-plus"
+      "model": "opencode-go/qwen3.6-plus",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        }
+      ]
     },
     "quick": {
-      "model": "opencode-go/minimax-m2.7"
-    },
-    "unspecified-low": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/mimo-v2-pro",
       "fallback_models": [
         {
           "model": "opencode-go/minimax-m2.7"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
+        }
+      ]
+    },
+    "unspecified-low": {
+      "model": "opencode-go/minimax-m2.7",
+      "fallback_models": [
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
         }
       ]
     },
     "unspecified-high": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/glm-5.1",
       "fallback_models": [
         {
+          "model": "opencode-go/glm-5"
+        },
+        {
           "model": "opencode-go/minimax-m2.7"
+        },
+        {
+          "model": "opencode-go/mimo-v2-pro"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
         }
       ]
     },
     "writing": {
-      "model": "opencode-go/kimi-k2.5",
+      "model": "opencode-go/mimo-v2-pro",
       "fallback_models": [
         {
           "model": "opencode-go/minimax-m2.7"
+        },
+        {
+          "model": "opencode-go/kimi-k2.5"
+        },
+        {
+          "model": "opencode-go/glm-5.1"
+        },
+        {
+          "model": "opencode-go/glm-5"
         }
       ]
     }

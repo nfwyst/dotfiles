@@ -18,13 +18,13 @@
     "doom_loop": "allow"
   },
   "plugin": [
-    "@tarquinen/opencode-dcp@latest",
+    "./plugins/rtk.ts",
     "opencode-mem@latest",
-    "oh-my-openagent@latest",
+    "opencode-plugin-preload-skills@latest",
+    "@tarquinen/opencode-dcp@latest",
     "opencode-plugin-openspec@latest",
-    "./plugins/rtk.ts"
+    "oh-my-openagent@latest"
   ],
-  "instructions": ["~/.agents/skills/caveman/SKILL.md"],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
@@ -131,7 +131,7 @@
       ]
     },
     "opencode-go": {
-      "blacklist": ["mimo-v2-omni", "minimax-m2.5", "glm-5", "qwen3.5-plus"]
+      "blacklist": ["mimo-v2-omni", "minimax-m2.5", "qwen3.5-plus"]
     }
   },
   "disabled_providers": [
