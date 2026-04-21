@@ -9,7 +9,6 @@ local g_opts = {
   loaded_ruby_provider = 0,
   python3_host_prog = "/opt/homebrew/bin/python3",
   markdowns = { "markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth", "mdx" },
-  markdown_recommended_style = 0,
 }
 
 for name, value in pairs(g_opts) do
@@ -56,7 +55,6 @@ opt.linebreak = true
 opt.list = true
 opt.mouse = "a"
 opt.number = true
-opt.statuscolumn = " "
 opt.pumblend = 10
 opt.pumheight = 10
 opt.scrolloff = scrolloff
@@ -83,7 +81,6 @@ opt.virtualedit = "block"
 opt.wildmode = "longest:full,full"
 opt.winminwidth = 5
 opt.wrap = false
-opt.formatoptions = "jcroqlnt"
 opt.foldtext = ""
 opt.ruler = false
 

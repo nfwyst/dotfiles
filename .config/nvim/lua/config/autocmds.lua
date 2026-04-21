@@ -17,7 +17,7 @@ vim.api.nvim_create_autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = augroup("highlight_yank"),
   callback = function()
-    (vim.hl or vim.highlight).on_yank()
+    vim.hl.on_yank()
   end,
 })
 
@@ -53,7 +53,6 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 vim.api.nvim_create_autocmd("FileType", {
   group = augroup("close_with_q"),
   pattern = {
-    "PlenaryTestPopup",
     "checkhealth",
     "dbout",
     "gitsigns.blame",
@@ -66,9 +65,7 @@ vim.api.nvim_create_autocmd("FileType", {
     "notify",
     "qf",
     "snacks_win",
-    "spectre_panel",
     "startuptime",
-    "tsplayground",
   },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
@@ -158,3 +155,10 @@ vim.api.nvim_create_autocmd("BufNewFile", {
   end,
 })
 
+-- Override formatoptions after ftplugins (which reset it)
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("formatoptions"),
+  callback = function()
+    vim.opt_local.formatoptions = "jcroqlnt"
+  end,
+})

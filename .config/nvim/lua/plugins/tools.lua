@@ -102,7 +102,7 @@ require("conform").setup({
   },
   formatters = {
     beautysh = function()
-      local shiftwidth = vim.bo[vim.api.nvim_get_current_buf()].shiftwidth
+      local shiftwidth = vim.bo.shiftwidth
       return {
         command = "beautysh",
         args = { "-i", tostring(shiftwidth), "$FILENAME" },
@@ -113,7 +113,7 @@ require("conform").setup({
   },
   format_on_save = function(bufnr)
     if not util.autoformat_enabled(bufnr) then return end
-    return { timeout_ms = 3000, lsp_fallback = true }
+    return { timeout_ms = 3000, lsp_format = "fallback" }
   end,
   format_after_save = function(bufnr)
     if not util.autoformat_enabled(bufnr) then return end

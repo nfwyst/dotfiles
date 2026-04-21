@@ -204,7 +204,6 @@ require("noice").setup({
     override = {
       ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
       ["vim.lsp.util.stylize_markdown"] = true,
-      ["cmp.entry.get_documentation"] = true,
     },
   },
   presets = {
@@ -418,7 +417,7 @@ require("lualine").setup({
       },
       {
         function()
-          return "󱁐:" .. vim.api.nvim_get_option_value("shiftwidth", { buf = vim.api.nvim_get_current_buf() })
+          return "󱁐:" .. vim.bo.shiftwidth
         end,
         padding = 0,
       },

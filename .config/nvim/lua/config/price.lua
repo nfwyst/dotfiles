@@ -129,17 +129,18 @@ end
 
 function M.stop()
   if timer_id then
-    vim.fn.timer_stop(timer_id)
+    timer_id:stop()
+    timer_id:close()
     timer_id = nil
   end
 end
 
 function M.setup()
   fetch_price(update_cache)
-  local refresh = function()
+  timer_id = vim.uv.new_timer()
+  timer_id:start(config.refresh_interval, config.refresh_interval, vim.schedule_wrap(function()
     fetch_price(update_cache)
-  end
-  timer_id = vim.fn.timer_start(config.refresh_interval, refresh, { ["repeat"] = -1 })
+  end))
 end
 
 -- Defer network requests + timer until after UI is ready.

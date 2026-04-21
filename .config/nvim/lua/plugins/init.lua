@@ -114,7 +114,7 @@ if vim.env.TERMINAL == "ghostty" then
 end
 
 -- Disable some built-in plugins
-local disabled_builtins = { "gzip", "netrwPlugin", "rplugin", "tarPlugin", "tohtml", "tutor", "zipPlugin" }
+local disabled_builtins = { "netrwPlugin", "rplugin", "tohtml", "tutor" }
 for _, plugin in ipairs(disabled_builtins) do
   vim.g["loaded_" .. plugin] = 1
 end

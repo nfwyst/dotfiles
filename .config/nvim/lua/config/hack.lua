@@ -11,12 +11,10 @@ local black_list = {
   -- 80001: File is a CommonJS module; it may be converted to an ES module
   -- 80006: This may be converted to an async function
   -- 80007: 'await' has no effect on this expression
-  -- 2305: Module has no exported member (often false positive with re-exports)
-  -- 6387: Argument of type 'X | undefined' is not assignable (overly strict)
   -- 7044: Parameter implicitly has an 'any' type (noisy in JS files)
   -- 1149: File appears to be a binary file
   { source = "ts", message = "File is a CommonJS module" },
-  { source = "ts", codes = { 7016, 80001, 80006, 80007, 2305, 6387, 7044, 1149 } },
+  { source = "ts", codes = { 7016, 80001, 80006, 80007, 7044, 1149 } },
 }
 
 vim.diagnostic.set = function(ns, bufnr, diagnostics, opts)

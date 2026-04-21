@@ -192,7 +192,6 @@ require("mini.pairs").setup({
   skip_next = [=[[%w%%%'%[%"%.%`%$]]=],
   skip_ts = { "string" },
   skip_unbalanced = true,
-  markdown = true,
 })
 
 -- Override mini.pairs open for markdown triple backtick
@@ -322,7 +321,7 @@ end)
 -- ===================================================================
 vim.keymap.set("n", "<leader>ce", function()
   local bufnr = vim.api.nvim_get_current_buf()
-  if vim.api.nvim_get_option_value("modified", { buf = bufnr }) then
+  if vim.bo[bufnr].modified then
     vim.cmd.write()
   end
   local opt = { bufnr = bufnr }

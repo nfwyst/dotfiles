@@ -133,7 +133,7 @@ end
 --- @return string absolute path to prettierrc config
 function M.prettierrc_config()
   local name = ".prettierrc.json"
-  if vim.bo[vim.api.nvim_get_current_buf()].shiftwidth == 4 then
+  if vim.bo.shiftwidth == 4 then
     name = ".prettierrc_tab.json"
   end
   return vim.env.HOME .. "/.config/" .. name

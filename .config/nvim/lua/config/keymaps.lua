@@ -1,11 +1,6 @@
 local util = require("config.util")
 local map = vim.keymap.set
 
-local function set(mode, lhs, rhs, opts)
-  opts = opts or {}
-  vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", { silent = true, noremap = true }, opts))
-end
-
 -- ===================================================================
 -- keymaps
 -- ===================================================================
@@ -28,7 +23,6 @@ map("n", "<S-l>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next Buffer" })
 map("n", "[b", "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 map("n", "]b", "<cmd>bnext<cr>", { desc = "Next Buffer" })
 map("n", "<leader>bb", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
-map("n", "<leader>`", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
 map("n", "<leader>bd", function()
   Snacks.bufdelete()
 end, { desc = "Delete Buffer" })
@@ -185,10 +179,6 @@ map("n", "<leader>K", "<cmd>norm! K<cr>", { desc = "Keywordprg" })
 -- Quit
 map("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit All" })
 
--- Add comment above/below
-map("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Below" })
-map("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
-
 -- Highlights under cursor
 map("n", "<leader>ui", vim.show_pos, { desc = "Inspect Pos" })
 map("n", "<leader>uI", function()
@@ -200,9 +190,6 @@ map("n", "<leader>w", "<c-w>", { desc = "Windows", remap = true })
 map("n", "<leader>-", "<C-W>s", { desc = "Split Window Below", remap = true })
 map("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
 map("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
-map("n", "<leader>wm", function()
-  Snacks.toggle.zoom():toggle()
-end, { desc = "Toggle Zoom" })
 
 -- Tabs
 map("n", "<leader><tab>l", "<cmd>tablast<cr>", { desc = "Last Tab" })
@@ -230,9 +217,6 @@ map("n", "<leader><space>", function()
 end, { desc = "Find Files (cwd)" })
 
 -- find
-map("n", "<leader>fb", function()
-  Snacks.picker.buffers()
-end, { desc = "Buffers" })
 map("n", "<leader>fc", function()
   Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "Find Config File" })
@@ -598,50 +582,48 @@ local function toggle_mark()
   vim.cmd.normal({ "m" .. char, bang = true })
 end
 
--- Move lines
-set("n", "<S-j>", "<cmd>execute 'move .+' . v:count1<cr>==")
-set("n", "<S-k>", "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==")
-set({ "v", "x" }, "<S-j>", ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv")
-set({ "v", "x" }, "<S-k>", ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv")
+-- Move lines (visual mode only — normal mode J/K preserved)
+map({ "v", "x" }, "<S-j>", ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv", { silent = true })
+map({ "v", "x" }, "<S-k>", ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv", { silent = true })
 
 -- Resize windows
-set("n", "<S-Up>", get_resizer(true), { desc = "Increase Window Height" })
-set("n", "<S-Down>", get_resizer(false), { desc = "Decrease Window Height" })
-set("n", "<S-Left>", get_resizer(true, true), { desc = "Increase Window Width" })
-set("n", "<S-Right>", get_resizer(false, true), { desc = "Decrease Window Width" })
+map("n", "<S-Up>", get_resizer(true), { desc = "Increase Window Height", silent = true })
+map("n", "<S-Down>", get_resizer(false), { desc = "Decrease Window Height", silent = true })
+map("n", "<S-Left>", get_resizer(true, true), { desc = "Increase Window Width", silent = true })
+map("n", "<S-Right>", get_resizer(false, true), { desc = "Decrease Window Width", silent = true })
 
 -- Custom leader keymaps
-set("n", "<leader>Q", "<cmd>quit<cr>", { desc = "Quit" })
-set("n", "<leader>qf", "<cmd>ccl<cr>", { desc = "Quit Quickfix List" })
-set("n", "<leader>o", ":update<cr> :source<cr>", { desc = "Update Source" })
+map("n", "<leader>Q", "<cmd>quit<cr>", { desc = "Quit", silent = true })
+map("n", "<leader>qf", "<cmd>ccl<cr>", { desc = "Quit Quickfix List", silent = true })
+map("n", "<leader>o", ":update<cr> :source<cr>", { desc = "Update Source", silent = true })
 
 -- Terminal
-set("n", "<leader>ft", function()
+map("n", "<leader>ft", function()
   Snacks.terminal(vim.o.shell)
-end, { desc = "Float Terminal (cwd)" })
-set("n", "<leader>fT", function()
+end, { desc = "Float Terminal (cwd)", silent = true })
+map("n", "<leader>fT", function()
   Snacks.terminal(vim.o.shell, { cwd = util.root() })
-end, { desc = "Float Terminal (Root Dir)" })
-set({ "n", "t" }, "<c-_>", function()
+end, { desc = "Float Terminal (Root Dir)", silent = true })
+map({ "n", "t" }, "<c-_>", function()
   Snacks.terminal(vim.o.shell, { cwd = util.root() })
-end, { desc = "Float Terminal (root)" })
+end, { desc = "Float Terminal (root)", silent = true })
 
 -- Save
-set({ "n", "x", "s" }, "<leader>i", "<cmd>w<cr>", { desc = "Save File" })
-set({ "n", "x", "s" }, "<leader>I", "<cmd>wall<cr>", { desc = "Save All" })
-set({ "n", "x", "s" }, "<leader>X", "<cmd>xall<cr>", { desc = "Save And Quit" })
+map({ "n", "x", "s" }, "<leader>i", "<cmd>w<cr>", { desc = "Save File", silent = true })
+map({ "n", "x", "s" }, "<leader>I", "<cmd>wall<cr>", { desc = "Save All", silent = true })
+map({ "n", "x", "s" }, "<leader>X", "<cmd>xall<cr>", { desc = "Save And Quit", silent = true })
 
 -- Toggle mark
-set({ "n", "x", "s" }, "m", toggle_mark)
+map({ "n", "x", "s" }, "m", toggle_mark, { silent = true })
 
 -- Format
-set({ "n", "v" }, "<leader>cf", function()
+map({ "n", "v" }, "<leader>cf", function()
   vim.env.PRETTIERD_DEFAULT_CONFIG = util.prettierrc_config()
-  require("conform").format({ timeout_ms = 3000, async = false, lsp_fallback = true })
-end, { desc = "Format" })
+  require("conform").format({ timeout_ms = 3000, async = false, lsp_format = "fallback" })
+end, { desc = "Format", silent = true })
 
 -- Escape from insert mode
-set("i", "jk", "<Esc>", { desc = "Exit insert mode" })
+map("i", "jk", "<Esc>", { desc = "Exit insert mode", silent = true })
 
 -- ===================================================================
 -- Quickfix keymaps
@@ -713,11 +695,11 @@ vim.api.nvim_create_autocmd("FileType", {
     local qfwin = vim.fn.bufwinid(bufnr)
     for mode, maps in pairs(qfkeymaps) do
       for _, m in ipairs(maps) do
-        set(mode, m.from, function()
+        map(mode, m.from, function()
           local qflist = vim.fn.getqflist()
           local pos = vim.api.nvim_win_get_cursor(qfwin)
           m.to(qflist, qfwin, pos)
-        end, { buffer = bufnr })
+        end, { buffer = bufnr, silent = true })
       end
     end
   end,
@@ -729,6 +711,6 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = "json",
   group = vim.api.nvim_create_augroup("json_keymaps", { clear = true }),
   callback = function(event)
-    set("v", '<leader>"', ":AddQuotes<cr>", { buffer = event.buf, desc = "Add Multiple Line Quotes" })
+    map("v", '<leader>"', ":AddQuotes<cr>", { buffer = event.buf, desc = "Add Multiple Line Quotes", silent = true })
   end,
 })

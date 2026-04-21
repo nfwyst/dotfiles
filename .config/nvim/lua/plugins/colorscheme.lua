@@ -114,10 +114,10 @@ if vim.fn.has("mac") == 1 then
     end
     watch()
   else
-    -- Fallback: poll every 5s (outside tmux or dark-notify not installed)
+    -- Fallback: poll every 15s (outside tmux or dark-notify not installed)
     local last_system_appearance = appearance
     local timer = vim.uv.new_timer()
-    timer:start(5000, 5000, vim.schedule_wrap(function()
+    timer:start(15000, 15000, vim.schedule_wrap(function()
       local current = get_macos_bg()
       if current ~= last_system_appearance then
         last_system_appearance = current
