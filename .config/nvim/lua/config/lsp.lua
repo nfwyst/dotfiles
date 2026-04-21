@@ -91,17 +91,3 @@ vim.lsp.enable({
   "yamlls",
   "vue_ls",
 })
-
--- Auto-enable inlay hints for supported servers
-vim.api.nvim_create_autocmd("LspAttach", {
-  group = vim.api.nvim_create_augroup("lsp_inlay_hints", { clear = true }),
-  callback = function(event)
-    local client = vim.lsp.get_client_by_id(event.data.client_id)
-    if client and client:supports_method("textDocument/inlayHint") then
-      local bufnr = event.buf
-      if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buftype == "" then
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-      end
-    end
-  end,
-})

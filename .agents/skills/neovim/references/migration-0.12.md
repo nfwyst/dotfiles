@@ -1,205 +1,66 @@
 # Neovim 0.12 Migration Reference
 
-Breaking changes and new APIs in Neovim 0.12+ that this configuration uses.
+## Current Status
 
-## vim.pack (Native Plugin Manager)
+This configuration is **already running on Neovim 0.12+**. This is not a future migration plan — these are the 0.12 features currently in use.
 
-Replaces lazy.nvim entirely.
+## vim.pack (Native Package Manager)
 
-### API
+Neovim 0.12 introduces `vim.pack`, a native package manager that replaces third-party solutions like lazy.nvim. This configuration uses `vim.pack.add()` exclusively to manage all ~35 plugins.
 
-```lua
-vim.pack.add(specs, opts?)        -- Install + load plugins
-vim.pack.update(names?, opts?)    -- Update plugins (default: all)
-vim.pack.get()                    -- List all managed plugins
-vim.pack.del(names, opts?)        -- Remove plugins
-```
+Key characteristics:
+- All plugins load at startup (no lazy-loading DSL)
+- PackChanged hooks handle post-update build steps (cargo build, TSUpdate)
+- Deferred cleanup of inactive plugin directories
+- `:PlugSync` command for manual synchronization
 
-### Spec Format
+## vim.lsp.config() + vim.lsp.enable()
 
-```lua
-vim.pack.add({
-  "https://github.com/user/repo",                           -- Short form
-  { src = "https://github.com/user/repo", version = "main" }, -- Pin to branch
-})
-```
+The 0.12 LSP API replaces the old `lspconfig` setup pattern:
 
-### Key Differences from lazy.nvim
+- `vim.lsp.config(server_name, config_table)` — declares server configuration
+- `vim.lsp.enable(server_name)` — activates the server
+- Supports **async root_dir callbacks** — the root_dir function receives a callback parameter and resolves asynchronously, which is important for the vtsls/tsgo mutual exclusion logic
 
-| Feature | lazy.nvim | vim.pack |
-|---|---|---|
-| Lazy loading | Built-in (event, cmd, ft, keys) | Manual (autocmds, vim.schedule) |
-| Lockfile | lazy-lock.json | nvim-pack-lock.json |
-| Install location | ~/.local/share/nvim/lazy/ | ~/.local/share/nvim/site/pack/core/opt/ |
-| Post-install hooks | `build = "..."` | `PackChanged` user event |
-| UI | `:Lazy` | None (custom :PlugSync) |
-| Startup stats | `:Lazy profile` | `--startuptime` |
-| Plugin spec | Lua table with lazy keys | URL string or {src, version} |
+## Default Keymaps
 
-### Migration Pattern
+Neovim 0.12 provides default LSP keymaps:
+- `grn` — rename (default)
+- `gra` — code action (default)
+- `grr` — references (default)
 
-```lua
--- OLD (lazy.nvim)
-{ "folke/snacks.nvim", event = "VeryLazy", config = function() ... end }
+This configuration **overrides** `grn` and `gra` with custom implementations. The override is done by first deleting the default mappings via `pcall(vim.keymap.del, ...)` before setting the custom ones. `grr` is left as the default.
 
--- NEW (vim.pack)
-vim.pack.add({ "https://github.com/folke/snacks.nvim" })
--- Config in separate file, loaded via require()
--- Deferred loading via vim.defer_fn() or autocmd
-```
+## vim.hl.on_yank
 
-## Native LSP (vim.lsp.config + vim.lsp.enable)
+Neovim 0.12 moved the yank highlight API:
+- **Old**: `vim.highlight.on_yank()`
+- **New**: `vim.hl.on_yank()`
 
-Replaces nvim-lspconfig plugin.
+This configuration uses the new `vim.hl.on_yank()` API.
 
-### API Changes
+## Treesitter Auto-Start
 
-| Old (nvim-lspconfig) | New (Neovim 0.12) |
-|---|---|
-| `require('lspconfig').server.setup({...})` | `lsp/server.lua` file + `vim.lsp.enable('server')` |
-| `lspconfig.util.root_pattern(...)` | `root_markers = { ... }` |
-| `capabilities` (from cmp-nvim-lsp) | `vim.lsp.config("*", { capabilities = ... })` |
-| `:LspInfo` | `:checkhealth vim.lsp` |
-| `vim.lsp.get_active_clients()` | `vim.lsp.get_clients()` |
-| `client.request()` | `Client:request()` |
-| `vim.lsp.buf.formatting()` | Use conform.nvim |
+Neovim 0.12 treesitter integration allows automatic highlighting for all filetypes via a `FileType` autocmd. This covers every language with an installed grammar — it is not limited to a fixed list of built-in languages.
 
-### Server Config Format
+## Known Workarounds
 
-```lua
--- lsp/server_name.lua
---- @type vim.lsp.Config
-return {
-  cmd = { "binary-name", "--stdio" },
-  filetypes = { "ft1", "ft2" },
-  root_markers = { "marker1", "marker2" },
-  settings = {},
-  init_options = {},
-  on_attach = function(client, bufnr) end,
-}
-```
+### tsgo codeLens
+The tsgo codeLens handler has a monkey-patch to resolve reference/implementation counts and drop 0-count lenses. This workaround may become unnecessary in future Neovim or tsgo releases if the codeLens protocol handling improves.
 
-### Auto-Discovery
+### Default Keymap Deletion
+The `pcall(vim.keymap.del, ...)` pattern for removing default `grn`/`gra` mappings is a transitional workaround. If Neovim changes how default LSP keymaps are managed, this may need updating.
 
-Neovim auto-discovers `lsp/*.lua` files. No need to explicitly call `vim.lsp.config()` for individual servers — just place the file and call `vim.lsp.enable("name")`.
+### Diagnostic Monkey-Patch
+The `hack.lua` monkey-patch of `vim.diagnostic.set` to filter diagnostic codes is not 0.12-specific but interacts with the 0.12 diagnostic infrastructure.
 
-## Treesitter Changes
+## API Changes Summary
 
-### Parser Loading
-
-```lua
--- OLD: vim.treesitter.get_parser() throws on failure
--- NEW: Returns nil on failure (no more pcall needed for checking)
-local parser = vim.treesitter.get_parser(bufnr, lang)
-if not parser then return end
-```
-
-### Language Registration
-
-```lua
--- Register language alias
-vim.treesitter.language.register("bash", "zsh")
-vim.treesitter.language.register("markdown", { "checkhealth", "mdx" })
-```
-
-### Custom Predicates
-
-```lua
--- Add custom query predicate
-vim.treesitter.query.add_predicate("is-filetype?", function(match, pattern, source, predicate)
-  return vim.bo[source].filetype == predicate[3]
-end, { force = true })
-```
-
-### Built-in ftplugin Coverage
-
-Neovim 0.12 built-in ftplugins call `vim.treesitter.start()` for ~20 languages. This config adds a `FileType` autocmd to cover all remaining languages with highlight queries.
-
-### ts_highlight Flag
-
-When treesitter is active, `vim.b.ts_highlight = true`. This **blocks** traditional `syntax` highlighting. To restore syntax:
-
-```lua
-vim.treesitter.stop(buf)
-vim.bo[buf].syntax = ft
-```
-
-## Diagnostic API
-
-### New Jump API
-
-```lua
--- OLD
-vim.diagnostic.goto_next({ severity = ... })
-
--- NEW
-vim.diagnostic.jump({ count = 1, severity = ... })
-vim.diagnostic.jump({ count = -1, severity = ... })
-```
-
-### Enable/Disable
-
-```lua
--- Toggle all diagnostics
-vim.diagnostic.enable(not vim.diagnostic.is_enabled())
-
--- Per-buffer, per-namespace
-vim.diagnostic.enable(false, { bufnr = bufnr, ns_id = ns })
-```
-
-## Inlay Hints
-
-```lua
--- Enable
-vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-
--- Toggle
-vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-
--- Check
-vim.lsp.inlay_hint.is_enabled()
-```
-
-## vim.uv (replaces vim.loop)
-
-```lua
--- OLD
-vim.loop.fs_stat(path)
-vim.loop.new_timer()
-
--- NEW
-vim.uv.fs_stat(path)
-vim.uv.new_timer()
-vim.uv.cwd()
-```
-
-## vim.hl (replaces vim.highlight)
-
-```lua
--- OLD
-vim.highlight.on_yank()
-
--- NEW (with backward compat)
-(vim.hl or vim.highlight).on_yank()
-```
-
-## vim.system
-
-```lua
--- Async external command (replaces io.popen/jobstart for simple cases)
-vim.system({ "fortune" }, { text = true, timeout = 200 }):wait()
-vim.system({ "curl", "-s", url }, { timeout = 10000 }, function(result)
-  if result.code == 0 then ... end
-end)
-```
-
-## Key Breaking Changes Summary
-
-1. **No lazy loading in vim.pack** — use manual deferred patterns
-2. **LSP configs as files** — `lsp/*.lua` instead of `lspconfig.setup()`
-3. **root_markers replaces root_pattern** — simpler table, no function
-4. **vim.treesitter.get_parser() returns nil** — no longer throws
-5. **vim.diagnostic.jump() replaces goto_next/goto_prev** — count-based API
-6. **vim.uv replaces vim.loop** — same libuv bindings, new namespace
-7. **Semantic tokens need manual disable** — no lspconfig `on_init` hook
-8. **vim.pack.add needs full URLs** — not short `user/repo` format
+| Feature | Old API | 0.12 API |
+|---------|---------|----------|
+| Package management | lazy.nvim / packer | vim.pack |
+| LSP setup | lspconfig.server.setup() | vim.lsp.config() + vim.lsp.enable() |
+| Yank highlight | vim.highlight.on_yank() | vim.hl.on_yank() |
+| LSP keymaps | manual setup only | grn/gra/grr defaults (can override) |
+| Treesitter start | manual per-language | FileType autocmd for all languages |
+| Root detection | synchronous | async callback pattern |

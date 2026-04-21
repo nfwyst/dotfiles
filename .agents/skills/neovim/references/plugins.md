@@ -1,84 +1,124 @@
-# Plugins Reference
+# Neovim Plugin Reference
 
-Complete plugin list with descriptions and configuration locations.
+## Plugin Manager
 
-## Dependencies
+**vim.pack** — Neovim 0.12+ native package manager. NOT lazy.nvim.
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [nui.nvim](https://github.com/MunifTanjim/nui.nvim) | UI component library (used by noice) | — |
-| [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) | Lua utility library | — |
-| [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) | File type icons | — |
-| [SchemaStore.nvim](https://github.com/b0o/SchemaStore.nvim) | JSON/YAML/TOML schemas | Used in jsonls, yamlls, taplo |
+All plugins are loaded via `vim.pack.add()` calls in `plugins/init.lua`. There is no lazy-loading in the traditional sense; all plugins load at startup, but their configurations are deferred.
 
-## Colorschemes
+## Plugin List (~35 total)
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [tokyonight.nvim](https://github.com/folke/tokyonight.nvim) | Primary theme (storm dark, day light) | `plugins/colorscheme.lua` |
-| [monokai-pro.nvim](https://github.com/loctvl842/monokai-pro.nvim) | Alternate theme (classic filter) | `plugins/colorscheme.lua` |
-| [NeoSolarized.nvim](https://github.com/Tsuzat/NeoSolarized.nvim) | Alternate theme | `plugins/colorscheme.lua` |
+### Dependencies
+- **nui.nvim** — UI component library
+- **plenary.nvim** — Lua utility functions
+- **nvim-web-devicons** — File type icons
+- **SchemaStore.nvim** — JSON/YAML schema catalog
 
-## Treesitter
+### Colorschemes (only 3)
+- **tokyonight.nvim**
+- **monokai-pro.nvim**
+- **NeoSolarized.nvim**
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | Syntax highlighting, text objects | `plugins/coding.lua` (main branch) |
-| [nvim-treesitter-context](https://github.com/nvim-treesitter/nvim-treesitter-context) | Sticky function/class context header | `plugins/coding.lua` |
+NOT included: catppuccin, rose-pine, kanagawa, or any others.
 
-## Completion
+### Treesitter
+- **nvim-treesitter** (main branch) — syntax highlighting, textobjects
+- **nvim-treesitter-context** — sticky function/class context at top of buffer
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [blink.cmp](https://github.com/saghen/blink.cmp) | Fast completion (Rust fuzzy) | `plugins/coding.lua` |
-| [friendly-snippets](https://github.com/rafamadriz/friendly-snippets) | Snippet collection | — |
+### Completion
+- **blink.cmp** — Completion engine with Rust fuzzy matching, built from source via cargo
+- **friendly-snippets** — Snippet collection
 
-## Editor
+### Editor
+- **which-key** — Keybinding hints popup
+- **gitsigns** — Git gutter signs and hunk actions
+- **resolve.nvim** — Merge conflict resolution
+- **grug-far** — Find and replace across files
+- **trouble** — Diagnostics list
+- **flash** — Motion/jump plugin
+- **todo-comments** — Highlight and search TODO/FIXME/etc
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [which-key.nvim](https://github.com/folke/which-key.nvim) | Keymap hints | `plugins/editor.lua` |
-| [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) | Git signs, hunk operations, blame | `plugins/editor.lua` |
-| [resolve.nvim](https://github.com/spacedentist/resolve.nvim) | Git conflict resolution | `plugins/editor.lua` |
-| [grug-far.nvim](https://github.com/MagicDuck/grug-far.nvim) | Search and replace (ripgrep) | `plugins/editor.lua` |
-| [trouble.nvim](https://github.com/folke/trouble.nvim) | Diagnostics/quickfix panel | `plugins/editor.lua` |
-| [flash.nvim](https://github.com/folke/flash.nvim) | Enhanced search/jump | `plugins/editor.lua` |
-| [todo-comments.nvim](https://github.com/folke/todo-comments.nvim) | TODO/FIX/FIXME highlighting | `plugins/editor.lua` |
+### UI
+- **lualine** — Statusline
+- **bufferline** — Buffer/tab line
+- **noice** — UI for messages, cmdline, popupmenu
+- **snacks.nvim** — Swiss-army-knife utility plugin
+- **vimade** — Dim inactive windows
 
-## UI
+### Coding
+- **mini.pairs** — Auto-pair brackets/quotes
+- **mini.ai** — Enhanced textobjects
+- **mini.surround** — Surround operations
+- **nvim-ts-autotag** — Auto close/rename HTML tags
+- **lazydev** — Lua dev environment for Neovim config
+- **ts-worksheet-neovim** — TypeScript scratch evaluation
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [snacks.nvim](https://github.com/folke/snacks.nvim) | Unified UI framework | `plugins/ui.lua` |
-| [noice.nvim](https://github.com/folke/noice.nvim) | Command line, messages, notifications | `plugins/ui.lua` |
-| [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) | Statusline/winbar | `plugins/ui.lua` |
-| [bufferline.nvim](https://github.com/akinsho/bufferline.nvim) | Buffer tabs | `plugins/ui.lua` |
-| [vimade](https://github.com/tadaa/vimade) | Dim inactive windows | `plugins/ui.lua` |
+### Language
+- **render-markdown.nvim** — Render markdown in-buffer
 
-## Coding
+### Tools
+- **mason.nvim** — External tool installer
+- **conform.nvim** — Formatter manager
+- **nvim-lint** — Linter manager
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [mini.pairs](https://github.com/nvim-mini/mini.pairs) | Auto-pairs (with markdown backtick override) | `plugins/coding.lua` |
-| [mini.ai](https://github.com/nvim-mini/mini.ai) | Enhanced text objects | `plugins/coding.lua` |
-| [mini.surround](https://github.com/nvim-mini/mini.surround) | Surround operations (gs prefix) | `plugins/coding.lua` |
-| [nvim-ts-autotag](https://github.com/windwp/nvim-ts-autotag) | Auto close/rename HTML/JSX tags | `plugins/coding.lua` |
-| [render-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim) | Markdown rendering (all modes) | `plugins/coding.lua` |
-| [lazydev.nvim](https://github.com/folke/lazydev.nvim) | Lua/Neovim dev support | `plugins/coding.lua` |
+### AI
+- **codecompanion.nvim** — AI code assistant
 
-## Tools
+### Utilities
+- **leetcode.nvim** — LeetCode integration
+- **checkmate.nvim** — Markdown checkbox management
+- **uv.nvim** — Python uv integration
 
-| Plugin | Purpose | Config |
-|---|---|---|
-| [mason.nvim](https://github.com/mason-org/mason.nvim) | LSP/tool binary manager | `plugins/tools.lua` |
-| [conform.nvim](https://github.com/stevearc/conform.nvim) | Formatting engine | `plugins/tools.lua` |
-| [nvim-lint](https://github.com/mfussenegger/nvim-lint) | Async linting | `plugins/tools.lua` |
-| [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim) | AI assistant (DeepSeek Reasoner) | `plugins/tools.lua` |
-| [leetcode.nvim](https://github.com/kawre/leetcode.nvim) | LeetCode (CN, TypeScript) | `plugins/tools.lua` |
-| [checkmate.nvim](https://github.com/bngarren/checkmate.nvim) | Todo checkboxes in markdown | `plugins/tools.lua` |
-| [ts-worksheet-neovim](https://github.com/typed-rocks/ts-worksheet-neovim) | Run JS/TS inline (bun runtime) | `plugins/tools.lua` |
-| [uv.nvim](https://github.com/benomahony/uv.nvim) | Python uv integration | `plugins/tools.lua` |
+## PackChanged Hooks
 
-## Plugin Count
+- **blink.cmp**: runs `cargo build --release` after update
+- **nvim-treesitter**: runs `:TSUpdate` after update
 
-**Total: 35 plugins** (4 deps + 3 colorschemes + 2 treesitter + 2 completion + 7 editor + 5 UI + 6 coding + 8 tools - 2 overlap = 35 unique)
+## Ghostty Support
+
+Ghostty terminal is supported via an additional runtime path entry.
+
+## Disabled Built-ins
+
+Only 4 built-in plugins are disabled:
+1. `netrwPlugin`
+2. `rplugin`
+3. `tohtml`
+4. `tutor`
+
+## Cleanup
+
+- Deferred cleanup of inactive/unused plugin directories
+- `:PlugSync` command available for manual sync
+
+## blink.cmp Details
+
+- **Fuzzy matching**: Rust implementation (`prebuilt_binaries.download = false`, built from source)
+- **Sources**: lsp, path, snippets, buffer; Lua filetypes add lazydev source
+- **Keymap preset**: `enter`
+  - `C-y` = select_and_accept
+  - `C-l` = show completions
+- **Cmdline**: `auto_show` enabled for `:` commands; `ghost_text` for search
+- **Completion menu**: rounded border, no scrollbar
+
+## Snacks Features
+
+dashboard, animate, scope, bigfile, quickfile, scroll, indent, input, notifier, statuscolumn, words, lazygit, dim, image (enabled), explorer (replace_netrw), picker
+
+## Other Coding Plugin Details
+
+- **treesitter-context**: Sticky context lines at top of buffer
+- **mini.pairs**: Includes markdown triple-backtick override
+- **mini.ai**: Custom textobjects:
+  - `o` = block
+  - `f` = function
+  - `c` = class
+  - `t` = tag
+  - `d` = digit
+  - `e` = word
+  - `u`/`U` = function_call
+- **mini.surround**: Uses `gs` prefix (not default `s`)
+- **nvim-ts-autotag**: Auto close/rename HTML-like tags
+- **render-markdown**: Render modes: n (normal), c (command), t (terminal), i (insert)
+- **lazydev**: Configured with snacks and luv library paths
+- **ts-worksheet**: TypeScript scratch evaluation in buffer

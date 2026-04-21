@@ -1,140 +1,185 @@
 # Configuration Reference
 
-Detailed reference for Neovim 0.12+ configuration structure and options.
+This document describes the Neovim configuration structure, covering options,
+autocommands, diagnostics, LSP settings, colorscheme synchronization, and
+statusline behavior.
 
-## Startup Sequence
+---
 
-```
-init.lua
-├── vim.loader.enable()             # Bytecode cache
-├── vim.g.mapleader = " "           # Leader keys (before plugins)
-├── vim.g.maplocalleader = "\\"
-├── safe_require("config.options")  # vim.opt settings, filetype additions
-├── safe_require("config.hack")     # Diagnostic blacklist filter
-├── safe_require("plugins")         # vim.pack.add() + plugin configs
-│   ├── vim.pack.add({...})         # Install/load plugins
-│   ├── treesitter runtime bridge   # Prepend ts runtime to rtp
-│   ├── PackChanged hooks           # blink.cmp cargo build, TSUpdate
-│   ├── Ghostty rtp support         # If TERMINAL == "ghostty"
-│   ├── Disabled built-ins          # gzip, netrwPlugin, etc.
-│   ├── Deferred cleanup            # Remove inactive plugins (300ms)
-│   ├── :PlugSync command           # Manual cleanup + update
-│   └── Plugin configs              # colorscheme → ui → editor → coding → tools
-├── safe_require("config.lsp")      # Mason PATH, diagnostics, vim.lsp.enable()
-├── safe_require("config.keymaps")  # All keybindings
-└── safe_require("config.autocmds") # Autocommands
-```
-
-`safe_require()` defers errors to `UIEnter` so one module's failure doesn't block the rest.
-
-## Options (config/options.lua)
+## Options (`config/options.lua`)
 
 ### Global Variables
 
-| Variable | Value | Purpose |
-|---|---|---|
-| `snacks_animate` | `true` | Enable Snacks animations |
-| `editorconfig` | `true` | Respect .editorconfig |
-| `transparent_enabled` | `true` | Transparent background |
-| `autoformat` | `true` | Format on save |
-| `todopath` | `stdpath("data")/snacks/todo/todo.md` | Global todo file |
-| `loaded_perl_provider` | `0` | Disable Perl provider |
-| `loaded_ruby_provider` | `0` | Disable Ruby provider |
-| `python3_host_prog` | `/opt/homebrew/bin/python3` | Python 3 path |
-| `markdowns` | `{"markdown","Avante","codecompanion",...}` | Markdown-like filetypes |
-| `markdown_recommended_style` | `0` | Disable recommended markdown style |
-
-### Key Options
-
-| Option | Value | Notes |
-|---|---|---|
-| `clipboard` | `unnamedplus` (not over SSH) | System clipboard |
-| `scrolloff` | Dynamic (window_height/4, min 4) | Calculated at startup |
-| `shiftwidth`/`tabstop`/`softtabstop` | `2` | 2-space indent |
-| `expandtab` | `true` | Spaces not tabs |
-| `conceallevel` | `3` | Full conceal |
-| `laststatus` | `0` (set to `3` after Snacks loads) | Global statusline |
-| `showtabline` | `0` | Hidden by default |
-| `formatexpr` | `conform.formatexpr()` | Use conform for gq |
-| `grepprg` | `rg --vimgrep` | Ripgrep |
-| `smoothscroll` | `true` | Smooth scroll |
-| `undofile` | `true` | Persistent undo |
-| `updatetime` | `200` | Faster CursorHold |
-| `timeoutlen` | `300` | Key sequence timeout |
-| `swapfile` | `false` | No swap files |
-| `modeline` | `false` | Disabled for security |
-| `termsync` | `false` (in tmux only) | Prevent double-sync ghosting |
-
-### Filetype Additions
-
-```lua
-vim.filetype.add({
-  extension = { mdx = "mdx" },
-  pattern = {
-    ["compose.*%.ya?ml"] = "yaml.docker-compose",
-    ["docker%-compose.*%.ya?ml"] = "yaml.docker-compose",
-  },
-})
-```
-
-### Paste Guard
-
-Custom `vim.paste` override: returns `false` for non-modifiable buffers to prevent E21.
+| Variable | Value |
+|---|---|
+| `snacks_animate` | `true` |
+| `editorconfig` | `true` |
+| `transparent_enabled` | `true` |
+| `autoformat` | `true` |
+| `todopath` | `vim.fn.stdpath("data") .. "/snacks/todo/todo.md"` |
+| `loaded_perl_provider` | `0` (disabled) |
+| `loaded_ruby_provider` | `0` (disabled) |
+| `python3_host_prog` | `"/opt/homebrew/bin/python3"` |
+| `markdowns` | `{"markdown", "Avante", "codecompanion", "octo", "grug-far-help", "checkhealth", "mdx"}` |
 
 ### Transparent Background Bootstrap
 
-Before colorscheme loads, sets `Normal`, `NormalNC`, `MsgArea`, `MsgSeparator`, `StatusLine`, `StatusLineNC` to `bg=NONE, fg=NONE` to suppress visual flash during startup.
+Sets the following highlight groups to `bg=NONE fg=NONE` at startup:
 
-## Autocommands (config/autocmds.lua)
+- `Normal`
+- `NormalNC`
+- `MsgArea`
+- `MsgSeparator`
+- `StatusLine`
+- `StatusLineNC`
 
-| Event | Group | Purpose |
+### Editor Options
+
+| Option | Value | Notes |
 |---|---|---|
-| `FocusGained`, `TermClose`, `TermLeave` | checktime | Auto-reload changed files |
-| `TextYankPost` | highlight_yank | Flash yanked text |
-| `VimResized` | resize_splits | Equalize splits on resize |
-| `BufReadPost` | last_loc | Restore cursor position |
-| `FileType` (qf, help, etc.) | close_with_q | Close with `q` key |
-| `FileType` (man) | man_unlisted | Mark man pages as unlisted |
-| `FileType` (text, markdown, etc.) | wrap_spell | Enable wrap + spell |
-| `FileType` (json, jsonc, json5) | json_conceal | Set conceallevel=0 |
-| `BufWritePre` | auto_create_dir | Auto-create parent dirs |
-| `FileType` (markdowns) | markdown_linebreak | Disable linebreak |
-| `BufReadPre`, `BufNewFile` | undo_file_check | Disable undofile for long paths (>255 chars, E828 on macOS) |
-| `BufNewFile` | new_file_indent | Fix Snacks indent guide for new files |
+| `scrolloff` | dynamic | `math.max(4, math.floor(vim.o.lines / 4) - 1)` |
+| `conceallevel` | `3` | |
+| `spelllang` | `{"en", "cjk"}` | |
+| `softtabstop` | `2` | |
+| `numberwidth` | `2` | |
+| `listchars` | `"tab:▓░,trail:•,extends:»,precedes:«,nbsp:░"` | |
+| `showcmd` | `false` | |
+| `modeline` | `false` | |
+| `swapfile` | `false` | |
+| `ruler` | `false` | |
+| `foldtext` | `""` (empty string) | |
+| `showtabline` | `0` | |
+| `cursorlineopt` | `"both"` | |
+| `laststatus` | `0` | Hidden during startup; changed to `3` after snacks loads |
+| `formatexpr` | `"v:lua.require'conform'.formatexpr()"` | |
 
-## Utility Functions (config/util.lua)
+`inccommand` is **not** set (removed from config).
 
-| Function | Purpose |
+### Tmux-Specific
+
+When running inside tmux, `termsync` is set to `false`.
+
+### Filetype Additions
+
+- The `mdx` extension is recognized.
+- Docker Compose YAML patterns are registered.
+
+### Paste Guard
+
+`nvim_put` is skipped in non-modifiable buffers to avoid the `E21` error.
+
+---
+
+## Autocommands (`config/autocmds.lua`)
+
+| Autocmd | Event(s) | Description |
+|---|---|---|
+| `checktime` | `FocusGained`, `TermClose`, `TermLeave` | Checks if files changed outside Neovim |
+| `highlight_yank` | `TextYankPost` | Highlights yanked text via `vim.hl.on_yank()` |
+| `resize_splits` | `VimResized` | Equalizes splits on terminal resize |
+| `last_loc` | `BufReadPost` | Restores last cursor position (excludes `gitcommit`) |
+| `close_with_q` | `FileType` | Maps `q` to close for specific filetypes (see below) |
+| `man_unlisted` | `FileType` | Sets man pages as unlisted buffers |
+| `wrap_spell` | `FileType` | Enables wrap for text, plaintex, typst, gitcommit, markdown; enables spell for all **except** markdown |
+| `json_conceal` | `FileType` | Sets `conceallevel=0` for `json`, `jsonc`, `json5` |
+| `auto_create_dir` | `BufWritePre` | Creates parent directories before writing a file |
+| `markdown_linebreak` | `FileType` | Sets `linebreak=false` for all `markdowns` filetypes |
+| `undo_file_check` | — | Disables `undofile` for paths where the filename exceeds 255 chars (macOS `E828` fix) |
+| `new_file_indent` | — | Fixes snacks indent guide rendering for new files |
+| `formatoptions` | `FileType` | Overrides formatoptions to `"jcroqlnt"` after ftplugins run |
+
+### `close_with_q` Filetypes
+
+`checkhealth`, `dbout`, `gitsigns.blame`, `grug-far`, `help`, `lspinfo`,
+`neotest-*`, `notify`, `qf`, `snacks_win`, `startuptime`
+
+---
+
+## Diagnostics (`config/lsp.lua`)
+
+### Display Settings
+
+```lua
+{
+  underline = false,
+  virtual_lines = false,
+  virtual_text = {
+    spacing = 0,
+    current_line = true,
+  },
+  float = {
+    focusable = true,
+    style = "minimal",
+    border = "rounded",
+    source = true,
+  },
+  severity_sort = true,
+}
+```
+
+### Diagnostic Signs
+
+| Severity | Icon |
 |---|---|
-| `M.root()` | Find root via `.git` or `lua` marker, fallback `vim.uv.cwd()` |
-| `M.git_root()` | Find root via `.git` only |
-| `M.has_eslint_config(path)` | Check if package.json has `eslintConfig` field |
-| `M.get_file_path(filenames, opts)` | Walk upward to find config file, supports `for_eslint` and `ensure_package` |
-| `M.format_snippet_json(args)` | Convert selected lines to JSON snippet format (`:AddQuotes`) |
-| `M.set_hl(hl, delay)` | Set highlight, optionally deferred |
-| `M.icons` | Diagnostic and git icons |
+| ERROR |  |
+| WARN |  |
+| INFO |  |
+| HINT | 󰌶 |
 
-## Diagnostic Blacklist (config/hack.lua)
+---
 
-Overrides `vim.diagnostic.set` to filter noisy diagnostics:
+## Diagnostic Blacklist (`config/hack.lua`)
 
-| Source | Filter |
+A monkey-patch on `vim.diagnostic.set` filters out noisy diagnostics.
+
+### eslint_d
+
+Suppressed message patterns:
+
+- `"path::String"`
+- `"projectService"`
+
+### TypeScript
+
+Suppressed diagnostic codes: `7016`, `80001`, `80006`, `80007`, `7044`, `1149`
+
+Suppressed message pattern: `"File is a CommonJS module"`
+
+---
+
+## Global LSP Settings (`config/lsp.lua`)
+
+- **Capabilities**: Advertises `workspace.fileOperations` support (`didRename`,
+  `willRename`).
+- **on_attach**: Disables `semanticTokensProvider` for all servers.
+- **Log level**: Set to `OFF`.
+- **showReferences handler**: The `editor.action.showReferences` handler is
+  redirected to Trouble's qflist.
+
+---
+
+## Colorscheme Synchronization (`plugins/colorscheme.lua`)
+
+The colorscheme is **tokyonight** with mode-specific transparent settings.
+
+### Detection Methods
+
+| Environment | Method |
 |---|---|
-| `eslint_d` | Messages matching `path::String` |
-| `eslint_d` | Messages matching `projectService` |
-| `ts` | `File is a CommonJS module` |
-| `ts` | Codes: 7016 (no type declaration), 80001 (convert to ES module), 80006, 80007, 2305, 6387, 7044, 1149 |
+| macOS initial | Synchronous detection via `defaults read -g AppleInterfaceStyle` |
+| Inside tmux | Event-driven `fs_event` watch on `~/.local/state/theme/mode` |
+| Outside tmux | 15-second polling fallback |
 
-## ETH Price Ticker (config/price.lua)
+### Custom Highlights
 
-Rotates between 3 API endpoints with randomized User-Agent:
+Applied via a `ColorScheme` autocmd after the theme loads.
 
-1. **Binance**: `/api/v3/ticker/price?symbol=ETHUSDT`
-2. **CoinGecko**: `/api/v3/simple/price?ids=ethereum&vs_currencies=usd`
-3. **Kraken**: `/0/public/Ticker?pair=ETHUSD`
+---
 
-- Refresh interval: 6000ms
-- Timeout: 10000ms
-- Deferred setup: starts after `UIEnter` to avoid blocking startup
-- Display: `Ξ {price}` in lualine_x
-- Toggle: `<leader>cUp`
+## Statusline
+
+- `laststatus` is set to `0` in `config/options.lua` to hide the statusline
+  during startup.
+- After snacks loads (in `plugins/ui.lua`), `laststatus` is changed to `3`
+  (global statusline).
+- `statuscolumn` is also configured after snacks loads.
