@@ -1,6 +1,21 @@
+---
+name: neovim
+description: |
+  Neovim 0.12+ configuration knowledge base at ~/dotfiles/.config/nvim.
+  vim.pack (native, NOT lazy.nvim), dual TS LSP (tsgo + vtsls),
+  blink.cmp, snacks.nvim, conform.nvim, nvim-lint, 16 LSP servers.
+  Use when: modifying/debugging/extending this Neovim config,
+  adding LSP servers, fixing diagnostics, changing keybindings,
+  plugin management, formatter/linter setup, troubleshooting
+  TS server selection, or any question about this Neovim setup.
+  Trigger on: nvim, neovim, vim config, LSP config, keybindings,
+  plugin install, formatter, linter, tsgo, vtsls, blink.cmp,
+  snacks.nvim, conform, mason, treesitter, colorscheme.
+---
+
 # Neovim Configuration Skill
 
-> **Version 2.1.0** | 2026-04-21
+> **Version 2.1.0** | 2026-04-22
 
 ## Overview
 
@@ -136,7 +151,7 @@ Selection logic uses helpers from `ts_util.lua`:
 - **vtsls on_attach**: Registers `_typescript.moveToFileRefactoring` command handler. maxTsServerMemory = `1024 * 8` (8 GB).
 - **vue_ls on_attach**: Disables overlapping capabilities (definitionProvider, referencesProvider, implementationProvider, typeDefinitionProvider, renameProvider) to avoid conflicts with tsgo/vtsls.
 
-## Key Mappings
+## Key Mappings (highlights)
 
 | Mapping | Mode | Action |
 |---|---|---|
@@ -150,6 +165,8 @@ Selection logic uses helpers from `ts_util.lua`:
 | `jk` | i | Escape from insert mode |
 
 **Not configured**: jj escape, `<Esc><Esc>` terminal escape, `<A-j>`/`<A-k>` line movement.
+
+Complete keybinding list → `references/keybindings.md`.
 
 ## Formatters (conform.nvim)
 
@@ -198,26 +215,21 @@ lua-language-server, vtsls, tsgo, html-lsp, css-lsp, css-variables-language-serv
 - Custom `is-filetype?` predicate
 - Language registrations: zsh → bash, checkhealth → markdown, mdx → markdown
 
-## Detailed References
+## When to Consult References
 
-| File | Purpose |
+Use these reference files for detailed information. Read the relevant file based on what you need — do not read all of them at once.
+
+| Question domain | Reference file |
 |---|---|
-| [init.lua](~/dotfiles/.config/nvim/init.lua) | Entry point, safe_require chain |
-| [lua/config/options.lua](~/dotfiles/.config/nvim/lua/config/options.lua) | Vim options |
-| [lua/config/hack.lua](~/dotfiles/.config/nvim/lua/config/hack.lua) | Diagnostic blacklist, monkey-patches |
-| [lua/config/lsp.lua](~/dotfiles/.config/nvim/lua/config/lsp.lua) | LSP enable list, handlers, showReferences → Trouble |
-| [lua/config/keymaps.lua](~/dotfiles/.config/nvim/lua/config/keymaps.lua) | Key mappings |
-| [lua/config/autocmds.lua](~/dotfiles/.config/nvim/lua/config/autocmds.lua) | Autocommands, formatoptions override |
-| [lua/config/ts_util.lua](~/dotfiles/.config/nvim/lua/config/ts_util.lua) | TS utilities (bun_cmd, mason_tsdk, find_project_root, etc.) |
-| [lua/config/util.lua](~/dotfiles/.config/nvim/lua/config/util.lua) | General utilities |
-| [lua/config/constant.lua](~/dotfiles/.config/nvim/lua/config/constant.lua) | Constants |
-| [lua/plugins/init.lua](~/dotfiles/.config/nvim/lua/plugins/init.lua) | Plugin declarations |
-| [lua/plugins/coding.lua](~/dotfiles/.config/nvim/lua/plugins/coding.lua) | Coding plugins |
-| [lua/plugins/colorscheme.lua](~/dotfiles/.config/nvim/lua/plugins/colorscheme.lua) | Colorscheme + dark mode detection |
-| [lua/plugins/editor.lua](~/dotfiles/.config/nvim/lua/plugins/editor.lua) | Editor plugins |
-| [lua/plugins/tools.lua](~/dotfiles/.config/nvim/lua/plugins/tools.lua) | Tool plugins (mason, conform, nvim-lint) |
-| [lua/plugins/ui.lua](~/dotfiles/.config/nvim/lua/plugins/ui.lua) | UI plugins (lualine, bufferline, noice, snacks) |
-| [lsp/tsgo.lua](~/dotfiles/.config/nvim/lsp/tsgo.lua) | tsgo server config + codeLens workaround |
-| [lsp/vtsls.lua](~/dotfiles/.config/nvim/lsp/vtsls.lua) | vtsls server config + moveToFileRefactoring |
-| [lsp/vue_ls.lua](~/dotfiles/.config/nvim/lsp/vue_ls.lua) | Vue LS config + capability disabling |
-| [after/plugin/snacks-image-fix.lua](~/dotfiles/.config/nvim/after/plugin/snacks-image-fix.lua) | Image visibility fix after floating windows |
+| Keybindings, "what does X key do", adding/changing mappings | `references/keybindings.md` |
+| LSP servers, TS server selection, ts_util module, server configs | `references/lsp.md` |
+| Vim options, autocommands, diagnostics, colorscheme sync | `references/configuration.md` |
+| Plugin list, blink.cmp config, snacks features, plugin details | `references/plugins.md` |
+| Formatters, linters, Mason packages, external tool deps | `references/tools.md` |
+| Something not working, debugging, common errors | `references/troubleshooting.md` |
+| Startup optimization, profiling, memory limits | `references/performance.md` |
+| Neovim 0.12 API changes, migration from older versions | `references/migration-0.12.md` |
+
+## Source Files
+
+The actual configuration source code lives at `~/dotfiles/.config/nvim/` (symlinked to `~/.config/nvim/`). Read source files directly when reference docs lack the detail needed for a specific modification.
