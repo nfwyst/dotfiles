@@ -3,6 +3,37 @@
 Complete reference of all keybindings defined in the Neovim configuration.
 Leader key is `<Space>`.
 
+## Sections
+
+- [General](#general)
+- [Window Navigation](#window-navigation)
+- [Buffer Navigation](#buffer-navigation)
+- [Buffer Management](#buffer-management)
+- [Editing](#editing)
+- [Search & Replace](#search--replace)
+- [Diagnostics](#diagnostics)
+- [File](#file)
+- [Toggle Options](#toggle-options-leaderu)
+- [Windows & Tabs](#windows--tabs)
+- [Snacks Picker — General](#snacks-picker--general)
+- [Snacks Picker — Files](#snacks-picker--files)
+- [Snacks Picker — Search](#snacks-picker--search)
+- [LSP](#lsp)
+- [Git](#git)
+- [Git Hunks](#git-hunks-gitsigns)
+- [Git Conflict](#git-conflict-resolvenvim)
+- [Trouble](#trouble)
+- [Snacks Utilities](#snacks-utilities)
+- [Terminal](#terminal)
+- [Save & Quit](#save--quit)
+- [Mini.surround](#minisurround)
+- [Flash](#flash)
+- [Noice](#noice)
+- [Marks & Miscellaneous](#marks--miscellaneous)
+- [Quickfix Overrides](#quickfix-overrides)
+- [CodeCompanion](#codecompanion)
+- [Leetcode](#leetcode)
+
 ## General
 
 | Key | Mode | Action |
