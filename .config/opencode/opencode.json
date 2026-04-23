@@ -18,6 +18,7 @@
     "doom_loop": "allow"
   },
   "plugin": [
+    "./plugins/graphify.js",
     "./plugins/rtk.ts",
     "opencode-mem@latest",
     "opencode-plugin-preload-skills@latest",
@@ -34,7 +35,7 @@
         "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}",
         "BUN_CONFIG_REGISTRY": "https://bnpm.byted.org/"
       },
-      "timeout": 1800000,
+      "timeout": 120000,
       "enabled": true
     },
     "meego": {
@@ -51,8 +52,8 @@
         "DOTENV_CONFIG_QUIET": "1",
         "BUN_CONFIG_REGISTRY": "https://bnpm.byted.org/"
       },
-      "timeout": 1800000,
-      "enabled": true
+      "timeout": 120000,
+      "enabled": false
     },
     "tradingview-mcp": {
       "type": "local",
@@ -67,7 +68,7 @@
         "ALPHA_VANTAGE_API_KEY": "{env:ALPHA_VANTAGE_API_KEY}"
       },
       "timeout": 120000,
-      "enabled": true
+      "enabled": false
     },
     "yahoo-finance-mcp": {
       "type": "local",

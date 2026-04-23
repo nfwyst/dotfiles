@@ -77,3 +77,12 @@
 ## 项目特定规则
 
 - 字节前端项目中，新增文案须添加 `###` 前缀（Starling 识别标记）。
+
+## graphify
+
+若目录中含 `graphify-out/` 知识图，遵循：
+
+- 回答架构, 依赖, 核心逻辑, 跨模块问题前，先读 `graphify-out/GRAPH_REPORT.md` 获取 god nodes 与结构信息。
+- 若存在 `graphify-out/wiki/index.md`，优先读 wiki 而非扫原始文件。
+- 「X 与 Y 如何关联」类问题：优先用 `graphify query "<q>"` / `graphify path "<A>" "<B>"` / `graphify explain "<concept>"`,遍历 EXTRACTED + INFERRED 边,优于 rg/fd/grep。
+- 本次会话修改代码后, 运行 `graphify update .` 刷新图(AST only,零 LLM 成本)。

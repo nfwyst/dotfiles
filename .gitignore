@@ -60,3 +60,4 @@ tests/
 .openclaw/completions/
 .openclaw/flows/
 .openclaw/workspace/.openclaw/workspace-state.json
+graphify-out/
