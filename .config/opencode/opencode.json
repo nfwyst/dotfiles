@@ -84,33 +84,6 @@
     }
   },
   "provider": {
-    "kimi-for-coding": {
-      "models": {
-        "k2p5": {
-          "limit": {
-            "context": 262144,
-            "output": 262144
-          }
-        }
-      }
-    },
-    "baiduqianfancodingplan": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Qianfan Coding Plan",
-      "options": {
-        "baseURL": "https://qianfan.baidubce.com/v2/coding",
-        "apiKey": "{env:BAIDU_QIANFAN_API_KEY}"
-      },
-      "models": {
-        "qianfan-code-latest": {
-          "name": "Qianfan Code Latest",
-          "limit": {
-            "context": 202752,
-            "output": 131072
-          }
-        }
-      }
-    },
     "opencode": {
       "blacklist": [
         "big-pickle",
@@ -150,36 +123,12 @@
         "kimi-k2.6",
         "minimax-m2.7",
         "ling-2.6-flash-free",
-        "hy3-preview-free"
+        "hy3-preview-free",
+        "gpt-5.5",
+        "gpt-5.5-pro"
       ]
     },
     "opencode-go": {
-      "models": {
-        "qwen3.6-plus": {
-          "limit": {
-            "context": 1000000,
-            "output": 65536
-          }
-        },
-        "kimi-k2.6": {
-          "limit": {
-            "context": 262144,
-            "output": 262144
-          }
-        },
-        "glm-5.1": {
-          "limit": {
-            "context": 200000,
-            "output": 131072
-          }
-        },
-        "minimax-m2.7": {
-          "limit": {
-            "context": 205000,
-            "output": 131072
-          }
-        }
-      },
       "blacklist": [
         "mimo-v2-omni",
         "minimax-m2.5",
@@ -187,14 +136,13 @@
         "glm-5",
         "kimi-k2.5",
         "mimo-v2-pro",
-        "mimo-v2.5"
+        "mimo-v2.5",
+        "deepseek-v4-flash"
       ]
+    },
+    "deepseek": {
+      "blacklist": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"]
     }
   },
-  "disabled_providers": [
-    "zhipuai-coding-plan",
-    "kimi-for-coding",
-    "baiduqianfancodingplan",
-    "deepseek"
-  ]
+  "disabled_providers": ["zhipuai-coding-plan", "kimi-for-coding"]
 }
