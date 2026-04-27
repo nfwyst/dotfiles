@@ -96,6 +96,13 @@ require("snacks").setup({
   scroll = {
     enabled = true,
     animate_repeat = { delay = 50, duration = { step = 2, total = 20 }, easing = "linear" },
+    filter = function(buf)
+      -- Preserve stock escape hatches: :lua vim.g.snacks_scroll = false / vim.b.snacks_scroll = false
+      if vim.g.snacks_scroll == false or vim.b[buf].snacks_scroll == false then return false end
+      if vim.b[buf].bigfile then return false end
+      if vim.api.nvim_buf_line_count(buf) > 5000 then return false end
+      return vim.bo[buf].buftype ~= "terminal"
+    end,
   },
   indent = { enabled = true },
   input = { enabled = true },
@@ -192,7 +199,6 @@ require("snacks").setup({
 vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
 
 -- Snacks keymaps for todos
-vim.keymap.set("n", "<leader>T", "", { desc = "Checkmate [T]odos" })
 vim.keymap.set("n", "<leader>T.", gen_get_todo(true), { desc = "Toggle Scratch Todo" })
 vim.keymap.set("n", "<leader>Tl", gen_get_todo(false), { desc = "Toggle Local Scratch Todo" })
 

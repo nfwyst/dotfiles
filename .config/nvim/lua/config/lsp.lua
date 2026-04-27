@@ -32,6 +32,9 @@ vim.diagnostic.config({
 -- Global LSP settings for all servers
 vim.lsp.config("*", {
   capabilities = {
+    general = {
+      positionEncodings = { "utf-16" },
+    },
     workspace = {
       fileOperations = {
         didRename = true,

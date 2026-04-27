@@ -66,32 +66,67 @@ local function format_price(price)
   return price and string.format("Ξ %.2f", price) or ""
 end
 
+-- Prefer vim.net.request (Neovim 0.12+ built-in async HTTP GET).
+-- Falls back to vim.system+curl on older runtimes for safety.
+local has_net = vim.net and type(vim.net.request) == "function"
+
 local function fetch_price(callback)
   cache.last_api_index = (cache.last_api_index % #api_endpoints) + 1
   local api = api_endpoints[cache.last_api_index]
   local user_agent = user_agents[math.random(#user_agents)]
 
-  local function on_result(result)
-    if result.code == 0 then
-      local price = api.parser(result.stdout)
-      if price then
-        update_cache(price)
-        callback(price)
-        return
-      elseif result.stderr and result.stderr ~= "" then
-        vim.notify(" price API error: " .. result.stderr, vim.log.levels.WARN)
-      end
-    end
-    callback(nil)
+  local done = false
+  local function finish(price)
+    if done then return end
+    done = true
+    callback(price)
   end
 
+  if has_net then
+    local job = vim.net.request(
+      api.url,
+      {
+        retry = 0, -- we rotate endpoints ourselves; built-in retry would slow rotation
+        headers = { ["User-Agent"] = user_agent },
+      },
+      function(err, res)
+        if err or not res then
+          return finish(nil)
+        end
+        local price = api.parser(res.body)
+        if price then
+          update_cache(price)
+          return finish(price)
+        end
+        finish(nil)
+      end
+    )
+    -- Enforce request timeout (vim.net.request has no native timeout option).
+    vim.defer_fn(function()
+      if not done and job then
+        pcall(job.close, job)
+        finish(nil)
+      end
+    end, config.timeout)
+    return
+  end
+
+  -- Legacy fallback
   local args = {
     "-s", "-L", "-m", tostring(config.timeout / 1000),
     "-H", string.format("User-Agent: %s", user_agent),
     api.url,
   }
-
-  vim.system({ "curl", unpack(args) }, { timeout = config.timeout }, on_result)
+  vim.system({ "curl", unpack(args) }, { timeout = config.timeout }, function(result)
+    if result.code == 0 then
+      local price = api.parser(result.stdout)
+      if price then
+        update_cache(price)
+        return finish(price)
+      end
+    end
+    finish(nil)
+  end)
 end
 
 function M.get_price(callback)

@@ -86,10 +86,6 @@ local function get_by_cmdtype(search_val, cmd_val, default)
   return default
 end
 
--- Pre-load the Rust module so ensure_downloaded() hits the cache and skips download.
--- First install / update builds are handled by the PackChanged hook in init.lua.
-pcall(require, "blink.cmp.fuzzy.rust")
-
 require("blink.cmp").setup({
   completion = {
     accept = {
@@ -151,9 +147,11 @@ require("blink.cmp").setup({
       ["<c-l>"] = { "show", "fallback" },
       ["<c-e>"] = { "cancel", "fallback" },
     },
-    sources = function()
-      return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
-    end,
+    sources = {
+      default = function()
+        return get_by_cmdtype({ "buffer" }, { "cmdline", "lsp" }, {})
+      end,
+    },
     completion = {
       menu = {
         auto_show = function(ctx)
@@ -174,10 +172,6 @@ require("blink.cmp").setup({
   },
   fuzzy = {
     implementation = "rust",
-    prebuilt_binaries = {
-      download = false,
-      ignore_version_mismatch = true,
-    },
   },
 })
 

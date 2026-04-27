@@ -10,10 +10,8 @@ return {
   filetypes = {
     "javascript",
     "javascriptreact",
-    "javascript.jsx",
     "typescript",
     "typescriptreact",
-    "typescript.tsx",
   },
   -- Use root_dir function to prevent tsgo from starting in projects where
   -- vtsls should be used. This avoids the "start then kill" pattern that

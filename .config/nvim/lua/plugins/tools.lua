@@ -44,14 +44,28 @@ require("mason").setup({
   },
 })
 
--- Auto-install mason packages (deferred to avoid blocking startup)
+-- Auto-install mason packages (deferred to avoid blocking startup).
+-- Fast-path: if every ensure_installed package is already present, skip
+-- mr.refresh() entirely — that call does a network fetch of the registry.
 vim.defer_fn(function()
   local mr = require("mason-registry")
+  local opts = require("mason.settings").current
+  local ensure = opts.ensure_installed or {}
+
+  local pending = {}
+  for _, name in ipairs(ensure) do
+    local ok, pkg = pcall(mr.get_package, name)
+    if not ok or not pkg:is_installed() then
+      table.insert(pending, name)
+    end
+  end
+
+  if #pending == 0 then return end
+
   mr.refresh(function()
-    local opts = require("mason.settings").current
-    for _, name in ipairs(opts.ensure_installed or {}) do
-      local pkg = mr.get_package(name)
-      if not pkg:is_installed() then
+    for _, name in ipairs(pending) do
+      local ok, pkg = pcall(mr.get_package, name)
+      if ok and not pkg:is_installed() then
         pkg:install()
       end
     end
@@ -160,11 +174,15 @@ require("lint").linters_by_ft = {
   markdown = { "vale" },
 }
 
--- Auto-lint on events
+-- Auto-lint on events. Scope to filetypes that actually have a linter
+-- so other buffers don't pay the require("lint") cost per keystroke-leave.
 vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
   group = vim.api.nvim_create_augroup("nvim_lint", { clear = true }),
-  callback = function()
-    require("lint").try_lint()
+  callback = function(ev)
+    local linters = require("lint").linters_by_ft[vim.bo[ev.buf].filetype]
+    if linters and #linters > 0 then
+      require("lint").try_lint()
+    end
   end,
 })
 
@@ -278,7 +296,6 @@ require("codecompanion").setup({
 
 vim.cmd([[cab cc CodeCompanion]])
 
-vim.keymap.set("n", "<leader>ac", "", { desc = "codeCompanion" })
 vim.keymap.set({ "n", "v" }, "<leader>acs", "<cmd>CodeCompanionActions<cr>", { desc = "CodeCompanion: Open Actions" })
 vim.keymap.set({ "n", "v" }, "<leader>act", "<cmd>CodeCompanionChat Toggle<cr>", { desc = "CodeCompanion: Toggle" })
 vim.keymap.set("v", "<leader>aca", "<cmd>CodeCompanionChat Add<cr>", { desc = "CodeCompanion: Add Selected Content" })
@@ -296,7 +313,6 @@ pcall(function()
   })
 end)
 
-vim.keymap.set("n", "<leader>cUl", "", { desc = "leet code" })
 vim.keymap.set("n", "<leader>cUlm", "<cmd>Leet<cr>", { desc = "Leet Code: Menu" })
 vim.keymap.set("n", "<leader>cUla", "<cmd>Leet random<cr>", { desc = "Leet Code: Random" })
 vim.keymap.set("n", "<leader>cUlc", "<cmd>Leet console<cr>", { desc = "Leet Code: Console" })

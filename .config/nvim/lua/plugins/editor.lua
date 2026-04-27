@@ -42,6 +42,7 @@ require("which-key").setup({
     { "<leader>g", group = "git" },
     { "<leader>gc", group = "conflict" },
     { "<leader>gh", group = "hunks" },
+    { "<leader>p", group = "plugins" },
     { "<leader>q", group = "quit/session" },
     { "<leader>s", group = "search" },
     { "<leader>sn", group = "noice" },
