@@ -32,6 +32,7 @@ if #errors > 0 then
       for _, err in ipairs(errors) do
         vim.notify("[init] " .. err, vim.log.levels.ERROR)
       end
+      errors = {}
     end,
   })
 end

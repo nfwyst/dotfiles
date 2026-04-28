@@ -15,35 +15,18 @@ local vue_plugin_path = vim.fn.stdpath("data")
   .. "/mason/packages/vue-language-server/node_modules/@vue/language-server"
 local vue_plugin = vim.fn.isdirectory(vue_plugin_path) == 1 and vue_plugin_path or nil
 
-local config = {
+local config = vim.tbl_deep_extend("force", ts_util.ts_common, {
   npm = bun_path,
   tsdk = tsdk,
   updateImportsOnFileMove = { enabled = "always" },
   suggest = {
     completeFunctionCalls = true,
   },
-  referencesCodeLens = {
-    enabled = true,
-    showOnAllFunctions = true,
-  },
-  implementationsCodeLens = {
-    enabled = true,
-    showOnInterfaceMethods = true,
-    showOnAllClassMethods = true,
-  },
-  inlayHints = {
-    enumMemberValues = { enabled = true },
-    functionLikeReturnTypes = { enabled = true },
-    parameterNames = { enabled = "literals" },
-    parameterTypes = { enabled = true },
-    propertyDeclarationTypes = { enabled = true },
-    variableTypes = { enabled = false },
-  },
   tsserver = {
     maxTsServerMemory = 1024 * 8,
     nodePath = bun_path,
   },
-}
+})
 
 return {
   cmd = ts_util.bun_cmd(

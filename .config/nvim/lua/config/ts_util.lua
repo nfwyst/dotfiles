@@ -382,12 +382,18 @@ end
 function M.bun_cmd(mason_pkg, js_entry, extra_args)
   local cache_key = mason_pkg .. "|" .. js_entry
   local args = extra_args or {}
+  -- Fallback to node when bun is not available on PATH
+  local runner = vim.fn.executable("bun") == 1 and "bun" or "node"
   if _cmd_cache[cache_key] == nil then
     local js = _data_dir .. "/mason/packages/" .. mason_pkg .. "/" .. js_entry
     _cmd_cache[cache_key] = vim.uv.fs_stat(js) and js or false
   end
   if _cmd_cache[cache_key] then
-    return vim.list_extend({ "bun", "run", "--bun", _cmd_cache[cache_key] }, args)
+    if runner == "bun" then
+      return vim.list_extend({ "bun", "run", "--bun", _cmd_cache[cache_key] }, args)
+    else
+      return vim.list_extend({ "node", _cmd_cache[cache_key] }, args)
+    end
   end
   return vim.list_extend({ mason_pkg }, args)
 end
@@ -403,5 +409,35 @@ function M.mason_tsdk()
   end
   return nil
 end
+
+
+-- ===================================================================
+-- Shared TS server settings (tsgo + vtsls)
+-- ===================================================================
+-- These capability/preference blocks are identical between tsgo.lua and
+-- vtsls.lua; centralize them here so drift between the two servers is
+-- impossible by construction.
+M.ts_common = {
+  referencesCodeLens = {
+    enabled = true,
+    showOnAllFunctions = true,
+  },
+  implementationsCodeLens = {
+    enabled = true,
+    showOnInterfaceMethods = true,
+    showOnAllClassMethods = true,
+  },
+  inlayHints = {
+    enumMemberValues = { enabled = true },
+    functionLikeReturnTypes = { enabled = true },
+    parameterNames = {
+      enabled = "literals",
+      suppressWhenArgumentMatchesName = true,
+    },
+    parameterTypes = { enabled = true },
+    propertyDeclarationTypes = { enabled = true },
+    variableTypes = { enabled = false },
+  },
+}
 
 return M

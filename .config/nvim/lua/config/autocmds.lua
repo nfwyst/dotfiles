@@ -125,7 +125,7 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = vim.g.markdowns,
   callback = function()
     vim.schedule(function()
-      vim.o.linebreak = false
+      vim.opt_local.linebreak = false
     end)
   end,
 })
@@ -144,14 +144,10 @@ vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 -- Fix indent guide for new files (snacks)
 vim.api.nvim_create_autocmd("BufNewFile", {
   group = augroup("new_file_indent"),
-  callback = function(event)
-    local bufnr = event.buf
-    if not vim.b[bufnr].is_new_file_fixed then
-      pcall(function()
-        Snacks.indent.enable()
-      end)
-    end
-    vim.b[bufnr].is_new_file_fixed = true
+  callback = function()
+    pcall(function()
+      Snacks.indent.enable()
+    end)
   end,
 })
 

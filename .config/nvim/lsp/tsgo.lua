@@ -102,27 +102,7 @@ return {
     end
   end,
   settings = {
-    typescript = {
-      referencesCodeLens = {
-        enabled = true,
-        showOnAllFunctions = true,
-      },
-      implementationsCodeLens = {
-        enabled = true,
-        showOnInterfaceMethods = true,
-        showOnAllClassMethods = true,
-      },
-      inlayHints = {
-        enumMemberValues = { enabled = true },
-        functionLikeReturnTypes = { enabled = true },
-        parameterNames = {
-          enabled = "literals",
-          suppressWhenArgumentMatchesName = true,
-        },
-        parameterTypes = { enabled = true },
-        propertyDeclarationTypes = { enabled = true },
-        variableTypes = { enabled = false },
-      },
+    typescript = vim.tbl_deep_extend("force", ts_util.ts_common, {
       suggest = {
         completeFunctionCalls = true,
         autoImports = true,
@@ -131,6 +111,6 @@ return {
         importModuleSpecifier = "shortest",
         preferTypeOnlyAutoImports = true,
       },
-    },
+    }),
   },
 }

@@ -170,8 +170,8 @@ for _, plugin in ipairs(disabled_builtins) do
   vim.g["loaded_" .. plugin] = 1
 end
 
--- Cleanup inactive plugins (fast, no network IO, safe on every startup)
-vim.defer_fn(function()
+-- Shared cleanup helper for inactive plugins
+local function cleanup_inactive_plugins(notify_fn)
   local ok, all = pcall(vim.pack.get)
   if not ok or not all then
     return
@@ -184,8 +184,18 @@ vim.defer_fn(function()
   end
   if #to_remove > 0 then
     pcall(vim.pack.del, to_remove, { confirm = false })
-    vim.notify("Cleaned up inactive plugins: " .. table.concat(to_remove, ", "), vim.log.levels.INFO)
+    local msg = "Cleaned up inactive plugins: " .. table.concat(to_remove, ", ")
+    if notify_fn then
+      notify_fn(msg)
+    else
+      vim.notify(msg, vim.log.levels.INFO)
+    end
   end
+end
+
+-- Cleanup inactive plugins (fast, no network IO, safe on every startup)
+vim.defer_fn(function()
+  cleanup_inactive_plugins()
 end, 300)
 
 -- :PlugSync — cleanup inactive + async parallel fetch + offline update
@@ -203,19 +213,9 @@ vim.api.nvim_create_user_command("PlugSync", function()
   sync_notify("Starting plugin sync...")
 
   -- 1) Cleanup inactive plugins
-  local ok_all, all = pcall(vim.pack.get)
-  if ok_all and all then
-    local to_remove = {}
-    for _, plug in ipairs(all) do
-      if not plug.active then
-        table.insert(to_remove, plug.spec.name)
-      end
-    end
-    if #to_remove > 0 then
-      pcall(vim.pack.del, to_remove, { confirm = false })
-      sync_notify("Cleaned up: " .. table.concat(to_remove, ", "))
-    end
-  end
+  cleanup_inactive_plugins(function(msg)
+    sync_notify(msg)
+  end)
 
   -- 2) Collect active plugins that have a git repo
   local _, plugs = pcall(vim.pack.get)

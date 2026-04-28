@@ -47,7 +47,7 @@ vim.lsp.config("*", {
   end,
 })
 
-vim.lsp.log.set_level(vim.log.levels.OFF)
+vim.lsp.log.set_level(vim.log.levels.WARN)
 vim.lsp.commands["editor.action.showReferences"] = function(command, ctx)
   ---@type lsp.Location[]
   local locations = command.arguments[3]

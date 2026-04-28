@@ -29,6 +29,30 @@
 - 不为假设场景补充额外兼容层、回退逻辑或过度防御。
 - 发现阻塞时优先定位根因，避免用跳过校验、绕过钩子或破坏性操作作为捷径。
 
+## Skill 缺失自动安装
+
+遇到 `Skill or command "<name>" not found` 时按以下流程处理:
+
+1. 执行 `bunx skills find <name>` 搜索候选。
+2. 选择策略(按优先级):
+   - 名字**完全匹配** `<name>` 且**安装量最多**的条目。
+   - 若均无完全匹配或候选为空, 停下列候选让用户决定, **禁止模糊匹配安装**。
+3. 回显即将执行的安装命令供用户 review, 随后执行: `bunx skills add <owner/repo@skill> -y`
+4. 安装完成后立即加载该 skill。
+
+## Edit 工具使用规范
+
+为规避 "Could not find oldString in the file" 匹配失败:
+
+- 每次 `edit` 前必须在同一轮先 `read` 目标文件,禁止凭记忆编辑。
+- `oldString` 必须**逐字节**从 `read` 输出拷贝,包含前导 tab/空格、尾随空白与行尾,禁止"按视觉对齐"推测缩进。
+- `oldString` 控制在 ≤ 5 行,选取文件中唯一的锚点片段。
+- `edit` 失败一次立即重新 `read`,用**更短**的 `oldString` 重试;连续失败 2 次改用 `patch`,`patch` 仍失败再兜底 `write` 整文件重写。
+- `write` 整文件兜底时:禁止省略注释/属性/空行,必须逐字节保留未改动部分;文件 ≥ 300 行禁止 `write`,停下报告由用户决策。
+- Rust / 严格缩进语言下,永不推断缩进,一律使用 `read` 返回的字节。
+- 怀疑文件含不可见字符(NBSP U+00A0、零宽空格、BOM)时,先 `rg -nP '[\x00-\x08\x0B\x0C\x0E-\x1F\u00A0\u200B-\u200D\uFEFF]'` 清理再编辑。
+- 若检测到文件在上次 `read` 之后被外部修改(format-on-save、其他进程),重新 `read` 后再 `edit`。
+
 ## Git 工作流
 
 - `push` 前先执行 `git pull --rebase`。

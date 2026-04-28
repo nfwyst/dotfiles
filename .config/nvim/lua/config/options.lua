@@ -50,7 +50,6 @@ opt.grepprg = "rg --vimgrep"
 opt.ignorecase = true
 opt.jumpoptions = "view"
 opt.laststatus = 0
-opt.showtabline = 0
 opt.linebreak = true
 opt.list = true
 opt.mouse = "a"
@@ -111,6 +110,7 @@ vim.filetype.add({
 })
 
 -- Guard paste handler: skip nvim_put in non-modifiable buffers (E21 fix)
+-- Nvim 0.12 still needs this for E21 in non-modifiable buffers
 local original_paste = vim.paste
 vim.paste = function(lines, phase)
   if not vim.bo.modifiable then

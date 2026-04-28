@@ -98,9 +98,15 @@ require("snacks").setup({
     animate_repeat = { delay = 50, duration = { step = 2, total = 20 }, easing = "linear" },
     filter = function(buf)
       -- Preserve stock escape hatches: :lua vim.g.snacks_scroll = false / vim.b.snacks_scroll = false
-      if vim.g.snacks_scroll == false or vim.b[buf].snacks_scroll == false then return false end
-      if vim.b[buf].bigfile then return false end
-      if vim.api.nvim_buf_line_count(buf) > 5000 then return false end
+      if vim.g.snacks_scroll == false or vim.b[buf].snacks_scroll == false then
+        return false
+      end
+      if vim.b[buf].bigfile then
+        return false
+      end
+      if vim.api.nvim_buf_line_count(buf) > 5000 then
+        return false
+      end
       return vim.bo[buf].buftype ~= "terminal"
     end,
   },
@@ -481,7 +487,6 @@ require("bufferline").setup({
     always_show_bufferline = false,
     truncate_names = false,
     max_prefix_length = 30,
-    -- offsets = { { filetype = "snacks_layout_box" } },
     name_formatter = function(bufinfo)
       local name = bufinfo.name or ""
       if name:match("^index$") or name:match("^index%..+") then

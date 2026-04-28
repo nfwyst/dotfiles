@@ -356,8 +356,120 @@ map({ "n", "x" }, "<leader>sW", function()
 end, { desc = "Visual selection or word (Root Dir)" })
 
 -- LSP picker keymaps
+-- `gd`: Goto Definition with "prefer source over .d.ts" policy.
+-- When multiple clients respond (e.g. tsgo returns `style-modules.d.ts` and
+-- cssmodules-ls returns the real `.less` file for `import styles from "./x.module.less"`),
+-- we drop .d.ts/.d.mts/.d.cts results if any non-declaration result exists.
+-- If only declaration files are available (e.g. `import { foo } from "lodash"`),
+-- we fall through to the full snacks picker (original behavior).
 map("n", "gd", function()
-  Snacks.picker.lsp_definitions()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local win = vim.api.nvim_get_current_win()
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = "textDocument/definition" })
+  if #clients == 0 then
+    return Snacks.picker.lsp_definitions()
+  end
+
+  local pending = #clients
+  local all = {} ---@type table[]
+
+  local function is_declaration(uri)
+    return uri:match("%.d%.[mc]?ts$") ~= nil
+  end
+
+  local function normalize_uri(uri)
+    if type(uri) ~= "string" or uri == "" then
+      return uri
+    end
+    if uri:match("^%a[%w+.%-]*:") then
+      return uri
+    end
+    if uri:sub(1, 1) == "/" then
+      return vim.uri_from_fname(uri)
+    end
+    return uri
+  end
+
+  -- Dedupe across clients (different clients often return the same Location;
+  -- e.g. tsgo + cssmodules-ls both point to the same `.less` file for a
+  -- `./x.module.less` import path).
+  local function key_of(loc)
+    local uri = loc.uri or loc.targetUri or ""
+    local range = loc.range or loc.targetSelectionRange or loc.targetRange or {}
+    local start = range.start or {}
+    return uri .. ":" .. (start.line or 0) .. ":" .. (start.character or 0)
+  end
+
+  local function dedupe(locs)
+    local seen, out = {}, {}
+    for _, loc in ipairs(locs) do
+      local k = key_of(loc)
+      if not seen[k] then
+        seen[k] = true
+        table.insert(out, loc)
+      end
+    end
+    return out
+  end
+
+  local function jump(loc)
+    local client = vim.lsp.get_clients({ bufnr = bufnr })[1]
+    local enc = (client and client.offset_encoding) or "utf-16"
+    vim.lsp.util.show_document(loc, enc, { focus = true })
+  end
+
+  local function show_list(locs)
+    local client = vim.lsp.get_clients({ bufnr = bufnr })[1]
+    local enc = (client and client.offset_encoding) or "utf-16"
+    local items = vim.lsp.util.locations_to_items(locs, enc)
+    vim.fn.setqflist({}, " ", { title = "LSP Definitions", items = items })
+    if pcall(function() Snacks.picker.qflist() end) then
+      return
+    end
+    vim.cmd("copen")
+  end
+
+  local function on_done()
+    if pending > 0 then
+      return
+    end
+    local unique = dedupe(all)
+    if #unique == 0 then
+      vim.notify("No definition found", vim.log.levels.INFO)
+      return
+    end
+    local preferred = vim.tbl_filter(function(loc)
+      return not is_declaration(loc.uri or loc.targetUri or "")
+    end, unique)
+    local use = (#preferred > 0) and preferred or unique
+    if #use == 1 then
+      jump(use[1])
+    else
+      show_list(use)
+    end
+  end
+
+  for _, client in ipairs(clients) do
+    local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+    client:request("textDocument/definition", params, function(err, result)
+      pending = pending - 1
+      if not err and result then
+        local list = vim.islist(result) and result or { result }
+        for _, loc in ipairs(list) do
+          if loc.uri then
+            loc.uri = normalize_uri(loc.uri)
+          end
+          if loc.targetUri then
+            loc.targetUri = normalize_uri(loc.targetUri)
+          end
+          if loc.uri or loc.targetUri then
+            table.insert(all, loc)
+          end
+        end
+      end
+      on_done()
+    end, bufnr)
+  end
 end, { desc = "Goto Definition" })
 map("n", "grr", function()
   Snacks.picker.lsp_references()
@@ -604,9 +716,6 @@ end, { desc = "Float Terminal (cwd)", silent = true })
 map("n", "<leader>fT", function()
   Snacks.terminal(vim.o.shell, { cwd = util.root() })
 end, { desc = "Float Terminal (Root Dir)", silent = true })
-map({ "n", "t" }, "<c-_>", function()
-  Snacks.terminal(vim.o.shell, { cwd = util.root() })
-end, { desc = "Float Terminal (root)", silent = true })
 
 -- Save
 map({ "n", "x", "s" }, "<leader>i", "<cmd>w<cr>", { desc = "Save File", silent = true })
