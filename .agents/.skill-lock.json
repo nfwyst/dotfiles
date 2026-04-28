@@ -80,6 +80,42 @@
       "skillFolderHash": "1db53f52d7d893a1a5450d3452d6009d1080e8c5",
       "installedAt": "2026-04-09T03:33:32.648Z",
       "updatedAt": "2026-04-09T03:33:32.648Z"
+    },
+    "frontend-design-review-gate": {
+      "source": "ASM/FE",
+      "sourceType": "byted",
+      "sourceUrl": "https://skills.byted.org/ASM/FE",
+      "skillPath": "frontend-design-review-gate/SKILL.md",
+      "skillFolderHash": "",
+      "installedAt": "2026-04-28T08:00:58.283Z",
+      "updatedAt": "2026-04-28T08:00:58.283Z"
+    },
+    "bits-code-guard": {
+      "source": "default/public",
+      "sourceType": "byted",
+      "sourceUrl": "https://skills.byted.org/default/public",
+      "skillPath": "bits-code-guard/SKILL.md",
+      "skillFolderHash": "",
+      "installedAt": "2026-04-28T08:12:49.443Z",
+      "updatedAt": "2026-04-28T08:12:49.443Z"
+    },
+    "react-best-practices": {
+      "source": "0xbigboss/claude-code",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/0xbigboss/claude-code.git",
+      "skillPath": ".claude/skills/react-best-practices/SKILL.md",
+      "skillFolderHash": "30dbccf72e10a92c311a8203db8e13d5a8cafc35",
+      "installedAt": "2026-04-28T08:22:25.860Z",
+      "updatedAt": "2026-04-28T08:22:25.860Z"
+    },
+    "typescript-best-practices": {
+      "source": "0xbigboss/claude-code",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/0xbigboss/claude-code.git",
+      "skillPath": ".claude/skills/typescript-best-practices/SKILL.md",
+      "skillFolderHash": "ddfe7d6738caa866df1275a9f55ea30300f916ee",
+      "installedAt": "2026-04-28T08:52:04.630Z",
+      "updatedAt": "2026-04-28T08:52:04.630Z"
     }
   },
   "dismissed": {
@@ -87,16 +123,12 @@
   },
   "lastSelectedAgents": [
     "amp",
-    "antigravity",
     "cline",
     "codex",
     "cursor",
-    "deepagents",
-    "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",
-    "opencode",
-    "warp"
+    "opencode"
   ]
 }
