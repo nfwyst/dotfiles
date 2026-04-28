@@ -19,6 +19,31 @@ return {
   on_attach = function(client)
     local orig = client.request
 
+    -- tsgo upstream bug (internal/ls/completions.go isValidTrigger default
+    -- branch): panics on any triggerCharacter outside the 9 advertised chars
+    -- (., ", ', `, /, @, <, #, space).
+    --
+    -- Real-world trigger: blink.cmp aggregates triggerCharacters from ALL
+    -- active LSP clients on the buffer (sources/lsp/init.lua), so when
+    -- emmet_language_server (or any other server on the same buffer)
+    -- advertises ")", digits, ":", "^", etc., blink forwards them as
+    -- triggerCharacter to tsgo too, crashing its completion handler.
+    --
+    -- Fix: intercept textDocument/completion in client.request and downgrade
+    -- any non-whitelist triggerCharacter to a plain Invoked (triggerKind=1)
+    -- request before it reaches tsgo.
+    local TSGO_COMPLETION_TRIGGERS = {
+      ["."] = true,
+      ['"'] = true,
+      ["'"] = true,
+      ["`"] = true,
+      ["/"] = true,
+      ["@"] = true,
+      ["<"] = true,
+      ["#"] = true,
+      [" "] = true,
+    }
+
     -- tsgo dev: codeLens/resolve returns null
     -- Workaround: pre-resolve via references/implementation, drop 0-count
     local KINDS = {
@@ -50,6 +75,17 @@ return {
     end
 
     client.request = function(self, method, params, handler, bufnr)
+      -- Sanitize completion trigger chars before forwarding.
+      if
+        method == "textDocument/completion"
+        and params
+        and params.context
+        and params.context.triggerCharacter
+        and not TSGO_COMPLETION_TRIGGERS[params.context.triggerCharacter]
+      then
+        params.context = { triggerKind = 1 } -- Invoked
+      end
+
       if method ~= "textDocument/codeLens" then
         return orig(self, method, params, handler, bufnr)
       end
