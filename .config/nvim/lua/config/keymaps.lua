@@ -423,7 +423,9 @@ map("n", "gd", function()
     local enc = (client and client.offset_encoding) or "utf-16"
     local items = vim.lsp.util.locations_to_items(locs, enc)
     vim.fn.setqflist({}, " ", { title = "LSP Definitions", items = items })
-    if pcall(function() Snacks.picker.qflist() end) then
+    if pcall(function()
+      Snacks.picker.qflist()
+    end) then
       return
     end
     vim.cmd("copen")
@@ -573,8 +575,7 @@ map("n", "gao", function()
 end, { desc = "Outgoing Calls" })
 
 -- File References (gR) — find all files that import the current file.
--- Uses ripgrep for speed and LSP-independence; works with tsgo, vtsls, or any server.
--- This restores LazyVim's gR which called vtsls's typescript.findAllFileReferences.
+-- Uses ripgrep for speed and LSP-independence; works with tsgo, vtsls(typescript.findAllFileReferences), or any server.
 map("n", "gR", function()
   require("config.ts_util").find_file_references()
 end, { desc = "File References" })

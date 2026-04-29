@@ -1,5 +1,4 @@
 -- Neovim 0.12+ Configuration
--- Migrated from LazyVim to native features
 vim.loader.enable()
 
 -- Leader keys (must be set before plugins)
