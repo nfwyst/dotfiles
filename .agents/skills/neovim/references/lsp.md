@@ -1,193 +1,221 @@
-# LSP Reference
+# LSP Configuration
 
-## Architecture
+Neovim has two parallel ways to configure LSP servers in 2025+. Pick based on
+what the user's config already does; don't mix unless asked.
 
-Neovim 0.12+ native LSP — no nvim-lspconfig plugin.
+## Path A — Native (0.11+, recommended for new configs)
 
-- Server configs: `lsp/<server>.lua` (each returns a config table)
-- Activation: `vim.lsp.config()` + `vim.lsp.enable()` in `config/lsp.lua`
+Since 0.11, Neovim exposes `vim.lsp.config()` and `vim.lsp.enable()` with an
+implicit loader: any file under a `lsp/` directory in `runtimepath` whose
+name matches an enabled server is auto-loaded and merged into the config.
 
-### Enabled Servers
+```
+~/.config/nvim/
+├── lsp/
+│   ├── lua_ls.lua      -- returns { cmd = {...}, root_markers = {...}, settings = {...} }
+│   ├── tsgo.lua
+│   └── jsonls.lua
+└── lua/config/lsp.lua  -- vim.lsp.enable({ "lua_ls", "tsgo", "jsonls" })
+```
+
+Each `lsp/<name>.lua` returns a plain table. Example:
 
 ```lua
-vim.lsp.enable({
-  "lua_ls", "tsgo", "vtsls", "html", "cssls", "css_variables",
-  "cssmodules_ls", "emmet_language_server", "tailwindcss", "taplo",
-  "solc", "protols", "docker_language_server", "jsonls", "yamlls", "vue_ls",
+-- lsp/lua_ls.lua
+return {
+  cmd = { "lua-language-server" },
+  filetypes = { "lua" },
+  root_markers = { ".luarc.json", ".luarc.jsonc", ".git" },
+  settings = {
+    Lua = {
+      workspace = { checkThirdParty = false },
+      telemetry = { enable = false },
+    },
+  },
+}
+```
+
+Activation, anywhere in your startup (typical: `lua/config/lsp.lua`):
+
+```lua
+vim.lsp.enable({ "lua_ls", "tsgo", "jsonls" })
+```
+
+Global defaults (capabilities, on_attach) go via `vim.lsp.config("*", {...})`:
+
+```lua
+vim.lsp.config("*", {
+  capabilities = vim.tbl_deep_extend("force",
+    vim.lsp.protocol.make_client_capabilities(),
+    require("blink.cmp").get_lsp_capabilities()),
+  on_attach = function(client, bufnr)
+    -- buffer-local keymaps, disable semanticTokens, etc.
+  end,
 })
 ```
 
-Not present: bashls, gopls, rust_analyzer, denols, eslint.
-
-### Global LSP Config (config/lsp.lua)
-
-- Capabilities: `workspace.fileOperations` (didRename, willRename)
-- `on_attach`: disables `semanticTokensProvider` for all servers
-- Log level: `vim.lsp.log.set_level(OFF)`
+### When to prefer this path
+- Neovim 0.11+ only.
+- You don't need nvim-lspconfig's ~200 preset server configs, or you're happy
+  writing each `lsp/<name>.lua` yourself.
+- You want fewer dependencies.
 
 ---
 
-## Shared Utilities: config/ts_util.lua
+## Path B — nvim-lspconfig (classic)
 
-Path is `config/ts_util.lua` (NOT `lua/util/ts_util.lua`).
+`neovim/nvim-lspconfig` ships curated defaults for most servers. Call
+`.setup{}` per server:
 
-### Functions
+```lua
+local lspconfig = require("lspconfig")
+local caps = require("blink.cmp").get_lsp_capabilities()
 
-| Function | Purpose |
+lspconfig.lua_ls.setup({
+  capabilities = caps,
+  settings = { Lua = { workspace = { checkThirdParty = false } } },
+})
+lspconfig.tsserver.setup({ capabilities = caps })
+```
+
+Starting with Neovim 0.11 / nvim-lspconfig's newer versions, setup internally
+uses `vim.lsp.config` + `vim.lsp.enable`, so the two paths coexist. If the
+user is on an older version, stick to `.setup{}`.
+
+---
+
+## Common tasks
+
+### Add a new server
+
+**Native path:**
+1. Create `lsp/<server>.lua` returning `{ cmd, filetypes, root_markers, settings }`.
+2. Add the server name to the `vim.lsp.enable({...})` list.
+3. Install the server binary (Mason, system package manager, or npm global).
+
+**Classic path:**
+1. Check `:h lspconfig-all` for a preset.
+2. Call `lspconfig.<name>.setup({ capabilities, settings })`.
+3. Install the binary.
+
+### Root directory
+
+`root_dir` / `root_markers` controls where the server starts. Two mental
+models:
+- **Marker-based** (native, simpler): `root_markers = { "package.json", ".git" }`.
+- **Callback-based** (lspconfig, flexible): `root_dir = function(fname) ... end`.
+
+For gating one server vs. another on the same filetype (e.g. `tsgo` vs.
+`vtsls` vs. `denols`), use a callback that returns `nil` to decline the
+buffer — a `nil` root means the server doesn't start for that file.
+
+### Capabilities and completion
+
+Completion plugins provide extra capabilities (snippet support,
+resolveSupport, etc.). Always merge them in:
+
+```lua
+-- blink.cmp
+local caps = require("blink.cmp").get_lsp_capabilities()
+
+-- nvim-cmp
+local caps = require("cmp_nvim_lsp").default_capabilities()
+```
+
+Pass `caps` into every `.setup{}` call (classic) or into `vim.lsp.config("*")`
+(native).
+
+### on_attach and keymaps
+
+As of 0.10+ many classic LSP keymaps have Neovim built-in defaults:
+
+| Default key | Action |
 |---|---|
-| `bun_cmd(mason_pkg, js_entry, extra_args)` | Builds bun-optimized cmd array for Mason JS-based servers; caches results |
-| `mason_tsdk()` | Resolves TypeScript SDK from Mason vtsls bundle at `.../mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib` |
-| `find_project_root(bufnr)` | Two-phase root detection: tsconfig/jsconfig first, then package.json/.git |
-| `is_vue_project(root)` | Checks vue config markers, package.json deps, `.vue` files in `src/` (subdirectory scan, 50 subdir limit) |
-| `is_deno_project(root)` | Checks `deno.json`/`deno.jsonc` via `vim.fs.root()`; excludes hybrid projects with npm lock files |
-| `needs_baseurl_fallback(root)` | Parses tsconfig/jsconfig + extends chains for non-trivial `baseUrl` (not `"."` or `"./"`) |
-| `_find_baseurl_in_config(config_path, depth)` | Recursive JSONC parser with `strip_jsonc_comments` |
-| `find_file_references()` | Ripgrep-based import/require finder; uses `Snacks.picker.grep` or qflist fallback |
+| `grn` | `vim.lsp.buf.rename` |
+| `gra` | `vim.lsp.buf.code_action` |
+| `grr` | `vim.lsp.buf.references` |
+| `gri` | `vim.lsp.buf.implementation` |
+| `gO` | `vim.lsp.buf.document_symbol` |
+| `K` | `vim.lsp.buf.hover` (already default for years) |
+| `<C-s>` (insert) | `vim.lsp.buf.signature_help` |
+
+If the user wants the old `gd`/`gr`/`gi` style, they set those explicitly in
+`on_attach` or a `LspAttach` autocmd.
+
+```lua
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local bufnr = args.buf
+    vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr, desc = "Go to definition" })
+  end,
+})
+```
+
+### Diagnostics
+
+Configured via `vim.diagnostic.config`:
+
+```lua
+vim.diagnostic.config({
+  virtual_text = { prefix = "●" },
+  signs = true,
+  underline = true,
+  severity_sort = true,
+  float = { border = "rounded", source = true },
+})
+```
+
+Filtering specific diagnostic codes (e.g. suppress TS 7016 "Could not find
+declaration file"): the cleanest place is a `LspAttach` autocmd that
+post-filters the handler, or a wrapper around `vim.diagnostic.set`.
+
+### Format on save
+
+Don't use `vim.lsp.buf.format` if you have a dedicated formatter engine;
+prefer conform.nvim — see `formatting-linting.md`.
+
+If you do use LSP formatting:
+
+```lua
+vim.api.nvim_create_autocmd("BufWritePre", {
+  callback = function() vim.lsp.buf.format({ async = false }) end,
+})
+```
 
 ---
 
-## TypeScript / JavaScript Servers
+## Debugging LSP
 
-### tsgo (lsp/tsgo.lua)
-
-Primary TS/JS server using the Go-based `tsgo` binary.
-
-- **cmd:** `tsgo --lsp --stdio`
-- **filetypes:** javascript, javascriptreact, javascript.jsx, typescript, typescriptreact, typescript.tsx
-- **root_dir:** Skips Deno, Vue, and baseUrl projects (async callback style)
-- **on_new_config:** Prefers project-local `node_modules/.bin/tsgo` when available
-- **on_attach:** Monkey-patches `client.request` to intercept `textDocument/codeLens`. Pre-resolves references/implementations counts via `textDocument/references` and `textDocument/implementation`. Drops 0-count lenses. Uses `editor.action.showReferences` command.
-- **Settings** (under `typescript`):
-  - `referencesCodeLens`, `implementationsCodeLens`
-  - `inlayHints`: enumMemberValues, functionLikeReturnTypes, parameterNames=`"literals"`, parameterTypes, propertyDeclarationTypes, variableTypes=`false`
-  - `suggest.completeFunctionCalls`
-  - `preferences.importModuleSpecifier` = `"shortest"`
-  - `preferTypeOnlyAutoImports`
-
-### vtsls (lsp/vtsls.lua)
-
-Fallback TS/JS server for Vue and baseUrl projects.
-
-- **cmd:** `ts_util.bun_cmd("vtsls", "node_modules/@vtsls/language-server/bin/vtsls.js", {"--stdio"})`
-- **filetypes:** same as tsgo + mdx, vue
-- **root_dir:** Skips Deno; ONLY starts for Vue or baseUrl projects
-- **get_language_id:** mdx → `typescriptreact`
-- **on_attach:** Disables diagnostics for mdx buffers; registers `_typescript.moveToFileRefactoring` command handler
-- **maxTsServerMemory:** `1024 * 8` (8 GB)
-- **Settings:**
-  - `complete_function_calls` = true
-  - `vtsls.autoUseWorkspaceTsdk` = true
-  - `enableMoveToFileCodeAction` = true
-  - Vue plugin sourced from Mason
-  - Experimental: `maxInlayHintLength` = 30, `serverSideFuzzyMatch`, `enableProjectDiagnostics` = false
-
-### Server Selection Logic
-
-| Project type | tsgo | vtsls |
-|---|---|---|
-| Plain TS/JS | Yes | No |
-| Vue project | No | Yes |
-| baseUrl project | No | Yes |
-| Deno project | No | No |
+- `:LspInfo` / `:checkhealth vim.lsp` — is the server attached? What root?
+- `:LspLog` — opens the log file. Set level with
+  `vim.lsp.set_log_level("debug")` (noisy).
+- Server not starting: check `cmd[1]` is on `$PATH` inside Neovim's env, not
+  just your shell's. `:lua =vim.env.PATH`.
+- Attaches to wrong root: check `root_markers` or `root_dir`.
+- Multiple servers for one filetype: verify `root_dir` callbacks return
+  `nil` for the server that should decline.
 
 ---
 
-## Vue
+## Mixing servers for one language (e.g. TypeScript)
 
-### vue_ls (lsp/vue_ls.lua)
+Common real-world case: `tsgo` (fast, Go-native) for plain TS, `vtsls` for
+Vue projects or baseUrl-heavy tsconfigs, `denols` for Deno. Keep them
+mutually exclusive via `root_dir`:
 
-- **cmd:** `vue-language-server --stdio`
-- **filetypes:** vue
-- **root_markers:** vue.config.js, vue.config.ts, nuxt.config.js, nuxt.config.ts, package.json
-- **on_attach:** Disables overlapping capabilities — definitionProvider, referencesProvider, implementationProvider, typeDefinitionProvider, renameProvider
-- **init_options:** `typescript.tsdk` from `mason_tsdk()`
+```lua
+-- lsp/tsgo.lua (sketch)
+return {
+  cmd = { "tsgo", "--lsp", "--stdio" },
+  filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
+  root_dir = function(bufnr, on_dir)
+    local root = vim.fs.root(bufnr, { "tsconfig.json", "package.json", ".git" })
+    if not root then return end
+    if is_deno_project(root) or is_vue_project(root) or needs_baseurl(root) then return end
+    on_dir(root)
+  end,
+}
+```
 
----
-
-## Web / CSS Servers
-
-### html (lsp/html.lua)
-
-- **cmd:** `vscode-html-language-server --stdio`
-- **filetypes:** html, templ
-
-### cssls (lsp/cssls.lua)
-
-- **cmd:** `vscode-css-language-server --stdio`
-- **filetypes:** css, scss, less
-
-### css_variables (lsp/css_variables.lua)
-
-- **cmd:** `css-variables-language-server --stdio`
-- **filetypes:** css, scss
-
-### cssmodules_ls (lsp/cssmodules_ls.lua)
-
-- **cmd:** via `bun_cmd`
-- **filetypes:** javascript, javascriptreact, typescript, typescriptreact
-
-### emmet_language_server (lsp/emmet_language_server.lua)
-
-- **cmd:** via `bun_cmd`
-- **filetypes:** html, css, scss, less, javascriptreact, typescriptreact, svelte, vue
-
-### tailwindcss (lsp/tailwindcss.lua)
-
-- **cmd:** via `bun_cmd`
-- **filetypes:** web languages
-- **root_markers:** tailwind config files
-- **on_attach:** Stops server if no tailwind config found in project
-
----
-
-## Data Format Servers
-
-### jsonls (lsp/jsonls.lua)
-
-- **cmd:** `vscode-json-language-server --stdio`
-- **filetypes:** json, jsonc
-- **SchemaStore:** Yes — `util.schemastore("json")`
-
-### yamlls (lsp/yamlls.lua)
-
-- **cmd:** `yaml-language-server --stdio`
-- **filetypes:** yaml, yaml.docker-compose
-- **SchemaStore:** Yes — `util.schemastore("yaml")`
-- **Settings:** `keyOrdering` = false
-
-### taplo (lsp/taplo.lua)
-
-- **cmd:** `taplo lsp stdio`
-- **filetypes:** toml
-- **Settings:** `validate` = true
-- **SchemaStore:** No
-
----
-
-## Other Servers
-
-### lua_ls (lsp/lua_ls.lua)
-
-- **cmd:** `lua-language-server`
-- **filetypes:** lua
-- **Settings:**
-  - `workspace.checkThirdParty` = false
-  - `codeLens.enable` = true
-  - Hint settings enabled
-  - `diagnostics.globals`: vim, require, Snacks
-
-### solc (lsp/solc.lua)
-
-- **cmd:** `solc --lsp`
-- **filetypes:** solidity
-- **root_markers:** hardhat, foundry, truffle config files
-
-### protols (lsp/protols.lua)
-
-- **cmd:** `protols`
-- **filetypes:** proto
-
-### docker_language_server (lsp/docker_language_server.lua)
-
-- **cmd:** `docker-langserver --stdio`
-- **filetypes:** dockerfile
+Put the shared detection helpers in `lua/config/ts_util.lua` and require
+from each `lsp/<name>.lua`.

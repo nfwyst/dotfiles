@@ -1,235 +1,178 @@
 ---
 name: neovim
 description: |
-  Neovim 0.12+ configuration knowledge base at ~/dotfiles/.config/nvim.
-  vim.pack (native, NOT lazy.nvim), dual TS LSP (tsgo + vtsls),
-  blink.cmp, snacks.nvim, conform.nvim, nvim-lint, 16 LSP servers.
-  Use when: modifying/debugging/extending this Neovim config,
-  adding LSP servers, fixing diagnostics, changing keybindings,
-  plugin management, formatter/linter setup, troubleshooting
-  TS server selection, or any question about this Neovim setup.
-  Trigger on: nvim, neovim, vim config, LSP config, keybindings,
-  plugin install, formatter, linter, tsgo, vtsls, blink.cmp,
-  snacks.nvim, conform, mason, treesitter, colorscheme.
+  Expert guidance for working on any user's Neovim configuration — writing Lua
+  config, wiring up plugins, configuring LSP servers, setting up completion,
+  formatters, linters, treesitter, keymaps, autocmds, and diagnosing startup
+  or runtime issues. Covers modern Neovim 0.10+ practices across the major
+  plugin managers (vim.pack, lazy.nvim, packer, pckr) and the two LSP paths
+  (native `vim.lsp.config` / `vim.lsp.enable` vs. nvim-lspconfig).
+
+  Use whenever the user asks anything Neovim-related: "fix my nvim config",
+  "add a new LSP", "why is my completion broken", "migrate from packer to
+  lazy", "convert my config to 0.11 native LSP", "add a formatter on save",
+  "my treesitter highlights aren't working", "debug slow startup", "how do I
+  remap X", "what does this lua snippet do", keybinding tweaks, plugin
+  selection, colorscheme issues. Trigger on: neovim, nvim, init.lua, vim.pack,
+  lazy.nvim, nvim-lspconfig, blink.cmp, nvim-cmp, conform, nvim-lint, mason,
+  treesitter, LSP, keymaps, autocmd, formatter, linter, colorscheme, and any
+  file under `~/.config/nvim/` or `~/dotfiles/.config/nvim/`.
 ---
 
-# Neovim Configuration Skill
+# Neovim Configuration Assistant
 
-> **Version 2.1.0** | 2026-04-22
+A skill for helping users work on **their own** Neovim configurations. Covers
+the patterns, plugin choices, and debugging moves you'll reach for most often
+on modern Neovim (0.10+).
 
-## Overview
+This skill is intentionally configuration-agnostic. The user's repo on disk is
+the source of truth — read it first, *then* advise. A concrete example config
+ships under `example-config/` for cases where you want to see one full working
+setup.
 
-This skill documents a Neovim 0.12+ configuration located at `~/dotfiles/.config/nvim`. The setup uses **vim.pack** (Neovim's native package manager) for plugin management and the built-in LSP client for language intelligence. The config entry point is `init.lua`, which loads modules via a `safe_require` pattern in this order: options → hack → plugins → lsp → keymaps → autocmds.
+---
 
-Key characteristics:
-- **Plugin manager**: vim.pack (native) — not lazy.nvim
-- **Completion**: blink.cmp with Rust fuzzy matching built from source
-- **Dual TypeScript LSP**: tsgo (Go-native, fast) and vtsls (Node-based, Vue/baseUrl support), mutually exclusive via root_dir guards
-- **Diagnostic filtering**: hack.lua monkey-patches `vim.diagnostic.set` to blacklist specific TS error codes and eslint_d message patterns
-- **Dark mode detection**: macOS dark mode with event-driven fs_event watch (tmux state file) or 15-second polling fallback
-- **Colorschemes**: tokyonight, monokai-pro, NeoSolarized
+## How to approach a Neovim task
 
-## Quick Reference
+Neovim configurations are deeply personal and the ecosystem has several
+competing "right answers" (lazy.nvim vs. vim.pack, blink.cmp vs. nvim-cmp,
+native LSP vs. nvim-lspconfig). Before changing anything:
 
-| Area | Details |
-|---|---|
-| Neovim version | 0.12+ |
-| Plugin manager | vim.pack (native) |
-| Config entry | init.lua → safe_require: options → hack → plugins → lsp → keymaps → autocmds |
-| Completion | blink.cmp (Rust fuzzy, built from source) |
-| Formatter engine | conform.nvim |
-| Linter engine | nvim-lint |
-| TS LSP (fast) | tsgo — Go-native TypeScript server |
-| TS LSP (compat) | vtsls — Node-based, Vue/baseUrl support, 8 GB memory limit |
-| File explorer | snacks.nvim explorer |
-| Fuzzy finder | snacks.nvim picker |
-| Git UI | lazygit (via snacks.nvim) |
-| Statusline | lualine.nvim |
-| Bufferline | bufferline.nvim |
-| Notifications | noice.nvim + snacks.nvim notifier |
-| Disabled built-ins | netrwPlugin, rplugin, tohtml, tutor |
+1. **Locate the config root.** Usually `~/.config/nvim/`, often a symlink into
+   a dotfiles repo. Check both. Read `init.lua` (or `init.vim`) first — it
+   reveals the load order and which subsystems are in play.
 
-## Directory Structure
+2. **Identify the plugin manager.** This determines how plugins are added and
+   whether load order is lazy or eager. Quick signals:
+   - `vim.pack.add({...})` → native vim.pack (0.12+)
+   - `require("lazy").setup(...)` or a `lazy-lock.json` → lazy.nvim
+   - `require("packer").startup(...)` → packer.nvim
+   - `require("pckr").add(...)` → pckr.nvim
+   - `plug#begin` → vim-plug (rare in Lua-first configs)
+
+3. **Identify the LSP path.** Modern configs split into two camps:
+   - **Native** (0.11+): per-server files in `lsp/<name>.lua` returning a
+     config table, activated via `vim.lsp.enable({...})` in a central place.
+     No nvim-lspconfig dependency.
+   - **Classic**: `require("lspconfig").<server>.setup({...})` via
+     nvim-lspconfig. Still widespread.
+   See `references/lsp.md`.
+
+4. **Read before you write.** Users usually have a reason for their current
+   structure. Respect it. If their config uses `safe_require` or some
+   bespoke loader, keep using it. If they split plugins across
+   `lua/plugins/*.lua`, add new plugins to the same style, not a new style.
+
+5. **Prefer minimal edits.** A three-line change to a working config beats a
+   rewrite. Neovim configs accumulate muscle memory; surprise costs the user.
+
+---
+
+## Where to look in a typical config
 
 ```
 ~/.config/nvim/
-├── init.lua                          # Entry point (safe_require chain)
+├── init.lua                 # entry: sets leader, requires submodules
 ├── lua/
-│   ├── config/
-│   │   ├── options.lua               # Vim options
-│   │   ├── keymaps.lua               # Key mappings
-│   │   ├── autocmds.lua              # Autocommands (formatoptions override, etc.)
-│   │   ├── lsp.lua                   # LSP client config, server enable list, handlers
-│   │   ├── hack.lua                  # Diagnostic blacklist, monkey-patches
-│   │   ├── util.lua                  # General utilities
-│   │   ├── ts_util.lua               # TS utilities: bun_cmd, mason_tsdk, find_project_root, etc.
-│   │   ├── constant.lua              # Constants
-│   │   └── price.lua                 # Price-related config
-│   └── plugins/
-│       ├── init.lua                  # Plugin declarations (vim.pack.add calls)
-│       ├── coding.lua                # Coding plugins (blink.cmp, snippets, etc.)
-│       ├── colorscheme.lua           # Colorscheme setup + dark mode detection
-│       ├── editor.lua                # Editor plugins (flash, trouble, grug-far, etc.)
-│       ├── tools.lua                 # Tool plugins (mason, conform, nvim-lint, etc.)
-│       └── ui.lua                    # UI plugins (lualine, bufferline, noice, snacks, etc.)
-├── lsp/                              # Native LSP server configs (one file per server)
-│   ├── css_variables.lua
-│   ├── cssls.lua
-│   ├── cssmodules_ls.lua
-│   ├── docker_language_server.lua
-│   ├── emmet_language_server.lua
-│   ├── html.lua
-│   ├── jsonls.lua
-│   ├── lua_ls.lua
-│   ├── protols.lua
-│   ├── solc.lua
-│   ├── tailwindcss.lua
-│   ├── taplo.lua
-│   ├── tsgo.lua
-│   ├── vtsls.lua
-│   ├── vue_ls.lua
-│   └── yamlls.lua
-└── after/
-    └── plugin/
-        └── snacks-image-fix.lua      # Workaround: images invisible after floating windows close
+│   ├── config/              # non-plugin: options, keymaps, autocmds, lsp glue
+│   └── plugins/             # plugin specs (one file per domain is common)
+├── lsp/                     # native LSP config (one file per server) — 0.11+
+├── after/                   # late-loaded overrides (runs after plugin loads)
+│   ├── ftplugin/            # per-filetype tweaks
+│   └── plugin/              # per-plugin late patches
+├── snippets/                # user snippets (friendly-snippets-compatible)
+└── spell/                   # spell files
 ```
 
-## Configuration Loading Order
+Not every config has every directory. Absence is signal too: no `lsp/`
+usually means classic nvim-lspconfig; no `after/` means no late overrides.
 
-1. **options.lua** — Vim options and settings
-2. **hack.lua** — Monkey-patches (diagnostic blacklist for TS codes 7016, 80001, 80006, 80007, 7044, 1149; eslint_d pattern filters)
-3. **plugins/** — Plugin declarations and configuration via vim.pack
-4. **lsp.lua** — LSP server enable list, handlers (`editor.action.showReferences` → Trouble qflist)
-5. **keymaps.lua** — Key mappings
-6. **autocmds.lua** — Autocommands (`formatoptions` override to `"jcroqlnt"` after ftplugins, treesitter auto-start for all file buffers via `FileType`, etc.)
+---
 
-## Enabled LSP Servers
+## Reference index
 
-These servers are enabled in `lsp.lua` and have corresponding config files in `lsp/`:
+Read the file matching the user's task. Don't preload everything.
 
-| Server | Language / Purpose |
+| If the task is about… | Read |
 |---|---|
-| lua_ls | Lua |
-| tsgo | TypeScript/JavaScript (Go-native, fast) |
-| vtsls | TypeScript/JavaScript (Node-based, Vue/baseUrl compat) |
-| html | HTML |
-| cssls | CSS |
-| css_variables | CSS custom properties |
-| cssmodules_ls | CSS Modules |
-| emmet_language_server | Emmet expansions |
-| tailwindcss | Tailwind CSS |
-| taplo | TOML |
-| solc | Solidity |
-| protols | Protocol Buffers |
-| docker_language_server | Dockerfiles |
-| jsonls | JSON (with SchemaStore) |
-| yamlls | YAML (with SchemaStore) |
-| vue_ls | Vue |
+| Adding/removing plugins, choosing a plugin manager, lazy-loading | `references/plugin-managers.md` |
+| Adding or configuring an LSP server, native vs. lspconfig, root_dir | `references/lsp.md` |
+| Completion engine setup, sources, keymaps | `references/completion.md` |
+| Treesitter parsers, highlight, textobjects, main vs. master | `references/treesitter.md` |
+| Formatters on save, linters, conform/nvim-lint/none-ls | `references/formatting-linting.md` |
+| Keymaps, `<leader>`, `vim.keymap.set`, `which-key`, autocmds | `references/keymaps-autocmds.md` |
+| Statusline, bufferline, notifications, file explorer, picker | `references/ui-stack.md` |
+| Options, diagnostics config, colorscheme, filetype | `references/options-diagnostics.md` |
+| Startup is slow, a plugin broke, `:checkhealth`, LSP won't attach | `references/debugging.md` |
+| Migrating from 0.10 → 0.11 → 0.12, deprecation warnings | `references/migration.md` |
+| A full working 0.12+ config to imitate | `example-config/README.md` |
 
-**Not enabled**: bashls, gopls, rust_analyzer, denols, eslint — none of these have `lsp/*.lua` config files.
+---
 
-## TypeScript Server Selection
+## Working style
 
-tsgo and vtsls are **mutually exclusive** via `root_dir` guards:
+- **Prefer the user's existing idioms.** If they wrap requires in
+  `safe_require`, use it. If they use `vim.keymap.set` with table `desc`,
+  match that. Don't introduce `lazy.nvim` patterns into a `vim.pack` config.
+- **Small diffs win.** Edit in place; avoid wholesale file rewrites unless
+  explicitly asked.
+- **Surface the "why".** When you suggest a plugin or option, briefly say why
+  (one line). Users keep configs for years; they deserve to know.
+- **Check for deprecations before writing 0.12+ APIs.** See
+  `references/migration.md`. Common traps: `vim.tbl_islist` →
+  `vim.islist`, `vim.validate` signature change,
+  `vim.treesitter.query.get` → `get_query`,
+  `vim.lsp.buf_get_clients` → `vim.lsp.get_clients`.
+- **Don't invent keybindings silently.** If suggesting a mapping, point out
+  if it collides with common defaults or the user's existing map.
+- **Respect ecosystem splits.** Don't tell a `blink.cmp` user to add an
+  `nvim-cmp` source, or an `nvim-lspconfig` user to rewrite against native
+  LSP, unless they asked.
 
-| Server | When active | Strengths |
-|---|---|---|
-| **tsgo** | Default for non-Vue, non-baseUrl projects | Fast (Go-native), codeLens support (with workaround) |
-| **vtsls** | Vue projects or projects needing baseUrl resolution | Full Vue support, moveToFileRefactoring command, 8 GB maxTsServerMemory |
+---
 
-Selection logic uses helpers from `ts_util.lua`:
-- `is_vue_project()` — detects Vue projects
-- `is_deno_project()` — detects Deno projects (excluded from both)
-- `needs_baseurl_fallback()` — detects tsconfig baseUrl usage
-- `bun_cmd()` — resolves Bun-compatible command paths
-- `mason_tsdk()` — locates Mason-installed TypeScript SDK
-- `find_project_root()` — finds project root directory
+## Example configuration
 
-### Server-specific behaviors
+The `example-config/` directory is a pointer to a concrete, fully-working
+Neovim 0.12+ setup you can refer to when you need to see how a full stack
+fits together — plugin manager choice (vim.pack), native LSP with per-server
+files, blink.cmp, snacks.nvim, conform + nvim-lint, and dual TypeScript
+servers (tsgo + vtsls) with root-directory gating.
 
-- **tsgo on_attach**: Monkey-patches `client.request` to intercept `textDocument/codeLens` and pre-resolve references/implementations counts.
-- **vtsls on_attach**: Registers `_typescript.moveToFileRefactoring` command handler. maxTsServerMemory = `1024 * 8` (8 GB).
-- **vue_ls on_attach**: Disables overlapping capabilities (definitionProvider, referencesProvider, implementationProvider, typeDefinitionProvider, renameProvider) to avoid conflicts with tsgo/vtsls.
+Treat it as *one* opinionated example, not the ground truth. When helping a
+user, their config is the ground truth.
 
-## Key Mappings (highlights)
+See `example-config/README.md` for the pointer and highlights.
 
-| Mapping | Mode | Action |
-|---|---|---|
-| `gR` | n | File References (ts_util.find_file_references, ripgrep-based) |
-| `gD` | n | Goto Source Definition (tsgo: custom/sourceDefinition, vtsls: typescript.goToSourceDefinition) |
-| `<leader>cM` | n | Add Missing Imports |
-| `<leader>co` | n | Organize Imports |
-| `<leader>cD` | n | Fix All Diagnostics |
-| `<leader>c/` | n | Remove All Carriage Returns (`%s/\r//g`) |
-| `S-j` / `S-k` | v, x | Move lines down / up (visual mode ONLY, not normal) |
-| `jk` | i | Escape from insert mode |
+---
 
-**Not configured**: jj escape, `<Esc><Esc>` terminal escape, `<A-j>`/`<A-k>` line movement.
+## Quick mental model: what lives where
 
-Complete keybinding list → `references/keybindings.md`.
+For fast orientation when dropped into an unfamiliar config:
 
-## Formatters (conform.nvim)
+- **Options** (`vim.opt.*`, `vim.g.*`) — usually in `lua/config/options.lua`.
+  Sets tab width, relative numbers, clipboard, etc.
+- **Keymaps** (`vim.keymap.set`) — `lua/config/keymaps.lua` or scattered
+  inside plugin specs.
+- **Autocmds** (`vim.api.nvim_create_autocmd`) — `lua/config/autocmds.lua`.
+  Common ones: highlight yank, restore cursor position, trim whitespace.
+- **LSP server activation** — either `lua/config/lsp.lua` with
+  `vim.lsp.enable(...)`, or inside a plugin spec that sets up
+  nvim-lspconfig.
+- **Plugin specs** — `lua/plugins/*.lua` (lazy.nvim convention) or one big
+  `lua/plugins/init.lua` (vim.pack convention).
+- **Per-server LSP configs** — `lsp/<name>.lua` for native, or inline
+  `lspconfig[name].setup{}` for classic.
+- **Filetype overrides** — `after/ftplugin/<ft>.lua`.
 
-| Formatter | File types |
-|---|---|
-| prettierd | Web languages (JS, TS, HTML, CSS, JSON, etc.) |
-| eslint_d | JS/TS (fix mode) |
-| stylua | Lua |
-| shfmt | Shell |
-| beautysh | Zsh |
-| taplo | TOML |
-| kulala-fmt | HTTP |
-| nginxfmt | Nginx |
-| sqruff | SQL |
+---
 
-## Linters (nvim-lint)
+## When the user asks "is my config good?"
 
-| Linter | File types |
-|---|---|
-| eslint_d | JavaScript, TypeScript |
-| bash | Shell |
-| zsh | Zsh |
-| vale | Markdown |
+Resist the urge to rewrite. Instead:
 
-## Schema Support
-
-- **jsonls**: JSON schemas via SchemaStore.nvim
-- **yamlls**: YAML schemas via SchemaStore.nvim
-- **taplo**: Does NOT use SchemaStore
-
-## Plugins (vim.pack.add)
-
-nui, plenary, nvim-web-devicons, SchemaStore, tokyonight, monokai-pro, NeoSolarized, nvim-treesitter (main branch), treesitter-context, blink.cmp, friendly-snippets, which-key, gitsigns, resolve.nvim, grug-far, trouble, flash, todo-comments, lualine, bufferline, noice, snacks, vimade, mini.pairs, mini.ai, mini.surround, nvim-ts-autotag, lazydev, render-markdown, mason, conform, nvim-lint, codecompanion, leetcode, checkmate, ts-worksheet, uv.nvim
-
-### Snacks.nvim Features
-
-dashboard, animate, scope, bigfile, quickfile, scroll, indent, input, notifier, statuscolumn, words, lazygit, dim, image (enabled), explorer, picker
-
-### Mason ensure_installed
-
-lua-language-server, vtsls, tsgo, html-lsp, css-lsp, css-variables-language-server, emmet-language-server, tailwindcss-language-server, taplo, ast-grep, tectonic, tree-sitter-cli, eslint_d, beautysh, prettierd, vale, kulala-fmt, mmdc, nginx-config-formatter, uv, sqruff, json-lsp, yaml-language-server, vue-language-server
-
-## Treesitter
-
-- Auto-start for all file buffers via `FileType` autocmd
-- Custom `is-filetype?` predicate
-- Language registrations: zsh → bash, checkhealth → markdown, mdx → markdown
-
-## When to Consult References
-
-Use these reference files for detailed information. Read the relevant file based on what you need — do not read all of them at once.
-
-| Question domain | Reference file |
-|---|---|
-| Keybindings, "what does X key do", adding/changing mappings | `references/keybindings.md` |
-| LSP servers, TS server selection, ts_util module, server configs | `references/lsp.md` |
-| Vim options, autocommands, diagnostics, colorscheme sync | `references/configuration.md` |
-| Plugin list, blink.cmp config, snacks features, plugin details | `references/plugins.md` |
-| Formatters, linters, Mason packages, external tool deps | `references/tools.md` |
-| Something not working, debugging, common errors | `references/troubleshooting.md` |
-| Startup optimization, profiling, memory limits | `references/performance.md` |
-| Neovim 0.12 API changes, migration from older versions | `references/migration-0.12.md` |
-
-## Source Files
-
-The actual configuration source code lives at `~/dotfiles/.config/nvim/` (symlinked to `~/.config/nvim/`). Read source files directly when reference docs lack the detail needed for a specific modification.
+1. Run (or ask them to run) `:checkhealth` and `:Lazy profile` /
+   `nvim --startuptime /tmp/nvim.log` to get data.
+2. Read `references/debugging.md` for what a healthy startup looks like.
+3. Point out concrete wins (a deprecated API here, a missing `desc =` on a
+   keymap there) rather than style preferences.
