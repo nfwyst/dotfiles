@@ -17,11 +17,11 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
+  "instructions": ["./skills/caveman/SKILL.md"],
   "plugin": [
     "./plugins/graphify.js",
     "./plugins/rtk.ts",
     "opencode-mem@latest",
-    "opencode-plugin-preload-skills@latest",
     "@tarquinen/opencode-dcp@latest",
     "opencode-plugin-openspec@latest",
     "oh-my-openagent@latest"
