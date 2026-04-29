@@ -144,5 +144,13 @@
       "blacklist": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"]
     }
   },
-  "disabled_providers": ["zhipuai-coding-plan", "kimi-for-coding"]
+  "disabled_providers": [
+    "zhipuai-coding-plan",
+    "kimi-for-coding",
+    "google",
+    "openai",
+    "openrouter",
+    "google-vertex-anthropic",
+    "google-vertex"
+  ]
 }
