@@ -19,8 +19,8 @@
   },
   "instructions": ["./skills/caveman/SKILL.md"],
   "plugin": [
-    "./plugins/graphify.js",
     "./plugins/rtk.ts",
+    "./plugins/graphify.js",
     "opencode-mem@latest",
     "@tarquinen/opencode-dcp@latest",
     "opencode-plugin-openspec@latest",
