@@ -24,7 +24,8 @@
     "opencode-mem@latest",
     "@tarquinen/opencode-dcp@latest",
     "opencode-plugin-openspec@latest",
-    "oh-my-openagent@latest"
+    "oh-my-openagent@latest",
+    "@byted/opencode-reporter-plugin"
   ],
   "mcp": {
     "codin-d2c-mcp": {

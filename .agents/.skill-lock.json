@@ -125,6 +125,15 @@
       "skillFolderHash": "290ab8ae85ba8695e9bceb674e74177e76f8633d",
       "installedAt": "2026-04-30T03:41:15.220Z",
       "updatedAt": "2026-04-30T03:41:15.220Z"
+    },
+    "codebase-to-course": {
+      "source": "zarazhangrui/codebase-to-course",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/zarazhangrui/codebase-to-course.git",
+      "skillPath": "SKILL.md",
+      "skillFolderHash": "ff8837ecf8e9f6ce9874ffa42e42633394a52a00",
+      "installedAt": "2026-04-30T08:48:23.881Z",
+      "updatedAt": "2026-04-30T08:48:23.881Z"
     }
   },
   "dismissed": {
