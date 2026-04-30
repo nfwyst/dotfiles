@@ -171,7 +171,7 @@ $env.CGO_ENABLED = "1"
 
 $env.NODE_OPTIONS = "--openssl-legacy-provider"
 # 为当前 shell 启用 web search
-$env.OPENCODE_ENABLE_EXA = 1
+$env.OPENCODE_ENABLE_EXA = "1"
 $env.OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX = 1048576
 $env.METRICS_LOG_LEVEL = "error"
 $env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
