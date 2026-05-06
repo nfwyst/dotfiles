@@ -17,6 +17,12 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
+  "agent": {
+    "general": {
+      "model": "deepseek/deepseek-v4-pro",
+      "variant": "max"
+    }
+  },
   "instructions": ["./skills/caveman/SKILL.md"],
   "plugin": [
     "./plugins/rtk.ts",
@@ -143,6 +149,24 @@
     },
     "deepseek": {
       "blacklist": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"]
+    },
+    "ai_agent_proxy_responses": {
+      "npm": "@ai-sdk/openai",
+      "name": "AI Agent Proxy Responses",
+      "options": {
+        "baseURL": "https://ai-coder.bytedance.net/responses",
+        "apiKey": "{env:PROXY_TOKEN}",
+        "headers": {}
+      },
+      "models": {
+        "gpt-5.5-2026-04-24": {
+          "name": "GPT-5.5",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          }
+        }
+      }
     }
   },
   "disabled_providers": [
