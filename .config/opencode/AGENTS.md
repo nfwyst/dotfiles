@@ -22,8 +22,8 @@
 - 优先复用现有实现,非必要不新增抽象。
 - 不为假设场景补充兼容层、回退逻辑或过度防御。
 - 遇阻塞先定位根因,禁用跳过校验、绕过钩子等捷径。
+- 优先使用 multimodal-looker agent 解析二进制图片。
 - 所有 `task()` 调用**必须**在 `load_skills` 中包含 `caveman`。
-- 使用 multimodal-looker agent 解析图片。
 
 ## Skill 缺失自动安装
 
