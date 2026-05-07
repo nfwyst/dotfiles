@@ -127,13 +127,13 @@
       "updatedAt": "2026-04-30T03:41:15.220Z"
     },
     "codebase-to-course": {
-      "source": "zarazhangrui/codebase-to-course",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/zarazhangrui/codebase-to-course.git",
+      "source": "default/public",
+      "sourceType": "byted",
+      "sourceUrl": "https://skills.byted.org/default/public",
       "skillPath": "SKILL.md",
-      "skillFolderHash": "ff8837ecf8e9f6ce9874ffa42e42633394a52a00",
+      "skillFolderHash": "",
       "installedAt": "2026-04-30T08:48:23.881Z",
-      "updatedAt": "2026-04-30T08:48:23.881Z"
+      "updatedAt": "2026-05-06T07:00:34.585Z"
     }
   },
   "dismissed": {

@@ -135,6 +135,20 @@ require("snacks").setup({
         p:set_cwd(current == root and cwd or root)
         p:find()
       end,
+      explorer_confirm = function(picker, item, action)
+        local explorer_actions = require("snacks.explorer.actions").actions
+        if item and item.dir and vim.fs.normalize(item.file) == vim.fs.normalize(picker:cwd()) then
+          return explorer_actions.explorer_up(picker)
+        end
+        return explorer_actions.confirm(picker, item, action)
+      end,
+      explorer_set_root = function(picker)
+        local dir = picker:dir()
+        if dir and vim.fs.normalize(dir) ~= vim.fs.normalize(picker:cwd()) then
+          picker:set_cwd(dir)
+          picker:find()
+        end
+      end,
     },
     icons = {
       git = {
@@ -170,6 +184,8 @@ require("snacks").setup({
         win = {
           list = {
             keys = {
+              ["-"] = { "explorer_set_root", mode = { "n" } },
+              ["<CR>"] = { "explorer_confirm", mode = { "n" } },
               ["/"] = { "toggle_input", mode = { "n" } },
             },
           },

@@ -1,6 +1,6 @@
 # Codebase to Course
 
-A Claude Code skill that turns any codebase into a beautiful, interactive single-page HTML course.
+A Claude Code skill that turns any codebase into a beautiful, interactive HTML course (assembled from modular parts).
 
 Point it at a repo. Get back a stunning, self-contained course that teaches how the code works — with scroll-based navigation, animated visualizations, embedded quizzes, and code-with-plain-English side-by-side translations.
 
@@ -20,7 +20,7 @@ You're not trying to become a software engineer. You want coding as a superpower
 
 ## What the course looks like
 
-The output is a **single HTML file** — no dependencies, no setup, works offline. It includes:
+The output is a **self-contained directory** — open `index.html` directly in the browser, no dependencies, no setup, works offline. Built from modular parts assembled via `build.sh`. It includes:
 
 - **Scroll-based modules** with progress tracking and keyboard navigation
 - **Code ↔ Plain English translations** — real code on the left, what it means on the right
@@ -80,10 +80,18 @@ Code snippets are exact copies from the real codebase — never modified or simp
 
 ```
 codebase-to-course/
-├── SKILL.md                          # Main skill instructions
+├── SKILL.md                          # Main skill instructions (4-phase process)
 └── references/
+    ├── _base.html                    # HTML skeleton (<head>, nav bar, <main>)
+    ├── _footer.html                  # Closing tags (</main></body></html>)
+    ├── build.sh                      # Assembles _base + modules + _footer → index.html
+    ├── styles.css                    # Complete design system (1195 lines)
+    ├── main.js                       # JS engine for all interactivity (498 lines)
     ├── design-system.md              # CSS tokens, typography, colors, layout
-    └── interactive-elements.md       # Quiz, animation, and visualization patterns
+    ├── interactive-elements.md       # Quiz, animation, and visualization patterns
+    ├── content-philosophy.md         # Visual density, metaphor, quiz design rules
+    ├── gotchas.md                    # Common failure points checklist
+    └── module-brief-template.md      # Template for complex codebase parallel builds
 ```
 
 
