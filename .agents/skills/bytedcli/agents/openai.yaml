@@ -1,0 +1,4 @@
+interface:
+  display_name: "bytedcli"
+  short_description: "Unified skill for all bytedcli capabilities"
+  default_prompt: "Use $bytedcli to solve ByteDance internal R&D tasks through the bytedcli CLI, MCP server, or bundled references."

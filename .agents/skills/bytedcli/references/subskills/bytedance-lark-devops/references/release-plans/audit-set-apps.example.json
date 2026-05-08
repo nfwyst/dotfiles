@@ -1,0 +1,41 @@
+{
+  "stage_data": [
+    {
+      "deploy_stage": 3,
+      "unit_iterms": [
+        {
+          "id": 29385,
+          "entity": "example.service_pre_release",
+          "psm_id": 5834,
+          "unit": 1,
+          "clusters": [
+            {
+              "id": 2055007,
+              "name": "default",
+              "desc": "default-2055007",
+              "gray_mode": 0,
+              "is_gray_cluster": false,
+              "is_standalone_release": false
+            }
+          ],
+          "is_deploy": true,
+          "version_iterms": [
+            {
+              "repo_id": 12345,
+              "repo_name": "example/repo",
+              "pub_base": 2,
+              "dependency_mode": "default",
+              "is_main_repo": true,
+              "attrs": "{\"icm_config\":null,\"scm_config\":{\"scm_version\":\"1.0.0.1\",\"branch\":\"master\",\"git_repo_name\":\"example/repo\",\"git_resource\":\"gitlab\",\"commit_hash\":\"commit_hash_here\",\"diff_url\":\"https://code.byted.org/example/repo/commit/commit_hash_here\",\"repo_name\":\"example/repo\"}}"
+            }
+          ],
+          "dependency_mode": "default",
+          "grayscale_on": false,
+          "online_deploy_type": 0
+        }
+      ]
+    }
+  ],
+  "extra_data": {},
+  "modify_token": ""
+}

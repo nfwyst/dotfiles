@@ -1,0 +1,91 @@
+{
+  "use_app_cloud_id": true,
+  "periods": [
+    {
+      "granularity": "day",
+      "align_unit": "day",
+      "timezone": "UTC",
+      "week_start": 1,
+      "type": "past_range",
+      "spans": [
+        {
+          "type": "past",
+          "past": {
+            "amount": 7,
+            "unit": "day"
+          }
+        },
+        {
+          "type": "past",
+          "past": {
+            "amount": 1,
+            "unit": "day"
+          }
+        }
+      ]
+    }
+  ],
+  "version": 3,
+  "content": {
+    "profile_groups_v2": [],
+    "profile_filters": [
+      {
+        "expression": {
+          "logic": "and",
+          "expressions": [
+            {
+              "logic": "or",
+              "conditions": []
+            }
+          ]
+        },
+        "show_name": "全体用户",
+        "show_label": "1"
+      }
+    ],
+    "orders": [],
+    "query_type": "event",
+    "queries": [
+      [
+        {
+          "indicator_show_name": "总次数（PV）",
+          "measure_info": {},
+          "event_indicator": "events",
+          "show_name": "",
+          "show_label": "A",
+          "event_name": "{event_name}",
+          "_comment_event_name": "实际查询替换为需要查询的事件名称event_name，如app_launch/launch_log",
+          "event_type": "origin",
+          "filters": [],
+          "groups_v2": [
+            {
+              "property_compose_type": "origin",
+              "property_name": "{param_name}",
+              "_comment_property_name": "实际查询替换为需要查询的参数名称property_name, 如_d/_oid等",
+              "property_type": "{param_type}",
+              "_comment_property_type": "实际查询替换为需要查询的参数类型property_type, 如event_param/common_param/profile等"
+            }
+          ]
+        }
+      ]
+    ],
+    "page": {
+      "offset": 0,
+      "limit": 200
+    }
+  },
+  "resources": [
+    {
+      "project_ids": [
+        55
+      ],
+      "subject_ids": [
+        1
+      ],
+      "app_ids": []
+    }
+  ],
+  "app_ids": [],
+  "finder_option": {},
+  "restriction": {}
+}

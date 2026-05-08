@@ -1,0 +1,16 @@
+{
+  "deploy_tpl_id": 1001,
+  "is_var_review": false,
+  "ignore_ut": true,
+  "need_confirm": true,
+  "item_id": 123456,
+  "item_vars": "[]",
+  "code": "return True",
+  "commit_msg": "sample review create (external)",
+  "auto_deploy": false,
+  "reviewer_list": "sample-reviewer",
+  "apply_user": "sample-reviewer",
+  "version_type": 1,
+  "item_filter": "{\"0\":{\"android\":[[{\"type\":\"version\",\"relation\":\">=\",\"value\":\"0\"}]],\"androidpad\":[],\"iphone\":[],\"ipad\":[],\"pc\":[]}}",
+  "qa_reviewer_list": "sample-qa"
+}

@@ -1,0 +1,17 @@
+{
+  "id": 431001,
+  "entity": "example.service",
+  "attrs": "{\"boe_feature\":\"example_boe_feature\"}",
+  "cloud_env": "BOE",
+  "unit": "BOE",
+  "dependency_mode": "default",
+  "versions": [
+    {
+      "repo_id": 12345,
+      "repo_name": "example/repo",
+      "pub_base": 0,
+      "is_main_repo": true,
+      "attrs": "{\"dependency\":\"default\",\"icm_config\":null,\"scm_config\":{\"scm_type\":\"offline\",\"repo_id\":12345,\"repo_name\":\"example/repo\",\"scm_version\":\"\",\"git_repo_name\":\"example/repo\",\"git_source\":\"gitlab\",\"branch\":\"feature_branch\"}}"
+    }
+  ]
+}

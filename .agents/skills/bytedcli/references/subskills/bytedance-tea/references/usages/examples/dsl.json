@@ -1,0 +1,197 @@
+{
+  "use_app_cloud_id": true,
+  "periods": [
+    {
+      "granularity": "day",
+      "align_unit": "day",
+      "timezone": "UTC",
+      "week_start": 1,
+      "type": "past_range",
+      "spans": [
+        {
+          "type": "past",
+          "past": {
+            "amount": 5,
+            "unit": "day"
+          }
+        },
+        {
+          "type": "past",
+          "past": {
+            "amount": 1,
+            "unit": "day"
+          }
+        }
+      ]
+    }
+  ],
+  "version": 3,
+  "content": {
+    "profile_groups_v2": [],
+    "profile_filters": [
+      {
+        "expression": {
+          "logic": "and",
+          "expressions": [
+            {
+              "logic": "or",
+              "conditions": [
+                {
+                  "property_type": "common_param",
+                  "property_name": "os_name",
+                  "property_compose_type": "origin",
+                  "property_operation": "=",
+                  "property_values": [
+                    "android"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "show_name": "android",
+        "show_label": "1"
+      }
+    ],
+    "orders": [],
+    "query_type": "event",
+    "queries": [
+      [
+        {
+          "indicator_show_name": "总次数（PV）",
+          "measure_info": {},
+          "event_indicator": "events",
+          "show_name": "应用启动",
+          "show_label": "A",
+          "event_name": "app_launch",
+          "event_type": "origin",
+          "filters": [
+            {
+              "expression": {
+                "logic": "and",
+                "expressions": [
+                  {
+                    "logic": "or",
+                    "conditions": [
+                      {
+                        "property_type": "common_param",
+                        "property_name": "app_region",
+                        "property_compose_type": "origin",
+                        "property_operation": "=",
+                        "property_values": [
+                          "VN",
+                          "ID",
+                          "TH",
+                          "BR"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "groups_v2": [
+            {
+              "property_compose_type": "origin",
+              "property_name": "country",
+              "property_type": "profile"
+            }
+          ],
+          "extra": {},
+          "show_key": "39d9cff1-f755-4c6d-916c-e5cee4f916fe",
+          "event_id": null
+        }
+      ],
+      [
+        {
+          "indicator_show_name": "总人数（UV）",
+          "measure_info": {},
+          "event_indicator": "event_users",
+          "show_name": "",
+          "show_label": "B",
+          "event_name": "launch_log",
+          "event_type": "origin",
+          "filters": [
+            {
+              "expression": {
+                "logic": "and",
+                "expressions": [
+                  {
+                    "logic": "or",
+                    "conditions": [
+                      {
+                        "property_type": "common_param",
+                        "property_name": "app_version",
+                        "property_compose_type": "origin",
+                        "property_operation": ">=",
+                        "property_values": [
+                          "41.0.3"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "groups_v2": [
+            {
+              "property_compose_type": "origin",
+              "property_name": "country",
+              "property_type": "profile"
+            }
+          ],
+          "extra": {},
+          "show_key": "a79066ca-4112-4d45-b330-fd6d12c1229e",
+          "event_id": null
+        }
+      ]
+    ],
+    "page": {
+      "offset": 0,
+      "limit": 200
+    },
+    "option": {
+      "chart_type": "line",
+      "use_sample_data": false,
+      "refresh_cache": false,
+      "fusion": false,
+      "insight": {},
+      "analysis_subject": {},
+      "accumulation": false,
+      "is_pie": false,
+      "skip_period_restrict": false,
+      "ignored_by_au": false,
+      "query_trigger_type": null,
+      "query_trigger": "manual_query",
+      "source": "finder"
+    }
+  },
+  "option": {
+    "blend": {
+      "status": true,
+      "base": 0,
+      "base_period": true
+    },
+    "transpose": false,
+    "finder": {
+      "sort_rule": "avg_desc"
+    },
+    "region_filter": [
+      "GLOBAL"
+    ]
+  },
+  "resources": [
+    {
+      "project_ids": [
+        55
+      ],
+      "subject_ids": [
+        1
+      ]
+    }
+  ],
+  "finder_option": {},
+  "restriction": {}
+}

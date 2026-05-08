@@ -1,0 +1,20 @@
+{
+  "repo_versions": {
+    "ee/bear/explorer": "1.0.0.5421",
+    "toutiao/load": "1.0.2.619",
+    "toutiao/runtime": "1.0.1.845",
+    "ee/apacana/conf": "1.0.8.5117",
+    "ss_conf": "1.0.0.1832",
+    "infra/aiops/panic_collector": "1.0.0.17"
+  },
+  "units": {
+    "CN": {
+      "is_deploy": true,
+      "grayscale_on": false,
+      "online_deploy_type": 0,
+      "cluster_ids": [
+        2055007
+      ]
+    }
+  }
+}
