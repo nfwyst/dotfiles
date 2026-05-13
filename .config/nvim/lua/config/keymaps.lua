@@ -390,6 +390,47 @@ map("n", "gd", function()
     return uri
   end
 
+  local function clamp_range_to_buffer(range, target_buf)
+    if type(range) ~= "table" or type(range.start) ~= "table" then
+      return
+    end
+
+    local line = range.start.line
+    if type(line) ~= "number" then
+      return
+    end
+
+    local line_count = math.max(vim.api.nvim_buf_line_count(target_buf), 1)
+    local clamped_line = math.max(0, math.min(line, line_count - 1))
+    range.start.line = clamped_line
+    if type(range.start.character) ~= "number" or range.start.character < 0 or clamped_line ~= line then
+      range.start.character = 0
+    end
+  end
+
+  local function clamp_location(loc)
+    local uri = loc.uri or loc.targetUri
+    uri = normalize_uri(uri)
+    if type(uri) ~= "string" or uri == "" then
+      return
+    end
+
+    local ok, fname = pcall(vim.uri_to_fname, uri)
+    if not ok or type(fname) ~= "string" or vim.fn.filereadable(fname) == 0 then
+      return
+    end
+
+    local target_buf = vim.fn.bufadd(fname)
+    vim.fn.bufload(target_buf)
+    if not vim.api.nvim_buf_is_loaded(target_buf) then
+      return
+    end
+
+    clamp_range_to_buffer(loc.range, target_buf)
+    clamp_range_to_buffer(loc.targetSelectionRange, target_buf)
+    clamp_range_to_buffer(loc.targetRange, target_buf)
+  end
+
   -- Dedupe across clients (different clients often return the same Location;
   -- e.g. tsgo + cssmodules-ls both point to the same `.less` file for a
   -- `./x.module.less` import path).
@@ -413,9 +454,13 @@ map("n", "gd", function()
   end
 
   local function jump(loc)
+    clamp_location(loc)
     local client = vim.lsp.get_clients({ bufnr = bufnr })[1]
     local enc = (client and client.offset_encoding) or "utf-16"
-    vim.lsp.util.show_document(loc, enc, { focus = true })
+    local ok, err = pcall(vim.lsp.util.show_document, loc, enc, { focus = true })
+    if not ok then
+      vim.notify("Failed to jump to definition: " .. tostring(err), vim.log.levels.ERROR)
+    end
   end
 
   local function show_list(locs)

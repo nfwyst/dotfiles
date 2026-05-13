@@ -181,7 +181,20 @@ vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
   callback = function(ev)
     local linters = require("lint").linters_by_ft[vim.bo[ev.buf].filetype]
     if linters and #linters > 0 then
-      require("lint").try_lint()
+      -- eslint_d default cwd = buffer dir → tsconfigRootDir too deep →
+      -- typescript-eslint length-based tsconfig search terminates early.
+      -- Fix: LSP root_dir (ts_ls/tsserver) → vim.fs.root fallback.
+      -- Ref: nvim-lint#482 (author's recommendation)
+      local cwd = nil
+      if vim.tbl_contains(linters, "eslint_d") then
+        local clients = vim.lsp.get_clients({ bufnr = ev.buf })
+        cwd = clients[1] and clients[1].config.root_dir
+        if not cwd then
+          local bufname = vim.api.nvim_buf_get_name(ev.buf)
+          cwd = vim.fs.root(bufname, { '.eslintrc.cjs', 'eslint.config.js', 'eslint.config.mjs', '.git' })
+        end
+      end
+      require("lint").try_lint(linters, { cwd = cwd })
     end
   end,
 })

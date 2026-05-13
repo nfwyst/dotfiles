@@ -11,7 +11,11 @@ if not tsdk then
 end
 
 return {
-  cmd = { "vue-language-server", "--stdio" },
+  cmd = ts_util.bun_cmd(
+    "vue-language-server",
+    "node_modules/@vue/language-server/bin/vue-language-server.js",
+    { "--stdio" }
+  ),
   filetypes = { "vue" },
   root_markers = { "vue.config.js", "vue.config.ts", "nuxt.config.js", "nuxt.config.ts", "package.json" },
   -- In hybrid mode (Volar 2.x default), vtsls handles TS features via

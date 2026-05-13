@@ -169,6 +169,12 @@ require("blink.cmp").setup({
     preset = "enter",
     ["<C-y>"] = { "select_and_accept" },
     ["<c-l>"] = { "show", "fallback" },
+    ["jk"] = {
+      function(cmp)
+        cmp.cancel()
+        return "<Esc>"
+      end,
+    },
   },
   fuzzy = {
     implementation = "rust",

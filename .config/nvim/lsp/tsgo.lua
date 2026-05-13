@@ -6,7 +6,14 @@
 local ts_util = require("config.ts_util")
 
 return {
-  cmd = { "tsgo", "--lsp", "--stdio" },
+  -- Use bun_cmd for direct path to JS wrapper (avoids mason/bin symlink).
+  -- Falls back to $PATH "tsgo" if the JS entry file is missing.
+  -- on_new_config below overrides this when a project-local tsgo exists.
+  cmd = ts_util.bun_cmd(
+    "tsgo",
+    "node_modules/@typescript/native-preview/bin/tsgo.js",
+    { "--lsp", "--stdio" }
+  ),
   filetypes = {
     "javascript",
     "javascriptreact",
@@ -16,6 +23,25 @@ return {
   -- Use root_dir function to prevent tsgo from starting in projects where
   -- vtsls should be used. This avoids the "start then kill" pattern that
   -- causes "exit code 1" errors.
+
+  -- tsgo dev build (7.0.0-dev.20260510.1) stability workaround:
+  -- After a crash/restart, tsgo may fail to detect workspace folders sent
+  -- by Neovim, printing "No workspace folders detected" → "not initializing".
+  -- Explicitly re-set workspace folders in on_init as a defensive measure.
+  on_init = function(client, init_result)
+    if not client.workspace_folders or #client.workspace_folders == 0 then
+      local root = client.config.root_dir
+      if root then
+        client.workspace_folders = {
+          {
+            uri = vim.uri_from_fname(root),
+            name = vim.fn.fnamemodify(root, ":t"),
+          },
+        }
+      end
+    end
+  end,
+
   on_attach = function(client)
     local orig = client.request
 
@@ -114,18 +140,22 @@ return {
   root_dir = function(bufnr, cb)
     local root = ts_util.find_project_root(bufnr)
     if not root then
+      cb(nil)
       return
     end
     -- Skip: Deno projects (handled by Deno LSP)
     if ts_util.is_deno_project(root) then
+      cb(nil)
       return
     end
     -- Skip: Vue projects (need vtsls for @vue/typescript-plugin)
     if ts_util.is_vue_project(root) then
+      cb(nil)
       return
     end
     -- Skip: projects with non-trivial baseUrl (tsgo dropped baseUrl support)
     if ts_util.needs_baseurl_fallback(root) then
+      cb(nil)
       return
     end
     cb(root)

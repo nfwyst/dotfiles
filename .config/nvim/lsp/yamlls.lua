@@ -1,8 +1,13 @@
 --- @type vim.lsp.Config
+local ts_util = require("config.ts_util")
 local util = require("config.util")
 
 return {
-  cmd = { "yaml-language-server", "--stdio" },
+  cmd = ts_util.bun_cmd(
+    "yaml-language-server",
+    "node_modules/yaml-language-server/bin/yaml-language-server",
+    { "--stdio" }
+  ),
   filetypes = { "yaml", "yaml.docker-compose" },
   root_markers = { ".git" },
   settings = {

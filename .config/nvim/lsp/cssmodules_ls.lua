@@ -63,6 +63,11 @@ return {
   filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
   root_markers = { "package.json", ".git" },
   on_attach = function(client)
+    if client._cssmodules_location_normalizer then
+      return
+    end
+    client._cssmodules_location_normalizer = true
+
     local orig = client.request
     client.request = function(self, method, params, handler, bufnr)
       if not LOCATION_METHODS[method] then

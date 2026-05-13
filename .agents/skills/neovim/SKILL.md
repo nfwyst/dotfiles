@@ -1,22 +1,19 @@
 ---
 name: neovim
 description: |
-  Expert guidance for working on any user's Neovim configuration — writing Lua
-  config, wiring up plugins, configuring LSP servers, setting up completion,
-  formatters, linters, treesitter, keymaps, autocmds, and diagnosing startup
-  or runtime issues. Covers modern Neovim 0.10+ practices across the major
-  plugin managers (vim.pack, lazy.nvim, packer, pckr) and the two LSP paths
-  (native `vim.lsp.config` / `vim.lsp.enable` vs. nvim-lspconfig).
+  Expert help for a user's Neovim config: Lua setup, plugins, LSP servers,
+  completion, formatters, linters, Treesitter, keymaps, autocmds, UI, and
+  startup/runtime debugging on modern Neovim 0.10+. Covers both LSP paths:
+  native `vim.lsp.config`/`vim.lsp.enable` and classic nvim-lspconfig.
 
-  Use whenever the user asks anything Neovim-related: "fix my nvim config",
-  "add a new LSP", "why is my completion broken", "migrate from packer to
-  lazy", "convert my config to 0.11 native LSP", "add a formatter on save",
-  "my treesitter highlights aren't working", "debug slow startup", "how do I
-  remap X", "what does this lua snippet do", keybinding tweaks, plugin
-  selection, colorscheme issues. Trigger on: neovim, nvim, init.lua, vim.pack,
-  lazy.nvim, nvim-lspconfig, blink.cmp, nvim-cmp, conform, nvim-lint, mason,
-  treesitter, LSP, keymaps, autocmd, formatter, linter, colorscheme, and any
-  file under `~/.config/nvim/` or `~/dotfiles/.config/nvim/`.
+  Use for requests like "fix my nvim config", "add an LSP", "why is
+  completion broken", "migrate packer to lazy.nvim", "convert to native 0.11
+  LSP", "format on save", "Treesitter highlight issue", "slow startup",
+  "remap keys", or "explain this lua snippet". Trigger on: neovim, nvim,
+  init.lua, init.vim, LSP, lazy.nvim, vim.pack, packer, pckr, nvim-lspconfig,
+  vim.lsp, blink.cmp, nvim-cmp, conform, nvim-lint, mason, Treesitter,
+  keymaps, autocmd, autocmds, formatters, linters, colorschemes, and files
+  under `~/.config/nvim/` or `~/dotfiles/.config/nvim/`.
 ---
 
 # Neovim Configuration Assistant
