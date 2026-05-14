@@ -17,14 +17,13 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
+  "compaction": { "reserved": 20000 },
   "agent": {
-    "general": {
-      "model": "deepseek/deepseek-v4-pro",
-      "variant": "max"
-    }
+    "general": { "model": "kimi-for-coding/k2p6", "temperature": 0 }
   },
-  "instructions": ["./skills/caveman/SKILL.md"],
+  "instructions": ["../../.agents/skills/caveman/SKILL.md"],
   "plugin": [
+    "./plugins/no-repeat-read.ts",
     "./plugins/rtk.ts",
     "./plugins/graphify.js",
     "opencode-mem@latest",
@@ -131,7 +130,6 @@
         "minimax-m2.7",
         "ling-2.6-flash-free",
         "hy3-preview-free",
-        "gpt-5.5",
         "gpt-5.5-pro"
       ]
     },
@@ -150,28 +148,12 @@
     "deepseek": {
       "blacklist": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"]
     },
-    "ai_agent_proxy_responses": {
-      "npm": "@ai-sdk/openai",
-      "name": "AI Agent Proxy Responses",
-      "options": {
-        "baseURL": "https://ai-coder.bytedance.net/responses",
-        "apiKey": "{env:PROXY_TOKEN}",
-        "headers": {}
-      },
-      "models": {
-        "gpt-5.5-2026-04-24": {
-          "name": "GPT-5.5",
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          }
-        }
-      }
+    "kimi-for-coding": {
+      "blacklist": ["k2p5", "kimi-k2-thinking"]
     }
   },
   "disabled_providers": [
     "zhipuai-coding-plan",
-    "kimi-for-coding",
     "google",
     "openai",
     "openrouter",
