@@ -150,7 +150,11 @@ require("grug-far").setup({
 })
 
 vim.keymap.set("n", "<leader>sr", function()
-  require("grug-far").open({ prefills = { search = vim.fn.expand("<cword>") } })
+  local word = vim.fn.expand("<cword>")
+  if not word:match("[%w_]") then
+    word = nil
+  end
+  require("grug-far").open({ prefills = { search = word } })
 end, { desc = "Search and Replace" })
 
 -- ===================================================================

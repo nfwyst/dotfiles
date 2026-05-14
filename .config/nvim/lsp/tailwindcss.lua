@@ -15,11 +15,11 @@ return {
     { "--stdio" }
   ),
   filetypes = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact", "svelte", "vue" },
-  root_markers = config_files,
-  on_attach = function(client, bufnr)
-    local config_root = vim.fs.root(bufnr, config_files)
-    if not config_root then
-      client:stop()
+  workspace_required = true,
+  root_dir = function(bufnr, cb)
+    local root = vim.fs.root(bufnr, config_files)
+    if root then
+      cb(root)
     end
   end,
 }

@@ -1,14 +1,15 @@
 --- @type vim.lsp.Config
---- tsgo: TypeScript/JavaScript LSP powered by typescript-go (TS 7.0)
---- Used for pure TS/JS/React projects (non-Vue) for maximum speed.
---- For Vue projects, vtsls is used instead (tsgo lacks Vue plugin support).
---- For projects with non-trivial baseUrl, vtsls is used (tsgo dropped baseUrl).
+--- tsgo: TypeScript/JavaScript LSP powered by typescript-go (TS 7.0).
+--- Default TS/JS/React server for maximum speed.
+--- Vue projects use vtsls instead because tsgo lacks Vue plugin support.
+--- Note: current native-preview builds may still hit upstream tsgo crashes;
+--- keep vtsls available as Vue-only fallback, not default TS server.
 local ts_util = require("config.ts_util")
 
 return {
   -- Use bun_cmd for direct path to JS wrapper (avoids mason/bin symlink).
   -- Falls back to $PATH "tsgo" if the JS entry file is missing.
-  -- on_new_config below overrides this when a project-local tsgo exists.
+  -- before_init below overrides this when a project-local tsgo exists.
   cmd = ts_util.bun_cmd(
     "tsgo",
     "node_modules/@typescript/native-preview/bin/tsgo.js",
@@ -20,6 +21,7 @@ return {
     "typescript",
     "typescriptreact",
   },
+  workspace_required = true,
   -- Use root_dir function to prevent tsgo from starting in projects where
   -- vtsls should be used. This avoids the "start then kill" pattern that
   -- causes "exit code 1" errors.
@@ -140,31 +142,28 @@ return {
   root_dir = function(bufnr, cb)
     local root = ts_util.find_project_root(bufnr)
     if not root then
-      cb(nil)
       return
     end
     -- Skip: Deno projects (handled by Deno LSP)
     if ts_util.is_deno_project(root) then
-      cb(nil)
       return
     end
     -- Skip: Vue projects (need vtsls for @vue/typescript-plugin)
     if ts_util.is_vue_project(root) then
-      cb(nil)
-      return
-    end
-    -- Skip: projects with non-trivial baseUrl (tsgo dropped baseUrl support)
-    if ts_util.needs_baseurl_fallback(root) then
-      cb(nil)
       return
     end
     cb(root)
   end,
-  on_new_config = function(new_config, root_dir)
+  before_init = function(_, config)
     -- Prefer project-local tsgo for monorepo version consistency
-    local local_bin = root_dir .. "/node_modules/.bin/tsgo"
+    local root = config.root_dir
+    if not root then
+      return
+    end
+
+    local local_bin = root .. "/node_modules/.bin/tsgo"
     if vim.uv.fs_stat(local_bin) then
-      new_config.cmd = { local_bin, "--lsp", "--stdio" }
+      config.cmd = { local_bin, "--lsp", "--stdio" }
     end
   end,
   settings = {

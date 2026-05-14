@@ -178,7 +178,6 @@ require("snacks").setup({
         title = "",
         layout = {
           hidden = { "input" },
-          auto_hide = { "input" },
           layout = { width = 50, position = "right" },
         },
         win = {
@@ -186,12 +185,12 @@ require("snacks").setup({
             keys = {
               ["-"] = { "explorer_set_root", mode = { "n" } },
               ["<CR>"] = { "explorer_confirm", mode = { "n" } },
-              ["/"] = { "toggle_input", mode = { "n" } },
+              ["/"] = { "focus_input", mode = { "n" } },
             },
           },
           input = {
             keys = {
-              ["<Esc>"] = { "toggle_input", mode = { "n", "i" } },
+              ["<Esc>"] = { "focus_list", mode = { "n", "i" } },
             },
           },
         },

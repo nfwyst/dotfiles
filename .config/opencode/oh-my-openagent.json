@@ -8,20 +8,17 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "hephaestus": {
       "model": "opencode-go/kimi-k2.6",
       "fallback_models": [
         { "model": "opencode-go/glm-5.1" },
-        { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "oracle": {
@@ -31,14 +28,12 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "librarian": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "opencode-go/qwen3.6-plus",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.6-plus" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "opencode-go/glm-5.1" },
@@ -47,9 +42,8 @@
       ]
     },
     "explore": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "opencode-go/qwen3.6-plus",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.6-plus" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "opencode-go/glm-5.1" },
@@ -71,8 +65,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "metis": {
@@ -82,8 +75,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "momus": {
@@ -93,8 +85,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "atlas": {
@@ -104,8 +95,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "sisyphus-junior": {
@@ -115,8 +105,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     }
   },
@@ -128,8 +117,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "ultrabrain": {
@@ -139,8 +127,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "deep": {
@@ -150,8 +137,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "artistry": {
@@ -161,14 +147,12 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "quick": {
-      "model": "opencode-go/minimax-m2.7",
+      "model": "opencode-go/qwen3.6-plus",
       "fallback_models": [
-        { "model": "opencode-go/qwen3.6-plus" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "opencode-go/glm-5.1" },
@@ -183,8 +167,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "unspecified-high": {
@@ -194,8 +177,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     },
     "writing": {
@@ -205,8 +187,7 @@
         { "model": "opencode-go/deepseek-v4-pro", "variant": "max" },
         { "model": "kimi-for-coding/k2p6" },
         { "model": "opencode-go/mimo-v2.5-pro", "variant": "high" },
-        { "model": "opencode-go/qwen3.6-plus" },
-        { "model": "opencode-go/minimax-m2.7" }
+        { "model": "opencode-go/qwen3.6-plus" }
       ]
     }
   }

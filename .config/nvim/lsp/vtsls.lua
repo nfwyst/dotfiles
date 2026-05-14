@@ -1,8 +1,6 @@
 --- @type vim.lsp.Config
---- vtsls: TypeScript/JavaScript LSP (via vtsls wrapping tsserver)
---- Activated in Vue projects (for @vue/typescript-plugin) and projects
---- with non-trivial baseUrl (tsgo dropped baseUrl support).
---- For all other TS/JS projects, tsgo is used for better performance.
+--- vtsls: TypeScript/JavaScript LSP (via vtsls wrapping tsserver).
+--- Vue-only fallback because tsgo lacks @vue/typescript-plugin support.
 local ts_util = require("config.ts_util")
 
 local tsdk = ts_util.mason_tsdk()
@@ -42,8 +40,7 @@ return {
     "mdx",
     "vue",
   },
-  -- Use root_dir function to only start vtsls where it's actually needed.
-  -- This is the complement of tsgo.lua's root_dir — they are mutually exclusive.
+  workspace_required = true,
   root_dir = function(bufnr, cb)
     local root = ts_util.find_project_root(bufnr)
     if not root then
@@ -53,11 +50,11 @@ return {
     if ts_util.is_deno_project(root) then
       return
     end
-    -- Start vtsls for Vue projects OR projects with non-trivial baseUrl
-    if ts_util.is_vue_project(root) or ts_util.needs_baseurl_fallback(root) then
+
+    -- vtsls is only needed for Vue projects. Plain TS/JS is handled by tsgo.
+    if ts_util.is_vue_project(root) then
       cb(root)
     end
-    -- Otherwise: tsgo handles this project, don't start vtsls
   end,
   get_language_id = function(_, filetype)
     if filetype == "mdx" then
