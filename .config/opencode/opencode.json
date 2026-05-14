@@ -17,20 +17,24 @@
     "external_directory": "allow",
     "doom_loop": "allow"
   },
-  "compaction": { "reserved": 20000 },
+  "compaction": {
+    "reserved": 20000
+  },
   "agent": {
-    "general": { "model": "kimi-for-coding/k2p6", "temperature": 0 }
+    "general": {
+      "model": "kimi-for-coding/k2p6",
+      "temperature": 0
+    }
   },
   "instructions": ["../../.agents/skills/caveman/SKILL.md"],
   "plugin": [
-    "./plugins/no-repeat-read.ts",
     "./plugins/rtk.ts",
     "./plugins/graphify.js",
     "opencode-mem@latest",
     "@tarquinen/opencode-dcp@latest",
     "opencode-plugin-openspec@latest",
-    "oh-my-openagent@latest",
-    "@byted/opencode-reporter-plugin"
+    "@byted/opencode-reporter-plugin",
+    "oh-my-openagent@latest"
   ],
   "mcp": {
     "codin-d2c-mcp": {
