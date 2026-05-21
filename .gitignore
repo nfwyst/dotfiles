@@ -63,3 +63,4 @@ tests/
 graphify-out/
 .config/opencode/skills
 .agents/_agents.mount_config
+.omo

@@ -198,6 +198,7 @@ bytedcli devflow task add-service \
 - `task list` 必填 `--biz-id`；`--creator` 可重复传多个
 - `task list --type-list` 默认为 `"8"`；`--source` 默认为 `0`
 - `work-item list` 必填 `--biz-id` 和 `--project-key`
+- `work-item list --project-name` 默认为 `ALL`，通常不需要修改
 - `work-item list --source`：`2` = 全量 work item，`4` = 最近有估分的 work item
 - `work-item list` 结果中 `id=0` 的项表示"无合适需求"
 - `resource search` 必填 `--biz-id` 和 `--keyword`；`--type-list` 默认 `"2,3,4,5,17,24"`

@@ -1,6 +1,6 @@
 # Manta (DataLeap) CLI Reference
 
-Manta is part of the DataLeap platform for data profiling and quality management. This CLI provides commands to query namespaces, list table monitor rules, create profiling rules, list profiling jobs, get profiling results, query comparison job summaries, and authenticate with DataLeap Manta.
+Manta is part of the DataLeap platform for data profiling and quality management. This CLI provides commands to query namespaces, list/run/create table monitor rules, create profiling rules, list profiling jobs, get profiling results, query comparison job summaries, and authenticate with DataLeap Manta.
 
 Supported regions: `cn`, `sg`, `va`, `eu`, `mycis`.
 
@@ -80,7 +80,7 @@ bytedcli manta monitor list [options]
 **Options:**
 - `--region <region>` - Region (default: "cn")
 - `--table-name-query <query>` - Search by database/table name
-- `--project-id <id>` - Filter by project ID, repeatable
+- `--project-id <id>` - Filter by project ID, repeatable (required)
 - `--mine` - Only list my monitor objects
 - `--triggered-only` - Only list triggered monitor objects
 - `--monitor-state <state>` - Filter by monitor state
@@ -92,8 +92,8 @@ bytedcli manta monitor list [options]
 **Examples:**
 ```bash
 bytedcli manta monitor list --region mycis --table-name-query demo_db.demo_table --project-id 1234567
-bytedcli manta monitor list --region sg --monitor-type Table_Lines --monitor-state RUNNABLE
-bytedcli --json manta monitor list --region va --table-name-query demo_db.demo_table
+bytedcli manta monitor list --region sg --project-id 1234567 --monitor-type Table_Lines --monitor-state RUNNABLE
+bytedcli --json manta monitor list --region va --project-id 1234567 --table-name-query demo_db.demo_table
 ```
 
 **Notes:**
@@ -102,6 +102,109 @@ bytedcli --json manta monitor list --region va --table-name-query demo_db.demo_t
 - 文本模式会把 `parts[].monitors[]` 扁平化成逐条规则的表格行；`--json` 会保留原始嵌套结构，便于上层自动化处理。
 - 查询具体表的监控规则时，如果已知项目归属，优先显式传 `--project-id`。在 `mycis` 等区域，仅使用 `--table-name-query` 或无筛选条件时，`find_monitors` 可能返回 `50005`。
 - 推荐排查顺序：先执行 `manta monitor list --project-id ... --table-name-query ...`，再执行 `manta profile job list`，并明确区分“接口异常”和“确认无数据”。
+
+---
+
+
+### monitor run
+
+Run one or more monitor rules once for a business datetime. This mirrors the Manta page trial-run action.
+
+```bash
+bytedcli manta monitor run [options]
+```
+
+**Options:**
+- `--region <region>` - Region (default: "cn")
+- `--rule-id <id>` - Monitor rule ID, repeatable
+- `--date <datetime>` - Business datetime for trial run, `YYYY-MM-DD HH:mm:ss`
+- `--cookie <cookie>` - DataLeap cookie string (or set `BYTEDCLI_MANTA_COOKIE` env var)
+
+**Examples:**
+```bash
+bytedcli manta monitor run --region cn --rule-id 123456 --date "2026-05-19 00:00:00"
+bytedcli --json manta monitor run --region cn --rule-id 123456 --rule-id 123457 --date "2026-05-19 00:00:00"
+```
+
+**Notes:**
+- `monitor run` calls `POST /monitor/dry_run` with `monitor_id_list` and `date`.
+- The endpoint triggers the trial run; inspect records with `monitor result list --rule-id <id> --business-date-start <yyyymmdd> --business-date-end <yyyymmdd> --project-id <id>`.
+
+---
+
+### monitor result list
+
+List Manta monitor alarm results. Use `--mode template` for Hive template rule results, `--mode custom` for custom SQL rule results, or the default `--mode all` to query both.
+
+```bash
+bytedcli manta monitor result list [options]
+```
+
+**Options:**
+- `--region <region>` - Region (default: "cn")
+- `--mode <mode>` - Result mode: `template`, `custom`, or `all` (default: `all`)
+- `--business-date-start <yyyymmdd>` - Start business date in `YYYYMMDD` format (must be used with `--business-date-end`)
+- `--business-date-end <yyyymmdd>` - End business date in `YYYYMMDD` format (must be used with `--business-date-start`)
+- `--rule-id <id>` - Monitor business rule ID
+- `--mine` - Only list my monitor results
+- `--only-alarm` - Only list alarmed results
+- `--project-id <id>` - Filter by project ID, repeatable (required)
+- `--page <n>` - Page number (1-based, default: 1)
+- `--page-size <n>` - Items per page (default: 100)
+- `--cookie <cookie>` - DataLeap cookie string (or set `BYTEDCLI_MANTA_COOKIE` env var)
+
+**Examples:**
+```bash
+bytedcli manta monitor result list --region cn --business-date-start 20260518 --business-date-end 20260519 --rule-id 123456 --mine --only-alarm --project-id 1234567 --page-size 50
+bytedcli manta monitor result list --region cn --mode template --business-date-start 20260517 --business-date-end 20260519 --project-id 1234567 --page 2
+bytedcli --json manta monitor result list --region cn --mode custom --rule-id 123456 --only-alarm --project-id 1234567 --page-size 20
+```
+
+**Notes:**
+- `template` mode queries Hive template monitor results; `custom` mode queries custom SQL monitor results.
+- `--business-date-start` 与 `--business-date-end` 表示日期范围边界；要么都不传，要传就必须一起传。
+- Text output renders a flat result table; JSON output preserves the raw result payloads grouped by mode.
+- `monitor result list` 后端在无项目过滤时可能返回 `50005`；建议始终显式传 `--project-id`。
+
+---
+
+### monitor create
+
+Create monitor rules using a single command with `--mode template|custom`.
+
+```bash
+bytedcli manta monitor create [options]
+```
+
+**Options:**
+- `--region <region>` - Region (default: "cn")
+- `--mode <mode>` - Rule mode: `custom` or `template` (required)
+- `--project-id <id>` - Project ID (required unless `--body-file`)
+- `--monitor-name <name>` - Rule name (required unless `--body-file`)
+- `--monitor-type <type>` - Monitor type (required unless `--body-file`)
+- `--monitor-state <state>` - Monitor state (`RUNNABLE` or `DISABLE`)
+- `--db-name <name>` - Database name
+- `--tb-name <name>` - Table name
+- `--partition <partition>` - Partition name
+- `--description <desc>` - Description
+- `--rule-sql <sql>` - SQL for custom mode (required for `custom` unless `--body-file`)
+- `--alarm-conditions <json>` - Alarm conditions JSON string or `@file`
+- `--schedule <value>` - Schedule
+- `--cron <value>` - Cron expression
+- `--body-file <path>` - Full JSON request body file (overrides all other options)
+- `--cookie <cookie>` - DataLeap cookie string (or set `BYTEDCLI_MANTA_COOKIE` env var)
+
+**Examples:**
+```bash
+bytedcli manta monitor create --region cn --mode custom --project-id 1085 --monitor-name demo_rule --monitor-type Custom_SQL --rule-sql "select 1"
+bytedcli manta monitor create --region cn --mode template --project-id 1085 --monitor-name demo_template_rule --monitor-type Table_Lines
+bytedcli manta monitor create --region cn --mode custom --body-file ./create-body.json
+```
+
+**Notes:**
+- `--mode custom` 调用 `POST /monitor/batch_create_monitor`
+- `--mode template` 调用 `POST /monitor/batch_create_monitor_with_object`
+- 传 `--body-file` 时，请求体会完整直传并覆盖结构化参数
 
 ---
 

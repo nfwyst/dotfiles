@@ -131,22 +131,38 @@ $env.SHELL = (which nu | get path | first)
 # To load env from custom file
 source ($nu.default-config-dir | path join 'custom-env.nu')
 
+# 各 init 缓存化: 缓存文件已存在则跳过, 减少每次启动 nu 时 fork 的子进程数量。
+# 升级对应工具后手动: rm -rf ~/.config/nushell/cache/{starship,zoxide,carapace,atuin}
+let _cache = ($nu.default-config-dir | path join 'cache')
+
 # prepare for starship
-mkdir ~/.config/nushell/cache/starship
-starship init nu | save -f ~/.config/nushell/cache/starship/init.nu
+let _starship_cache = ($_cache | path join 'starship/init.nu')
+if not ($_starship_cache | path exists) {
+    mkdir ($_starship_cache | path dirname)
+    starship init nu | save -f $_starship_cache
+}
 
 # prepare for zoxide
-mkdir ~/.config/nushell/cache/zoxide
-zoxide init nushell | save -f ~/.config/nushell/cache/zoxide/init.nu
+let _zoxide_cache = ($_cache | path join 'zoxide/init.nu')
+if not ($_zoxide_cache | path exists) {
+    mkdir ($_zoxide_cache | path dirname)
+    zoxide init nushell | save -f $_zoxide_cache
+}
 
 # prepare for carapace
 $env.CARAPACE_BRIDGES = 'zsh,bash'
-mkdir ~/.config/nushell/cache/carapace
-carapace _carapace nushell | save -f ~/.config/nushell/cache/carapace/init.nu
+let _carapace_cache = ($_cache | path join 'carapace/init.nu')
+if not ($_carapace_cache | path exists) {
+    mkdir ($_carapace_cache | path dirname)
+    carapace _carapace nushell | save -f $_carapace_cache
+}
 
 # prepare for atuin
-mkdir ~/.config/nushell/cache/atuin
-atuin init nu | save -f ~/.config/nushell/cache/atuin/init.nu
+let _atuin_cache = ($_cache | path join 'atuin/init.nu')
+if not ($_atuin_cache | path exists) {
+    mkdir ($_atuin_cache | path dirname)
+    atuin init nu | save -f $_atuin_cache
+}
 
 # load fnm env
 if (which fnm | is-not-empty) {
@@ -176,15 +192,8 @@ $env.OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX = 1048576
 $env.METRICS_LOG_LEVEL = "error"
 $env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
 
-# ── Auto-install missing tools ──────────────────────────────────
-if (which nufmt | is-empty) and (which cargo | is-not-empty) {
-    cargo install --git https://github.com/nushell/nufmt
-}
-
-if $env.UNAME == "Darwin" and (which brew | is-not-empty) {
-    if (which vivid | is-empty) { brew install vivid }
-    if (which dark-notify | is-empty) { brew install cormacrelf/tap/dark-notify }
-}
+# auto-install dev tool dependencies (defined in auto-install.nu)
+source ($nu.default-config-dir | path join 'auto-install.nu')
 
 # Set LS_COLORS based on system theme (requires vivid: brew install vivid)
 if (which vivid | is-not-empty) {

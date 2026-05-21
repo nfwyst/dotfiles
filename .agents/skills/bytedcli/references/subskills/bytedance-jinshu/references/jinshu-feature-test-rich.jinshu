@@ -1,0 +1,41 @@
+#orange@IMG_KEY_PLACEHOLDER 锦书富元素测试<green:Image><blue:Mention>
+> 覆盖标题图标、图片、右侧图标、mention、人员列表
+
+## 0. 变量说明
+发送或预览前替换以下占位符：
+- IMG_KEY_PLACEHOLDER：真实 image key，用于标题图标、正文图片、右侧图标。
+- USER_OPEN_ID_PLACEHOLDER：真实用户 open ID，用于 mention 和人员列表。
+- ANOTHER_USER_OPEN_ID_PLACEHOLDER：第二个真实用户 open ID。没有第二人时可替换为同一个 open ID。
+
+## 1. 标题图标
+如果标题左侧出现图标，说明 `#color@image_key` 生效。
+
+## 2. 普通图片
+![普通图片](IMG_KEY_PLACEHOLDER)
+
+## 3. 指定宽度图片
+![指定宽度图片](IMG_KEY_PLACEHOLDER@360)
+
+## 4. 通栏图片
+![](IMG_KEY_PLACEHOLDER size:stretch_without_padding)
+
+## 5. 完整单图
+![](IMG_KEY_PLACEHOLDER scale_type:fit_horizontal)
+
+## 6. 用户 mention
+@USER_OPEN_ID_PLACEHOLDER 这是一条 mention 当前测试用户的内容。
+
+## 7. 人员列表
+![](USER_OPEN_ID_PLACEHOLDER,ANOTHER_USER_OPEN_ID_PLACEHOLDER@medium,show_name,show_avatar)
+
+## 8. 右侧图标
+右侧应显示同一个测试图标。
+!extra:img[测试图标](IMG_KEY_PLACEHOLDER)
+
+## 9. 右侧按钮
+右侧按钮和右侧图标可共存测试。
+!extra:b:p[查看说明](https://example.com/jinshu-rich-test)
+
+--note--
+预期结果：标题图标、正文图片、右侧图标、mention、人员列表均正常渲染。若无第二个 open ID，可用同一个 open ID 覆盖人员列表双人显示路径。
+--note-end--

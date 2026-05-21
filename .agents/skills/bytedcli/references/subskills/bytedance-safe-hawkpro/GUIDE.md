@@ -1,19 +1,25 @@
 ---
 name: bytedance-safe-hawkpro
-description: Hawkpro trace query operations via bytedcli safe domain. Use when tracing moderation decisions — list traces by user/room/time/hit-type, get trace detail with decision graph and rule hit information.
+description: Hawkpro trace and error-reason query operations via bytedcli safe domain. Use when the user asks for an objectID's machine-review error reason or Hawkpro error reason; also use when tracing moderation decisions by user/room/time/hit-type and viewing decision graph or rule-hit details.
 ---
 
 # Safe Hawkpro — Trace Query
 
-Query hawkpro moderation trace entries: list traces by user ID, room ID, time range, or hit type; get trace detail with execution graph, rule hit information, and disposition action analysis.
+Query hawkpro moderation traces and HawkOps error reasons: list traces by user ID, room ID, time range, or hit type; get trace detail with execution graph, rule hit information, and disposition action analysis; use `trace doctor` when investigating objectID machine-review failures or Hawkpro error causes.
 
 ## Authentication
 
-Requires Safe authentication. See the parent skill `bytedance-safe` for login instructions:
+Requires Safe authentication. A single `safe login` covers `safe.bytedance.net`, `hawk.bytedance.net`, and `tcs.bytedance.net` via shared MPSSO cookies — no separate hawk login is needed.
 
 ```bash
 bytedcli auth login --session
 bytedcli safe login
+```
+
+If the hawk query reports missing permission, open the Hawk strategy tracing page below in a browser, apply for Hawk access, then retry:
+
+```text
+https://hawk.bytedance.net/v2/strategy_tracing?businessId=125&scene=community_audit_safe&start_time=1778223340945&end_time=1778309740945
 ```
 
 ## Commands
@@ -62,19 +68,84 @@ Get trace detail by trace ID. Shows execution graph, rule hit results, and dispo
 
 ```bash
 # Basic detail (auto-detects disposition rules, shows View 1)
-bytedcli safe hawkpro trace get --id 1776927119952144745
+bytedcli safe hawkpro trace get --id <trace-id>
 
 # View 2: Find rules by risk label name
-bytedcli safe hawkpro trace get --id 1776927119952144745 --risk-label demo-label
+bytedcli safe hawkpro trace get --id <trace-id> --risk-label demo-label
 
 # Show upstream chain with all conditions (works with both views)
-bytedcli safe hawkpro trace get --id 1776927119952144745 --upstream
+bytedcli safe hawkpro trace get --id <trace-id> --upstream
 
 # Combine risk-label and upstream
-bytedcli safe hawkpro trace get --id 1776927119952144745 --risk-label demo-label --upstream
+bytedcli safe hawkpro trace get --id <trace-id> --risk-label demo-label --upstream
 
 # JSON output
-bytedcli --json safe hawkpro trace get --id 1776927119952144745
+bytedcli --json safe hawkpro trace get --id <trace-id>
+```
+
+### trace doctor
+
+Diagnose the latest failed execution error reason for object_id(s).
+
+```bash
+bytedcli safe hawkpro trace doctor --scene demo-scene --object-id demo-object-id-1
+bytedcli safe hawkpro trace doctor --scene demo-scene --object-id demo-object-id-1 --object-id demo-object-id-2 --hours 48
+bytedcli --json safe hawkpro trace doctor --scene demo-scene --object-id demo-object-id-1
+```
+
+### scene list
+
+List hawkpro scenes.
+
+```bash
+bytedcli safe hawkpro scene list
+```
+
+### scene update-runtime-conf
+
+Update a scene's runtime configuration.
+
+```bash
+bytedcli safe hawkpro scene update-runtime-conf --id 6748 --action-conf '{"key": "value"}'
+bytedcli safe hawkpro scene update-runtime-conf --key demo-key --action-conf ./path/to/conf.json
+```
+
+### rule list
+
+List rules in a hawkpro scene.
+
+```bash
+bytedcli safe hawkpro rule list --scene-id 6748
+bytedcli safe hawkpro rule list --scene-id 6748 --group-keyword demo
+bytedcli safe hawkpro rule list --scene-id 6748 --rule-keyword spam
+bytedcli --json safe hawkpro rule list --scene-id 6748
+```
+
+### action list
+
+List actions in a hawkpro scene.
+
+```bash
+bytedcli safe hawkpro action list --scene-id 6748
+bytedcli safe hawkpro action list --scene-id 6748 --keyword test
+bytedcli --json safe hawkpro action list --scene-id 6748
+```
+
+### action copy
+
+Copy actions to a target scene.
+
+```bash
+bytedcli safe hawkpro action copy --to-scene-id 6749 --action-ids 100 101
+bytedcli --json safe hawkpro action copy --to-scene-id 6749 --action-ids 100
+```
+
+### scene add-param
+
+Add a new parameter to a hawkpro scene.
+
+```bash
+bytedcli safe hawkpro scene add-param --id 6748 --param-key my_param --param-name "My Param" --param-value-type string
 ```
 
 ## Options
@@ -101,6 +172,62 @@ bytedcli --json safe hawkpro trace get --id 1776927119952144745
 | `--id <id>` | (required) | Trace ID |
 | `--risk-label <name>` | — | Find rules by risk label name (View 2) |
 | `--upstream` | `false` | Show upstream chain with all conditions |
+
+### scene list
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--keyword <name>` | — | Scene keyword |
+| `--page <n>` | `1` | Page number |
+| `--page-size <n>` | `10` | Page size |
+
+### scene update-runtime-conf
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--id <id>` | — | Scene ID (at least one of --id or --key is required) |
+| `--key <key>` | — | Scene Key |
+| `--action-conf <conf>` | (required) | JSON string or path to JSON file |
+
+### scene add-param
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--id <id>` | — | Scene ID (at least one of --id or --key is required) |
+| `--key <key>` | — | Scene Key |
+| `--param-key <key>` | (required) | Parameter key |
+| `--param-name <name>` | (required) | Parameter name |
+| `--param-value-type <type>`| (required) | Parameter value type (string/bool/int/float/[]string/[]int/[]float/map) |
+| `--param-is-encrypt` | `false` | Whether the parameter is encrypted |
+| `--param-material-type <type>`| — | Material type |
+| `--param-desc <desc>` | — | Parameter description |
+
+### rule list
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--scene-id <id>` | (required) | Scene ID |
+| `--group-keyword <name>` | — | Group keyword |
+| `--rule-keyword <name>` | — | Rule keyword |
+| `--page <n>` | `1` | Page number |
+| `--page-size <n>` | `10` | Page size |
+
+### action list
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--scene-id <id>` | — | Scene ID (required if --scene-key is absent) |
+| `--scene-key <key>` | — | Scene Key (required if --scene-id is absent) |
+| `--keyword <name>` | — | Action keyword |
+| `--page <n>` | `1` | Page number |
+| `--page-size <n>` | `10` | Page size |
+
+### action copy
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--to-scene-id <id>` | (required) | Target scene ID |
+| `--action-ids <ids...>` | (required) | Action IDs to copy |
 
 ## Output Modes
 

@@ -51,10 +51,10 @@ Lidar 是字节服务性能平台，支持对 Golang / Python / Nodejs 服务发
 
 Lidar 使用两个独立域名，功能不同：
 
-| 域名                        | 用途                                       |
-| --------------------------- | ------------------------------------------ |
-| `cloud.bytedance.net`       | 管理 API（创建采样、查询状态、列表历史等） |
-| `lidar.bytedance.net`       | 数据服务（pprof 下载、火焰图渲染）         |
+| 域名                  | 用途                                       |
+| --------------------- | ------------------------------------------ |
+| `cloud.bytedance.net` | 管理 API（创建采样、查询状态、列表历史等） |
+| `lidar.bytedance.net` | 数据服务（pprof 下载、火焰图渲染）         |
 
 CLI 内部已做好域名路由，用户无需关心。
 
@@ -122,6 +122,25 @@ bytedcli lidar sampling create --psm demo.psm.lidar --type profile --duration 30
 # 指定 cluster
 bytedcli lidar sampling create --psm demo.psm.lidar --type heap --cluster-id 123456
 ```
+
+### 判断 PSM 是否开启 Lidar 条件采样
+
+```bash
+bytedcli lidar config get --psm demo.psm.lidar
+bytedcli --json lidar config get --psm demo.psm.lidar
+```
+
+文本输出顶部含：
+
+- `access_status`：Lidar Agent 在 prod / ppe 环境的接入状态（文本模式扁平展示为 `prod=... ppe=...`，JSON 模式保留对象结构）
+- `effective`：综合开关，对应 JSON 里的 `enabled_summary.effective`；true 表示采样会真正触发
+- `source` / `owners`：规则定义来源与负责人
+
+下方表格列出 6 条命名规则（cpu / mem / goroutine / cpu_burst / mem_burst / goroutine_burst）的阈值、瓶颈值、启用状态与 profilings。
+
+JSON 输出额外包含 `enabled_summary` 与 `raw`（原始后端响应，便于上层兜底）。
+
+当前命令为只读；修改条件采样配置请到 Lidar SamplingConfig 页面操作：`https://cloud.bytedance.net/lidar/service/instant-sampling?psm=<psm>&tab=SamplingConfig`。
 
 ## 多 Site 说明
 

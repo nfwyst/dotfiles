@@ -98,6 +98,7 @@ bytedcli merlin trial list-sites
 bytedcli merlin trial diagnose --trial-id <trial-id>
 bytedcli merlin trial local-log --trial-id <trial-id>
 bytedcli merlin trial local-log --trial-id <trial-id> --stream stderr --tail 200
+bytedcli merlin trial stream-log --trial-id <trial-id> --stream stderr --tail 200
 ```
 
 Notes:
@@ -107,6 +108,8 @@ Notes:
 - `trial list-sites` currently shows the same Arnold root mapping family as `quota list-sites`.
 - `trial local-log` uses Arnold `instances` + `locallog`, not Streamlog.
 - `trial local-log --stream` only accepts `stdout` or `stderr`.
+- `trial stream-log` uses the Streamlog backend (alias of `merlin logs get --trial-id`); same options as `logs get`.
+- `local-log` and `stream-log` are independent backends; both work at any time but each may miss logs the other has — try the other if the first comes back empty.
 
 ## Logs
 
@@ -120,6 +123,9 @@ bytedcli merlin logs get --trial-id <trial-id> --stream stderr --pod-name <kuber
 bytedcli merlin logs get --trial-id <trial-id> --stream both --all-instances --all
 bytedcli --json merlin logs get --job <job-run-id> --role-name <role-name>
 bytedcli --site i18n-tt merlin logs get --job <job-run-id> --debug-request
+bytedcli merlin logs stream --job <job-run-id> --stream stderr --tail 50
+bytedcli merlin logs stream --trial-id <trial-id> --stream stderr --tail 200
+BYTEDCLI_NETWORK_PROFILE=prod bytedcli --site i18n-tt merlin logs get --job <job-run-id> --stream stderr --tail 50
 ```
 
 Key options:
@@ -142,6 +148,9 @@ Notes:
 - When exact backend alignment matters, prefer `--pod-name`.
 - `logs list-sites` shows the Streamlog API Root, not the job API Root.
 - For i18n / row logs, bytedcli uses the Merlin `list-trial-logs` URL workaround: retrieve stdout/stderr log-proxy URLs, rewrite internal hosts to the matching public row endpoint, then download the selected URL. For SG/row use `ml-i18n.tiktok-row.net` / `tosv-sg.tiktok-row.org`; do not rewrite SG logs to `cdn-tos-cn`.
+- Under `BYTEDCLI_NETWORK_PROFILE=prod` (production network, e.g. dev hosts in VA), `logs get` and other MCP-backed commands keep using MCP — bytedcli auto-swaps the i18n-tt MCP host to a prod-friendly DNS (same service; MCP becomes reachable from prod networks). Office network and `cn` site behavior unchanged.
+- `merlin trial stream-log` always uses Streamlog `query_batch_ids` + `by_batch_ids` directly (independent of MCP); it's the explicit "use Streamlog backend" entry point.
+- `merlin logs stream` calls MCP `get_job_stream_log` — same options as `logs get`, but returns indexed StreamLog entries instead of trial-log file URLs. Use it when you want StreamLog content via MCP (vs `trial stream-log` which uses Streamlog HTTP directly).
 - Use `--debug-request` to print sanitized HTTP requests and curl equivalents for the actual log lookup/download path.
 
 ## Tracking

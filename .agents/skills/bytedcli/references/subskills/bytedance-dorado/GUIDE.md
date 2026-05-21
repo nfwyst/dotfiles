@@ -1,6 +1,6 @@
 ---
 name: bytedance-dorado
-description: "Operate Dorado (DataLeap) via bytedcli: list projects/tasks/instances, get task details, create tasks, update SQL, diff versions, view history, execute adhoc Hive SQL, manage task drafts (update/test/explain), validate HSQL/DTS drafts, manage python/notebook nodes, fetch notebook run result JSON, resolve nodeUid from taskId, browse folders, manage backfills, query DECC endpoints/datas, list project UDFs, update resources, and diagnose failures with Megatron/Spark History/logs. Use when users mention Dorado, DataLeap, batch tasks, HSQL/DTS drafts, notebook results, resource/explain, taskId URLs, instance failures, slow runs, backfill, spark-jar config, or DECC."
+description: "Operate Dorado (DataLeap) via bytedcli: list projects/tasks/instances, get task details, create tasks, update SQL, diff versions, view history, execute adhoc Hive SQL, manage task drafts (update/test/explain), inspect deploy package DIFF SQL, validate HSQL/DTS drafts, manage python/notebook nodes, fetch notebook run result JSON, resolve nodeUid from taskId, browse folders, manage backfills, query DECC endpoints/datas, list project UDFs, update resources, and diagnose failures with Megatron/Spark History/logs. Use when users mention Dorado, DataLeap, batch tasks, deploy packages, DIFF SQL, HSQL/DTS drafts, notebook results, resource/explain, taskId URLs, instance failures, slow runs, backfill, spark-jar config, or DECC."
 
 ---
 
@@ -30,6 +30,7 @@ bytedcli <command> [options]
 - Dorado 慢任务性能分析（Stages/SQL、shuffle/spill/skew、小文件、资源等待）
 - 查看项目、任务、实例列表
 - 获取任务详情（包括源/目标数据库信息、SQL 代码、依赖任务 ID）
+- 获取任务监控配置（告警规则、基线绑定，`dorado task alarms`）
 - 检查补数据 (Backfill) 进展和触发器详情 (`dorado backfill triggers`) 
 - 下载 Dorado 实例日志（页面态 cookie，`dorado download-instance-log`）
 - 获取 notebook 实例“运行结果”JSON（`dorado instance notebook-result`，默认读取 `{taskId}_{instanceId}.ipynb`）
@@ -38,6 +39,7 @@ bytedcli <command> [options]
 - MySQL->Hive binlog 状态检查与接入（`task binlog status` / `task binlog connect`）
 - 通过 ad-hoc query API 执行临时查询（Hive SQL）
 - 对比 SQL 版本差异（草稿 vs 发布版本、任意两个版本）
+- 查看发布包详情里的 DIFF SQL（`dorado deploy diff-sql`）
 - 查看任务版本历史
 - 浏览项目文件夹结构、查看文件夹下的任务和子文件夹
 - 创建子目录（`folder create --parent-uri --name`）
@@ -50,6 +52,7 @@ bytedcli <command> [options]
 - 创建 python/notebook/spark(pyspark) 任务节点，支持创建时指定 Docker 镜像（`node create --type python/notebook/spark --image-name/--image-id`）
 - 获取 python/notebook/spark 节点草稿内容（`node get`）
 - 保存 python/notebook/spark 节点草稿（`node save`）
+- 启动 notebook kernel 会话（`node start`，支持 `--restricted`/`--no-restricted`，非 cn region 默认开启合规模式）
 - 提交 python/notebook/spark 节点上线（`node submit` / `node submit-approval`）
 - 查看节点生产版本历史（`node history`）
 - 恢复草稿到指定生产版本（`node rollback --commit-id`）
@@ -70,16 +73,38 @@ bytedcli <command> [options]
 - 对 Dorado / DataLeap 的 `MY-BD` 环境，请特别使用 `bytedcli --site i18n-bd auth login --session`（或 `BYTEDCLI_CLOUD_SITE=i18n-bd bytedcli auth login --session`）先准备浏览器态 session；该环境的页面能力依赖 session/cookie，单独做普通 `auth login` 往往不够。
 ## Agent Guidance
 
+- **处理 403 错误**：如果 Dorado API 返回 403 认证错误，可以尝试使用 titan 鉴权模式重试。通过环境变量配置对应 region 使用 titan 鉴权（注意 region 名中的 `-` 在环境变量名里要替换为 `_`）：
+  ```bash
+  # 对 gcp region 使用 titan 鉴权
+  export DORADO_REGION_GCP_AUTH=titan
+  
+  # 对 us-eastred region 使用 titan 鉴权
+  export DORADO_REGION_US_EASTRED_AUTH=titan
+  
+  # 对 eu-ttp2 region 使用 titan 鉴权
+  export DORADO_REGION_EU_TTP2_AUTH=titan
+  
+  # 对 us-ttp region 使用 titan 鉴权
+  export DORADO_REGION_US_TTP_AUTH=titan
+  ```
+  配置后重新执行命令即可。
 - Dorado web URL 常见格式：
   - 任务开发页：`<host>/dorado/development/node/<taskId>?groupName=<region>&project=<region>_<projectId>`
   - 临时查询页：`<host>/dorado/development/query/<taskId>?groupName=<region>&project=<region>_<projectId>`
+  - 从任务开发页读取当前任务详情时，优先使用 `dorado task get <taskId> --region <region>`；`project` 查询参数主要用于补充上下文，`task get` 本身通常只需要 `taskId + region`
   - 从这两类 URL 中解析 CLI 参数时，路径里的 `<taskId>` 对应 task ID，`groupName` 对应 `--region`，`project` 去掉 `<region>_` 前缀后对应 `--project-id`
+- Dorado 任务页“任务监控/基线监控”配置默认走 `GET /dorado_api/task/{taskId}/alarms?projectId={projectId}&supportTaskAlarm=true`
+- 读取任务监控配置时，优先使用 `dorado task alarms --task-id <taskId> --project-id <projectId> --region <region>`；不要再复用 `task get` 猜测 `alarmRules`/`baseline` 字段是否存在
 - 当用户已经明确给出一个不在内置列表里的 Dorado region 名称时，不要遍历或试探 `cn/sg/va/mycis/gcp/boe/boei18n`
 - 先检查是否已存在对应的 `.dorado.env` 配置；若不存在，优先引导用户配置 `DORADO_REGION_<NAME>_API_BASE_URL`
 - 若该机房已知依赖页面态 cookie，再补充 `DORADO_REGION_<NAME>_AUTH=session`
 - 只有用户没有提供 region 名称时，才允许在内置 region 中选择或追问
 - Dorado 审批提交类命令（如 `dorado task commit-approval`、`dorado node submit-approval`）中的 `--review-policy-id`、`--review-users` 必须由用户按当前项目显式提供；不要从项目默认配置、历史记录或页面上下文自动推断后代填
 - 对于页面提交类写操作，如果页面 payload 对字段顺序、字段缺省或附加字段敏感，优先使用与页面一致的专用命令和参数语义，不要复用“相近但不完全一致”的旧命令再额外拼接页面未发送字段
+- 发布包详情读取与发布操作统一走 `dorado deploy` 命令组；不要把发布包读取或提交流程混入 `task` 相关命令语义
+- 查看发布包 DIFF SQL 使用 `dorado deploy diff-sql` 对接 `/deploy/{deployId}/detail?projectId=...`；若接口未返回显式 diff SQL，可基于 `rawCommitVo` / `newCommitVo` 代码快照生成 diff，但这仍属于发布包详情语义，不要混入 `task diff`
+- Dorado 页面提交流程若走专用 `deploy/v2/create` 接口，优先使用专门的 deploy/approval 命令；审批人、commit ID 列表在命令层按数组心智传参，页面默认结构（如 `deployPackage.developConf`）由实现层补齐
+- 对于 Dorado 页面镜像型提交/发布 payload，若 body 同时包含告警/监控字段（如 `openDefaultSystemAlarm`、`customAlarmRuleIds`、固定 `alarmVersion`），只把用户有明确心智的字段暴露出来；固定默认值继续视为页面默认透传
 - 排查 Dorado 权限失败时，先确认用户给的是 task ID 还是 instance ID；通过 `task get`、`instance record/list` 定位失败 instance，再下载实例日志解析 `NoPrivilegeException`。后续使用 Coral 权限申请流程，详见 `references/dorado.md` 的 “Debug permission failures and apply via Coral” 以及 `bytedance-coral` skill。
 - 不要用 `bytedcli hive` 或 `bytedcli iam` 处理 Dorado 任务执行时的 Hive/TQS 权限缺失；`hive` 只适合查元数据，`iam` 只适合查员工身份。权限申请应走 `bytedcli coral permission apply`。
 
@@ -147,6 +172,10 @@ bytedcli dorado task advanced-search --region boei18n --project-id 458 --keyword
 
 # 获取任务详情（包括源/目标信息、SQL 代码、依赖任务 ID）
 bytedcli dorado task get 100274211 --region boei18n
+
+# 获取任务监控配置（告警规则、基线绑定）
+bytedcli dorado task alarms --task-id 100274211 --project-id 458 --region boei18n
+bytedcli dorado task alarms --task-id 1204196659 --project-id 1200002135 --region mycis
 
 # 创建任务
 bytedcli dorado task create --type hsql --project-id 458 --name "demo_task" --region boei18n
@@ -216,12 +245,13 @@ bytedcli dorado task online 100274211 --project-id 458 --region boei18n
 bytedcli dorado task online 100274211 --project-id 458 --message "deploy v2" --skip-codes "-1005" --region boei18n
 
 # 提交审批（页面同款 commitAndDeploy payload）
-# 对应 payload 字段：reviewPolicyId / reviewUserNames / customAlarmRuleIds / agentConfig / projectId / skipCodes
+# 对应 payload 字段：reviewPolicyId / reviewUserNames / openDefaultSystemAlarm / customAlarmRuleIds / baselineIds / agentConfig / projectId / skipCodes
 # review-policy-id / review-users 必须由用户按当前项目显式提供
 bytedcli dorado task commit-approval <task-id> --project-id <project-id> \
   --review-policy-id 24 \
   --review-users "demo-user-a,demo-user-b" \
   --custom-alarm-rule-ids 11870,14696 \
+  --baseline-ids 33 \
   --agent-config '{"sessionId":"demo-session"}' \
   --region mycis
 
@@ -234,12 +264,17 @@ bytedcli dorado task commit-batch-approval --project-id <project-id> \
   --commit-ids "108103,108111,108110" \
   --region mycis
 
+# 查看发布包详情里的 DIFF SQL（deploy/{deployId}/detail?projectId=...；无显式 diff 字段时比较 rawCommitVo/newCommitVo 代码快照）
+bytedcli dorado deploy diff-sql --deploy-id <deploy-id> --project-id <project-id> --region mycis
+
 # 仅提交（commit 草稿，不部署上线）
 bytedcli dorado task commit <task-id> --project-id <project-id> --region mycis
 bytedcli dorado task commit <task-id> --project-id <project-id> \
   --message "commit draft" \
   --review-policy-id 33 \
+  --no-open-default-system-alarm \
   --custom-alarm-rule-ids 14032 \
+  --baseline-ids 33 \
   --agent-config '{"sessionId":"demo-session"}' \
   --region mycis
 
@@ -329,6 +364,20 @@ bytedcli dorado task-draft update <task-id> -r sg \
   --dts-writer-shard-column col1 --dts-writer-shard-num 1200 --dts-writer-append-mode 2 \
   --dts-writer-columns '[{"type":"string","name":"col1"},{"type":"int64","name":"col2"}]' \
   --dts-writer-connector-type clickhouse
+
+# larksheet -> hive: 通过 LarkSheet URL 读取并写入 Hive
+bytedcli dorado task-draft update <task-id> -r mycis \
+  --dts-read-type larksheet --dts-read-idc pinnacle \
+  --dts-read-url "https://example.com/wiki/demo?vwb=1.0.0&sheet=abc123" \
+  --dts-read-sheet-type spreadsheet \
+  --dts-read-template-param '{}' \
+  --dts-read-connector-type larksheet \
+  --dts-read-columns '[{"type":"string","name":"col1","extraType":null,"description":null},{"type":"string","name":"col2","extraType":null,"description":null}]' \
+  --dts-writer-type hive --dts-writer-idc pinnacle \
+  --dts-writer-database-name example_db --dts-writer-table-name example_table \
+  --dts-writer-partitions '[{"name":"pdate","type":"TIME"}]' \
+  --dts-writer-columns '[{"type":"string","name":"id","description":"col1"},{"type":"string","name":"obj_id","description":"col2"}]' \
+  --dts-writer-connector-type hive
 
 # 局部更新（只修改部分字段，其余保留原值）
 bytedcli dorado task-draft update <task-id> -r sg --dts-writer-append-mode 3
@@ -452,6 +501,23 @@ bytedcli dorado node save --node-id NxyzABC --image-name demo-image --image-id 4
 # spark 任务可额外指定语言和 Spark 版本
 bytedcli dorado node save --node-id NxyzABC --image-name demo-image --image-id 400012345 --language python --spark-version 3.2 --region cn
 
+# notebook 草稿保存到合规队列（把目标合规队列写进 computeResourceParam 即可，
+# 服务端会原样落进 draft；合规队列对 kernel 真正生效的环节是 node start）
+bytedcli dorado node save --node-id NxyzABC --content-file ./notebook.ipynb \
+  --metadata '{"configuration":{"computeResourceParam":{"region":"sg","dc":"my","cluster":"nbyodel01","queue":"root.notebook_compliance_public2"}},"name":"demo-notebook","type":"notebook"}' \
+  --region sg
+
+# 启动 notebook kernel 会话（用 metadata 里指定的队列拉起 kernel；不会回写 draft）
+# - --metadata 省略时会复用当前 draft 的 metadata，等同于 dorado web 点「启动 kernel」直接跑
+# - 在非 cn region 默认会注入 X-Restricted-Status: restricted 头，让 kernel 真的落到合规队列；
+#   不带这个头时，metadata 里就算写了合规队列，服务端也会把队列选择静默忽略
+# - --no-restricted：在非 cn region 关掉合规模式（极少用到）
+# - --restricted：在 cn/boe 上加这个 flag 不会报错但也无意义
+bytedcli dorado node start --node-id NxyzABC --region sg                      # 用当前 draft 的 metadata 启动 kernel
+bytedcli dorado node start --node-id NxyzABC --metadata-file ./meta.json \
+  --region sg                                                                  # 用自定义 metadata 启动 kernel（一次性）
+bytedcli dorado node start --node-id NxyzABC --no-restricted --region sg      # 非 cn region 关闭合规模式
+
 # 查询 nodeId → taskId 映射（需要用 task 相关 API 时使用，如 get-task、list-instances 等）
 bytedcli dorado node relation --node-id NxyzABC --region boei18n
 # 批量查询（逗号分隔）
@@ -464,7 +530,7 @@ bytedcli dorado node submit --node-id NxyzABC --project-id {project-id} --messag
 
 # 带审批的提交上线
 bytedcli dorado node submit-approval --node-id NxyzABC --project-id {project-id} --message "deploy with approval" \
-  --review-policy-id 33 --review-users "demo.user1,demo.user2" --custom-alarm-rule-ids 17587 \
+  --review-policy-id 33 --review-users "demo.user1,demo.user2" --custom-alarm-rule-ids 17587 --baseline-ids 33 \
   --agent-config '{"sessionId":"demo-session"}' --region mycis
 
 # 查看节点生产版本历史
@@ -595,7 +661,7 @@ If the built-in region list does not cover the target IDC/region, prefer adding 
 - `task get` 文本输出会附带依赖任务 ID，便于快速查看上游关系
 - `folder structure` 默认显示任务开发目录（root-id=-1），可用 `--root-id -2` 查看临时查询目录
 - `folder create` 在指定项目下创建子目录，`--parent-uri` 为父目录 URI（如 `task:///HrdNGPWr`），可用 `tree-nodes children` 命令获取，`--name` 为新目录名称，可选 `--description` 添加描述
-- `node` 子命令（create/get/save/submit）适用于 python、notebook 和 spark（含 pyspark）三种类型任务；hsql/fsql/stream_sql 等 SQL 类任务请使用 `task-draft update` 更新草稿、`rerun-task` 提交上线
+- `node` 子命令（create/get/save/start/submit/submit-approval）适用于 python、notebook 和 spark（含 pyspark）三种类型任务；hsql/fsql/stream_sql 等 SQL 类任务请使用 `task-draft update` 更新草稿、`rerun-task` 提交上线
 - `node create` 返回 nodeId（字符串）；需要 taskId 时，用 `node relation --node-id <nodeId>` 查询对应关系，再用 taskId 调用 `get-task`、`list-instances` 等命令
 - `node relation` 支持批量查询，多个 nodeId 用逗号分隔；响应中 taskId 与 nodeId 按顺序一一对应
 - 仅有 taskId、需要 IDE nodeUid 时，用 `node resolve-uid`（通过 tree-nodes 的 name+type filter 单路径下钻 + node-relations 校验）
@@ -621,17 +687,20 @@ If the built-in region list does not cover the target IDC/region, prefer adding 
 - `task-draft update` 支持小时调度字段；日调度可继续传 `--schedule-time 00:00`，小时调度请按页面原始值传 `--schedule-time <minute>` 与 `--schedule-day <value>`（例如 `--schedule-time 5 --schedule-day 16`）
 - `task-draft explain` 使用 Dorado `resource/explain` 校验 HSQL 草稿或线上版本语法，支持 `--date` 替换 `${DATE}` / `${date}` / `${date-1}`，支持 `--template-var k=v` 替换 `{{k}}`，支持 `--online` / `--version <n>` 校验发布版本
 - `task-draft explain` 仅适用于 `type=hsql` 任务；如果任务是 DTS，请改用 `dts-draft explain`
-- `dts-draft explain` 使用 Dorado `resource/explain` 校验 DTS reader SQL（`conf.configuration.reader.parameter.query`），支持 `typeGroup=dts` 和 `typeGroup=common-dts-batch`
-- `dts-draft explain` 同样支持 `--date`、`--template-var k=v`、`--online`、`--version <n>`
+- `dts-draft explain` 使用 Dorado `resource/explain` 校验 DTS reader SQL（`conf.configuration.reader.parameter.query`），支持 `typeGroup=dts`、`typeGroup=common-dts-batch` 和 `typeGroup=hive->clickhouse`
+- `dts-draft explain` 同样支持 `--date`、`--template-var k=v`、`--online`、`--version <n>`；若任务详情无法推导 `dc` 或 `ownerUserName`，调用时需显式传 `--dc` / `--username`
 - `task-draft update --query-type` 设置查询类型（如 `FLEXIBLE_UNION`、`COMPLEX_QUERY`），写入 `conf.configuration.operator.parameter.queryType`
 - `task-draft update --source-region-infos` 设置跨区域数据源配置，接受 JSON 数组，每个元素包含 `geo`（区域标识）和 `yarnQueue`（含 region/dc/clusterName/queue），可选 DECC 字段（`deccDataId`/`deccEndpointId`/`deccTransmissionTaskId`/`deccTransferJobId`/`owner`），写入 `conf.configuration.operator.parameter.sourceRegionInfos`
 - `task-draft update` DTS 参数说明（`common-dts-batch` 类型任务）：
+  - DTS 草稿更新统一通过 `task-draft update --dts-read-*` / `--dts-writer-*` 做增量字段映射；尤其是 LarkSheet 等 reader 的 `url`、`urls`、`sheetType`、`templateParam` 这类参数，按调用方传值原样写入，不重建整段 reader/writer 配置
   - **Reader 参数**（写入 `conf.configuration.reader`）：
     - `--dts-read-type`：reader 类型（如 `hive`），写入 `reader.type`
     - `--dts-read-idc`：reader IDC（如 `sg`）
     - `--dts-read-source-type`：数据源模式，`sql`（SQL 查询读取）或 `table`（指定库表读取）
     - `--dts-read-query`：SQL 查询语句（`sourceType=sql` 时使用）
     - `--dts-read-database-name` / `--dts-read-table-name`：库名和表名（`sourceType=table` 时使用）
+    - `--dts-read-url` / `--dts-read-urls`：源 URL；LarkSheet 场景下 `--dts-read-url` 会同时写入 `url` 与单元素 `urls`
+    - `--dts-read-sheet-type` / `--dts-read-template-param` / `--dts-read-data-source-name`：LarkSheet 等 reader 的补充参数
     - `--dts-read-columns`：列定义 JSON 数组，格式 `[{"type":"string","name":"col1"}]`；`sourceType=table` 时可加 `extraType`、`description` 字段
     - `--dts-read-partitions`：分区定义 JSON 数组（`sourceType=table` 时使用），格式 `[{"name":"date","type":"string","value":"${date}"}]`
     - `--dts-read-connector-type`：连接器类型（如 `hive`）

@@ -1,11 +1,11 @@
 ---
 name: bytedance-safe-digital-employee
-description: Safe Digital Employee operations via bytedcli safe domain. Use when querying Digital Employee agents, resolving graph instance keys, validating or updating graph instances, running agent simulations, querying simulation results, or creating and listing batch simulation tasks.
+description: Safe Digital Employee operations via bytedcli safe domain. Use when listing Digital Employees, querying Digital Employee agents, resolving graph instance keys, validating or updating graph instances, running agent simulations, querying simulation results, or creating and listing batch simulation tasks.
 ---
 
 # Safe Digital Employee
 
-Digital Employee agent 查询、图实例校验/更新、agent 单任务试运行、仿真结果查询，以及飞书表格驱动的批量仿真任务创建与状态查询。
+Digital Employee 列表、agent 查询、图实例校验/更新、agent 单任务试运行、仿真结果查询，以及飞书表格驱动的批量仿真任务创建与状态查询。
 
 ## Authentication
 
@@ -19,9 +19,35 @@ Use the explicit command root in examples below:
 bytedcli safe digital-employee --help
 ```
 
-`safe de` is the short alias of `safe digital-employee`.
-
 ## Commands
+
+### list
+
+List Digital Employees with common filters.
+
+```bash
+bytedcli safe digital-employee list --name demo --page 1 --page-size 10
+bytedcli safe digital-employee list --department-ids demo-department-id --project-ids demo-project-id
+bytedcli --json safe digital-employee list --employee-id demo-employee-id
+```
+
+Parameters:
+- `--name <name>` — Digital Employee name filter
+- `--department-ids <ids>` — Comma-separated department IDs
+- `--classify <n>` — Digital Employee classify: `1=审核`, `2=标注`, `3=质检`, `4=管理`, `5=知识库`, `6=审核技能`, `7=智能标注` (default: `1`)
+- `--type <n>` — Digital Employee type: `1=正式`, `2=测试` (default: `1`)
+- `--status <n>` — Digital Employee status: `1=启用`, `2=未启用` (default: `1`)
+- `--employee-id <id>` — Digital Employee ID filter
+- `--project-ids <ids>` — Comma-separated project IDs
+- `--owner-open-ids <ids>` — Comma-separated owner open IDs
+- `--is-cqc` — Filter CQC Digital Employees
+- `--manage-scene <scene>` — Management scene filter
+- `--has-publish-time` — Filter employees with publish time
+- `--creator <name>` — Creator filter
+- `--page <n>` / `--page-size <n>` — Pagination for returned Digital Employees
+- `--tenant <tenant>` — Tenant code override
+
+Text mode renders enum values with labels, for example `1(启用)`. JSON mode preserves structured API fields under `data`.
 
 ### agent get
 
@@ -35,6 +61,22 @@ bytedcli --json safe digital-employee agent get --id demo-agent-id
 Parameters:
 - `--id <id>` — Digital Employee agent ID [required]
 - `--tenant <tenant>` — Tenant code override
+
+### agent list
+
+List agents under a Digital Employee.
+
+```bash
+bytedcli safe digital-employee agent list --id demo-employee-id --page 1 --page-size 10
+bytedcli --json safe digital-employee agent list --id demo-employee-id
+```
+
+Parameters:
+- `--id <id>` — Digital Employee ID [required]
+- `--page <n>` / `--page-size <n>` — Pagination for returned agents
+- `--tenant <tenant>` — Tenant code override
+
+Text mode renders agent status with labels: `1(草稿)`, `2(线上)`, `3(部署中)`.
 
 ### graph validate
 
@@ -130,6 +172,26 @@ bytedcli --json safe digital-employee simulate list-batch-task --id demo-agent-i
 Parameters:
 - `--id <id>` — Digital Employee agent ID [required]
 - `--page <n>` / `--page-size <n>` — Pagination for batch tasks
+- `--tenant <tenant>` — Tenant code override
+
+### statistics
+
+Get digital employee statistics data (process counts, accuracy, tokens, etc.).
+
+```bash
+bytedcli safe digital-employee statistics --type employee --id demo-employee-id
+bytedcli safe digital-employee statistics --id demo-employee-id --start 1777885200 --end 1778491619
+bytedcli --json safe digital-employee statistics --id demo-employee-id
+```
+
+Parameters:
+- `--type <type>` — Statistics query type: `employee` (default: `employee`)
+- `--id <id>` — Digital employee ID [required]
+- `--start <unix>` — Start time unix timestamp (default: 7 days ago)
+- `--end <unix>` — End time unix timestamp (default: now)
+- `--department-ids <ids>` — Comma-separated department IDs
+- `--data-view <n>` — Data view mode (default: `0`)
+- `--page <n>` / `--page-size <n>` — Pagination (default: page 1, size 10)
 - `--tenant <tenant>` — Tenant code override
 
 ## Output

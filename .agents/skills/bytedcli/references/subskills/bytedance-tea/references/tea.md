@@ -86,16 +86,18 @@
 
 ## Sites
 
-| 区域 | 值 | 前端入口 host（用户浏览器） | DataOpen 基址 | Titan internal host |
-|------|------|--------------|--------------|--------------|
-| 中国 | `cn` | `data.bytedance.net` / `tea.bytedance.net` | `data.bytedance.net/dataopen/open-apis` | `data.bytedance.net` |
-| Virginia | `va` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net` | `data-va.tiktok-row.net/dataopen/open-apis` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net`（与 URL host 一致） |
-| Singapore | `sg` | `tea-sg.tiktok-row.net` | `dataopen-sg.tiktok-row.net/dataopen/open-apis` | `tea-sg.tiktok-row.net`（办公网）；`tea-sg.bytedance.net` 是生产网 host，办公网外不可达 |
-| SG Lark | `sglark` | `tea-sglark.bytedance.net` | —（titan only） | `tea-sglark.bytedance.net` |
+| 区域 | 值 | 前端入口 host（用户浏览器） | DataOpen 基址（办公网） | DataOpen 基址（生产网） | Titan internal host |
+|------|------|--------------|--------------|--------------|--------------|
+| 中国 | `cn` | `data.bytedance.net` / `tea.bytedance.net` | `data.bytedance.net/dataopen/open-apis` | 同左 | `data.bytedance.net` |
+| Virginia | `va` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net` | `data-va.tiktok-row.net/dataopen/open-apis` | `data-va.bytedance.net/dataopen/open-apis` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net`（与 URL host 一致） |
+| Singapore | `sg` | `tea-sg.tiktok-row.net` | `tea-captain.tiktok-row.net/dataopen/open-apis` | `tea-captain.byteintl.net/dataopen/open-apis` | `tea-sg.tiktok-row.net` |
+| SG Lark | `sglark` | `tea-sglark.bytedance.net` | —（titan only） | — | `tea-sglark.bytedance.net` |
 
-`--tea-site auto` 会按 URL host 自动推断；`--tea-base-url <url>` 可直接覆盖 DataOpen 基址（海外私有部署场景）。
+`--tea-site auto` 会按 URL host 自动推断（识别 `data.bytedance.net` / `tea.bytedance.net` / `tea-va.bytedance.net` / `tea-va.tiktok-row.net` / `data-va.tiktok-row.net` / `data-va.bytedance.net` / `tea-captain.tiktok-row.net` / `tea-captain.byteintl.net` / `dataopen-sg.tiktok-row.net` / `tea-sg.bytedance.net` / `tea-sg.tiktok-row.net` / `tea-sglark.bytedance.net`）；`--tea-base-url <url>` 可直接覆盖 DataOpen 基址（海外私有部署场景）。
 
 VA 区域的 titan host 会保留 URL 中的实际 host：用户给的链接是 `tea-va.tiktok-row.net` 时，CLI 会同时把 cookie 签发与后续请求都发到 `tea-va.tiktok-row.net`，避免被改写到 `tea-va.bytedance.net` 后命中错误后端。
+
+**生产网模式**：在 ByteDance 生产网（如 FaaS、TCE 容器）中运行时，设置 `BYTEDCLI_NETWORK_PROFILE=prod` 可将 VA / SG 的 DataOpen 域名自动切换为生产网可达的内部域名（见上表"生产网"列）。CN 不受影响。
 
 ## Inputs
 

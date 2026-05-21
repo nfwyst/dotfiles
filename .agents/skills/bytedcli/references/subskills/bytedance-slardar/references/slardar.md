@@ -3,13 +3,14 @@
 Use `bytedcli slardar` as the unified Slardar command group:
 
 - `slardar web`: Web / Hybrid Query Assistant, Workflow Studio, Data Explore, Flex meta, alarms, JS errors, SOP, and Investigation.
-- `slardar app`: Slardar App issue logs, retrace/native stack symbolication, native symbol URLs, and log file search/download.
+- `slardar app`: Slardar App abnormal trends, issue logs, retrace/native stack symbolication, native symbol URLs, log file search/download, and encrypted ALog zip decrypt.
 - `slardar os`: Slardar OS issue event summaries and main-thread native stack symbolication.
 
 ## URL routing
 
 - `/node/app_detail/` with `#/track/logSearch/logs`: Slardar App log file search page. Use `slardar app file list --url "<url>"` to list files, or `slardar app file download --all --url "<url>" --output ./logs` to download all.
 - `/node/app_detail/` with `#/abnormal/detail/`: Slardar App issue page. Use `slardar app issue log`, usually with `--symbolicate` when native stacks should be readable.
+- App abnormal trends: use `slardar app trend` with any Slardar App `crash_type`. `--all-crash-types` follows the selected OS meta list: Android includes `anr`, `anr_start`, `anr_not_start`, `asan`, `dart`, `start`, `app`, `exception`, `kill_app`, `native_start`, `native`, `native_exception`, `native_not_start`, `tsan`, `biz_exception`, `serious_lag`, `lag`, `mp`, `lag_drop_frame`, `game`; iOS includes all non-empty meta `crash_type` values such as `watch_dog`, `crash`, `oom_crash`, `exception`, `ios_mem`, MetricKit, Extension, ASAN/TSAN, lag, game, and custom exception types.
 - `/node/os_detail/issue/overview/system/detail`: Slardar OS issue page. Use `slardar os issue log`, usually with `--symbolicate` when native stacks should be readable.
 - Web alarm page: use `slardar web analyze-alarm-url`, then `slardar web alarm-history` and optionally `slardar web start-investigation`.
 - `/node/web/kanban/detail/`: Slardar Web dashboard page. Prefer `slardar web dashboard get --url "<url>"` when the user wants one dashboard's detail, or `dashboard update-name|like|unlike|item add|update|delete|migrate-hybrid-v3 --url "<url>"` when operating on an existing dashboard. Use `dashboard create` for a new dashboard and `dashboard migrate` when the task starts from `aid + dashboard_detail`.
@@ -134,6 +135,39 @@ bytedcli slardar web js-error-issue-stack --bid <bid> --env <env> --issue-id <is
 bytedcli --json slardar web analyze-alarm-url "<slardar-alarm-url>"
 ```
 
+## App
+
+Use `slardar app trend` to query `/api_v2/app/crash/trend` and display the same platform summary metrics for Android and iOS App abnormal `crash_type` values. `--all-crash-types` uses the selected OS meta list; iOS `memory_graph` has an empty meta `crash_type` and is not included in the automatic all-type query.
+
+```bash
+bytedcli slardar app trend \
+  --origin "https://slardar.example" \
+  --aid 123 \
+  --os Android \
+  --region cn \
+  --start-time 1778673780 \
+  --end-time 1778760180 \
+  --crash-type app \
+  --app-version 10.7.0 \
+  --channel gp
+
+bytedcli slardar app trend \
+  --aid 123 \
+  --os Android \
+  --region cn \
+  --start-time 1778673780 \
+  --end-time 1778760180 \
+  --all-crash-types
+```
+
+Text summaries use the response total fields, not the trend point arrays:
+
+- `异常数`: `count_total_`
+- `异常率`: `count_start_total_ * 1000‰`
+- `影响用户数`: `active_total_`
+- `平均影响用户比例`: `user_active_total_ * 1000‰`
+- `整体影响用户比例`: `user_active_total_all_ * 1000‰`
+
 ### Web Data Explore event drilldown
 
 Use this workflow when the user has a Slardar Web Data Explore page or browser request and wants the same data from CLI.
@@ -185,7 +219,12 @@ bytedcli --json slardar web flex event-measure \
 For percentile custom-event metrics, the returned `measureName` is typically a JSON string shaped like:
 
 ```jsonc
-{"metric":"custom.metrics.pct95","event_dimension":"event_name","event_name":"sample_custom_event_tti","map_key":"<map-key>"}
+{
+  "metric": "custom.metrics.pct95",
+  "event_dimension": "event_name",
+  "event_name": "sample_custom_event_tti",
+  "map_key": "<map-key>",
+}
 ```
 
 Prefer the API-returned `measureName` over hand-written values whenever possible.
@@ -360,6 +399,19 @@ bytedcli slardar app file download --all \
 ```
 
 With `--all`, each file is downloaded individually to the `--output` directory (defaults to `./slardar_logs`). Duplicate file names are automatically deduplicated with a numeric suffix.
+
+## App encrypted ALog decrypt
+
+Use `log decrypt` to upload a local encrypted ALog zip and save the decrypted txt file:
+
+```bash
+bytedcli slardar app log decrypt \
+  --aid 123 --os Android \
+  --input ./sample-alog.zip \
+  --output ./sample-alog.txt
+```
+
+`--region` defaults to `cn`; pass `--region <region>` when the decrypted artifact must be downloaded from another Slardar App region. The command sends the zip content as base64 to `/api_v2/app/alog/decrypt`, always requests a returned download token internally, and then downloads the decrypted txt through the Slardar App file download API.
 
 ## OS issue event summary and symbolication
 

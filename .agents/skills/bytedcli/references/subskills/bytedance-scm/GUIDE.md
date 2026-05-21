@@ -46,6 +46,10 @@ bytedcli scm repo list --all --create-user <username> --language Go     # all ta
 
 bytedcli scm repo search "example-org/example-repo"                     # 等价 list --all --search
 bytedcli scm repo create --name "example-org/example-repo"
+# 创建仓库时附带 CDN 业务线绑定（创建成功后自动调用 goofy cdn bind；绑定失败抛 GOOFY_CDN_BIND_FAILED）
+bytedcli scm repo create --name "example-org/example-repo" --description "demo" --git-repo "example-org/example-source" --cdn-business-line-identifier example_web_static
+# 单独绑定（用于已有仓库或自动绑定失败后手动重试）；该命令属于 Goofy 域，因为后端走的是 Goofy Deploy host
+bytedcli goofy cdn bind --scm-name "example-org/example-repo" --cdn-business-line-identifier example_web_static
 bytedcli scm repo version list "example-org/example-repo" --branch master --type online --status build_ok
 bytedcli scm repo build "example-org/example-repo" --branch master --type test -e '{"DEMO_KEY":"VALUE"}' -m "trigger build reason"
 # 指定编译架构（仅允许 x86_64 / aarch64 / x86_64,aarch64）

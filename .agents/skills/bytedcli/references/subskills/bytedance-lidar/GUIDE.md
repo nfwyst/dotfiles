@@ -1,6 +1,6 @@
 ---
 name: bytedance-lidar
-description: "Operate Lidar (字节服务性能平台) via bytedcli: start Golang / Python / Nodejs instant pprof sampling, poll status, list sampling history, and download raw pprof data. Use when tasks mention Lidar, instant sampling, 即时采样, pprof, heap profile, goroutine profile, or Golang performance profiling. For C++/Java/jemalloc/off-CPU flamegraphs, use bytedance-bytedog instead."
+description: "Operate Lidar (字节服务性能平台) via bytedcli: start Golang / Python / Nodejs instant pprof sampling, poll status, list sampling history, and download raw pprof data. Use when tasks mention Lidar, instant sampling, 即时采样, pprof, heap profile, goroutine profile, Golang performance profiling, 判断 PSM 是否开启 Lidar 采样, 采样开关, SamplingConfig, 条件采样配置. For C++/Java/jemalloc/off-CPU flamegraphs, use bytedance-bytedog instead."
 ---
 
 # bytedcli Lidar
@@ -27,6 +27,7 @@ bytedcli <command> [options]
 - 查询 profiling_id 状态，获取火焰图 URL
 - 列出最近 6h（默认）的采样历史
 - 下载原始 pprof 采样数据到本地
+- 判断单个 PSM 是否开启 Lidar 条件采样（agent 接入状态 + 6 条触发规则启用情况）
 
 ## Do not use
 
@@ -58,6 +59,10 @@ bytedcli lidar sampling list --psm demo.psm.lidar
 bytedcli lidar sampling download --id demo.psm.lidar_202604181600_abc
 bytedcli lidar sampling download --id demo.psm.lidar_202604181600_abc --output /tmp/heap.pb.gz
 
+# 查询 PSM 的条件采样配置（SamplingConfig tab）
+bytedcli lidar config get --psm demo.psm.lidar
+bytedcli --json lidar config get --psm demo.psm.lidar
+
 # i18n 站点（ByteIntl）
 bytedcli --site i18n-bd lidar sampling create --psm demo.psm.lidar --type heap
 ```
@@ -78,3 +83,13 @@ bytedcli --site i18n-bd lidar sampling create --psm demo.psm.lidar --type heap
 
 - `references/invocation.md`
 - `references/lidar.md`
+
+## Agent Guidance
+
+- 触发场景：用户问 "xxx 服务有没有开 Lidar 采样 / 采样开关开了吗 / 为什么 Lidar 里没采样数据 / SamplingConfig / 条件采样配置"。
+- 推荐命令：`bytedcli lidar config get --psm <psm>`。
+- 判读优先级：
+  1. `enabled_summary.effective` — 综合开关；false 直接告诉用户未开启。
+  2. `access_status.prod` / `access_status.ppe` — Agent 是否接入；都 false 说明根本没接 agent。
+  3. 6 条规则的 `on`（rules.cpu / mem / goroutine / cpu_burst / mem_burst / goroutine_burst）— 接了 agent 但所有规则 off，依然不会触发采样。
+- 当前 CLI **不支持写操作**；需要修改时引导用户去 Lidar SamplingConfig 页面：`https://cloud.bytedance.net/lidar/service/instant-sampling?psm=<psm>&tab=SamplingConfig`。

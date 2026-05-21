@@ -39,6 +39,12 @@ Get content by URL.
 Options:
 - `--target <target>` — URL (alternative to positional arg)
 
+GET fallback safety boundaries:
+- Only GET is supported.
+- bytedcli-managed auth is selected automatically and only sent to the maintained ByteDance internal/TTP host allowlist.
+- URLs with username/password are rejected.
+- POST, PUT, PATCH, DELETE, arbitrary auth headers, and user-provided tokens are not supported.
+
 Supported URL patterns:
 - `*.larkoffice.com/wiki/*` — Feishu wiki doc → markdown
 - `*.larkoffice.com/docx/*` — Feishu docx → markdown
@@ -48,6 +54,7 @@ Supported URL patterns:
 - `*.bytedance.net/docs/*/wiki/*` — Cloud docs (wiki) → markdown
 - `cloud.bytedance.net/docs/product/*` — ByteCloud product docs entry → product metadata and related document URLs
 - `bytetech.info/articles/*` — ByteTech article URL → full markdown in text mode; structured detail in `--json`
+- Other allowlisted ByteDance internal HTTP(S) URLs — plain GET fallback with bytedcli-managed auth
 
 Examples:
 
@@ -63,6 +70,12 @@ bytedcli insearch get https://cloud.bytedance.net/docs/product/demo-product
 
 # Fetch ByteTech article by URL
 bytedcli insearch get https://bytetech.info/articles/12345
+
+# Fetch file from Codebase repository
+bytedcli insearch get https://code.byted.org/example/demo-project/tree/main/path/to/file.yaml
+
+# GET fallback for internal URL/API
+bytedcli insearch get https://sample-service.bytedance.net/api/status
 
 # JSON output
 bytedcli --json insearch get https://bytedance.larkoffice.com/wiki/xxx

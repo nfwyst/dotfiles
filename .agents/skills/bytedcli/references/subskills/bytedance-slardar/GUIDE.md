@@ -1,6 +1,6 @@
 ---
 name: bytedance-slardar
-description: "Use bytedcli for Slardar tooling across Web, App, and OS. Trigger when tasks mention Slardar alarm pages, Web/Hybrid Query Assistant, Web dashboard or kanban pages, JS error triage, Slardar App issue links, app crash/anr/native stack logs, retrace, Android .so BuildID/crash_lib_uuid/native symbol URL, Slardar App log file search/download (#/track/logSearch), Slardar OS issue links, /node/os_detail pages, system ANR/native stacks, or symbolizing Slardar App/OS native stack frames."
+description: "Use bytedcli for Slardar tooling across Web, App, and OS. Trigger when tasks mention Slardar alarm pages, Web/Hybrid Query Assistant, Web dashboard or kanban pages, JS error triage, Slardar App issue links, app crash/anr/native/app/start trend metrics, native stack logs, retrace, Android .so BuildID/crash_lib_uuid/native symbol URL, Slardar App log file search/download/decrypt (#/track/logSearch), Slardar OS issue links, /node/os_detail pages, system ANR/native stacks, or symbolizing Slardar App/OS native stack frames."
 ---
 
 # bytedcli Slardar
@@ -24,8 +24,8 @@ bytedcli <command> [options]
 ## When to use
 
 - Slardar Web / Hybrid 查询、Dashboard / Kanban、Workflow Studio、Data Explore、Flex 元数据、告警规则、告警历史、JS error issue、SOP 与 Investigation。
-- Slardar App issue URL、事件日志、Slardar retrace、native 栈符号化、native symbol URL。
-- Slardar App 日志文件检索（`#/track/logSearch/logs`）：按设备 ID 列出、筛选、下载日志文件。
+- Slardar App issue URL、异常趋势、事件日志、Slardar retrace、native 栈符号化、native symbol URL。
+- Slardar App 日志文件检索（`#/track/logSearch/logs`）：按设备 ID 列出、筛选、下载日志文件；本地加密 ALog zip 解密。
 - Slardar OS issue URL、事件 summary、main thread stack、APK embedded native stack 符号化。
 - 用户只贴 Slardar URL 时，先按 URL path 区分 `web`、`app`、`os` 子命令。
 
@@ -38,6 +38,7 @@ bytedcli <command> [options]
 ## URL routing
 
 - App log file search URL containing `#/track/logSearch/logs`: use `bytedcli --json slardar app file list --url "<url>"` to list log files, or `bytedcli slardar app file download --all --url "<url>" --output ./logs` to download all files.
+- Encrypted App ALog zip: use `bytedcli slardar app log decrypt --aid <aid> --os Android --input ./sample-alog.zip --output ./sample-alog.txt`; `--region` defaults to `cn` and can be overridden.
 - App issue URL containing `/node/app_detail/`: use `bytedcli --json slardar app issue log --symbolicate --url "<url>"` when the user wants readable native stacks; omit `--symbolicate` when they only want the raw event log.
 - OS issue URL containing `/node/os_detail/issue/overview/system/detail`: use `bytedcli --json slardar os issue log --symbolicate --url "<url>"` when the user wants readable native stacks; omit `--symbolicate` when they only want the event summary.
 - Web alarm URL: use `bytedcli --json slardar web analyze-alarm-url "<url>"`, then fetch alarm history and optionally start an investigation.
@@ -116,9 +117,12 @@ bytedcli --json slardar app issue log --url "https://slardar.example/node/app_de
 bytedcli --json slardar app issue log --symbolicate --url "https://slardar.example/node/app_detail/?region=cn&aid=123&os=Android&type=app&lang=zh#/abnormal/detail/crash/demo_issue?params=%7B%22start_time%22%3A1773410940%2C%22end_time%22%3A1776089340%2C%22event_index%22%3A1%7D"
 bytedcli slardar app symbol url --build-id 00112233445566778899aabbccddeeff00112233
 bytedcli slardar app symbol url --uuid 33221100554477660
+bytedcli slardar app trend --origin "https://slardar.example" --aid 123 --os Android --region cn --start-time 1778673780 --end-time 1778760180 --crash-type app --app-version 10.7.0 --channel gp
+bytedcli slardar app trend --aid 123 --os Android --region cn --start-time 1778673780 --end-time 1778760180 --all-crash-types
 bytedcli --json slardar app file list --aid 123 --os Android --region cn --device-id demo_device --start-time 1776092520 --end-time 1776351720
 bytedcli --json slardar app file range --aid 123 --os Android --region cn --device-id demo_device --start-time 1776092520 --end-time 1776351720 --dimension scene
 bytedcli slardar app file download --all --aid 123 --os Android --region cn --device-id demo_device --start-time 1776092520 --end-time 1776351720 --output ./logs
+bytedcli slardar app log decrypt --aid 123 --os Android --input ./sample-alog.zip --output ./sample-alog.txt
 
 # OS
 bytedcli --json slardar os issue log --url "https://slardar.example/node/os_detail/issue/overview/system/detail?app_id=123&start_time=1775491200&end_time=1776133985&region=cn&category=3&time_type=client_time&filter_conditions=%257B%2522type%2522%253A%2522and%2522%252C%2522sub_conditions%2522%253A%255B%255D%257D&issue_id=demo_issue&pgno=1"
@@ -130,6 +134,8 @@ bytedcli --json slardar os issue log --symbolicate --url "https://slardar.exampl
 - `slardar web dashboard get --with-raw` is the easiest way to capture the current dashboard payload before editing. Reuse the returned `items` and `extra` with `dashboard update --items-file ... --extra-file ...` when you need a full dashboard rewrite.
 - `slardar web dashboard item add` accepts a single dashboard item JSON object; `slardar web dashboard update` accepts the full dashboard `items` array plus optional `extra`.
 - `slardar app issue log --symbolicate` calls Slardar App retrace first, then falls back to local `.zst` native symbol download/decompression and `llvm-addr2line`.
+- `slardar app trend` queries `/api_v2/app/crash/trend` for App abnormal metrics. Android and iOS App abnormal `crash_type` values share the same response schema; `--all-crash-types` follows the selected OS meta list, while the no-flag default remains Android `anr` and iOS `watch_dog`. Text summaries use `*_total_` fields (`count_total_`, `count_start_total_`, `active_total_`, `user_active_total_`, `user_active_total_all_`) instead of summing trend series points.
+- `slardar app log decrypt` uploads the encrypted ALog zip as base64 to Slardar App and downloads the decrypted txt through the existing Slardar file download flow. The command always requests a download URL internally, so large decrypted logs are saved as a file instead of being printed.
 - `slardar os issue log --symbolicate` extracts native frames from the OS event main thread stack, groups APK embedded frames by `BuildId + APK offset`, then reuses Slardar App native symbol helpers.
 - If one native symbol group fails to download or symbolize, the result keeps unresolved frames for that group and continues with the remaining groups.
 

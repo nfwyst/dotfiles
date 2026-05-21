@@ -262,6 +262,35 @@ Parameters:
 - `--params <json-or-file>` — Node input params JSON object string or local JSON file path [required]
 - `--dsl <json-or-file>` — Graph DSL JSON object string or local JSON file path [required]
 
+### graph validate
+
+Validate graph content without persisting changes.
+
+```bash
+# Basic usage
+bytedcli safe safemind graph validate --key <graph-instance-key> --version 1 --content ./graph.json
+
+# With inline JSON content
+bytedcli safe safemind graph validate --key <graph-instance-key> --version 1 --content '{"root":"input_node","nodes":[],"edges":[]}'
+
+# With tenant and graph-mode
+bytedcli safe safemind graph validate --tenant tcs --key <key> --version 1 --content ./graph.json --graph-mode workflow
+
+# JSON output
+bytedcli --json safe safemind graph validate --key <key> --version 1 --content ./graph.json
+```
+
+Parameters:
+- `--tenant <code>` — Tenant code (from config or `--tenant` override)
+- `--key <key>` — Graph instance unique key [required]
+- `--version <n>` — Graph instance version [required]
+- `--content <json-or-file>` — Graph DSL JSON string or local JSON file path [required]
+- `--graph-mode <mode>` — Graph mode: agent, workflow, chatflow, workflow-chatflow, container (default: `workflow`)
+
+Notes:
+- Validates graph content against SafeMind backend rules without persisting any changes.
+- `--content` accepts either inline JSON or a local JSON file path.
+
 ### trace get
 
 Get trace with node states and execution details.

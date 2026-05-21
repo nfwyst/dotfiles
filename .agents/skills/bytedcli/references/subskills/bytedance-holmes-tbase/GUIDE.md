@@ -1,6 +1,6 @@
 ---
 name: bytedance-holmes-tbase
-description: "Query Holmes TBase product metadata, runtime config, field metadata, triggers, and row data via bytedcli. Use when tasks mention Holmes TBase、TBase、row key、查字段、product get、config get、field list、field describe、field get、trigger list、全量字段查询、多字段查询."
+description: "Query Holmes TBase product metadata, runtime config, field metadata, triggers, row data, and create field review tickets via bytedcli. Use when tasks mention Holmes TBase、TBase、row key、查字段、新增字段、创建字段、product get、config get、field list、field add、field describe、field get、trigger list、全量字段查询、多字段查询."
 ---
 
 # bytedcli Holmes TBase
@@ -28,6 +28,7 @@ bytedcli <command> [options]
 - 列出指定 TBase 产品的字段列表（`holmes tbase field list`）
 - 列出指定 TBase 产品的 Trigger 列表（`holmes tbase trigger list`）
 - 获取单个字段元信息列表行（`holmes tbase field describe`）
+- 创建字段新增提审工单（`holmes tbase field add`）
 - 按 row key 查询单字段、多字段或整行全部字段值（`holmes tbase field get`）
 
 ## 前置条件
@@ -59,6 +60,12 @@ bytedcli holmes tbase trigger list --produce-name example.tbase.demo --region sg
 
 # 获取单个字段元信息列表行
 bytedcli holmes tbase field describe --produce-name example.tbase.demo --field-name activity_id --region sg
+
+# 新增字段提审；默认 dry-run，不会提交
+bytedcli holmes tbase field add --produce-name example.tbase.demo --region sg --from field.json
+
+# 真正创建字段 review 工单
+bytedcli holmes tbase field add --produce-name example.tbase.demo --region sg --body-json '{"field_name":"demo_field","field_type":"TYPE_STRING","field_version":"0","template_name":"demo_template","owner":"user.name","comments":"add demo field"}' --yes
 
 # 查询单字段值
 bytedcli holmes tbase field get --produce-name example.tbase.demo --field-name activity_id --row-key 1 --region sg
@@ -97,6 +104,8 @@ bytedcli auth login --session
 
 - 参数名是 `--produce-name`，不是 `--product-name`
 - `field describe` 只返回字段列表中的单条记录，不会拉取 scheme/diff detail
+- `field add` 创建的是 Holmes review 工单，不会自动审批或上线；不加 `--yes` 时只 dry-run 并输出最终 payload
+- `field add` 的 `--body-json` 与 `--from` 二选一；CLI 会自动补齐 `produce_id`、`resource_id`、`review_link`、`id=0`，提交成功后返回带 review id 的 `review_ticket_link`
 - `field get` 支持三种主路径：
   - `--field-name <name>`
   - `--field <name[:version]>`

@@ -295,7 +295,14 @@ $env.config = {
                 }
             }
         }]
-        pre_execution: [{ null }] # run before the repl input is run
+        pre_execution: [{||
+            # exit 时 SIGKILL nu 的 children, 防 tmux POLLHUP 自旋。
+            # 不可向 nu 自身或 pgid 发 TERM: 兄弟 pane 共享 pgid 会被一并送走。
+            let _cmd = (commandline | str trim)
+            if $_cmd == "exit" or $_cmd == "exit 0" {
+                ^bash -c $"for c in $(pgrep -P ($nu.pid) 2>/dev/null); do kill -KILL $c 2>/dev/null; done; true"
+            }
+        }] # run before the repl input is run
         env_change: {
             PWD: [{|before, after| null }] # run if the PWD environment is different since the last repl input
         }
@@ -922,6 +929,9 @@ source ~/.config/nushell/aliases/git.nu
 
 # load opencode alias
 source ~/.config/nushell/aliases/opencode.nu
+
+# load tmux alias (ghostty 主窗口里敲 t 进入 tmux)
+source ~/.config/nushell/aliases/tmux.nu
 
 # integration with carapace
 source ~/.config/nushell/cache/carapace/init.nu

@@ -22,9 +22,6 @@ bytedcli safe puzzle feature list --production-type stats model
 # Get feature by ID
 bytedcli safe puzzle feature get --id <feature-id>
 
-# Get feature by code
-bytedcli safe puzzle feature get --code <feature-code>
-
 # List feature dependencies
 bytedcli safe puzzle feature list-dependencies --id <feature-id>
 

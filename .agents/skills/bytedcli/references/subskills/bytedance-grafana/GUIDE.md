@@ -33,7 +33,10 @@ bytedcli <command> [options]
 ## 前置条件
 
 - 使用通用调用方式：`references/invocation.md`
-- 认证：SSO 登录后自动通过 OAuth2 换取用户级 Grafana session（6h 缓存）；也可通过 `--grafana-session` 或 `GRAFANA_SESSION` 手动指定；未登录时降级到服务端公共账号
+- 认证：SSO 登录后自动通过 OAuth2 换取用户级 Grafana session（默认 7 天缓存）；也可通过 `--grafana-session` 或 `GRAFANA_SESSION` 手动指定；未登录时降级到服务端公共账号
+- 生产网用：`export BYTEDCLI_NETWORK_PROFILE=prod`（i18n-bd / i18n-tt 切到 `-api` 域名）
+- 自动 OAuth 失败时（headless 环境常见）：TTY 会提示从浏览器 DevTools 拷 `grafana_session_v1` cookie 粘贴；或者用 `--grafana-session` 直接传
+- TTL 调节：`BYTEDCLI_GRAFANA_SESSION_TTL_HOURS=<n>`（默认 168）
 
 > 示例省略 invocation 前缀。
 

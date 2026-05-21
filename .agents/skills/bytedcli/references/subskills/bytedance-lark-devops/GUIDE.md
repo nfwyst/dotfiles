@@ -548,7 +548,7 @@ bytedcli lark-devops release dev finish --process-id 76200 \
 
 - 两种形态**互斥**（类似 `set-window --file` vs `--from-platform`）
 - `app_id` / `branch` / `boe_feature` 三者都是**必填**；`repo_versions` 可选
-- `boe_feature` 必须在平台对这个 PSM 注册过（见 3.10）；Agent 不要自行编名字
+- `boe_feature` 是任意符合 `^boe_[a-zA-Z_0-9]{1,26}$` 的字符串（见 §3.10）；first-time tag 由 pipeline 懒创建，无需用户预先在 UI 注册。但 Agent 仍应跟用户确认 tag 名（避免 typo），不要自行随机生成
 - `repo_versions` 未指定的依赖库自动取平台最新版本；键用 **slash-form**（`ee/example/dep`）
 - 主仓库由 `--branch` 指定分支，不需要在 `repo_versions` 里列它
 
@@ -573,18 +573,18 @@ dry-run 返回的 `preflight` 块是 Agent 写前判断的唯一信号：
 ```
 
 - `preflight.ok=true` → 可安全 `--execute`
-- `preflight.ok=false` → 看以下三个 blocker 字段定位问题，**向用户回显** 候选信息让用户确认，**不要自行挑版本/挑 feature**
+- `preflight.ok=false` → 看以下两个 blocker 字段定位问题，**向用户回显** 候选信息让用户确认，**不要自行挑版本**
 - 即便不看 preflight，`--execute` 会在 preflight 失败时直接抛 `LARK_DEVOPS_DEV_ADD_APP_PREFLIGHT_FAILED` 强制拒写
 
-**三个 hard-blocker：**
+**两个 hard-blocker：**
 
 1. **`unknown_repo_versions`** — 用户 `--repo-versions-file` pin 的版本不在 `scm/versions` 候选里。回显 `available_versions` 给用户选
-2. **`unknown_boe_features`** — 用户的 `--boe-feature` 标签没在平台预注册。**必须让用户先去 `lark-devops.bytedance.net` 上给这个 PSM 注册该 BOE feature**（UI 一次性动作），然后 CLI 才能触发。已注册列表在 `unknown_boe_features[*].registered_features`。CLI 通过 `/deploy/cd/publish/v1/get_boe_tag_list?psm=<psm>` 拉取
-3. **`line_contamination_check: fail`** — payload 出现 `deploy_stage >= 3`（严重 bug，不是用户错）
+2. **`line_contamination_check: fail`** — payload 出现 `deploy_stage >= 3`（严重 bug，不是用户错）
 
-**soft warning（不 block execute）：**
+**soft warnings（不 block execute）：**
 
 - `unknown_branches` — `search_branch` 探测失败，通常是误判，平台自己会在 execute 时验证
+- `unknown_boe_features` — 用户的 `--boe-feature` 是个**全新标签**，还没在 `get_boe_tag_list` 出现过。**这不是错误**：pipeline 的 "Init BOE Env and deploy" 步骤会在 deploy 时**懒创建** TCE service，first-time tag 完全支持端到端。保留这个软提示主要用于 **typo 防护**——如果用户想用一个已存在的 tag 但拼错了，preflight 里的 `registered_features` 候选列表能帮用户立刻发现拼写差异
 
 ### 3.8 Agent 决策默认值
 
@@ -598,15 +598,16 @@ dry-run 返回的 `preflight` 块是 Agent 写前判断的唯一信号：
 ### 3.9 错误码
 
 - `LARK_DEVOPS_DEV_FLOW_LINE_CONTAMINATION` — 线上环境污染（严重 bug，不是用户错）
-- `LARK_DEVOPS_DEV_ADD_APP_PREFLIGHT_FAILED` — preflight 失败后仍 `--execute`（未注册 boe_feature / unknown_repo_versions）
+- `LARK_DEVOPS_DEV_ADD_APP_PREFLIGHT_FAILED` — preflight 失败后仍 `--execute`（`unknown_repo_versions` 或 `line_contamination` 命中）
 - `LARK_DEVOPS_INPUT_ERROR` — 普通参数校验失败（缺 `--branch`、`--file` 结构错等）
 
-### 3.10 BOE feature 必须预注册
+### 3.10 BOE feature 标签由 pipeline 懒创建
 
-- **Dev flow 的 boe_feature 标签必须已经在 lark-devops 平台上给该 PSM 注册过**。CLI 通过 `/deploy/cd/publish/v1/get_boe_tag_list?psm=<psm>` 取到已注册列表
-- 首次用一个新 BOE feature：**让用户去 `lark-devops.bytedance.net` 对应 PSM 页面注册一次**（UI 一次性动作），CLI 无法替代
-- 为什么：CLI 触发的 DEV pipeline 在 CN-TCE 创建 service 的代码路径无法"现注册"一个从未见过的 feature，会失败；UI 有单独的注册步骤
-- preflight 里 `unknown_boe_features[*].registered_features` 会列出当前可用的 feature，Agent 应该直接回显给用户挑
+- `boe_feature` 是个**自由字符串字段**，写进 `env_item.attrs.boe_feature` 即可。平台不要求"预注册"
+- `get_boe_tag_list` 返回的是**已部署过的 tag 历史**（每条对应一个 TCE service_id），不是必填白名单
+- 首次用一个新 tag：**直接传**给 `dev add-app --boe-feature` 即可。Pipeline 的 "Init BOE Env and deploy" 步骤会在 deploy 时**懒创建** TCE service，下次再查 `get_boe_tag_list` 才会出现该 tag
+- preflight 里 `unknown_boe_features[*].registered_features` 仍然列出"已部署历史"，用于 **typo 防护**——agent 应在 hint 里看到 `unknown_boe_features` 软警告时，先比对一下历史列表确认不是拼错；如果用户本意就是新 tag，直接 `--execute` 即可
+- **格式约束**：tag 名必须匹配 `^boe_[a-zA-Z_0-9]{1,26}$`（总长 ≤ 30 字符，`boe_` 前缀 + 1~26 字符后缀）。超长或非法字符会在后端 PPE 原子工单阶段被拒，浪费一次 pipeline run
 
 ### 3.11 Constraints
 
@@ -615,7 +616,7 @@ dry-run 返回的 `preflight` 块是 Agent 写前判断的唯一信号：
 - `release dev update-app` 是低层逃生口（传 raw JSON env_item），标准流程请用 `dev add-app`
 - `dev finish` 必须手动调 —— pipeline 完成后工单不会自动 close
 - `scm_type` 每个 repo 版本不同（主仓 `offline`；依赖从 `scm/versions.results[].type` 拿，通常 `online`，偶尔 `test`）。CLI 自动从平台取，不要硬编码。极端情况下平台响应没有 `type` 字段（历史数据），CLI fallback 为 `"online"` —— 如果 pipeline 因此在 i18n 挂，让用户改用 `--repo-versions-file` 精确 pin 一个新版本
-- `boe_feature` 必须是已注册列表（见 3.10）里的值；首次使用必须先 UI 注册
+- `boe_feature` 可以是任意符合 `^boe_[a-zA-Z_0-9]{1,26}$` 的字符串；first-time tag 由 pipeline 现创建，详见 §3.10
 
 ---
 

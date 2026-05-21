@@ -77,11 +77,19 @@ bytedcli goofy deploy get-build-config --app-id <app_id>
 # List deployment regions for a project
 bytedcli goofy deploy list-regions --app-id <app_id>
 
-# Create a deployment channel (requires region-id)
+# Create a deployment channel (requires region-id); defaults to env-name based traffic matching
 bytedcli goofy deploy create-channel \
   --region-id <region_id> \
   --name <channel_name> \
   --env-name <env_name>
+
+# Create a deployment channel with header-based traffic matching
+# Header mode does not require --env-name; --header-key and --header-value must be provided together; --header-op defaults to 1 (= equals)
+bytedcli goofy deploy create-channel \
+  --region-id <region_id> \
+  --name <channel_name> \
+  --header-key fe-env \
+  --header-value <header_value>
 
 # List deployment channels for a project
 bytedcli goofy deploy list-channels --app-id <app_id>

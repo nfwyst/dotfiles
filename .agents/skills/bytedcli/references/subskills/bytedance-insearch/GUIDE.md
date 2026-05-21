@@ -1,11 +1,11 @@
 ---
 name: bytedance-insearch
-description: "搜索字节跳动内部知识、文档、服务和工具。当用户提问涉及字节内部平台（如 TCC、TCE、Kitex、Hertz、ByteRPC、Neptune、Aeolus、BMQ、Hive、ES 等）、内部文档（飞书文档、ByteCloud 文档）、内部流程（发版、上线、oncall、审批）或需要查找内部资源时使用。Search ByteDance internal knowledge, docs, services and tools. Use when questions involve internal platforms, frameworks, documentation, deployment, oncall, or any ByteDance-specific topic."
+description: "搜索字节跳动内部知识、文档、服务和工具；也可通过 insearch get 对允许的内部 HTTP(S) URL 执行只读 GET。当用户提问涉及字节内部平台（如 TCC、TCE、Kitex、Hertz、ByteRPC、Neptune、Aeolus、BMQ、Hive、ES 等）、内部文档、内部流程，或给出需要登录态访问的内部 URL/API 时使用。Search ByteDance internal knowledge, docs, services and tools. Use when questions involve internal platforms, frameworks, documentation, deployment, oncall, ByteDance-specific topics, or authenticated internal URL reads."
 ---
 
 # bytedcli insearch
 
-Unified search across ByteDance internal services. Use this skill when questions involve ByteDance internal knowledge, tools, services, or documentation.
+Unified search and authenticated read-only URL fetch across ByteDance internal services. Use this skill when questions involve ByteDance internal knowledge, tools, services, documentation, or when the user provides an internal HTTP(S) URL/API that needs bytedcli-managed auth.
 
 ## 如何调用 bytedcli
 
@@ -31,6 +31,8 @@ bytedcli <command> [options]
 - User asks "how to" questions about internal frameworks
 - User wants to look up internal service configurations
 - User needs answers about ByteDance-specific technology stack
+- User provides a ByteDance internal HTTP(S) URL/API that needs login/auth, returns 401/403 without auth, or asks to GET/fetch/read it
+- User needs content from an allowlisted internal URL; use `insearch get <url>`
 
 ## 前置条件
 
@@ -58,13 +60,15 @@ bytedcli insearch query "kitex如何设置env" --source bitsai.bytedance.net
 bytedcli insearch query "Openclaw" --source bytetech.info
 ```
 
-### Get document content
+### Get document/URL content
 
 ```bash
 bytedcli insearch get https://bytedance.larkoffice.com/wiki/xxx
 bytedcli insearch get https://cloud.bytedance.net/docs/tcc/wiki/xxx
 bytedcli insearch get https://cloud.bytedance.net/docs/product/demo-product
 bytedcli insearch get https://bytetech.info/articles/12345
+bytedcli insearch get https://sample-service.bytedance.net/api/status
+bytedcli insearch get https://code.byted.org/example/demo-project/tree/main/path/to/file.yaml
 ```
 
 ### Check auth status
@@ -89,7 +93,7 @@ bytedcli insearch login
 
 1. Use `insearch query` to search across all sources: `bytedcli insearch query "your question"`
 2. Do not specify `--source` by default; search all sources first, and only narrow to a specific source when you need to load more data from that source.
-3. Use `insearch get <url>` to fetch full document content from search results
+3. Use `insearch get <url>` to fetch full document content from search results or read an allowlisted internal HTTP(S) URL.
 
 ## Notes
 
@@ -98,6 +102,8 @@ bytedcli insearch login
 - BitsAI answers are saved to temp markdown files; the file path is shown in the URL column
 - ByteTech article fetch only supports article URLs; text mode prints full markdown body and `--json` keeps structured fields including `markdown`
 - ByteCloud product URLs such as `https://cloud.bytedance.net/docs/product/demo-product` return product metadata plus related document URLs; fetch a related document URL for full document markdown.
+- Codebase file URLs (`code.byted.org`/`code-tx.byted.org`) with `/tree/`, `/blob/`, or `/raw/` fetch file content via the Codebase API. For branches with slashes, use the `/-/` separator between revision and file path.
+- Unsupported structured URLs fall back to a plain GET for allowlisted ByteDance internal HTTP(S) hosts; the fallback uses bytedcli-managed auth automatically.
 - Auth errors include a hint on how to authenticate
 - Use `insearch status` to check which sources are available
 - 需要结构化输出加 `--json`（全局选项，放在子命令之前，如 `bytedcli --json insearch query "xxx"`）

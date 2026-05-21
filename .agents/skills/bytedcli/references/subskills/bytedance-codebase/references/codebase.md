@@ -8,111 +8,127 @@ bytedcli codebase auth config-add-pat <pat>
 bytedcli codebase auth config-auth --jwt-token <token>
 
 # Repo
-bytedcli codebase repo get "byteapi/bytedcli"
-bytedcli codebase repo list --query "bytedcli"
-bytedcli codebase repo branch create feat/demo -R "byteapi/bytedcli" --from master
-bytedcli codebase repo file "README.md" -R "byteapi/bytedcli"
-bytedcli codebase commit list -R "byteapi/bytedcli" --revision master
-bytedcli codebase commit get -R "byteapi/bytedcli" --revision <sha>
+bytedcli codebase repo get "example-org/example-repo"
+bytedcli codebase repo list --query "demo-query"
+bytedcli codebase repo create --namespace example-org --name example-repo --description "Demo repo" --search-bytetree "Example Team"
+bytedcli codebase repo create --namespace example-org --name example-repo --groot-node-id 12345
+bytedcli codebase repo create --namespace example-org --name example-repo --groot-node-id 12345 --execute --confirm example-org/example-repo
+bytedcli codebase repo branch create feat/demo -R "example-org/example-repo" --from master
+bytedcli codebase repo file "README.md" -R "example-org/example-repo"
+bytedcli codebase commit list -R "example-org/example-repo" --revision master
+bytedcli codebase commit get -R "example-org/example-repo" --revision <sha>
+
+# Snippet
+bytedcli codebase snippet get <snippet_id>
+bytedcli codebase snippet get <snippet_id> --file index.ts
+bytedcli codebase snippet get <snippet_id> --save ./snippet-files
+bytedcli codebase snippet list --query "demo-query" --page-size 10
+bytedcli codebase snippet create --title "demo snippet" --visibility internal --file ./README.md
+bytedcli codebase snippet update --id <snippet_id> --add-file ./new.txt --remove-file old.txt
+bytedcli codebase snippet delete --id <snippet_id> --yes
 
 # Issue
-bytedcli codebase issue list -R "byteapi/bytedcli" # 默认只看 open
-bytedcli codebase issue list -R "byteapi/bytedcli" --status todo --limit 20
-bytedcli codebase issue get "https://code.byted.org/byteapi/bytedcli/issues/52"
-bytedcli codebase issue comment 24 -R "byteapi/bytedcli" --body "ack"
-bytedcli codebase issue delete 24 -R "byteapi/bytedcli"
+bytedcli codebase issue list -R "example-org/example-repo" # 默认只看 open
+bytedcli codebase issue list -R "example-org/example-repo" --status todo --limit 20
+bytedcli codebase issue get 52 -R "example-org/example-repo"
+bytedcli codebase issue comment 24 -R "example-org/example-repo" --body "ack"          # 写：发一条评论
+bytedcli codebase issue comment list 24 -R "example-org/example-repo"                  # 读：列出某 issue 的所有评论
+bytedcli codebase issue comment list https://code.byted.org/example-org/example-repo/issues/24
+bytedcli codebase issue comment list 24 -R "example-org/example-repo" --author alice --status open
+bytedcli codebase issue delete 24 -R "example-org/example-repo"
 
 # MR 基础查询
-bytedcli codebase mr get 821 -R "byteapi/bytedcli"
+bytedcli codebase mr get 821 -R "example-org/example-repo"
 bytedcli codebase mr get
-bytedcli codebase mr get "https://code.byted.org/byteapi/bytedcli/merge_requests/821"
-bytedcli codebase mr comment list 821 -R "byteapi/bytedcli"
-bytedcli codebase mr files 821 -R "byteapi/bytedcli"
-bytedcli codebase mr diff 821 -R "byteapi/bytedcli" --file "path/to/file.ts"
-bytedcli codebase repo tag list -R "byteapi/bytedcli" --query "v1." --query-mode prefix
-bytedcli codebase repo tag create -R "byteapi/bytedcli" --name v1.0.1 --revision master --message "Release v1.0.1"
-bytedcli codebase release list -R "byteapi/bytedcli" --query "v1." --query-mode prefix
-bytedcli codebase release get -R "byteapi/bytedcli" --tag v1.0.0
-bytedcli codebase release create -R "byteapi/bytedcli" --tag v1.0.1 --description "Release v1.0.1" --revision master --tag-message "Release v1.0.1"
-bytedcli codebase release update -R "byteapi/bytedcli" --tag v1.0.1 --description "Updated release notes"
+bytedcli codebase mr get 821 -R "example-org/example-repo"
+bytedcli codebase mr comment list 821 -R "example-org/example-repo"
+bytedcli codebase mr files 821 -R "example-org/example-repo"
+bytedcli codebase mr diff 821 -R "example-org/example-repo" --file "path/to/file.ts"
+bytedcli codebase repo tag list -R "example-org/example-repo" --query "v1." --query-mode prefix
+bytedcli codebase repo tag create -R "example-org/example-repo" --name v1.0.1 --revision master --message "Release v1.0.1"
+bytedcli codebase release list -R "example-org/example-repo" --query "v1." --query-mode prefix
+bytedcli codebase release get -R "example-org/example-repo" --tag v1.0.0
+bytedcli codebase release create -R "example-org/example-repo" --tag v1.0.1 --description "Release v1.0.1" --revision master --tag-message "Release v1.0.1"
+bytedcli codebase release update -R "example-org/example-repo" --tag v1.0.1 --description "Updated release notes"
 
 # CI / Check Runs
-bytedcli codebase checks mr 821 -R "byteapi/bytedcli"
-bytedcli codebase checks list -R "byteapi/bytedcli"
-bytedcli codebase checks list -R "byteapi/bytedcli" --commit <sha> --mr 821
-bytedcli codebase checks mr --commit <sha> -R "byteapi/bytedcli"
-bytedcli codebase checks get -R "byteapi/bytedcli" --id <check_run_id>
-bytedcli codebase checks log 2395465271 unit_test_and_coverage --run-seq 126 --step-id 1259002466
-bytedcli codebase checks log 2552744121 build_lint-step_4 --run-seq 1 --no-limit
-bytedcli codebase checks log --url "https://bits.bytedance.net/p/job_runs/2395465271/step_logs/unit_test_and_coverage?runSeq=126&stepId=1259002466"
-bytedcli codebase checks log -R "byteapi/bytedcli" --check-run-id 765416657961248
+bytedcli codebase checks mr 821 -R "example-org/example-repo"
+bytedcli codebase checks list -R "example-org/example-repo"
+bytedcli codebase checks list -R "example-org/example-repo" --commit <sha> --mr 821
+bytedcli codebase checks mr --commit <sha> -R "example-org/example-repo"
+bytedcli codebase checks get -R "example-org/example-repo" --id <check_run_id>
+bytedcli codebase checks log 1234567890 unit_test_and_coverage --run-seq 126 --step-id 3456789012
+bytedcli codebase checks log 2345678901 build_lint-step_4 --run-seq 1 --no-limit
+bytedcli codebase checks log -R "example-org/example-repo" --check-run-id 4567890123
 bytedcli codebase mr artifacts list 821 -R "example-org/example-repo" --artifact example-artifact-filename
 bytedcli codebase mr artifacts download 821 -R "example-org/example-repo" --artifact example-artifact-filename --all --output-dir ./ci-artifacts
 # Logs can be large; prefer redirecting to a file and searching locally.
-bytedcli codebase checks log -R "byteapi/bytedcli" --check-run-id 765416657961248 > /tmp/check.log
+bytedcli codebase checks log -R "example-org/example-repo" --check-run-id 4567890123 > /tmp/check.log
 grep -n 'error\\|fail' /tmp/check.log
-bytedcli codebase mr status 821 -R "byteapi/bytedcli"
+bytedcli codebase mr status 821 -R "example-org/example-repo"
 
 # Comment
-bytedcli codebase mr comment draft 821 -R "byteapi/bytedcli" --body "draft comment"
-bytedcli codebase mr comment publish 821 -R "byteapi/bytedcli" --body "LGTM"
-bytedcli codebase mr comment reply 821 -R "byteapi/bytedcli" --thread-id <thread_id> --body "fixed"
-bytedcli codebase mr comment resolve -R "byteapi/bytedcli" --id <thread_id>
+bytedcli codebase mr comment draft 821 -R "example-org/example-repo" --body "draft comment"
+bytedcli codebase mr comment publish 821 -R "example-org/example-repo" --body "LGTM"
+bytedcli codebase mr comment reply 821 -R "example-org/example-repo" --thread-id <thread_id> --body "fixed"
+bytedcli codebase mr comment resolve -R "example-org/example-repo" --id <thread_id>
 
 # 创建 / 更新 PR
-bytedcli codebase mr create -R "byteapi/bytedcli" \
+bytedcli codebase mr create -R "example-org/example-repo" \
   --title "feat: demo"
-bytedcli codebase mr create -R "byteapi/bytedcli" \
-  --title "feat: demo" --meego 7074189149
-bytedcli codebase mr update 821 -R "byteapi/bytedcli" --body "first line\nsecond line"
-bytedcli codebase mr update 821 -R "byteapi/bytedcli" --meego 7074189149
-bytedcli codebase mr update 821 -R "byteapi/bytedcli" --base develop   # 切 MR 的 target branch 到另一条 release/集成分支
+bytedcli codebase mr create -R "example-org/example-repo" \
+  --title "feat: demo" --meego 123456
+bytedcli codebase mr update 821 -R "example-org/example-repo" --body "first line\nsecond line"
+bytedcli codebase mr update 821 -R "example-org/example-repo" --meego 123456
+bytedcli codebase mr update 821 -R "example-org/example-repo" --base develop   # 切 MR 的 target branch 到另一条 release/集成分支
 
 # 搜索 Meego 工作项（获取 work_item_id 后填入 MR）
 bytedcli --json meego workitem list --project-key <project_key> \
   --mql "SELECT \`work_item_id\`, \`name\` FROM \`<project_key>\`.\`story\` WHERE \`name\` LIKE '%关键字%' LIMIT 10"
 
 # PR 列表 / 生命周期
-bytedcli codebase mr list -R "byteapi/bytedcli" # 默认只看 open
-bytedcli codebase mr list -R "byteapi/bytedcli" --state open -H feature/foo -B master -L 20
+bytedcli codebase mr list -R "example-org/example-repo" # 默认只看 open
+bytedcli codebase mr list -R "example-org/example-repo" --state open -H feature/foo -B master -L 20
 bytedcli codebase search mr --author @me --status open --page-size 5
-bytedcli codebase mr count -R "byteapi/bytedcli"
-bytedcli codebase mr close 821 -R "byteapi/bytedcli"
-bytedcli codebase mr reopen 821 -R "byteapi/bytedcli"
-bytedcli codebase mr merge 821 -R "byteapi/bytedcli" --merge-method rebase_merge
+bytedcli codebase mr count -R "example-org/example-repo"
+bytedcli codebase mr close 821 -R "example-org/example-repo"
+bytedcli codebase mr reopen 821 -R "example-org/example-repo"
+bytedcli codebase mr merge 821 -R "example-org/example-repo" --merge-method rebase_merge
 
 # PR Review / Queue
-bytedcli codebase mr review 821 -R "byteapi/bytedcli" --approve --body "LGTM" # 自动附带当前 MR 最新 source commit
+bytedcli codebase mr review 821 -R "example-org/example-repo" --approve --body "LGTM" # 自动附带当前 MR 最新 source commit
 bytedcli codebase mr review --comment --body-file ./review.txt
-bytedcli codebase mr reviewer list 821 -R "byteapi/bytedcli"
-bytedcli codebase mr reviewer update 821 -R "byteapi/bytedcli" --add 123456 --add 234567
-bytedcli codebase mr reviewer update 821 -R "byteapi/bytedcli" --add alice --remove bob   # 支持 username
-bytedcli codebase mr bypass list 821 -R "byteapi/bytedcli"
-bytedcli codebase mr bypass create 821 -R "byteapi/bytedcli" --inputs-json '[{"kind":"check_run","target":"check_name"}]'
-bytedcli codebase mr queue status -R "byteapi/bytedcli"
-bytedcli codebase mr queue list -R "byteapi/bytedcli" -L 20
-bytedcli codebase mr queue entries 821 -R "byteapi/bytedcli"
-bytedcli codebase mr queue enqueue 821 -R "byteapi/bytedcli" --merge-method rebase_merge
-bytedcli codebase mr queue dequeue 821 -R "byteapi/bytedcli"
+bytedcli codebase mr reviewer list 821 -R "example-org/example-repo"
+bytedcli codebase mr reviewer update 821 -R "example-org/example-repo" --add 123456 --add 234567
+bytedcli codebase mr reviewer update 821 -R "example-org/example-repo" --add alice --remove bob   # 支持 username
+bytedcli codebase mr bypass list 821 -R "example-org/example-repo"
+bytedcli codebase mr bypass create 821 -R "example-org/example-repo" --inputs-json '[{"kind":"check_run","target":"check_name"}]'
+bytedcli codebase mr bypass create 821 -R "example-org/example-repo" --commit-id <source_commit> --review
+bytedcli codebase mr queue status -R "example-org/example-repo"
+bytedcli codebase mr queue list -R "example-org/example-repo" -L 20
+bytedcli codebase mr queue entries 821 -R "example-org/example-repo"
+bytedcli codebase mr queue enqueue 821 -R "example-org/example-repo" --merge-method rebase_merge
+bytedcli codebase mr queue dequeue 821 -R "example-org/example-repo"
 
 # Check Run 读写
-bytedcli codebase checks get -R "byteapi/bytedcli" --id c1
-bytedcli codebase checks create -R "byteapi/bytedcli" --payload-json '{"Name":"ci/test","CommitId":"<sha>"}'
-bytedcli codebase checks update -R "byteapi/bytedcli" --payload-json '{"Id":"c1","Status":"completed","Conclusion":"success"}'
-bytedcli codebase checks operate -R "byteapi/bytedcli" --payload-json '{"Id":"c1","OperationId":"retry"}'
+bytedcli codebase checks get -R "example-org/example-repo" --id c1
+bytedcli codebase checks create -R "example-org/example-repo" --payload-json '{"Name":"ci/test","CommitId":"<sha>"}'
+bytedcli codebase checks update -R "example-org/example-repo" --payload-json '{"Id":"c1","Status":"completed","Conclusion":"success"}'
+bytedcli codebase checks operate -R "example-org/example-repo" --payload-json '{"CheckRunId":"c1","OperationId":"<operation_id_from_operations>"}'
 bytedcli codebase search issue --assignee @me --status todo --page-size 5
 
 # Permission（依赖权限）
-bytedcli codebase permission check -R "byteapi/bytedcli"
-bytedcli codebase permission check -R "byteapi/bytedcli" --revision main
-bytedcli --json codebase permission check -R "byteapi/bytedcli"
-bytedcli codebase permission apply -R "byteapi/bytedcli" --action reporter --reason "need read access" --repos "dep-org/dep-repo"
-bytedcli codebase permission apply -R "byteapi/bytedcli" --action developer --reason "need write access" --repos "dep-org/repo1,dep-org/repo2"
+bytedcli codebase permission check -R "example-org/example-repo"
+bytedcli codebase permission check -R "example-org/example-repo" --revision main
+bytedcli --json codebase permission check -R "example-org/example-repo"
+bytedcli codebase permission apply -R "example-org/example-repo" --action reporter --reason "need read access" --repos "dep-org/dep-repo"
+bytedcli codebase permission apply -R "example-org/example-repo" --action developer --reason "need write access" --repos "dep-org/repo1,dep-org/repo2"
 ```
 
 ## 迁移说明
 
 - 公开命令树已切换为 `codebase auth|repo|commit|mr|issue|checks|search` 的资源分组形式；MR 评论统一走 `codebase mr comment`，reviewer/bypass/queue 相关操作分别走 `codebase mr reviewer|bypass|queue`，跨仓库搜索走 `codebase search mr|issue`，master 上已有的平铺命令仍保留为兼容入口。
+- Snippet 入口为 `codebase snippet list|get|create|update|delete`；`get --save <dir>` 默认不覆盖本地已有文件，增量更新 `--add-file/--remove-file` 会拒绝复用内容缺失或被截断的远端文件。
 - 当前 Git 仓库 `origin` 可用于自动推断仓库；如果推断失败，CLI 会说明是非 Git 仓库、缺少 `origin`、host 不支持，还是 remote 无法解析。
 - 主仓库选择器统一推荐 `-R, --repo`；PR / issue 编号默认使用位置参数；正文统一用 `--body`，PR 创建改用 `--head/--base`。
 - `codebase commit list|get` 使用 `--revision` 指定 branch/tag/commit SHA；未显式传入时会优先使用当前 Git 分支，失败后回落到仓库默认分支。

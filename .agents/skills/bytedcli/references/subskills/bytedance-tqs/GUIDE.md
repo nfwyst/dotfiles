@@ -145,24 +145,38 @@ bytedcli tqs result --job-id <job-id> --format csv --output ./result.csv
 bytedcli tqs execute --sql "SELECT 1" --cluster sg_row --json
 ```
 
+## Auto analyze
+
+`tqs submit` 和 `tqs execute` 默认在提交前自动执行 SQL analyze：
+
+- analyze 失败时直接报错退出，不会继续提交任务
+- 如需跳过自动 analyze，传 `--skip-analyze`
+
+```bash
+# 默认行为：先 analyze 再 submit
+bytedcli tqs submit --sql "SELECT 1" --json
+
+# 跳过 analyze 直接提交
+bytedcli tqs submit --sql "SELECT 1" --skip-analyze --json
+```
+
 ## Recommended flow
 
-### Validate first
+### Validate only
 
-1. 先用 `tqs analyze --sql ...` 检查 Hive SQL 是否可执行。
-2. 如果只是确认语法或分析信息，停在这一步即可。
+1. 如果只想确认语法或分析信息，用 `tqs analyze --sql ...`。
 
 ### Async job flow
 
-1. 用 `tqs submit --sql ... --json` 提交任务并记录 `jobId`。
+1. 用 `tqs submit --sql ... --json` 提交任务并记录 `jobId`（自动包含 analyze）。
 2. 后续需要时，用 `tqs status --job-id ...` 或 `tqs wait --job-id ...` 继续查询。
 3. 任务成功后，用 `tqs result --job-id ...` 取预览结果。
 4. 如果需要完整结果文件，再用 `tqs result --format csv --output <path>` 下载。
 
 ### One-shot flow
 
-1. 如果不需要手动拆分流程，直接用 `tqs execute --sql ...`。
-2. `execute` 会先提交任务，再轮询，最后返回结果预览。
+1. 如果不需要手动拆分流程，直接用 `tqs execute --sql ...`（自动包含 analyze）。
+2. `execute` 会先 analyze，再提交任务，再轮询，最后返回结果预览。
 3. 如果只想拿到完整文件，仍然推荐显式使用 `result --format csv --output ...`。
 
 ## Yarn options

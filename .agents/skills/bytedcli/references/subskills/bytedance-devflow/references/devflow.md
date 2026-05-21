@@ -90,6 +90,7 @@ Space (biz_id) → Project → Work Item (需求) → Task (研发任务)
 |------|------|------|------|
 | `--biz-id` | number | 是 | 业务线 ID |
 | `--project-key` | string | 是 | 项目 key（从 project list 获取） |
+| `--project-name` | string | 否 | 项目名过滤，默认 ALL |
 | `--keyword` | string | 否 | 需求名称关键词搜索 |
 | `--source` | number | 否 | 2=全量 work item，4=最近有估分 |
 

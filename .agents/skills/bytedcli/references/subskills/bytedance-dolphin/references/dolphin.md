@@ -4,25 +4,25 @@
 
 ### event
 
-- `bytedcli dolphin event get --event-id <id> [--env prod|boe]`
-- `bytedcli dolphin event groups --event-id <id> [--pattern <kw>] [--page N] [--page-size N] [--with-rules] [--env prod|boe]`
-- `bytedcli dolphin event vars --event-id <id> [--need-ref-info] [--env prod|boe]`
-- `bytedcli dolphin event params --event-id <id> [--need-ref-info] [--env prod|boe]`
-- `bytedcli dolphin event testcases list --event-id <id> --bizline-id <id> [--scope 0|1] [--env-name <name>] [--draft-user <prefix>] [--env prod|boe]`
-- `bytedcli dolphin event testcases check [--body <json>|--body-file <path>] [--env prod|boe]`
+- `bytedcli dolphin event get --event-id <id> [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin event groups --event-id <id> [--pattern <kw>] [--page N] [--page-size N] [--with-rules] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin event vars --event-id <id> [--need-ref-info] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin event params --event-id <id> [--need-ref-info] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin event testcases list --event-id <id> --bizline-id <id> [--scope 0|1] [--env-name <name>] [--draft-user <prefix>] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin event testcases check [--body <json>|--body-file <path>] [--env prod|boe|i18n-bd]`
 
 ### group
 
-- `bytedcli dolphin group get --group-id <id> [--with-rules] [--with-template] [--with-testcases] [--env prod|boe]`
-- `bytedcli dolphin group testcases --group-id <id> [--env-name <name>] [--user-draft <prefix>] [--env prod|boe]`
-- `bytedcli dolphin group factors --group-id <id> [--need-ref-info] [--env prod|boe]`
-- `bytedcli dolphin group feature-env --group-id <id> --env-name <name> [--env prod|boe]`
-- `bytedcli dolphin group history get --group-id <id> --version <n> [--env prod|boe]`
-- `bytedcli dolphin group history list --group-id <id> [--page N] [--page-size N] [--env prod|boe]`
+- `bytedcli dolphin group get --group-id <id> [--with-rules] [--with-template] [--with-testcases] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin group testcases --group-id <id> [--env-name <name>] [--user-draft <prefix>] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin group factors --group-id <id> [--need-ref-info] [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin group feature-env --group-id <id> --env-name <name> [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin group history get --group-id <id> --version <n> [--env prod|boe|i18n-bd]`
+- `bytedcli dolphin group history list --group-id <id> [--page N] [--page-size N] [--env prod|boe|i18n-bd]`
 
 ### rule
 
-- `bytedcli dolphin rule get --rule-id <id> [--env prod|boe]`
+- `bytedcli dolphin rule get --rule-id <id> [--env prod|boe|i18n-bd]`
 
 ## Output
 

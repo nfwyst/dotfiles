@@ -53,6 +53,7 @@ bytedcli bmq cluster list --vregion "Singapore-Central" --search "public"
 # Consumer Group 列表
 bytedcli bmq consumer list --vregion "US-BOE" --page 1 --size 20
 bytedcli bmq consumer list --vregion "Singapore-Central" --search "demo_consumer" --all
+bytedcli bmq consumer list --vregion "Singapore-Central" --cluster-name "demo-cluster" --all
 
 # Mirror 列表
 bytedcli bmq mirror list --vregion "Singapore-Central" --status RUNNING --all
@@ -82,6 +83,7 @@ bytedcli --site boe bmq topic list --vregion "US-BOE" --all
 - 需要结构化输出加 `--json`
 - `--vregion` 指定虚拟区域（如 `US-BOE`、`Singapore-Central`、`CN` 等）
 - `--all` 查看所有资源（默认只看自己拥有的）
+- `bmq consumer list` 支持 `--cluster-name` 按集群名过滤
 
 ## References
 

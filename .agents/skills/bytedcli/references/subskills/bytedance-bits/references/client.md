@@ -89,6 +89,13 @@ bytedcli bits client workflow job retry --job-id 123 --env '{"key":"value"}'
 bytedcli bits client workflow job cancel --job-id 123 --reason "manual stop"
 bytedcli bits client workflow job skip --job-id 123 --username demo.user --force true
 
+# Pipeline jobRun 强制跳过（jobRunId，不是 legacy jobId）
+bytedcli bits job-run force-skip \
+  --job-run-id 123456789 \
+  --pipeline-run-id 987654321 \
+  --space-id 12345 \
+  --reason "TeslaX skipped for this launch"
+
 # 触发 job
 bytedcli bits client workflow job trigger \
   --type service \
@@ -120,6 +127,7 @@ bytedcli bits client workflow dev quick-run \
 - `bits client workflow` 走的是客户端 OpenAPI，不等价于平台原生 `bits pipeline`
 - `bits client workflow job` 里的 `jobId` 不是 `bits job-run` 使用的 `jobRunId`
 - `jobId` 通常出现在 `https://example.bytedance.net/space/legacy/build/logs?jobId=<jobId>` 这类 legacy workflow 链接中
+- 要跳过平台 Pipeline 页面里的 `jobRunId`，用 `bits job-run force-skip`，不要用 `bits client workflow job skip`
 - `bits client workflow dev quick-run` 适合客户端研发的开发任务自测，不适合替代平台主流水线编排
 
 ## integration

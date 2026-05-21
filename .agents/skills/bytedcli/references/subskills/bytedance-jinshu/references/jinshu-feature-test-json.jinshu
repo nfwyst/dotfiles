@@ -1,0 +1,157 @@
+#purple JSON 高级能力测试<orange:Advanced>
+> 覆盖 JSON 片段、图片分栏、图文分栏、表格、图表
+
+## 0. 变量说明
+发送或预览前替换以下占位符：
+- IMG_KEY_1、IMG_KEY_2、IMG_KEY_3、IMG_KEY_4：真实 image key。
+
+## 1. JSON 基础片段
+--json--
+{
+  "tag": "markdown",
+  "content": "**JSON 片段已解析**\n这段内容来自 `--json--` / `--json-end--`。"
+}
+--json-end--
+
+## 2. 双图混排
+--json--
+{
+  "tag": "img_combination",
+  "combination_mode": "double",
+  "img_list": [
+    { "img_key": "IMG_KEY_1" },
+    { "img_key": "IMG_KEY_2" }
+  ]
+}
+--json-end--
+
+## 3. 等分三列
+--json--
+{
+  "tag": "img_combination",
+  "combination_mode": "trisect",
+  "img_list": [
+    { "img_key": "IMG_KEY_1" },
+    { "img_key": "IMG_KEY_2" },
+    { "img_key": "IMG_KEY_3" }
+  ]
+}
+--json-end--
+
+## 4. 图文分栏
+--json--
+[
+  {
+    "tag": "column_set",
+    "flex_mode": "bisect",
+    "horizontal_spacing": "default",
+    "columns": [
+      {
+        "tag": "column",
+        "width": "weighted",
+        "weight": 1,
+        "vertical_align": "center",
+        "elements": [
+          {
+            "tag": "img",
+            "img_key": "IMG_KEY_1",
+            "mode": "fit_horizontal",
+            "alt": {
+              "tag": "plain_text",
+              "content": "测试图片"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "column",
+        "width": "weighted",
+        "weight": 1,
+        "vertical_align": "center",
+        "elements": [
+          {
+            "tag": "markdown",
+            "content": "**右侧说明**\n- 支持多行文本\n- 支持 <font color='green'>彩色文本</font>"
+          }
+        ]
+      }
+    ]
+  }
+]
+--json-end--
+
+## 5. 表格
+--json--
+{
+  "tag": "table",
+  "page_size": 5,
+  "row_height": "middle",
+  "header_style": {
+    "bold": true,
+    "background_style": "grey",
+    "lines": 1,
+    "text_size": "heading",
+    "text_align": "center"
+  },
+  "columns": [
+    {
+      "name": "item",
+      "display_name": "事项",
+      "data_type": "text"
+    },
+    {
+      "name": "status",
+      "display_name": "状态",
+      "data_type": "options",
+      "width": "100px"
+    },
+    {
+      "name": "score",
+      "display_name": "分数",
+      "data_type": "number",
+      "format": {
+        "precision": 1
+      },
+      "width": "90px"
+    }
+  ],
+  "rows": [
+    {
+      "item": "sample-a",
+      "status": [{ "text": "完成", "color": "green" }],
+      "score": 98.5
+    },
+    {
+      "item": "sample-b",
+      "status": [{ "text": "待确认", "color": "orange" }],
+      "score": 76.0
+    }
+  ]
+}
+--json-end--
+
+## 6. 图表
+--json--
+{
+  "tag": "chart",
+  "chart_spec": {
+    "type": "line",
+    "title": {
+      "text": "趋势示例"
+    },
+    "data": {
+      "values": [
+        { "time": "10:00", "value": 8 },
+        { "time": "11:00", "value": 13 },
+        { "time": "12:00", "value": 11 }
+      ]
+    },
+    "xField": "time",
+    "yField": "value"
+  }
+}
+--json-end--
+
+--note--
+预期结果：JSON 基础片段、图片分栏、图文分栏、表格、图表都被解析为卡片元素，而不是原样显示 JSON。
+--note-end--

@@ -1,0 +1,89 @@
+{
+  "alarm_conf": {
+    "users": "demo-user",
+    "user_ids": "demo-user",
+    "groups": "",
+    "at_peoples": "",
+    "duty_plan_list": "",
+    "webhook_url": "",
+    "user_alarm_roles": ["CONCRETE_PERSON"],
+    "group_at_alarm_roles": [],
+    "urgent_level": "normal",
+    "repeat_times": 1,
+    "repeat_interval": 10,
+    "mute_time": ["00:00", "00:00"],
+    "user_list": ["demo-user"]
+  },
+  "monitor_sources": [
+    {
+      "monitor_conf_list": [
+        {
+          "monitor_name": "demo_custom_sql_rule",
+          "description": "demo custom sql monitor",
+          "monitor_type": "Custom_SQL",
+          "monitor_state": "RUNNABLE",
+          "launch_type": "glance",
+          "timeout": -1,
+          "queue_conf": {
+            "use_account_auth": false,
+            "use_task_queue": true
+          },
+          "monitor_column": {
+            "columns": ["metric_value"],
+            "values": [],
+            "is_reg": false
+          },
+          "alarm_conditions": {
+            "conditions": [
+              {
+                "compare_content_list": [
+                  {
+                    "change_type": "equal",
+                    "compare_type": "value",
+                    "threshold": 0
+                  }
+                ],
+                "compare_logic_list": []
+              }
+            ]
+          },
+          "rule_sql": {
+            "custom_sql": "select count(1) as metric_value from sample_db.sample_table where date='${date}'",
+            "where_sql": ""
+          }
+        }
+      ],
+      "db_name": "sample_db",
+      "tb_name": "sample_table",
+      "project_id": 123456,
+      "region": "cn",
+      "namespace": "sample-namespace",
+      "part_name": "date={date}",
+      "alarm_level": "normal",
+      "extra_conf": {
+        "where_sql": "",
+        "alarm_zone_time": {
+          "alarm_start_time": "",
+          "timezone_offset": 8,
+          "use_native": true
+        },
+        "job_conf": ""
+      },
+      "bind_tasks": {
+        "enable": true,
+        "scheduled": false,
+        "schedule_type": "DORADO-TRIGGER",
+        "schedule_conf": {},
+        "tasks": [
+          {
+            "task_id": 123456789,
+            "task_name": "demo_hsql_task",
+            "task_owner": "demo-user",
+            "task_project_id": 123456,
+            "task_frequency": "daily"
+          }
+        ]
+      }
+    }
+  ]
+}

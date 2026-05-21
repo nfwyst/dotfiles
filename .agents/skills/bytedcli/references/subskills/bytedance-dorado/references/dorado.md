@@ -29,6 +29,24 @@ Dorado task and ad-hoc query pages can be mapped to CLI parameters:
 
 Use the path `<taskId>` as the task ID, `groupName` as `--region`, and the numeric suffix of `project` as `--project-id`.
 
+When the user gives a task development page URL and wants the current task detail, prefer:
+
+```bash
+bytedcli dorado task get <taskId> --region <region>
+```
+
+Treat `project=<region>_<projectId>` as context unless the task also needs project-scoped APIs.
+
+For the task page's "Task Monitoring / Baseline Monitoring" config, prefer:
+
+```bash
+bytedcli dorado task alarms --task-id <taskId> --project-id <projectId> --region <region>
+```
+
+This maps to `GET /dorado_api/task/{taskId}/alarms?projectId={projectId}&supportTaskAlarm=true`. Do not rely on `dorado task get` to infer alarm rules or baseline bindings.
+
+For page-shaped submit flows such as `dorado task commit`, `dorado task commit-approval`, and `dorado node submit-approval`, if the web payload includes monitoring fields like `openDefaultSystemAlarm`, `customAlarmRuleIds`, and `baselineIds`, only expose the fields users can reason about directly. Keep fixed/default payload structures such as `noticeConf` in the implementation layer instead of asking users to pass empty objects.
+
 ## Commands
 
 ### spark-jar
@@ -370,7 +388,7 @@ bytedcli dorado dts-draft explain 1204196358 --project-id 1200002135 \
 bytedcli dorado dts-draft explain 1204196358 --project-id 1200002135 --online --region mycis
 ```
 
-**Note:** This command supports DTS tasks where `conf.typeGroup` is `dts` or `common-dts-batch`.
+**Note:** This command supports DTS tasks where `conf.typeGroup` is `dts`, `common-dts-batch`, or `hive->clickhouse`. If task details cannot infer `dc` or `ownerUserName`, pass `--dc` and `--username` explicitly.
 
 ---
 
@@ -535,6 +553,7 @@ bytedcli dorado task commit-approval [taskId] [options]
 - `--project-id <projectId>` - Project ID (required)
 - `--review-policy-id <id>` - Review policy ID (required; must be explicitly provided by the caller for the current project)
 - `--review-users <users>` - Comma-separated reviewer usernames (required; must be explicitly provided by the caller for the current project)
+- `--baseline-ids <ids>` - Comma-separated baseline IDs
 - `--custom-alarm-rule-ids <ids>` - Comma-separated alarm rule IDs
 - `--agent-config <json>` - Agent config JSON string
 - `--skip-codes <codes>` - Skip specific error codes during commit
@@ -550,6 +569,7 @@ bytedcli dorado task commit-approval 100052730 --project-id 458 \
   --review-policy-id 24 \
   --review-users "demo-user-a,demo-user-b" \
   --custom-alarm-rule-ids 11870,14696 \
+  --baseline-ids 33 \
   --agent-config '{"sessionId":"demo-session"}' \
   --region mycis
 ```
@@ -586,6 +606,27 @@ bytedcli dorado task commit-batch-approval --project-id 458 \
   --review-users "demo-user-a,demo-user-b" \
   --commit-ids "108103,108111,108110" \
   --region mycis
+```
+
+---
+
+
+### deploy diff-sql
+
+View SQL diff fields from a Dorado deploy package detail page (`GET /deploy/{deployId}/detail?projectId=...`). It also compares `rawCommitVo` and `newCommitVo` code snapshots when the API does not return a dedicated diff SQL field.
+
+```bash
+bytedcli dorado deploy diff-sql --deploy-id <deployId> --project-id <projectId> [options]
+```
+
+**Options:**
+- `--deploy-id <deployId>` - Deploy package ID (required)
+- `--project-id <projectId>` - Project ID (required)
+- `-r, --region <region>` - Dorado region (default: "cn"; use `mycis` for `dataleap-mycis.byteintl.net`)
+
+**Example:**
+```bash
+bytedcli dorado deploy diff-sql --deploy-id <deploy-id> --project-id <project-id> --region mycis
 ```
 
 ---
@@ -967,6 +1008,7 @@ bytedcli dorado node submit-approval --node-id <nodeId> --project-id <projectId>
 - `--no-skip-commit-pipeline` - Do not skip commit pipeline checks
 - `--review-policy-id <id>` - Review policy ID (required; must be explicitly provided by the caller for the current project)
 - `--review-users <users>` - Comma-separated reviewer usernames (required; must be explicitly provided by the caller for the current project)
+- `--baseline-ids <ids>` - Comma-separated baseline IDs
 - `--custom-alarm-rule-ids <ids>` - Comma-separated alarm rule IDs
 - `--agent-config <json>` - Agent config JSON string
 - `-r, --region <region>` - Dorado region (default: "cn")
@@ -977,7 +1019,7 @@ Use this dedicated command because the approval payload is page-shaped and sensi
 **Example:**
 ```bash
 bytedcli dorado node submit-approval --node-id NxyzABC --project-id 458 --message "deploy via bytedcli" \
-  --review-policy-id 33 --review-users "demo.user1,demo.user2" --region boei18n
+  --review-policy-id 33 --review-users "demo.user1,demo.user2" --custom-alarm-rule-ids 17587 --baseline-ids 33 --region boei18n
 ```
 
 ---

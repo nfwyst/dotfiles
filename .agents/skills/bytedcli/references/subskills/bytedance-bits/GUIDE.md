@@ -1,6 +1,6 @@
 ---
 name: bytedance-bits
-description: "Operate BITS DevOps platform via bytedcli: create/update dev tasks, run pipelines, manage merge requests (including host-sub MR for SDK component releases with config-driven multi-sub-repo support), trigger component upgrades, query client workflow/integration/calendar OpenAPI surfaces, generate AI test cases, update lanes, bind branches, and manage releases."
+description: "Operate BITS DevOps platform via bytedcli: create/update dev tasks, import TCC configs, run pipelines, manage merge requests (including host-sub MR for SDK component releases with config-driven multi-sub-repo support), trigger component upgrades, query client workflow/integration/calendar OpenAPI surfaces, generate AI test cases, update lanes, bind branches, manage releases, and upgrade existing TCE clusters in PPE/BOE envs."
 ---
 
 # bytedcli BITS
@@ -29,10 +29,14 @@ bytedcli <command> [options]
 - 触发客户端组件升级、查询升级历史
 - 查询客户端 workflow / integration / calendar OpenAPI 子域
 - 运行自测流水线
+- 将 TCC 配置导入研发任务
 - 更新泳道配置
 - 绑定代码分支
+- 升级 PPE/BOE 环境内已有 TCE 集群
 - 查询发布工作流
+- 查询发布工单详情
 - 创建发布工单
+- 监控设备的 Anywheredoor 抓包记录（`bits anywhere`），把单条抓包转成可执行 curl
 
 ## 前置条件
 
@@ -47,9 +51,9 @@ bytedcli <command> [options]
 
 #### Token 优先级（从高到低）
 
-1) 命令行 `--token <token>`（仅本次请求生效，不写入缓存；若请求 `401/403`，为避免覆盖 override token，会直接报错）
-2) 环境变量 `CLIENT_BITS_TOKEN`
-3) 本地 token cache（通过 `bytedcli bits auth ...` 管理；按 Bits `apiUrl` 的 host 分开缓存）
+1. 命令行 `--token <token>`（仅本次请求生效，不写入缓存；若请求 `401/403`，为避免覆盖 override token，会直接报错）
+2. 环境变量 `CLIENT_BITS_TOKEN`
+3. 本地 token cache（通过 `bytedcli bits auth ...` 管理；按 Bits `apiUrl` 的 host 分开缓存）
 
 #### 推荐用法
 
@@ -83,6 +87,30 @@ bytedcli bits auth config-auth --token <token>
 > `bits auth` 会自动读取当前 Bits 配置（例如 `BITS_API_URL` / `.bits/project_config.json.apiUrl`），并按 host 维度管理缓存文件。
 
 ## Quick start
+
+### 升级 PPE/BOE 环境里的已有 TCE 集群
+
+`bits env deploy-upgrade` 新增支持升级已有 PPE/BOE 环境内的 TCE 集群，核心参数为：`env + psm + cluster-id + branch/version`。它只用于升级已有集群；新建环境、新增服务或新增集群仍应使用 ENV 创建链路。
+
+```bash
+# 指定 SCM 版本升级。若同时传 --version 和 --branch，--version 优先生效。
+bytedcli bits env deploy-upgrade \
+  --env ppe_demo \
+  --standard-env online_cn \
+  --psm example.service.api \
+  --cluster-id 12345 \
+  --version 1.0.0.370
+
+# 部署 Git 分支
+bytedcli bits env deploy-upgrade \
+  --env ppe_demo \
+  --standard-env online_cn \
+  --psm example.service.api \
+  --cluster-id 12345 \
+  --branch feat/demo
+```
+
+可先用 `bytedcli env service list --env <env> --standard-env <standard-env> --search <psm>` 或 ENV 页面确认目标 cluster id；提交后返回的 `Ticket ID` 用于继续查部署进度。
 
 ### 创建研发任务
 
@@ -152,7 +180,7 @@ bytedcli bits develop create \
   --lane test \
   --space-id 12345 \
   --dry-run
-  
+
 # 方式3: 指定 Bits space + 可选 work item / state / created-at 查询开发任务列表
 bytedcli bits develop list \
   --space-id 12345 \
@@ -172,6 +200,77 @@ bytedcli bits develop quick-run \
   --wait \
   --wait-timeout-sec 600
 ```
+
+### 强制跳过 Pipeline jobRun
+
+`bits job-run force-skip` 面向 BITS Pipeline 的 `jobRunId`，不是 legacy workflow 的 `jobId`。适合在 Pipeline 页面拿到 `jobRunId` / `pipelineRunId` 后跳过 FTF、TeslaX 等阻塞任务。
+
+```bash
+bytedcli bits job-run force-skip \
+  --job-run-id 123456789 \
+  --pipeline-run-id 987654321 \
+  --space-id 12345 \
+  --reason "TeslaX skipped for this launch"
+```
+
+### 导入 TCC 配置到研发任务
+
+```bash
+# 先预览自动发现的 region / dir / config 列表
+bytedcli bits develop import-tcc-configs \
+  --dev-id 123456 \
+  --psm example.service.api \
+  --control-planes 2,3,4 \
+  --dry-run
+
+# 只导入指定配置名
+bytedcli bits develop import-tcc-configs \
+  --dev-id 123456 \
+  --psm example.service.api \
+  --config-names flow_config,ab_token
+```
+
+- 默认按 Dev Task workflow 导入，内部使用 BITS 的 `workflowType=2`。
+- 默认控制面是 `2,3,4`，会按任务已配置的 region / dir 自动发现可导入配置。
+- `--dry-run` 只输出导入计划，不会写入 BITS。
+
+### 查看 Pipeline / Job Run 状态
+
+#### 1) 用 `pipeline` 快速定位当前 run 状态和节点状态
+
+```bash
+# 最新一次 run
+bytedcli bits pipeline <pipeline-id>
+
+# 指定 run（可选）
+bytedcli bits pipeline <pipeline-id> --run-seq <run-seq>
+
+# 默认会折叠 hidden jobs（ignored / 尚未执行），并输出 hidden 摘要计数
+# 如需展开 hidden jobs 并查看隐藏原因，显式打开
+bytedcli bits pipeline <pipeline-id> --run-seq <run-seq> --show-ignored
+```
+
+看输出里的两部分即可：
+
+- `Bits Pipeline Latest Run`：整条 pipeline 的当前状态（如 `running (2)` / `failed (9)`）
+- `Jobs`：每个 job 的状态与 `Job Run ID`，可快速定位当前卡在哪个 job
+
+隐藏节点分类约定：
+
+- `skipped`：run 中有记录，但状态是 `ignored (1)`（被跳过）
+- `not_executed`：pipeline DSL 里定义了 job，但当前 run 还没创建该 job
+  - 展开后状态会显示为 `not_started`（run 未结束）或 `not_created`（run 已结束）
+
+#### 2) 用 `job-run` 查看单个节点的详细状态
+
+```bash
+bytedcli bits job-run <job-run-id> --pipeline-run-id <pipeline-run-id>
+```
+
+重点看：
+
+- `Status`、`Fail Reason`
+- `Steps / Atoms`（该 job 内部各 step 的状态）
 
 ### 基于模板创建流水线
 
@@ -194,6 +293,33 @@ bytedcli bits pipelines create \
 - `--var-group` 必须是 JSON 对象，只会 merge 到模板里的 `pipeline.varGroup`。
 - CLI 不会自动补齐 `pipeline.varGroup.description`；如果 merge 后结构仍不满足后端要求，BITS API 会直接返回错误。
 
+### 更新流水线 DSL（`bits pipelines set`）
+
+`bits pipelines set` 用来把一份完整 pipeline DSL 整体 PUT 回去，常见用法是 "拉下来 → 局部改 → 写回去"：
+
+```bash
+# 1. 拉当前 DSL（注意是 -j；data.pipeline 即可写回的 DSL）
+bytedcli bits pipelines get <pipeline_id> -j > /tmp/pipeline.json
+
+# 2. 编辑 /tmp/pipeline.json 里 data.pipeline 的字段，例如改某个 stage 下所有 job 的 runEnv
+
+# 3. 把 data.pipeline 写回（也接受完整 PUT body {note, editorType, pipeline}）
+bytedcli bits pipelines set --pipeline-id <pipeline_id> --file /tmp/pipeline.json --note "调整 stage runEnv"
+```
+
+输出（`-j` 模式 `data` 字段）会带：
+
+- `fromVersion` / `toVersion`：本次编辑前后的 `pipelineVersion.version`，可用于校验是否成功 bump
+- `diffUrl`：`https://bits.bytedance.net/devops/<spaceId>/pipeline/edit_record/diff?pipelineId=<id>&fromVersion=X&toVersion=Y`，给用户在浏览器里 review 改动
+- `backupPath`：PUT 之前的当前 DSL 本地备份（`os.tmpdir()/bytedcli/bits-pipeline-backup/<id>-<ts>.json`），出错时可回滚
+- `sanitizedI18nPaths`：被自动剥成 `null` 的空 i18n 字段路径列表（见下方 Notes）
+- `response`：服务端 PUT 响应原文，含完整 echoed pipeline DSL，可用于二次校验
+
+**注意**：
+
+- PUT 是整体替换。`--file` 里没出现的字段会被服务端清掉，所以必须基于 `bits pipelines get` 的最新 DSL 改，不要自己拼一份小子集。
+- 文本模式（不带 `-j`）只渲染 KV 表，不打印 `response`；要看服务端回显请用 `-j`。
+
 ### MR 相关
 
 ```bash
@@ -203,7 +329,17 @@ bytedcli --json bits mr create \
   --target-branch <target-branch> \
   --title <title> \
   --description <description> \
-  --type optimize
+  --type optimize \
+  --wip false \
+  --remove-source true
+
+# 查询空间 MR 创建表单字段和默认 custom_fields
+bytedcli --json bits mr get-custom-fields \
+  --group-name LarkFrontend
+
+# 查询空间 MR 创建表单字段和默认 custom_fields
+bytedcli --json bits mr get-custom-fields \
+  --group-name LarkFrontend
 
 # 单仓 MR + Meego 绑定（URL 模式，自动解析 projectKey 和 type）
 bytedcli --json bits mr create \
@@ -227,7 +363,36 @@ bytedcli --json bits mr create \
   --meego-type feature \
   --meego-project-key larksuite
 
+# 平台 MR（单仓客户端 MR，走 Optimus API + JWT 认证，不要求子仓依赖）
+# 与默认单仓 MR 的区别：默认单仓 MR 走 BITS OpenAPI；平台 MR 走客户端空间的平台评审流程
+# group_name / host project id 在仓库存在 .bits/project_config.json 时自动读取，可省略
+bytedcli --json bits mr create \
+  --platform \
+  --source-branch <source-branch> \
+  --target-branch develop \
+  --title <title> \
+  --type optimize \
+  --app-id <bits-space-app-id> \
+  --cloud-id <bits-space-cloud-id>
+
+# 发起平台 MR 的代码评审（reviewer 手动指定）
+# --mr-id 用创建平台 MR 返回的 optimus_mr_id；group_name / project_id 同样可从 .bits/project_config.json 读取
+bytedcli --json bits mr code-review start \
+  --mr-id <optimus-mr-id> \
+  --reviewer <reviewer-username> \
+  --rule develop \
+  --app-id <bits-space-app-id> \
+  --cloud-id <bits-space-cloud-id>
+
+# 通过平台 MR 的代码评审
+# --mr-id 用 bits code/detail/<id> 页面 URL 里的 code review MR id
+bytedcli --json bits mr code-review approve \
+  --mr-id <code-review-mr-id> \
+  --app-id <bits-space-app-id> \
+  --cloud-id <bits-space-cloud-id>
+
 # 多主仓 MR（使用 Optimus API + JWT 认证，适用于 KMP 跨端场景）
+# 兼容旧的单 host 输入：--host-* + --mr-dependency
 bytedcli --json bits mr create \
   --multi-host \
   --source-branch <source-branch> \
@@ -244,6 +409,19 @@ bytedcli --json bits mr create \
   --meego "https://meego.larkoffice.com/<project-key>/story/detail/<id>" \
   --app-id <bits-space-app-id> \
   --cloud-id <bits-space-cloud-id>
+
+# 高级多 host 输入：重复传 --host，每个 host 自带私有 mrDependencies；顶层 --mr-dependency 继续作为公共子仓依赖保留
+bytedcli --json bits mr create \
+  --multi-host \
+  --source-branch <source-branch> \
+  --target-branch develop \
+  --title <title> \
+  --type feature \
+  --group-name <host-group-name> \
+  --mr-dependency '{"projectId":300,"sourceBranch":"feature/public-sub","targetBranch":"develop"}' \
+  --host '{"projectId":100,"sourceBranch":"feature/host-a","targetBranch":"develop","mrDependencies":[{"projectId":200,"sourceBranch":"feature/sub-a","targetBranch":"develop"}]}' \
+  --host '{"projectId":101,"sourceBranch":"feature/host-b","targetBranch":"develop","mrDependencies":[{"projectId":201,"sourceBranch":"feature/sub-b","targetBranch":"develop"}]}' \
+  --custom-fields '{"risk_level":"low"}'
 
 # 主子仓 MR（高级：直接传参模式，BITS OpenAPI）
 > 不推荐作为主路径。主子仓 + 多子仓场景优先使用下文的“配置文件驱动（`bits mr create-host-sub`）”，参数更少且不易配错。
@@ -279,6 +457,26 @@ bytedcli --json bits mr approve --mr-id <mr-id>
 bytedcli --json bits mr disapprove --mr-id <mr-id>
 bytedcli --json bits mr remind-review --mr-id <mr-id>
 bytedcli --json bits mr remind-qa --mr-id <mr-id>
+
+# 更新已有 MR：标题 / 描述 / WIP 状态 / 自定义字段
+bytedcli --json bits mr update \
+  --mr-id <mr-id> \
+  --title "<new title>" \
+  --description "<new description>" \
+  --custom-fields '{"CASE_STUDY":"https://example.com/cs/123"}'
+
+# 给已有 MR 追加绑定 Meego 工作项（URL 模式，自动解析 projectKey 和 type）
+# 与 `mr create --meego` 等价，但作用在已经创建好的 MR 上
+bytedcli --json bits mr update \
+  --mr-id <mr-id> \
+  --meego "https://meego.larkoffice.com/larksuite/issue/detail/7310890683"
+
+# 给已有 MR 追加绑定 Meego 工作项（ID 模式，需指定 type 和 project-key）
+bytedcli --json bits mr update \
+  --mr-id <mr-id> \
+  --meego 7310890683 \
+  --meego-type bug \
+  --meego-project-key larksuite
 
 # 多仓合码：查询完整 workflow / job 列表
 bytedcli --json bits client workflow pipeline from-mr --mr-id <mr-id> --include-dependencies
@@ -355,37 +553,39 @@ bytedcli --json bits mr create-host-sub \
 
 **关键选项**：
 
-| 选项 | 说明 |
-|------|------|
-| `--host-config <path>` | 宿主仓目录或配置文件路径（必填） |
-| `--sub-repo <path[:branch]>` | 子仓目录路径，可带分支 `path:branch`，可重复（必填） |
-| `--sub-source <branch>` | 子仓统一分支（当不是每个 --sub-repo 都带 :branch 时必填） |
-| `--host-source <branch>` | 宿主仓源分支（可选） |
-| `--title <text>` | MR 标题（必填） |
-| `--type <type>` | MR 类型：feature / bug / optimize（默认 feature） |
-| `--meego <url>` | 绑定 Meego 工作项，可重复 |
-| `--meego-type <type>` | Meego 工单类型：bug / feature（当 --meego 传纯 ID 时必填） |
-| `--meego-project-key <key>` | Meego 项目标识（当 --meego 传纯 ID 时必填） |
-| `--no-wip` | 不标记 WIP |
-| `--no-remove-source` | 合并后保留 source 分支 |
+| 选项                         | 说明                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `--host-config <path>`       | 宿主仓目录或配置文件路径（必填）                                                            |
+| `--sub-repo <path[:branch]>` | 子仓目录路径，可带分支 `path:branch`，可重复（必填）                                        |
+| `--sub-source <branch>`      | 子仓统一分支（当不是每个 --sub-repo 都带 :branch 时必填）                                   |
+| `--host-source <branch>`     | 宿主仓源分支（可选）                                                                        |
+| `--title <text>`             | MR 标题（必填）                                                                             |
+| `--type <type>`              | MR 类型：feature / bug / optimize / merge / lab / package / patch / slardar（默认 feature） |
+| `--meego <url>`              | 绑定 Meego 工作项，可重复                                                                   |
+| `--meego-type <type>`        | Meego 工单类型：bug / feature（当 --meego 传纯 ID 时必填）                                  |
+| `--meego-project-key <key>`  | Meego 项目标识（当 --meego 传纯 ID 时必填）                                                 |
+| `--no-wip`                   | 不标记 WIP                                                                                  |
+| `--no-remove-source`         | 合并后保留 source 分支                                                                      |
 
 **成功输出**：返回 `mr_link`（MR 链接），用于后续流转/通知。
-
 
 ### Component 相关
 
 提供客户端组件（如 iOS/Android 模块、跨端库等）在 Bits 平台的生命周期管理、升级与查询能力。支持的核心功能包括：
+
 - **组件库基础查询**：根据 ID、名称或搜索条件查找组件库信息。
 - **组件版本与升级管理**：执行组件升级 (`upgrade-repo`)、查询组件基准版本以及自动获取下个合理语义化版本号。
 - **升级历史追溯**：根据 ID 或版本号获取某次升级的详细信息及关联构建任务流。
 - **标签与关联检索**：查询平台组件标签、特定组件绑定的标签，以及获取目标组件的相关依赖和关联组件信息。
 
 详情和所有命令用例请参考专属文档：
+
 - `references/component.md`
 
 ### Client 子域
 
 `bits client` 提供三组客户端 OpenAPI 子域：
+
 - `bits client workflow`
   - workflow job、pipeline template、开发任务流水线
 - `bits client integration`
@@ -394,6 +594,7 @@ bytedcli --json bits mr create-host-sub \
   - 版本日历 workspace、event、segment、mark
 
 详情和所有命令用例请参考专属文档：
+
 - `references/client.md`
 
 其中 workflow 相关 OpenAPI 已经统一收口到 `bits client workflow`，不再单独保留根级 `bits workflow` 入口。
@@ -419,7 +620,9 @@ bytedcli bits case generate \
 ```
 
 ### 用例上传
+
 使用 Markdown 内容上传测试用例，支持指定文件内容或文件地址；未传 `--case-id` 时将新建用例集。需要提供 `--model-name`（联系 lixihe.lj 获取）。
+
 ```bash
 bytedcli bits case upload \
   --devops-id <space-id> \
@@ -471,6 +674,7 @@ bytedcli bits develop bind-branch \
 ```
 
 ### 绑定开发单到发布单
+
 ```bash
 bytedcli bits develop bind-release \
   --dev-ids 2143012,2143013 \
@@ -478,10 +682,12 @@ bytedcli bits develop bind-release \
   --dry-run
 ```
 
-
 ### 发布相关
 
 ```bash
+# 查询发布工单详情
+bytedcli bits release get --ticket-id <release-ticket-id>
+
 # 查询发布工作流
 bytedcli bits release list-workflows \
   --workspace-id 150900021762 \
@@ -501,6 +707,51 @@ bytedcli bits release create-ticket \
   --projects-json '[...]'
 ```
 
+### Anywheredoor — 设备抓包监控与 curl 转换
+
+`bits anywhere` 用于在已授权设备上启动/停止流量抓包，并近实时输出 capture 列表，支持把单条 capture 转换成可直接执行的 `curl` 命令。
+
+实现要点：
+
+- `watch` 默认走 HTTP 轮询模式（`--mode poll`），每 1.5s 拉一次 `/web-apis/proxy/v1/history` 的滑动窗口（默认 30s），按 capture id 去重，仅打印新增。
+- `--url-path` 在客户端做 substring 匹配，同时把过滤值的最长 path segment 作为 backend hint 收窄响应（backend `path=` 是 per-segment 子串，多 segment 切片不识别）。
+- backend 默认 10 分钟无续期会自动停止抓包；watch 超时后会拉不到新数据，需要重跑 `bits anywhere listen` 续期。
+- `--mode ws` 仅作为 WebSocket 协议研究 escape hatch；实测 server 对非浏览器指纹连接 silently 拒推送，**不要在生产场景使用**。
+
+```bash
+# 启动抓包（10 分钟自动停止）
+bytedcli bits anywhere listen \
+  --app-id 1234 --did 1234567890123456
+
+# 查询当前抓包状态
+bytedcli bits anywhere status \
+  --app-id 1234 --did 1234567890123456
+
+# 实时监控某个 path 的 capture 并打印 curl（Ctrl+C 停止）
+bytedcli bits anywhere watch \
+  --app-id 1234 --did 1234567890123456 \
+  --url-path /v1/execute_strategy \
+  --show-curl
+
+# 把最近 30 分钟内 path 含 execute_strategy 的 capture 全部 dump 出来
+bytedcli bits anywhere watch \
+  --app-id 1234 --did 1234567890123456 \
+  --window-sec 1800 --include-snapshot \
+  --url-path /v1/execute_strategy
+
+# 单条 capture 转 curl（已知 history_id + env，envcode 来自 list 中的 env 字段）
+bytedcli bits anywhere get \
+  --app-id 1234 --did 1234567890123456 \
+  --history-id 1447858190 --env 8 --curl
+
+# 立即释放代理资源（不等 10 分钟自动停）
+bytedcli bits anywhere stop \
+  --app-id 1234 --did 1234567890123456
+```
+
+`watch` 输出列：`id`、`path`、`log_id`、`env`，可作为 `get --history-id <id> --env <env>` 的输入。
+配合 `--show-curl` 可以直接拷贝得到的 `curl` 在本地复现请求（已自动剥离 `Host` / `Content-Length` / `Accept-Encoding` 等 curl 自管头，并把 cookies 合并成 `-b`）。
+
 ## Notes
 
 - 需要结构化输出加 `--json`
@@ -514,7 +765,15 @@ bytedcli bits release create-ticket \
 - `--dry-run` 只打印 payload 不实际创建
 - `mr create` 用于基于 source/target branch 创建客户端 BITS MR；至少需要 `source-branch`、`target-branch`、`title`
 - `mr create --type` 支持 `feature | bug | optimize | merge | lab | package | patch | slardar`，默认 `optimize`
+- `mr create --wip [true|false]` 可设置是否 WIP；只传 `--wip` 等价于 `--wip true`
+- `mr create --remove-source <true|false>` 可设置合并后是否移除 source branch，默认 true；也支持 `--no-remove-source`
 - 如果仓库上下文无法自动推断，还需要补 `--group-name` 或 `--project-id`
+- `mr get-custom-fields` 会读取 Bits 空间 `create_mr` 表单字段，并输出可传给 `mr create --custom-fields` 的默认 custom fields；`mr create` 不会自动补默认字段
+- `mr create --platform` 启用平台 MR 模式（Optimus API + JWT），用于在客户端空间创建单仓 MR 并走平台评审流程；与默认单仓模式（BITS OpenAPI）走不同链路，且不要求子仓依赖
+- 平台 MR 的 `--group-name` 与 `--host-project-id`（GitLab project ID）在仓库存在 `.bits/project_config.json`（含 `group_name` / `project_gitlab_id`）时自动读取、可省略；建议带 `--app-id` / `--cloud-id`（对应 `x-bits-auth-appid` / `x-bits-auth-appcloudid`）；认证只依赖 SSO 登录态，不需要 `CLIENT_BITS_TOKEN`
+- `mr code-review start` 对平台 MR 发起代码评审（Optimus API）；`--mr-id` 是创建平台 MR 返回的 `optimus_mr_id`，不是 `mr_id`
+- `mr code-review start` 的 reviewer：简单场景用可重复的 `--reviewer` + `--rule`（`BRANCH_REVIEWER` 时 `--rule` 为分支名），多 scope 或复杂规则用可重复的 `--review-info` JSON；`--group-name` / `--project-id` 缺省时回退 `.bits/project_config.json`，`--operator` 缺省时取当前 SSO 用户
+- `mr code-review approve` 通过平台 MR 的代码评审；`--mr-id` 是 bits `code/detail/<id>` 页面 URL 里的 code review MR id（与 `start` 的 `optimus_mr_id` 不是同一个 ID）；存在待处理评审变更时需显式加 `--always-approve` 才会强制通过
 - `mr create --multi-host` 启用多主仓模式（Optimus API + JWT），适用于 KMP 跨端场景中 bits 宿主仓检测拦截单仓 MR 的情况
 - `mr create --host-sub` 启用主子仓模式（BITS OpenAPI），适用于单宿主仓+多子仓的客户端 SDK 组件发版场景
 - 主子仓模式的子仓嵌套在 hosts[0].mr_dependencies 中，组件版本嵌套在 mr_dependencies[0].components 中
@@ -528,13 +787,20 @@ bytedcli bits release create-ticket \
 - `mr create-host-sub --host-config <path>` 指定宿主仓目录或配置文件，搭配 `--sub-repo` 使用
 - 配置文件支持三种格式：全量（host+sdks）、子仓独立（sdk only，key 取目录名）、宿主仓独立（host only）
 - 多子仓模式下不传 `--sdk` 则默认使用所有收集到的 SDK
-- 多主仓模式必须提供 `--host-project-id`（宿主仓 bits project ID）和至少一个 `--mr-dependency`（子仓依赖 JSON）
-- `--mr-dependency` 和 `--component` 均可重复传入多个
+- 多主仓模式支持两种输入：
+  - 兼容单 host 输入：提供 `--host-project-id`，并至少传一个 `--mr-dependency`
+  - 高级多 host 输入：重复传 `--host '<json>'`，每个 host JSON 自带私有 `mrDependencies`
+- 顶层 `--mr-dependency` 表示公共子仓依赖，会保留在顶层 `mr_dependencies`
+- `--host` JSON 里的 `mrDependencies` 表示该 host 的私有依赖，会进入对应 `hosts[*].mr_dependencies`
+- 使用 `--host` 时不要混用顶层 `--component`；公共 `--mr-dependency` 仍可与 `--host` 并存
+- `--host` JSON 字段：`projectId`（必填）、`sourceBranch`（可选，默认取 `--host-source`/`--source-branch`）、`targetBranch`（可选，默认取 `--host-target`/`--target-branch`）、`mrDependencies`（数组）、`components`（数组，可选）
+- `--mr-dependency` 和 `--component` 均可重复传入多个；
 - `--meego` 支持传入 Meego URL 或 ID，MR 创建后自动绑定关联信息
   - URL 模式：自动从 URL 解析 `projectKey` 和 `type`，如 `https://meego.larkoffice.com/larksuite/bug/detail/6841440562`
   - ID 模式：需配合 `--meego-type` 和 `--meego-project-key` 使用
 - `--meego-type` 指定 Meego 工单类型：`bug` 或 `feature`（ID 模式必填）
 - `--meego-project-key` 指定 Meego 项目标识，如 `larksuite`（ID 模式必填）
+- `mr update` 同样支持 `--meego` / `--meego-type` / `--meego-project-key`，用于给已经存在的 MR 追加绑定 Meego 工作项（解析规则与 `mr create` 一致），返回结果会带 `meego_bindings` 数组指明每条绑定的成功 / 失败原因；可重复传 `--meego` 一次绑多个
 - `--app-id` 和 `--cloud-id` 用于传递 bits 空间鉴权 header（多主仓模式）；`--group-name` 在多主仓模式下是宿主仓的 host_group_name（可能与 bits 空间名不同）
 - `mr status` 是客户端 BITS MR 的主入口；更稳定的程序化消费优先加 `--json`
 - `mr search` 适合按状态、作者、reviewer、source/target branch、mr_type 做列表筛选；`mr mine` 是带 author 过滤的快捷入口
@@ -555,6 +821,9 @@ bytedcli bits release create-ticket \
 - `--service-type` 支持：`PROJECT_TYPE_WEB`、`PROJECT_TYPE_TCE`、`PROJECT_TYPE_FAAS`、`PROJECT_TYPE_HYBRID`、`PROJECT_TYPE_CRONJOB`、`PROJECT_TYPE_CUSTOM`；传入后会按对应项目类型自动解析 `projectUniqueId`
 - `--change` 支持可选的 `scm=<name>` 键，用于指定非主 SCM 依赖；省略时默认绑定主 SCM（`isMain === true`），行为与之前一致
 - `--change` 支持可选的 `mr=<iid>` 键（仅 `develop create` 生效），用于复用 source branch 上已存在的 open MR——等价于 Bits Web UI 提示 "An unfinished MR already exists" 时点击 "use directly"；省略时（默认）由 Bits 后端自动开新 MR，行为与之前一致；`mr=` 必须是正整数
+- `pipelines set` 是整体替换（PUT 语义），调用方必须基于 `pipelines get` 拿到的最新 DSL 改后再写回；命令 PUT 之前会自动把当前 DSL 备份到 `os.tmpdir()/bytedcli/bits-pipeline-backup/<id>-<ts>.json`
+- `pipelines set` 会在 PUT 前把所有空 i18n 字段（`{value: "", lang?, texts?}` 的 `StringInMultiLang`）置为 `null`，因为 BITS 校验器会拒绝 `value` 为空字符串但 GET 接口又会返回这种 sentinel 值；被剥的路径列在 `data.sanitizedI18nPaths`，最常见的是 `varGroup.description`
+- `pipelines set` 的版本字段是 `pipelineVersion.version`（一个 wrapper 对象），不是裸数字；CLI 已经做了 unwrap，正常情况下 `data.fromVersion / data.toVersion` 应该连续递增
 
 ## References
 

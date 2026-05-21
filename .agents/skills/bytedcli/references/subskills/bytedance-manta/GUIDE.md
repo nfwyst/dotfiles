@@ -1,6 +1,6 @@
 ---
 name: bytedance-manta
-description: "Operate Manta (DataLeap) data profiling, table monitor query/update, and two-table comparison via bytedcli: list namespaces and YARN queues, list/get/update table monitor rules, create profiling rules, list/get profiling jobs, create comparison jobs, query comparison job summaries, authenticate with DataLeap Manta, and manage data quality tasks. Use when tasks mention Manta, DataLeap data profiling, monitor rules, monitor rule updates, data comparison, comparison result summaries, data quality checks, profiling results, or profiling/comparison rules."
+description: "Operate Manta (DataLeap) data profiling, table monitor query/result/trial-run/create/update, and two-table comparison via bytedcli: list namespaces and YARN queues, list/get/run/create/update table monitor rules, query monitor alarm results, create profiling rules, list/get profiling jobs, create comparison jobs, query comparison job summaries, authenticate with DataLeap Manta, and manage data quality tasks. Use when tasks mention Manta, DataLeap data profiling, monitor rules, monitor alarm results, monitor rule trial runs, monitor rule creation/updates, data comparison, comparison result summaries, data quality checks, profiling results, or profiling/comparison rules."
 ---
 
 # bytedcli Manta
@@ -24,7 +24,7 @@ bytedcli <command> [options]
 ## When to use
 
 - DataLeap Manta 数据探查（Profiling）任务管理
-- 查询 Manta namespace（`namespaces`）、表监控规则（`monitor list/get`）、更新监控规则（`monitor update`）和数据探查任务（`profile job list/result`）
+- 查询 Manta namespace（`namespaces`）、表监控规则（`monitor list/get`）、试跑监控规则（`monitor run`）、监控报警结果（`monitor result list`）、创建监控规则（`monitor create`）、更新监控规则（`monitor update`）和数据探查任务（`profile job list/result`）
 - 创建数据探查规则（`profile rule create`）
 - 两表数据对比（`comparison job create`）
 - 查询两表对比结果（`comparison job get`，支持 `--view summary|overview`）
@@ -92,12 +92,31 @@ bytedcli <command> [options]
 - 对比：`--db-name-old/new` + `--tb-name-old/new` + `--partition-old/new` + `--primary-keys`（主键必须由用户指定或确认，禁止猜测）
 - SQL 比对：`--source-table` + `--target-table` + `--join-keys`（关联键必须由用户指定或确认）
 
-**监控规则查询/更新经验：**
+**监控规则查询/创建/更新经验：**
 - 查询具体表的监控规则时，如果已知项目归属，优先显式传 `--project-id`
 - 在 `mycis` 等区域，仅传 `--table-name-query` 或不带项目过滤时，`manta monitor list` 后端可能返回 `50005`
 - 推荐命令：`bytedcli manta monitor list --region <region> --project-id <id> --table-name-query <db.table>`
+- `manta monitor list` 与 `manta monitor result list` 默认都应携带 `--project-id`；CLI 会在缺失时直接报参数错误
+- 查询监控报警结果使用 `bytedcli manta monitor result list`；`--mode template` 查询 Hive 模板规则结果，`--mode custom` 查询自定义 SQL 规则结果，默认 `--mode all` 同时查询两类结果
+- 常用过滤：`--business-date-start <yyyymmdd>` + `--business-date-end <yyyymmdd>` 组成日期范围（必须成对出现）；`--rule-id <id>` 按业务规则 ID 搜索，`--mine` 只看我的结果，`--only-alarm` 只看已报警结果，`--project-id <id>` 可重复指定项目
 - 查询某条规则详情：`bytedcli manta monitor get --region cn --rule-id <id>`（`--mode` 可选，默认 `custom`）
+- 试跑规则使用 `bytedcli manta monitor run --region cn --rule-id <id> --date "YYYY-MM-DD HH:mm:ss"`；`--rule-id` 可重复传多个，试跑结果用 `manta monitor result list --business-date-start ... --business-date-end ... --rule-id ... --project-id ...` 查询
+- 创建规则统一使用 `bytedcli manta monitor create --mode <custom|template> ...`
+  - `--mode custom` → `POST /monitor/batch_create_monitor`
+  - `--mode template` → `POST /monitor/batch_create_monitor_with_object`
+  - 不传 `--body-file` 时，至少需要 `--project-id`、`--monitor-name`、`--monitor-type`；`custom` 模式还需要 `--rule-sql`
+  - 传 `--body-file` 时，请求体完整直传并覆盖结构化参数
 - 更新规则时，`--body-file` 为完整请求体直传；不传 `--body-file` 时，CLI 会先读取当前规则详情并合并本次传入字段后提交
+- 关闭监控规则时，使用 Manta 后端枚举值 `DISABLE`；CLI 通过监控规则启停接口提交状态变更
+
+**`custom + --body-file` 已验证可用结构（推荐）：**
+
+```bash
+bytedcli manta monitor create --region cn --mode custom --body-file skills/bytedance-manta/references/demo-manta-custom-monitor-sources.json
+```
+
+- 示例请求体文件：`skills/bytedance-manta/references/demo-manta-custom-monitor-sources.json`
+- 自定义 SQL 规则在 `--body-file` 模式下优先使用 `monitor_sources[].monitor_conf_list[]` 结构，比扁平字段更稳妥。
 
 ## 前置条件
 
@@ -124,7 +143,11 @@ bytedcli manta yarn-queues --region va
 # 查看 namespace 或历史数据探查任务
 bytedcli manta namespaces --region va
 bytedcli manta monitor list --region va --table-name-query demo_db.demo_table --project-id 1234567
+bytedcli manta monitor result list --region cn --mode all --business-date-start 20260518 --business-date-end 20260519 --rule-id 123456 --mine --only-alarm --project-id 1234567 --page-size 50
 bytedcli manta monitor get --region cn --rule-id 1552347
+bytedcli manta monitor run --region cn --rule-id 1552347 --date "2026-05-19 00:00:00"
+bytedcli manta monitor create --region cn --mode custom --project-id 1085 --monitor-name demo_rule --monitor-type Custom_SQL --rule-sql "select 1"
+bytedcli manta monitor create --region cn --mode template --project-id 1085 --monitor-name demo_template_rule --monitor-type Table_Lines
 bytedcli manta monitor update --region cn --rule-id 1552347 --description sample-update
 bytedcli manta profile job list --region va --table-name-query demo_table --limit 20
 bytedcli manta profile job result --region va --instance-id 123456
@@ -209,6 +232,9 @@ Region-to-SSO 映射：
 
 - 需要结构化输出加 `--json`（全局参数，放在 `manta` 前面）
 - `monitor list` 通过 `POST /monitor/object/find_monitors` 查询规则；文本模式会按“表/分区/规则/状态”展开 `parts[].monitors[]`
+- `monitor run` 通过 `POST /monitor/dry_run` 试跑规则，请求体包含 `monitor_id_list` 和 `date`；`--date` 使用 `YYYY-MM-DD HH:mm:ss`
+- `monitor result list` 查询监控报警结果；`--mode template` 走 Hive 模板结果接口，`--mode custom` 走自定义 SQL 结果接口，默认 `all` 合并两类结果；文本模式输出扁平表格，`--json` 保留原始响应
+- `monitor create` 统一走单命令 + `--mode`：`custom` 调 `POST /monitor/batch_create_monitor`，`template` 调 `POST /monitor/batch_create_monitor_with_object`；传 `--body-file` 时请求体完整直传
 - `--columns` 支持简写格式 `name:type,...` 和完整 JSON 数组两种形式；省略时自动获取表 schema 并探查全部字段
 - `--partitions` 可重复传入多个分区；多级分区用 `/` 分隔，例如 `date=20260401/asset_type=sdk/metrics_tag=basic_info`
 - `--partition-old` / `--partition-new` 同样支持多级分区格式，例如 `date=20260401/asset_type=sdk/metrics_tag=v1`

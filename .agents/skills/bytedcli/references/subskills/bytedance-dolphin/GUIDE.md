@@ -69,7 +69,7 @@ bytedcli dolphin event testcases check --body '{"bizline_id":1,"event_id":12345,
 ## Notes
 
 - 默认输出文本表格；需要机器可读输出时加全局 `--json`（必须放在 `dolphin` 前面）。
-- `--env` 仅用于 Dolphin 模块（`prod|boe`），不等同于 bytedcli 的全局 `--site`。
+- `--env` 仅用于 Dolphin 模块（`prod|boe|i18n-bd`），不等同于 bytedcli 的全局 `--site`。`--site i18n-bd` 时默认 env 自动切到 `i18n-bd`（走 cloud.byteintl.net 网关：`https://cloud.byteintl.net/api/v1/dolphin/...`）。
 - `check_testcases` 入参建议用 `--body-file`，避免命令行转义问题。
 
 ## References

@@ -66,18 +66,20 @@ bytedcli auth login  # 扫码登录即可，无需申请 DataOpen App
 
 所有 tea 子命令支持 `--region` 或 `--tea-site` 切换控制面：
 
-| 区域 | 值 | DataOpen 域名 | Titan internal 域名 | DataOpen | Titan |
-|---|---|---|---|---|---|
-| 中国（默认） | `cn` | `data.bytedance.net/dataopen/open-apis` | `data.bytedance.net/datafinder/api/v1` | ✅ | ✅ |
-| Virginia | `va` | `data-va.tiktok-row.net/dataopen/open-apis` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net` `/datafinder/api/v1` | ✅ | ✅ |
-| Singapore | `sg` | `dataopen-sg.tiktok-row.net/dataopen/open-apis` | `tea-sg.tiktok-row.net/datafinder/api/v1` | ✅ | ✅ |
-| SG Lark | `sglark` | — | `tea-sglark.bytedance.net/datafinder/api/v1` | ❌ | ✅ |
+| 区域 | 值 | DataOpen 域名（办公网） | DataOpen 域名（生产网） | Titan internal 域名 | DataOpen | Titan |
+|---|---|---|---|---|---|---|
+| 中国（默认） | `cn` | `data.bytedance.net/dataopen/open-apis` | 同左 | `data.bytedance.net/datafinder/api/v1` | ✅ | ✅ |
+| Virginia | `va` | `data-va.tiktok-row.net/dataopen/open-apis` | `data-va.bytedance.net/dataopen/open-apis` | `tea-va.bytedance.net` 或 `tea-va.tiktok-row.net` `/datafinder/api/v1` | ✅ | ✅ |
+| Singapore | `sg` | `tea-captain.tiktok-row.net/dataopen/open-apis` | `tea-captain.byteintl.net/dataopen/open-apis` | `tea-sg.tiktok-row.net/datafinder/api/v1` | ✅ | ✅ |
+| SG Lark | `sglark` | — | — | `tea-sglark.bytedance.net/datafinder/api/v1` | ❌ | ✅ |
 
 > cn / va / sg 三个区域 DataOpen 与 Titan 任选其一；如果没有 DataOpen App 凭据，可直接 `bytedcli auth login` 后用 `--auth-mode titan`（或留空 `--auth-mode` 让默认逻辑兜底）。SG Lark 仅支持 titan。
 >
 > VA 区域同时识别 `tea-va.bytedance.net` 与 `tea-va.tiktok-row.net` 两个 host，用户给的 URL host 会优先于 site 默认值，避免请求被改写到错误后端。
+>
+> **生产网模式**：在 ByteDance 生产网（如 FaaS、TCE 容器）中运行时，设置 `BYTEDCLI_NETWORK_PROFILE=prod` 可将 VA / SG 的 DataOpen 域名切换为生产网可达的内部域名（见上表"生产网"列）。CN 不受影响。
 
-- `--tea-site cn|va|sg|sglark|auto`：显式选择控制面；`auto` 会按 tea-next URL host 自动推断（识别 `data.bytedance.net` / `tea.bytedance.net` / `tea-va.bytedance.net` / `tea-va.tiktok-row.net` / `dataopen-sg.tiktok-row.net` / `tea-sg.bytedance.net` / `tea-sg.tiktok-row.net` / `tea-sglark.bytedance.net`）
+- `--tea-site cn|va|sg|sglark|auto`：显式选择控制面；`auto` 会按 tea-next URL host 自动推断（识别 `data.bytedance.net` / `tea.bytedance.net` / `tea-va.bytedance.net` / `tea-va.tiktok-row.net` / `data-va.tiktok-row.net` / `data-va.bytedance.net` / `tea-captain.tiktok-row.net` / `tea-captain.byteintl.net` / `dataopen-sg.tiktok-row.net` / `tea-sg.bytedance.net` / `tea-sg.tiktok-row.net` / `tea-sglark.bytedance.net`）
 - `--tea-base-url <url>`：直接覆盖 DataOpen API 基址（仅 DataOpen 模式有效）
 
 优先级：`--tea-base-url` > `--tea-site` > `--region`

@@ -44,13 +44,17 @@ bytedcli --site i18n-tt megatron app get --app-ids application_1234567890000_000
 bytedcli --site i18n-tt megatron app search --app-name demo-app --state RUNNING -r va
 bytedcli --site i18n-tt megatron app search --me -r sg
 
-# 查询队列使用情况
-bytedcli --site i18n-tt megatron queue get-usage --queue-name root.demo_queue -r sg
+# 查看队列使用情况 + 用户配额（合并的命令）
+bytedcli --site i18n-tt megatron queue usage --queue-name root.demo_queue --user-name demo-user -r sg
+bytedcli --site i18n-tt megatron queue usage -r sg
 
-# 查询/计算队列配额
+# 列出队列（默认按当前 SSO 用户过滤；--all-users 列全部）
+bytedcli --site i18n-tt megatron queue list -r sg
+bytedcli --site i18n-tt megatron queue list --all-users -r sg
+
+# 配置层面的用户配额（默认 ratio / 已配置的 per-user ratio）
 bytedcli --site i18n-tt megatron queue quota list-users --queue-name root.demo_queue -r sg
 bytedcli --site i18n-tt megatron queue quota get-default --queue-name root.demo_queue -r sg
-bytedcli --site i18n-tt megatron queue calc-user-quota --queue-name root.demo_queue --user-name demo-user -r sg
 ```
 
 ## Site and region

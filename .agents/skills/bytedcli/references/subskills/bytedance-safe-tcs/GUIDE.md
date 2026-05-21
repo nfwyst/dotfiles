@@ -1,11 +1,11 @@
 ---
 name: bytedance-safe-tcs
-description: TCS project and trace operations via bytedcli safe domain. Query TCS project detail and trace information, and update a project's ProductType by migrating it to a target project.
+description: TCS project, trace, and object-id query operations via bytedcli safe domain. Use when the user asks to inspect a TCS project, fetch TCS trace information, update a project's ProductType from another project, or query which objectIDs entered review for a given TCS project within a time range.
 ---
 
-# Safe TCS — Project & Trace Operations
+# Safe TCS — Project, Trace & Object ID Operations
 
-Query TCS project metadata and trace information, and perform limited write operations (such as ProductType migration) on the TCS platform via `bytedcli safe tcs`.
+Query TCS project metadata, trace information, and review object IDs, and perform limited write operations (such as ProductType migration) on the TCS platform via `bytedcli safe tcs`.
 
 ## Authentication
 
@@ -32,6 +32,12 @@ bytedcli safe tcs project update_product_type --project-id <project-id> --target
 
 # Explicit JSON output
 bytedcli --json safe tcs project update_product_type --project-id <project-id> --target-project-id <target-project-id>
+
+# Query object IDs that entered review for a project within a time range
+bytedcli safe tcs project query-object-ids --project-id <project-id> --start <time> --end <time>
+
+# Explicit JSON output with a custom limit
+bytedcli --json safe tcs project query-object-ids --project-id <project-id> --start <time> --end <time> --limit 50
 ```
 
 ### trace
@@ -48,35 +54,56 @@ bytedcli --json safe tcs trace get --project-id <project-id>
 
 ### project get / trace get
 
-| Option | Default | Description |
-|--------|---------|-------------|
+| Option              | Default    | Description    |
+| ------------------- | ---------- | -------------- |
 | `--project-id <id>` | (required) | TCS project id |
 
 ### project update_product_type
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--project-id <id>` | (required) | Source TCS project id whose ProductType will be updated |
+| Option                     | Default    | Description                                                                   |
+| -------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `--project-id <id>`        | (required) | Source TCS project id whose ProductType will be updated                       |
 | `--target-project-id <id>` | (required) | Target TCS project id whose ProductType will be applied to the source project |
+
+### project query-object-ids
+
+| Option              | Default    | Description                                                                                     |
+| ------------------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| `--project-id <id>` | (required) | TCS project id                                                                                  |
+| `--start <time>`    | (required) | Start time of the query window                                                                  |
+| `--end <time>`      | (required) | End time of the query window                                                                    |
+| `--limit <n>`       | `50`       | Max object IDs to return; must be a positive integer and cannot exceed backend-supported limits |
 
 ## Output Modes
 
-- **默认文本**: `project get`、`project update_product_type` 与 `trace get` 会输出可读文本；对象结果会渲染成 KV 表。
+- **默认文本**: `project get`、`project update_product_type` 与 `trace get` 会输出可读文本；对象结果会渲染成 KV 表。`project query-object-ids` 会先输出命中数量，再逐行输出 object ID。
 - **显式 JSON (`--json`)**: 在 `data` 字段返回结构化 JSON，适合脚本消费。
 
 ## Common Patterns
 
 **Inspect a project's metadata then pull its trace:**
+
 ```bash
 bytedcli safe tcs project get --project-id example-project-id
 bytedcli safe tcs trace get --project-id example-project-id
 ```
 
 **Update a project's ProductType to match another project:**
+
 ```bash
 bytedcli safe tcs project update_product_type \
   --project-id example-source-id \
   --target-project-id example-target-id
+```
+
+**Query object IDs that entered review in a time window:**
+
+```bash
+bytedcli safe tcs project query-object-ids \
+  --project-id example-project-id \
+  --start 2026-01-01T00:00:00Z \
+  --end 2026-01-01T01:00:00Z \
+  --limit 50
 ```
 
 ## References

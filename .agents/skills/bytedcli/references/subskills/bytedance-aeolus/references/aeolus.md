@@ -13,8 +13,7 @@ bytedcli aeolus list-authorized [options]
 ```
 
 **Options:**
-
-- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts (required)
+- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts, usbd (required)
 - `-t, --type <type>` - Filter by type: dashboard, data_set
 - `--limit <limit>` - Number of results (default: 20)
 - `--offset <offset>` - Pagination offset (default: 0)
@@ -47,8 +46,7 @@ bytedcli aeolus resolve-report [options]
 ```
 
 **Options:**
-
-- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts (required when URL cannot infer region)
+- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts, usbd (required when URL cannot infer region)
 - `--url <aeolusUrl>` - Aeolus URL (`dataQuery` or `dashboard`)
 - `--app-id <appId>` - App ID (when not using URL)
 - `--report-id <reportId>` - Report ID (when not using URL)
@@ -90,8 +88,7 @@ bytedcli aeolus dataset-fields <datasetId> [options]
 - `datasetId` - Dataset ID (from list-authorized output)
 
 **Options:**
-
-- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts (required)
+- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts, usbd (required)
 - `--json` is a global option and must appear before `aeolus`
 
 **Examples:**
@@ -122,8 +119,7 @@ bytedcli aeolus dataset-model-info [options]
 ```
 
 **Options:**
-
-- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts (required)
+- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts, usbd (required)
 - `--app-id <appId>` - Aeolus app ID (required, from list-authorized JSON output `app.id`)
 - `--dataset-id <dataSetId>` - Dataset ID (required)
 - `--json` is a global option and must appear before `aeolus`
@@ -267,8 +263,7 @@ bytedcli aeolus query <datasetId> <sql> [options]
 - `sql` - SQL query string
 
 **Options:**
-
-- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts (required)
+- `-r, --region <region>` - Region: cn, sg, va, mycis, mybd, sglark, usttpusts, usbd (required)
 - `--json` is a global option and must appear before `aeolus`
 - `--version <version>` - API version (default: "v2")
 - `--limit <limit>` - Limit rows in output (default: 100)
@@ -367,7 +362,7 @@ bytedcli aeolus query -r va 2231500 "SELECT reporting_ad_id, sum(placement_dolla
 
 Ad-hoc SQL under `aeolus query-editor`. Uses QE HTTP APIs under `{baseUrl}/qe/v2/api/...` where `baseUrl` comes from the same region map as dataset commands (`src/api/aeolus/site.ts`).
 
-**Auth:** Reuses `bytedcli auth login` (Titan passport cookie) for most regions. **`mycis`**, **`mybd`** and **`usttpusts`** use **session** auth instead (local browser cookies); see `references/invocation.md` for `--site` / `BYTEDCLI_CLOUD_SITE`.
+**Auth:** Reuses `bytedcli auth login` (Titan passport cookie) for most regions. **`mycis`**, **`mybd`**, **`usttpusts`** and **`usbd`** use **session** auth instead (local browser cookies); see `references/invocation.md` for `--site` / `BYTEDCLI_CLOUD_SITE`.
 
 **QE App ID:** Request header `x-qe-appid` defaults from `QE_APP_ID` or `BYTEDCLI_AEOLUS_QE_APP_ID` (CLI default in code if unset). Match the **Query Editor page URL `appId=`** when reproducing browser runs.
 
@@ -384,7 +379,7 @@ bytedcli aeolus query-editor query run [options]
 
 **Common options:**
 
-- `-r, --region <region>` — `cn` | `sg` | `va` | `mycis` | `mybd` | `sglark` | `usttpusts` (default `cn` if omitted)
+- `-r, --region <region>` — `cn` | `sg` | `va` | `mycis` | `mybd` | `sglark` | `usttpusts` | `usbd` (default `cn` if omitted)
 - `--sql <sql>` — Inline SQL
 - `--file <path>` — SQL from disk (if neither `--sql` nor `--file`, CLI may read SQL from the file record)
 - `--queue <name>` — **Hive (default):** YARN queue name in `yarn.queue`. **CH (`--engine ch`):** maps to `cluster_name` unless `--cluster-name` is set
@@ -475,6 +470,7 @@ Default OpenAPI / QE **hostnames** (see `src/api/aeolus/site.ts`). Developer con
 | `mybd`      | MYBD                   | `https://aeolus-mybd.sinf.net`        |
 | `sglark`    | Singapore Lark         | `https://aeolus-sglark.bytedance.net` |
 | `usttpusts` | US TTP USTS            | `https://aeolus-tx.tiktok-usts.net`   |
+| `usbd`      | US ByteDance           | `https://aeolus-usbd.byteintl.net`    |
 
 ## Authentication
 
@@ -511,6 +507,81 @@ BYTEDCLI_AEOLUS_SGLARK_CLIENT_SECRET=your_sglark_client_secret
 BYTEDCLI_AEOLUS_USTTPUSTS_CLIENT_ID=your_usttpusts_client_id
 BYTEDCLI_AEOLUS_USTTPUSTS_CLIENT_SECRET=your_usttpusts_client_secret
 ```
+
+## Shuttle (task submit)
+
+`aeolus shuttle task submit` resolves template SQL placeholders in both `${name}` and `{{name}}` forms (reserved: `${date}` / `${date-N}` and `{{date}}` / `{{date-N}}` are left for the CLI date pass). Repeatable `--var key=value` overrides template parameter defaults; the submit request carries the merged `params` list expected by Shuttle.
+
+Submit and ad-hoc flows inherit `taskType`, `dataSource`, and `engine` from the source template detail (including ClickHouse templates). Using `--query` or `--query-file` creates a temporary template that copies the same fields from `--template-id` instead of defaulting to Hive, and the transient template stays hidden from the project’s "我的模板" sidebar (it submits with `templateSource: "adhoc"` rather than `origin`). The custom SQL must still produce columns that match the source template’s DECC compliance schema; mismatches surface as a misleading `invalidTemplateSnapshotException: failed to parse the template sql`, even though the SQL itself is parseable.
+
+`task submit` rejects `--start-date` / `--end-date` when the source template is an ADHOC base. ADHOC templates are single-day; use a BATCH base template to submit a range. The same rule applies when ad-hoc SQL is submitted via `--query` / `--query-file` against an ADHOC `--template-id`.
+
+`template get` normalizes template `params` whether the API returns `name` / `defaultValue` or `key` / `value`. `template create` defaults to `taskType=BATCH`, so `--start-date` / `--end-date` are required even without `--clone-template-id` — the backend NPEs on a BATCH template with no range. When `--clone-template-id` points at an ADHOC base, the dates are not needed; the clone also copies the source’s `deccSchemaId` / `taskType` / `dataSource` / `engine` and DECC `infos`.
+
+`template search` requires `--project-id`; without it the upstream search endpoint rejects the request, so the CLI raises a clear error before sending.
+
+## Shuttle (task download)
+
+Shuttle lives under `aeolus shuttle`. To save the **full** query result as Excel or CSV (not only the preview rows from `task result`), use:
+
+```bash
+bytedcli aeolus shuttle task download [options]
+```
+
+**Options:**
+
+- `-r, --region <region>` — Aeolus API gateway (`cn`, `sg`, `va`, …): which host this command calls; **choose explicitly** to match the Aeolus/Shuttle portal you use — **not** inferred from `--task-id` or `--shuttle-region`. Required.
+- `--task-id <taskId>` — Shuttle task id; required
+- `--shuttle-region <code>` — HTTP query `region=…`; must match a key under `infos` in `aeolus shuttle task get` for the geography you queried (e.g. EU vs US/TTP row — do not mix; exact spelling is backend-defined). **This is not** the same as `-r/--region`.
+- `-o, --output <path>` — Local output path; required
+- `--fmt <fmt>` — `excel` or `csv` (default: `excel`)
+- `--sub-task` — Request sub-task export (boolean flag)
+- `--timeout-ms <ms>` — HTTP read timeout for the download (default **180000** ms)
+
+**Examples:**
+
+```bash
+bytedcli aeolus shuttle task download -r va --task-id 123456 --shuttle-region US --fmt excel -o ./demo-export.xlsx
+bytedcli aeolus shuttle task download -r va --task-id 123456 --shuttle-region EU --fmt csv -o ./demo-export.csv --timeout-ms 240000
+```
+
+**Behavior:** Some environments return raw bytes; others return the Shuttle JSON envelope where `data` is an `https://` object URL. bytedcli follows that URL; Aeolus auth headers are sent **only when the file URL hostname matches the Shuttle API hostname** (same-origin). External presigned URLs are fetched without Aeolus cookies/tokens.
+
+## Shuttle (template + folder organisation)
+
+The same project also exposes template- and folder-level operations so saved SQL can be organised under the "我的模板" sidebar. Templates and folders share the same node tree, so the commands come in matching pairs.
+
+Template-level:
+
+```bash
+bytedcli aeolus shuttle template move   -r <region> --project-id <id> --template-id <id> --target-folder-id <folderId>
+bytedcli aeolus shuttle template delete -r <region> --template-id <id> [--project-id <id>]
+```
+
+Folder-level (all `folder` subcommands require `--project-id`):
+
+```bash
+bytedcli aeolus shuttle folder tree   -r <region> --project-id <id>
+bytedcli aeolus shuttle folder list   -r <region> --project-id <id> [--folder-id <id>] [--keyword <kw>] [--creator <u>] [--only-favored] [--page <n>] [--per-page <n>]
+bytedcli aeolus shuttle folder create -r <region> --project-id <id> --name <name> [--parent-id <id>]
+bytedcli aeolus shuttle folder rename -r <region> --project-id <id> --folder-id <id> --name <new-name>
+bytedcli aeolus shuttle folder move   -r <region> --project-id <id> --folder-id <id> [--target-parent-id <id>]
+bytedcli aeolus shuttle folder delete -r <region> --project-id <id> --folder-id <id>
+```
+
+`folder list` returns the immediate contents under the given parent (sub-folders + that folder’s templates); `folder tree` returns the entire project tree in one call.
+
+The project root is expressed either by omitting the target-id flag or by passing `0` to `--target-folder-id` / `--target-parent-id` — the CLI translates `0` to the `null` parent the backend actually expects. (Hitting the Shuttle API directly with `0` returns `Directory Node 0 does not exist`.)
+
+`folder delete` only succeeds when the folder is empty, and emptiness is tracked separately from `folder list`: deleting a template via `DELETE /template/{id}` does **not** decrement the parent folder’s child count, so a later `folder delete` would refuse with `Cannot delete directory as it is not empty` even though `folder list` returns zero items. The CLI works around this by detaching the template from its parent first when `template delete --project-id <id>` is supplied. Always pass `--project-id` when deleting a template that lives in a folder.
+
+Pick the right action by what you’re moving: `template move --target-folder-id` reparents a single template, `folder move --target-parent-id` reparents the entire sub-tree.
+
+**No template rename.** Shuttle has no public rename endpoint for templates — `PUT/POST/PATCH /template/{id}` all return 405, the directory-node endpoint rejects template ids, and the Shuttle UI only exposes Move / Save to on templates. The CLI therefore has no `template rename` subcommand. To rename a template, run `template create` with the desired name (clone the original via `--clone-template-id` to preserve DECC), then `template delete --project-id <id>` the old one.
+
+There is no single `save` subcommand and `template create` does not accept a target folder. To save SQL with a chosen name into a specific folder, run `template create --name <name> --query-file <path> --start-date <YYYY-MM-DD> --end-date <YYYY-MM-DD>` (lands in the project root) and then `template move --target-folder-id <folderId>` to place it; reuse an existing folder’s id from `folder tree`, or run `folder create` first.
+
+---
 
 ## JSON Output
 

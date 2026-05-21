@@ -61,6 +61,47 @@ bytedcli codecov report link --rid 10000001
 # -> https://bits.bytedance.net/quality/measure/coverage-next/full?language=1&rId=10000001&region=cn&viewId=1
 ```
 
+## access-status
+
+查询单个 PSM 是否接入覆盖率平台。命令对外暴露 4 种稳定状态字符串：
+
+| CLI status       | 含义                                                                              |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `accessed`       | 已接入采集（后端 access_status=1）                                                |
+| `not_accessed`   | 已在平台登记但未接入（后端 access_status=2，access_message 区分子状态）           |
+| `inactive`       | 服务不活跃（后端 access_status=3）                                                |
+| `not_registered` | 未在覆盖率平台登记任何服务实例（**推断状态**——也可能是 ACL 过滤或后端短暂空响应） |
+
+注意 `not_registered` 是**推断状态**：CLI 在后端返回空 `services` 时合成此状态，但同样的形态也可能是 (a) 调用方对该 PSM 无权限、(b) 后端短暂空响应，或 (c) PSM 拼写错误。出现 `not_registered` 时，建议先核对 PSM 拼写并确认权限，再走接入流程。
+
+`not_registered` 与 `not_accessed` 的区别：前者后端没有任何 PSM 记录（推断），后者已登记但尚未接入采集（权威）。
+
+```bash
+bytedcli codecov access-status --psm example.service.api
+bytedcli -j codecov access-status --psm example.service.api
+```
+
+JSON 输出（`-j`）：
+
+```json
+{
+  "psm": "example.service.api",
+  "registered": true,
+  "services": [
+    {
+      "psm": "example.service.api",
+      "status": "not_accessed",
+      "access_status_code": 2,
+      "os_type": "server",
+      "language": 1,
+      "access_message": "not register"
+    }
+  ]
+}
+```
+
+`not_registered` 情况下 `registered: false`，`services: []`。
+
 ## create-report (deprecated)
 
 保留兼容老脚本，内部转发到 `codecov report create`。返回的 `bytest_url` 字段现在承载 bits coverage-next 链接，不再是旧 bytest 页面。参数 `--base-commit` 放宽到 7~64 位。

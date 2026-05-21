@@ -43,6 +43,19 @@ Libra (DataTester) A/B 实验平台 CLI，通过 SSO 认证访问，无需额外
 
 ### 创建实验（推荐：从模板克隆）
 
+如果你已经有 Libra 单实验模板 ID，优先直接走模板模式。模板默认值会被转换成 create payload，再由你的 request body 覆盖实验专属字段：
+
+```bash
+# 示例：基于现有单实验模板（3139）
+bytedcli --json libra experiment create --app-id 1193 --template-id 3139 --request-file ./override.json
+```
+
+模板模式当前支持 Libra 单实验模板。实际使用时，至少建议在 override 里覆盖：
+
+- `name`
+- `versions`
+- 必要时覆盖 `description`、`filter_rule`
+
 最稳的创建方式是"找一个同 layer / 同类型的实验当模板，改最小必要字段，再发 create"。直接手写 payload 极易踩到 `HTTP 500 网络异常` 或 `[213] create experiment failed`，因为 Libra 对 `layer_info` / `version_resource` / `traffic_map` / `metrics` 的组合有隐性校验。
 
 ```bash
@@ -68,7 +81,7 @@ bytedcli --site i18n-tt --json libra experiment create --app-id -1 --request-fil
 1. 第一次 POST `only_verification:true, skip_verification:false`，让后端做 filter rule / 流量 / layer 冲突等真实校验，保留 `code=213` 时的 `messages` / `conflict_experiments` 详情。
 2. 第二次 POST `only_verification:false, skip_verification:true`，真正落库。
 
-两步握手对所有站点都生效（cn 默认 → `data.bytedance.net`、i18n-tt → `libra-sg.tiktok-row.net`、其他站点同理），路径都是同一个 `/batch_create_experiment`。
+两步握手对所有站点都生效。host 由 `--site` 和网络 profile 自动路由：cn 默认 → `data.bytedance.net`；i18n-tt 默认 → `libra-sg.tiktok-row.net`；生产网环境设置 `BYTEDCLI_NETWORK_PROFILE=prod` 后，i18n-tt 切到 `libra-sg.bytedance.net`。路径都是同一个 `/batch_create_experiment`。
 
 也就是说 **请求体里不要再写 `skip_verification` / `only_verification`** —— CLI 会自动处理。如果你确实想保留旧的"一把梭"行为（例如你已经手工写好了 `skip_verification:true`），加 `--no-verify`。
 
@@ -121,6 +134,9 @@ bytedcli --site i18n-tt libra experiment create \
 ```bash
 # 0. 创建实验（通过 JSON 文件传入完整请求体；CLI 自动做 preflight + create 两步）
 bytedcli --json libra experiment create --app-id -1 --request-file ./experiment.json
+
+# 0.1 基于单实验模板创建；override body 会覆盖模板默认值
+bytedcli --json libra experiment create --app-id 1193 --template-id 3139 --request-file ./override.json
 # 创建成功后，从返回的 JSON 中提取实验 ID，拼接实验链接给用户：
 # https://data.bytedance.net/libra/flight/<experiment_id>/report/main
 
@@ -156,14 +172,14 @@ bytedcli --site i18n-tt libra experiment report --flight-id <flight_id> --metric
 
 支持的 `data_region` 取值与实验 `truly_effected_regions` 的映射：
 
-| `truly_effected_regions` | `data_region` | 说明 |
-|---|---|---|
-| `SG` | `sg` | Singapore (TTP-SG) |
-| `VA` | `va` | Virginia / US（老 US 机房） |
-| `US_TTP` | `us_ttp` | US-TTP（对应 `tx` 别名也接受） |
-| `EU_TTP` | `eu_ttp` | EU-TTP（GCP 欧洲机房） |
-| `MY` | `my` | My-Compliance |
-| 多区域 / 无明确区域 | `other` | 默认值 |
+| `truly_effected_regions` | `data_region` | 说明                           |
+| ------------------------ | ------------- | ------------------------------ |
+| `SG`                     | `sg`          | Singapore (TTP-SG)             |
+| `VA`                     | `va`          | Virginia / US（老 US 机房）    |
+| `US_TTP`                 | `us_ttp`      | US-TTP（对应 `tx` 别名也接受） |
+| `EU_TTP`                 | `eu_ttp`      | EU-TTP（GCP 欧洲机房）         |
+| `MY`                     | `my`          | My-Compliance                  |
+| 多区域 / 无明确区域      | `other`       | 默认值                         |
 
 **典型排查**：如果 report 全 `-`，先 `bytedcli libra experiment get --flight-id <id>` 看 `truly_effected_regions`，再确认 `--data-region` 的取值匹配。手动传 `--data-region other` 可以快速复现老行为（作为对照）。
 
@@ -250,6 +266,21 @@ bytedcli libra feature-flag list --repo-id 11681182 --page 3 --page-size 10
 bytedcli libra feature-flag list --repo-id 11681182 --side-type scc_server
 ```
 
+### 管理实验层
+
+实验层命令走 Libra 页面 API，复用 Titan Passport 登录态；不需要 DataOpen app credential。
+
+```bash
+# 创建实验层
+bytedcli libra layer create --app-id 123 --product-id 456 --name demo-layer --owner demo.user
+
+# 查询实验层列表
+bytedcli libra layer list --app-id 123 --product-id 456 --search demo --page-size 50
+
+# 查询实验层详情
+bytedcli libra layer get --layer-id <layer_id>
+```
+
 ### 管理测试用户
 
 ```bash
@@ -264,6 +295,22 @@ bytedcli libra test-user delete --flight-id <flight_id> --uid <uid>
 
 # 指定版本（多实验组时需要）
 bytedcli libra test-user add --flight-id <flight_id> --uid <uid> --version <vid>
+```
+
+### 管理测试白名单分群
+
+```bash
+# 查看测试白名单分群
+bytedcli libra test-whitelist list --flight-id <flight_id>
+
+# 添加测试白名单分群到实验组
+bytedcli libra test-whitelist add --flight-id <flight_id> --group-id <group_id>
+
+# 删除测试白名单分群
+bytedcli libra test-whitelist delete --flight-id <flight_id> --group-id <group_id>
+
+# 指定版本（多实验组时需要）
+bytedcli libra test-whitelist add --flight-id <flight_id> --group-id <group_id> --version <vid>
 ```
 
 ### 按参数路径搜索实验
@@ -294,23 +341,29 @@ bytedcli libra experiment approve --review-id <review_id> --app-id <app_id>
 
 ## Command overview
 
-| Command | Description |
-|---------|-------------|
-| `libra experiment create --app-id <id> --request-file <path> [--skip-conflicts] [--no-verify]` | 创建实验（JSON 直传，默认走 preflight + create 两步） |
-| `libra experiment get --flight-id <id>` | 实验详情（版本、流量、owner） |
-| `libra experiment traffic --flight-id <id>` | 流量分配和版本权重 |
-| `libra experiment report --flight-id <id>` | 实验报告（指标、P-Value、趋势） |
-| `libra experiment realtime --flight-id <id>` | 实时指标（最近 1 小时监控数据） |
-| `libra metric-group get --id <id>` | 指标组基础信息（文本摘要；`--json` 返回完整 payload） |
-| `libra metric-group template get --id <id> --app-id <id>` | 指标组模版信息（支持 `--type normal\|conclusion`，默认 normal，403 自动 fallback） |
-| `libra experiment list --app-id <id>` | 搜索和筛选实验 |
-| `libra experiment search --key-path <path>` | 按参数路径搜索实验 |
-| `libra feature-flag list --repo-id <id>` | 按仓库列出配置发布里的 feature flags |
-| `libra experiment approve --url <url>` | 批准或驳回实验 peer review |
-| `libra app list` | 列出所有可用 App |
-| `libra test-user list --flight-id <id>` | 查看测试用户 |
-| `libra test-user add --flight-id <id> --uid <uid>` | 添加测试用户 |
-| `libra test-user delete --flight-id <id> --uid <uid>` | 删除测试用户 |
+| Command                                                                                                             | Description                                                                        |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `libra experiment create --app-id <id> --request-file <path> [--template-id <id>] [--skip-conflicts] [--no-verify]` | 创建实验（支持单实验模板默认值 + override，默认走 preflight + create 两步）        |
+| `libra experiment get --flight-id <id>`                                                                             | 实验详情（版本、流量、owner）                                                      |
+| `libra experiment traffic --flight-id <id>`                                                                         | 流量分配和版本权重                                                                 |
+| `libra experiment report --flight-id <id>`                                                                          | 实验报告（指标、P-Value、趋势）                                                    |
+| `libra experiment realtime --flight-id <id>`                                                                        | 实时指标（最近 1 小时监控数据）                                                    |
+| `libra metric-group get --id <id>`                                                                                  | 指标组基础信息（文本摘要；`--json` 返回完整 payload）                              |
+| `libra metric-group template get --id <id> --app-id <id>`                                                           | 指标组模版信息（支持 `--type normal\|conclusion`，默认 normal，403 自动 fallback） |
+| `libra experiment list --app-id <id>`                                                                               | 搜索和筛选实验                                                                     |
+| `libra experiment search --key-path <path>`                                                                         | 按参数路径搜索实验                                                                 |
+| `libra feature-flag list --repo-id <id>`                                                                            | 按仓库列出配置发布里的 feature flags                                               |
+| `libra layer create --app-id <id> --product-id <id> --name <name> --owner <user>`                                   | 创建实验层（页面 API / Titan Passport 鉴权）                                       |
+| `libra layer list --app-id <id> [--product-id <id>]`                                                                | 查询实验层列表                                                                     |
+| `libra layer get --layer-id <id>`                                                                                   | 查询实验层信息                                                                     |
+| `libra experiment approve --url <url>`                                                                              | 批准或驳回实验 peer review                                                         |
+| `libra app list`                                                                                                    | 列出所有可用 App                                                                   |
+| `libra test-user list --flight-id <id>`                                                                             | 查看测试用户                                                                       |
+| `libra test-user add --flight-id <id> --uid <uid>`                                                                  | 添加测试用户                                                                       |
+| `libra test-user delete --flight-id <id> --uid <uid>`                                                               | 删除测试用户                                                                       |
+| `libra test-whitelist list --flight-id <id>`                                                                        | 查看测试白名单分群                                                                 |
+| `libra test-whitelist add --flight-id <id> --group-id <id>`                                                         | 添加测试白名单分群                                                                 |
+| `libra test-whitelist delete --flight-id <id> --group-id <id>`                                                      | 删除测试白名单分群                                                                 |
 
 各命令的完整参数、选项和 `request-file` 格式说明见 `references/libra.md`。
 
@@ -319,6 +372,9 @@ bytedcli libra experiment approve --review-id <review_id> --app-id <app_id>
 - `--json` 是全局选项，放在子命令前：`bytedcli --json libra experiment get --flight-id <flight_id>`
 - 用户提到 `ROW`、`i18n`、`US` 或 `TTP` 场景时，默认加 `--site i18n-tt`（例如：`bytedcli --site i18n-tt libra app list`）
 - 任何需要 `--app-id` 的 Libra 命令，默认使用 `--app-id -1`，除非用户明确指定其他 app_id。
+- `test-user` 更新的是 `versions[].user_list` 里的 `type=id` 条目；`test-whitelist` 更新的是 `versions[].user_list` 里的 `type=group` 条目
+- `test-whitelist --group-id` 只接受数字分群 ID，不接受分群名称
+- `layer` 命令使用 Libra 页面 API 鉴权，复用 Titan Passport；create/list 需要 `--app-id`，create 还需要 `--product-id`
 - report 默认 `--merge-type total`（累计，含 P-Value），可选 `sum`（日均）或 `avg`
 - report `--trend` 显示逐日趋势，`total` 为累计趋势，`avg` 为分段趋势
 - report `--data-caliber <1|2|3>` 透传 Libra API 的 `data_caliber`，用于按页面抓包值对齐普通/CUPED 等报告口径；不传时保持 CLI 默认口径
@@ -328,6 +384,7 @@ bytedcli libra experiment approve --review-id <review_id> --app-id <app_id>
 - 多维交叉查询走异步 adhoc 计算，若超时就提示稍后重试同一条命令
 - `metric-group get` 当前仅支持 `prod` 和 `i18n-tt`
 - 访问 `i18n-tt` 时，请显式使用 `--site i18n-tt`
+- 在生产网环境访问 i18n-tt 时，设置 `BYTEDCLI_NETWORK_PROFILE=prod`；Libra Page API / Gallery / Titan 会从默认 `.tiktok-row.net` 入口切到生产网可达的 `.bytedance.net` 入口。
 
 ## Troubleshooting
 

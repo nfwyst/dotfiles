@@ -51,7 +51,7 @@ bytedcli <command> [options]
 - 如果用户明确要“看链路耗时 / 各节点延迟 / 调用树”，优先用 `log trace-tree --log-id <logid>`，不要继续用 `get-logid-log` 解析日志明细代替。
 - 任何情况下不并发查询：同一轮对话中如需多次查询（多 LogID、多 PSM、多时间段），必须串行执行，上一条完成后再发下一条。
 - 时间范围尽量精准且渐进扩展：优先使用用户给出的精确时间点（或从告警/工单/调用链获得的时间），先用 15m~30m 窗口定位；只有在证据不足时才逐步扩大窗口，避免一上来用小时级或天级范围。`get-logid-log` 支持 `--start`/`--end`（RFC3339 或 epoch 秒）显式指定时间范围，不传时由 `--scan-span` 推导。
-- 日志条数尽量最小且可控：首次 PSM 查询优先设置较小的收集上限（如 `--max-logs 200`）与单次请求上限（如 `--limit 50` 或 `--limit 100`）；除非用户明确要求，不要使用 `--max-logs 0`（无限制）。
+- 日志条数尽量最小且可控：`search-psm-log` 默认 `--max-logs 1000`；全量滚动需要显式传 `--max-logs 0`。`get-logid-log --psm` / `get-logid-log --rolling` 面向 LogID 定位，默认可全量滚动；首次排查仍优先显式设置较小的收集上限（如 `--max-logs 200`）与单次请求上限（如 `--limit 50` 或 `--limit 100`），只有用户明确要求全量 dump 时才使用 `--max-logs 0`。
 - 扩大范围前先收窄条件：时间窗口不变时，优先通过 `--keyword/--exclude/--kv-filter/--idc` 收敛结果，再考虑扩大时间范围或提高 `--max-logs`。
 - 关键词传参优先用重复选项：多关键词场景优先重复传 `--keyword/--exclude`（例如 `--keyword "a,b" --keyword "c"`），避免使用逗号分隔写法导致关键词内包含逗号时被误拆分。
 - **vregion 必须显式指定**：`--vregion` 决定服务端去哪个区域的日志存储查数据，默认值按站点不同：`cn` 为 `China-North`，`boe` 为 `China-BOE`，`i18n`/`i18n-bd` 为 `Singapore-SaaS`，`i18n-tt` 为 `Singapore-Central`，`us-ttp`/`us-ttp-bdee`/`us-ttp-usts` 为 `US-TTP`。当目标服务部署在其他区域时，必须传正确的 `--vregion`（如 US-TTP 对应 useast5、`US-TTP2` 对应 useast8，必须显式传 `--vregion US-TTP2` 才会路由到 tx2 host），否则会在错误的区域查询，导致返回空结果。如果不确定目标区域，应先询问用户服务部署在哪个 region。
@@ -71,6 +71,12 @@ bytedcli log search-psm-log --psm "psm.name" --start "2026-02-02T08:00:00" --end
 # PSM 日志搜索（按 KV 过滤）
 bytedcli log search-psm-log --psm "example.service.api" --keyword "deploy" --kv-filter "method=Deploy|Rollback" --kv-filter "_idc=lf|hl"
 
+# PSM 日志搜索（按日志级别过滤）
+bytedcli log search-psm-log --psm "example.service.api" --level Error --level Warn --max-logs 200 --output console
+
+# PSM 日志搜索（错误/告警快捷过滤）
+bytedcli log search-psm-log --psm "example.service.api" --error-warn --keyword "timeout" --max-logs 200
+
 # PSM 日志搜索（索引加速查询：enable_index=true）
 bytedcli log search-psm-log --psm "psm.name" --start "2026-02-02T08:00:00" --end "2026-02-02T09:00:00" --keyword "error" --enable-index
 
@@ -80,8 +86,14 @@ bytedcli log search-psm-log --psm "psm.name" --start "2026-02-02T08:00:00" --end
 # PSM 日志搜索（BOE 的 boei18n 分区 US-BOE）
 bytedcli --site boe --json log search-psm-log --psm "demo.psm" --vregion "US-BOE" --start "2026-04-16T21:08:48-07:00" --end "2026-04-16T21:33:48-07:00" --keyword "demo-keyword" --output console
 
-# LogID 查询（国内，默认 vregion=China-North）
+# LogID 查询（提供 PSM 时自动使用 rolling __logid PSM search）
 bytedcli log get-logid-log "20260202085428C91A145A63CB5F0B9D80" --psm "psm.name" --vregion "China-North"
+
+# LogID 查询（显式 rolling：通过 PSM 日志搜索 + __logid KV 过滤滚动拉取并输出覆盖证明）
+bytedcli log get-logid-log "20260202085428C91A145A63CB5F0B9D80" --psm "psm.name" --rolling --max-logs 0 --output console
+
+# LogID 查询（全量 dump 快捷方式；需要提供 PSM）
+bytedcli log get-logid-log "20260202085428C91A145A63CB5F0B9D80" --psm "psm.name" --dump --output file
 
 # 接口总体性能分析（默认把完整结果落到本地文件）
 bytedcli log analysis performance --psm "psm.name" --method "QueryFoo" --start "2026-02-02T08:00:00+08:00" --end "2026-02-02T09:00:00+08:00"
@@ -145,7 +157,11 @@ bytedcli log get-log-cluster "psm.name" --start "2026-02-02T08:00:00" --kv-filte
 - `search-psm-log` 可用 `--enable-index` 开启索引加速查询（`enable_index=true`），适用于 PSM 关键词搜索
 - `search-psm-log` 可用 `--term` 开启短语查询（`is_term=true`，不分词）；短语查询必须配合索引加速（`--enable-index`）
 - `search-psm-log` 开启 `--enable-index` 时会提示二次确认 PSM 是否已开索引，并给出索引说明文档：`https://bytedance.larkoffice.com/docx/K1lHdQppSo0d1HxkAMscn1Wfnff`；非交互场景可加 `--yes` 跳过确认
-- `search-psm-log` 默认最多收集 1000 条日志（`--max-logs 1000`）；传 `--max-logs 0` 表示无限制
+- `search-psm-log` 默认 `--max-logs 1000`；JSON 输出会包含 `retrieval_coverage`（含 `verdict`、`pagination_proof`、`rounds`）证明本次拉取覆盖程度
+- `search-psm-log` 支持 `--max-logs N` 显式限制收集条数；需要全量滚动到后端 `finished=true` 或 `--poll-timeout` 时，显式传 `--max-logs 0`
+- `search-psm-log` 支持 `--level <level>` 日志级别过滤（可重复或逗号分隔），常用快捷方式：`--error-warn` 等价于 `--level Error --level Warn`，`--error-only` 等价于 `--level Error`
+- `get-logid-log` 提供 PSM 时自动走 rolling 模式：用 PSM 日志滚动查询按 `__logid` KV 过滤，并返回同样的 `retrieval_coverage`；不需要额外传 `--rolling`
+- `get-logid-log --dump` 是全量 rolling dump 快捷方式，等价于 `--rolling --max-logs 0`，需要同时提供 `--psm`
 - `search-psm-log` 和 `get-log-cluster` 支持 `--kv-filter key=value1|value2`，可重复传递多个过滤条件
 - `--idc` 在 `search-psm-log` 中会自动映射为 `_idc` 过滤
 - `get-log-cluster` 使用 `--kv-filter` 可按日志级别等字段过滤聚类结果，例如 `--kv-filter "level=ERROR|WARN"`

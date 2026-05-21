@@ -1,6 +1,6 @@
 ---
 name: bytedance-kross
-description: "Use bytedcli Kross commands to create multi-platform (Linux, macOS, Windows) container environments (workloads), list accessible workspaces, list workspace-visible container templates, list workloads, create and delete workloads, execute commands inside workload containers through webshell, and upload/download files to workload containers. Use when tasks mention Kross, workspace list, workload list, workload templates, create workload, delete workload, remote exec, or file transfer in a workload container."
+description: "Use bytedcli Kross commands to create multi-platform (Linux, macOS, Windows) container environments (workloads), list accessible workspaces, list workspace variables and secret injection paths, list workspace-visible container templates, list workloads, create and delete workloads, execute commands inside workload containers through webshell, and upload/download files to workload containers. Use when tasks mention Kross, workspace list, workspace vars, secret injection path, workload list, workload templates, create workload, delete workload, remote exec, or file transfer in a workload container."
 ---
 
 # bytedcli Kross
@@ -27,6 +27,7 @@ bytedcli <command> [options]
 
 - 查询某个 workspace 在当前 cluster 下可见的 container template
 - 列出当前用户有权限访问的 workspace
+- 查看 workspace 变量，以及 secret 变量注入到 workload 内的文件路径
 - 列出某个 workspace 下的 workload
 - 创建一组可随时创建和销毁的 job workload
 - 删除已有 workload
@@ -48,6 +49,10 @@ bytedcli <command> [options]
 ```bash
 # 先列出当前用户可访问的 workspace
 bytedcli kross workspace list
+
+# 查看 workspace 变量和 secret 文件注入路径
+bytedcli kross workspace var list --workspace demo-workspace
+bytedcli --json kross workspace var list --workspace demo-workspace --type SECRET
 
 # 先查当前 workspace 可用模板
 bytedcli kross template list --workspace demo-workspace
@@ -92,6 +97,8 @@ bytedcli kross workload download --workspace demo-workspace --workload-id 72 --c
 ### 1. 先看 workspace 和模板
 
 先用 `kross workspace list` 看当前用户可访问的 workspace；创建前再用 `kross template list --workspace <name>` 获取该 workspace 在所属 cluster 下可见的 container template，并从返回结果里选择 `template id`。
+
+如果 workload 需要使用 workspace 变量，先用 `kross workspace var list --workspace <name>` 查看注入方式。普通变量通过环境变量注入；secret 变量通过文件注入，输出会包含 `UnixPath` 和 `WindowsPath`，不会返回 secret 明文。
 
 ### 2. 创建 job workload
 
@@ -175,8 +182,10 @@ bytedcli --json kross workload exec --workspace demo-workspace --name demo-workl
 
 ## Notes
 
-- `kross` 当前暴露 `workspace list`、`template list`、`workload list`、`workload create`、`workload delete`、`workload exec`、`workload upload`、`workload download`
+- `kross` 当前暴露 `workspace list`、`workspace var list`、`template list`、`workload list`、`workload create`、`workload delete`、`workload exec`、`workload upload`、`workload download`
 - `workspace list` 会自动翻完分页，列出当前用户可访问的 workspace
+- `workspace var list` 会返回变量的 `InjectionMode`。普通变量看 `EnvName`，secret 变量看 `UnixPath` / `WindowsPath`
+- `workspace var list --type SECRET` 只看 secret 变量；secret 值只会以 `MaskedValue` 脱敏展示，不返回明文
 - `workload list` 会自动翻完目标 workspace 下的 workload 分页
 - CLI 会按 workspace 名称自动解析 ID，但要求名称精确；模糊名称会报错并返回候选项
 - 其他 `--workspace <name>` 命令在按名称解析 workspace 时，也只会在当前用户可访问的 workspace 范围内匹配

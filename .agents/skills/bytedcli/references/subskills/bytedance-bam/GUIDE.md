@@ -46,11 +46,16 @@ bytedcli bam method list --psm "example.service.api" --cluster i18n
 bytedcli bam method list --psm "example.service.api" --cluster i18n --version 1.0.155
 bytedcli bam method get --endpoint-id 123456 --version 1.2.3
 bytedcli bam method get --psm "example.service.api" --method "DemoMethod"
+bytedcli bam method get --psm "example.service.api" --method "DemoMethod" --ep-type rpc
 bytedcli bam method get --psm "example.service.api" --method "DemoMethod" --cluster i18n
 bytedcli bam method gencode --endpoint-id 123456
 bytedcli bam method gencode --psm "example.service.api" --method "DemoMethod"
+bytedcli bam method gencode --psm "example.service.api" --method "DemoMethod" --ep-type rpc
 bytedcli bam method gencode --psm "example.service.api" --method "DemoMethod" --schema-type response
 bytedcli bam method gencode --psm "example.service.api" --method "DemoMethod" --struct "DemoMethodRequest"
+
+# Endpoint 查询（通过 HTTP path 查 PSM 归属）
+bytedcli bam endpoint list --path "/api/example/path"
 
 # 代码生成规则与生成任务
 bytedcli bam codegen rule list --psm "example.service.api" --cluster default
@@ -58,6 +63,7 @@ bytedcli bam method list --psm "example.service.api" --cluster default
 bytedcli bam codegen rule create --psm "example.service.api" --name "robot_demo_rule" --app-id 1234 --package "com.example.demo.model" --methods "GetDemoInfo"
 bytedcli bam codegen rule update --rule-id 123456 --psm "example.service.api" --name "robot_demo_rule" --app-id 1234 --package "com.example.demo.model" --generate selected --methods "GetDemoInfo"
 bytedcli bam codegen generate --rule-id 123456 --branch master
+bytedcli bam codegen generate --rule-id 123456 --branch master --create-permission-ticket --permission-reason "need codegen access"
 
 # 版本历史
 bytedcli bam version list "example.service.api" --cluster default
@@ -65,18 +71,26 @@ bytedcli bam version list "example.service.api" --cluster default
 # 创建/更新 IDL 版本
 bytedcli bam idl update --psm "example.service.api" --branch master --next-version
 bytedcli bam idl update --psm "example.service.api" --branch "codex/fix-idl" --version "1.2.4" --commit-id "abc1234" --commit-msg "update idl"
+
+# 引用 schema 查询（struct、enum、const）
+bytedcli bam idl schema --psm "example.service.api" --version 1.0.155
+bytedcli bam idl schema --psm "example.service.api" --version 1.0.155 --type enum --search EntityType
 ```
 
 ### Notes
 
 - `method list` 和 `method get` 支持 `-c, --cluster <cluster>` 指定集群（默认 `default`），适用于 i18n 等非默认集群
 - `method list` 支持 `--version <version>` 查询指定版本的方法列表；不带 `--version` 时走分页搜索接口，带 `--version` 时返回该版本全量方法
-- `method get` 支持 `--endpoint-id` 或 `--psm` + `--method` 两种定位方式
-- `method gencode` 支持 `--endpoint-id` 或 `--psm` + `--method` 两种定位方式，`--version` 默认为最新版本，`--lang` 默认为 `ts`，`--schema-type` 默认为 `request`，也支持生成 `response`
+- `method get` 支持 `--endpoint-id` 或 `--psm` + `--method` 两种定位方式；RPC 方法按 PSM + 方法名定位时传 `--ep-type rpc`
+- `method get --schema ref` 会保留 HTTP `body_param` 与 RPC `rpc_param` schema
+- `method gencode` 支持 `--endpoint-id` 或 `--psm` + `--method` 两种定位方式，RPC 方法按 PSM + 方法名定位时传 `--ep-type rpc`；`--version` 默认为最新版本，`--lang` 默认为 `ts`，`--schema-type` 默认为 `request`，也支持生成 `response`
 - `codegen rule create` 和 `codegen rule update` 已拆分；创建会传 `only_create=true`，更新必须传 `--rule-id` 并传 `only_create=false`
 - `codegen rule create/update` 默认 `--generate selected`，因此通常需要先用 `bam method list` 查询方法名，再把 `endpoint.rpc_method || endpoint.name` 作为 `--methods` 传入
 - `codegen rule create/update` 不内置业务默认值，`--app-id`、`--package`、`--psm`、`--name` 都需要显式提供；`--owner` 不传时使用当前 ByteCloud JWT 用户
+- `codegen generate` 若返回 `has_permission=false` 或带 `escape_params`，会自动执行 IAM 权限检查；需要自动创建权限工单时显式加 `--create-permission-ticket`，默认权限角色为 `bam.developer.cn`，必要时用 `--permission-role` 覆盖
+- `idl schema` 拉取指定服务版本的全部引用 schema（struct、enum、const），支持 `--search <keyword>` 按名称过滤和 `--type enum|struct|const|string_enum` 按类型过滤
 - `--schema ref|raw` 控制 schema 展示方式
+- `endpoint list` 通过 HTTP path 查询其归属的 PSM/Endpoint 信息；`--path` 为必填参数，支持 `--count`、`--offset`、`--newest`、`--ep-type`、`--cluster` 等过滤条件
 - `idl update` 必须提供 `--psm` 和 `--branch`，版本号通过 `--version` 指定或 `--next-version` 自动在最新版本基础上 patch +1
 - 缺少必填参数会自动输出帮助信息
 - 需要结构化输出加 `--json`（全局选项，放在子命令之前，如 `bytedcli --json bam method get ...`）

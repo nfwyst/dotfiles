@@ -26,11 +26,13 @@ bytedcli <command> [options]
 | `i18n-bd` | ByteIntl 国际站 | `sso.bytedance.com` | 通常复用 cn 登录态 |
 | `i18n-tt` | TikTok 国际站 | `sso.tiktok-intl.com` | 需单独登录 |
 | `eu-ttp` | EU TTP 站 | `sso.tiktok-intl.com` | 需单独登录 |
+| `us-ttp` | US TTP 站 | `sso.tiktok-intl.com` | 需单独登录 |
+| `us-ttp-bdee` | US TTP（BDEE）站 | `sso.tiktok-intl.com` | 需单独登录 |
 | `boe` | BOE 测试 | `test-sso.bytedance.net` | |
 
 > `--site i18n-bd` 是 ByteIntl 国际站的规范站点值（`i18n` 也可用作别名）。
 
-**认证隔离按 SSO 环境生效。`i18n-tt`、`eu-ttp`（TikTok SSO）需单独 `auth login`；`cn`、`i18n-bd`（ByteDance SSO）通常共享登录态。**
+**认证隔离按 SSO 环境生效。`i18n-tt`、`eu-ttp`、`us-ttp`、`us-ttp-bdee`（TikTok SSO）需单独 `auth login`；`cn`、`i18n-bd`（ByteDance SSO）通常共享登录态。**
 
 ```bash
 # 检查 i18n-tt 站点认证

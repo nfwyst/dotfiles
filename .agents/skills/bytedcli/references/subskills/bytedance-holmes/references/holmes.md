@@ -1,4 +1,4 @@
-# Holmes TrustPress
+# Holmes
 
 ## Commands
 
@@ -52,6 +52,97 @@ bytedcli auth login --session
 2. 访问 Holmes API 时，自动通过 `sso.bytedance.com/cas/login` 获取 CAS ticket
 3. CAS ticket 换取 Holmes 的 BDSSO session cookie（httpOnly）
 4. 后续请求自动携带 session cookie
+
+## TrustData SQL 查询与后续处理
+
+TrustData 查询通过 `holmes trust-data` 命令执行，默认使用 i18n Holmes 后端。CLI 请求体固定使用 BytedCLI platform；提交 SQL 时不需要传 `--repo-id` 或 `--data-source-type`，后端会处理 data source 与 repo 归属。`sql-submit` 会从 SQL 的 `FROM`/`JOIN` 中识别完整表名（如 `db.table`），先调用 i18n `get_table_info --active-only` 查询活跃表元数据并自动确定 `region`；如果只命中一个活跃 region，会自动带该 region 提交。如果返回多个活跃 region，交互式终端会提示选择；JSON/非 TTY 模式会返回 `HOLMES_TRUSTDATA_REGION_AMBIGUOUS`，需要显式传 `--region` 重跑。用户不需要额外传 `--site i18n`。
+
+### 提交 SQL
+
+```bash
+# 直接提交 SQL；TrustData API 默认走 i18n Holmes，CLI 会先用 get_table_info 自动确定 region
+bytedcli holmes trust-data sql-submit \
+  --sql "SELECT count(*) FROM example_db.example_table WHERE p_date = '2026-04-01'"
+
+# 推荐给 Agent/脚本：从文件读取 SQL，并等待查询结果
+bytedcli --json holmes trust-data sql-submit \
+  --sql-file ./query.sql \
+  --wait \
+  --poll-interval-ms 5000 \
+  --wait-timeout-ms 180000
+
+# 若 JSON/非 TTY 模式提示同名表或 region 歧义，用 --region 消歧
+bytedcli holmes trust-data sql-submit --sql-file ./query.sql --region us-ttp
+```
+
+参数与行为：
+
+- `--sql` 与 `--sql-file` 二选一；`--sql-file` 优先，适合避免 shell 转义问题。
+- `sql-submit` 会根据 SQL 中的完整表名自动调用 `get_table_info --active-only`；若返回单一活跃 region，自动带该 region 提交。
+- `--region` 用于覆盖自动检测结果，或在 JSON/非 TTY 模式收到 `HOLMES_TRUSTDATA_REGION_AMBIGUOUS` 后指定查询 region；推荐语义值：`us-ttp`、`eu-ttp`、`va`、`eu-ttp-no`、`us-ttp2`（兼容旧数字 1/2/3/4/5）。
+- `--wait` 只在成功提交并拿到 `task_id` 后轮询结果 API；默认每 5 秒一次，最长等待 3 分钟。result API 可能在刚提交后短暂返回 `failed`/`unknown`，CLI 会至少等待 15 秒且连续确认失败后才停止。
+- `--poll-interval-ms <ms>` 调整轮询间隔；`--wait-timeout-ms <ms>` 调整最长等待。
+- `annotation_required` 或 `table_register_required` 是提交阶段的 follow-up 状态，不会进入结果轮询。
+- 提交阶段如果遇到 `HTTP 502 Bad Gateway`，CLI 会自动简单重试，最多重试 2 次；重试后仍失败才返回 502 错误。
+
+### Agent / JSON 模式处理规则
+
+Agent 和脚本可以使用 `--json --wait` 稳定解析结果；JSON 模式不会关闭 TrustData 的自动能力（submit 前 region preflight、`--wait` 轮询都会继续执行），只是 stdout 保持纯 JSON，且不会自动打开浏览器：
+
+- 提交前预检已内置：`sql-submit` 会识别 `db.table` 并先调 `get_table_info` 自动确定 region。若 JSON/非 TTY 模式返回 `HOLMES_TRUSTDATA_REGION_AMBIGUOUS`，从错误 details/candidates 中读取候选 region 后，用 `sql-submit --region <region>` 重跑；不要自行改写 SQL。
+- 成功完成：读取 `data.result.rows`、`data.result.columns`、`data.result.row_count`，并在回复用户时渲染成表格；不要把单行结果只拼成纯文本值。
+- 用户直接在终端运行且未传 `--json` 时，CLI 自身会把成功查询结果渲染成表格。
+- 如果 `get_table_info` 命中多个活跃 region，提交和结果输出会展示本次实际使用的 selected region；向用户汇报结果时带上 region，避免不同 region 数据混淆。
+- 查询失败：如果 CLI 连续确认失败后仍返回 `failed`，停止并向用户汇报 `data.task_id`、`data.url`、已使用的 region 和可选候选；不要自动尝试其他 region。只有用户明确要求继续，才可用另一个 `--region` 重跑同一 SQL。
+- 结果状态未知：`unknown` 可能是 result API 的短暂过渡状态；`--wait` 会继续轮询直到成功、连续确认失败或超时。单独执行 `sql-result` 看到 `unknown` 时，稍后用同一 task_id 再查，不要立刻换 region。
+- 仍在 pending/running 或等待超时：读取 `data.url` 并请用户打开 TrustData 页面检查进度；也可读取 `data.task_id`，稍后执行 `bytedcli holmes trust-data sql-result --task-id <task_id>`。
+- 需要字段标注：读取 `data.annotation_url`，让用户完成 annotation 流程后重试提交。
+- 需要注册表：读取 `data.table_register_url` 与 `data.new_table_name`，让用户完成 table registration 后重试提交。
+- JSON/非 TTY 模式不会执行交互式 region 选择，也不会自动打开浏览器；遇到 `HOLMES_TRUSTDATA_REGION_AMBIGUOUS` 时，读取候选 region 并用 `--region` 重跑。
+
+### Annotation required
+
+当 `sql-submit` 返回 `annotation_required` 时，输出包含：
+
+- `annotation_url`：可打开的标注表单 URL。
+- `annotation_meta` / `encoded_annotation_meta`：后端返回并由前端预填的字段或表达式标注 metadata。
+
+处理方式：打开 `annotation_url` 完成标注，然后重新执行同一条 SQL 查询。
+
+### Table registration required
+
+当 `sql-submit` 返回 `table_register_required`（后端错误码 `100008`）时，输出包含：
+
+- `table_register_url`：`/trust-data/annotation/table-register?table_name=<name>&modal=1` 深链。
+- `new_table_name`：后端返回的第一个缺失表名。
+
+处理方式：打开 `table_register_url` 完成注册表流程，然后重新执行同一条 SQL 查询。
+
+### 获取结果、历史与表信息
+
+```bash
+# task_id 可从 sql-submit 输出 URL 的 taskid 参数或 JSON data.task_id 获取
+bytedcli holmes trust-data sql-result --task-id <task_id> --limit 50
+
+# 查询最近 SQL 历史，找回 task_id 或确认提交记录
+bytedcli holmes trust-data sql-history
+
+# 列出已注册活跃表
+bytedcli holmes trust-data list-tables --active-only
+
+# 查询表提交元数据，用于排查同名表、region、data_source_type
+bytedcli holmes trust-data table-info --table-name "example_db.example_table" --active-only
+
+# 查询字段、类型、是否已标注及描述
+bytedcli holmes trust-data fields --table-info "example_db.example_table"
+
+# 若仅表名无法解析字段元数据，先 list-tables 获取完整 metadata，再传 JSON 给 --table-info
+bytedcli --json holmes trust-data list-tables --active-only
+bytedcli holmes trust-data fields \
+  --table-info '{"table_name":"example_db.example_table","cluster_name":"example_cluster","table_type":0,"region":"1","is_active":true}'
+```
+
+`sql-result` 会自动解析 `data_source` JSON 为行列结构；`--limit` 控制文本展示行数。若 `task_status=3`，表示查询失败，通常需要简化 SQL 或缩短时间范围后重试。
 
 ### 创建压测任务
 

@@ -89,8 +89,10 @@ bytedcli goofy deploy region-name-to-region --region-name Singapore-Central
 bytedcli goofy deploy region-to-region-name --region 3001
 
 # 流量频道 / Channel
-## 创建流量频道 Channel（需要 region-id）
+## 创建流量频道 Channel（需要 region-id），默认按 env-name 匹配小流量
 bytedcli goofy deploy create-channel --region-id 224335 --name test2 --env-name ppe_test2 --site cn
+## 创建流量频道 Channel（按请求 header 匹配小流量；--header-key 与 --header-value 必须成对传入，--header-op 默认 1 = equals；此模式不需要 --env-name）
+bytedcli goofy deploy create-channel --region-id 224335 --name demo-header --header-key fe-env --header-value ppe_demo_header
 ## 通过项目 ID列出项目的流量频道 / Channel
 bytedcli goofy deploy list-channels --app-id 131716
 

@@ -30,6 +30,7 @@ bytedcli <command> [options]
 - List reports for a PSM
 - Print the bits coverage-next URL without an HTTP call
 - Manage collection-side tags and upload intervals
+- Check whether a PSM is integrated into the coverage platform (access status; note that `not_registered` is inferred from an empty response — may also indicate ACL or transient empty)
 
 ## 前置条件
 
@@ -49,6 +50,10 @@ bytedcli codecov report get --rid 10000001
 bytedcli codecov report get --psm example.service.api --branch master
 bytedcli codecov report list --psm example.service.api --limit 10
 bytedcli codecov report link --rid 10000001
+
+# Access status (new gateway)
+bytedcli codecov access-status --psm example.service.api
+bytedcli -j codecov access-status --psm example.service.api
 
 # Collection-side (collection gateway, unchanged)
 bytedcli codecov create-tag --tag demo-tag --service example.service.api:prod --expire 10

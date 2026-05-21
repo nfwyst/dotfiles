@@ -80,7 +80,24 @@ bytedcli tce cluster update --cluster-id <cluster_id> --service-id <service_id> 
 ```bash
 # US-TTP 上纯版本升级 — 自动走 pipeline 端点
 bytedcli --site us-ttp tce cluster update --cluster-id 400581289 --service-id 3987 --update-info-file repo_only.json --yes
+
+# CN / 其他站点也可主动走 pipeline 端点（当 update_info 只含 repo_info 时）
+# --pipeline-template 可省：省略时请求体 pipeline_template=0，由 TCE 服务端解析
+#   该 service 自己配置的升级管线（与 console 一键升级一致）。仅当某 service 需要
+#   特定模板时才显式传 --pipeline-template <id>。
+# 加 --step-built-in 表示请求体里 step_built_in: true（与 console 一键升级一致）；
+# 不传则默认 false，与历史行为保持兼容。
+bytedcli tce cluster update --cluster-id <cluster_id> --service-id <service_id> \
+  --update-info-file repo_only.json --step-built-in --yes
 ```
+
+> **单集群 repo-only 升级的 pipeline_template**：省略 `--pipeline-template` 时
+> bytedcli 发 `pipeline_template: 0`，TCE 服务端按 service 自身配置解析升级管线
+> （与 console「升级」页一致，console 建的单集群升级单也不带特定模板）。若某 service
+> 没有可解析的默认升级管线，会报 `get pipeline_template error: ... no documents in
+> result`——此时显式传 `--pipeline-template <id>`，或改用 `tce deploy-lane` / 控制台。
+
+> **关于 `--step-built-in` 实际效果**：该 flag 把 `step_built_in: true` 透传到 pipeline-upgrade 请求体，与 console 一键升级的请求一致。但 deploy-stage 各 step 的 `auto_start` 由服务端基于 `source_platform` 等条件决定，不只看 `step_built_in`——直接 API 创建（非 bytecycle pipeline 触发）的部署即使传 `step_built_in: true`，UpgradeStep / DetectorStep 仍可能落到 `auto_start: false`。这种情况下用上面 `tce deployment execute-step` 章节的循环驱动方案。
 
 其中 `repo_only.json`：
 
@@ -217,6 +234,44 @@ bytedcli --site byteintl tce deployment get <deployment_id>
 # 不传 --step-id 时，会自动根据 deployment 详情定位含 choose_ttops_approver 的 ConfirmStep
 bytedcli --site us-ttp tce deployment select-ttops-approver "https://cloud-ttp-us.bytedance.net/tce/deployment_new/<deployment_id>?service_id=<service_id>"
 bytedcli --site us-ttp tce deployment select-ttops-approver <deployment_id> --step-id <step_id>
+
+# 手动驱动 deployment 流水线中某一步（通用版的 step action 入口）。
+# 用途：通过 `tce cluster update` 这类直连 TCE API 创建的部署，UpgradeStep / DetectorStep
+# 默认 auto_start=false，需要逐步手动触发；console 上点 "开始" / "跳过" 等于本命令。
+# 通过 `bytedcli tce deployment get <deployment_id>` 查看每个 step 的 allow_actions。
+bytedcli tce deployment execute-step --step-id <step_id> --action start
+bytedcli tce deployment execute-step --step-id <step_id> --action skip
+# 需要额外字段的 action（合并到请求体顶层，但 --action 本身不可被覆盖）：
+bytedcli tce deployment execute-step --step-id <step_id> --action choose_ttops_approver \
+  --extra-json '{"approver_type":"organization_account","is_noc":true}'
+```
+
+### 流水线整步驱动示例（部署不自动推进时）
+
+直连 `tce cluster update --yes` 创建的部署会以 `auto_start: false` 卡在 deploy stage。
+传统做法是去 TCE console 点 "开始" / "跳过"，纯命令行链路用循环 + execute-step 替代：
+
+```bash
+TICKET_ID=<from cluster update>
+while true; do
+  DEP=$(bytedcli --json tce deployment get "$TICKET_ID")
+  STATUS=$(echo "$DEP" | jq -r '.data.meta.status')
+  case "$STATUS" in
+    finished|success) break ;;
+    failed|cancelled|canceled) echo "deploy failed: $STATUS"; exit 1 ;;
+  esac
+
+  NEXT=$(echo "$DEP" | jq -r '
+    .data.pipeline.stages[].steps[]
+    | select(.status == "pending")
+    | (.id|tostring) + " " + (.allow_actions[]? | select(.name | IN("start","skip")) | .name)
+  ' | head -1)
+  [[ -z "$NEXT" ]] && { sleep 10; continue; }
+
+  bytedcli tce deployment execute-step \
+    --step-id $(echo "$NEXT" | awk '{print $1}') \
+    --action  $(echo "$NEXT" | awk '{print $2}')
+done
 ```
 
 ## 环境级联查询

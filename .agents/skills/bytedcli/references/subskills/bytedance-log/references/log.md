@@ -31,7 +31,7 @@ bytedcli log search-psm-log --psm "psm.name" --start "2026-02-02T08:00:00" --end
 # PSM 日志搜索（BOE 的 boei18n 分区 US-BOE）
 bytedcli --site boe --json log search-psm-log --psm "demo.psm" --vregion "US-BOE" --start "2026-04-16T21:08:48-07:00" --end "2026-04-16T21:33:48-07:00" --keyword "demo-keyword" --output console
 
-# LogID 查询
+# LogID 查询（提供 PSM 时自动使用 rolling __logid PSM search）
 bytedcli log get-logid-log "20260202085428C91A145A63CB5F0B9D80" --psm "psm.name" --vregion "China-North"
 
 # 接口总体性能分析（默认把完整结果落到本地文件）

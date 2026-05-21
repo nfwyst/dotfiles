@@ -1,0 +1,63 @@
+#blue 锦书功能回归测试<orange:Preview><green:DSL>
+> 覆盖 bytedcli jinshu message preview/send 当前公开支持的正文能力
+
+## 0. 使用前检查
+本样例用于预览不依赖图片 key 或用户 open ID 的静态能力。图片、标题图标、mention、人员列表请使用 rich 专项样例。
+
+## 1. 文本样式
+普通文本用于确认基础段落渲染。
+**加粗文本**
+*斜体文本*
+~斜体文本别名~
+~~删除线文本~~
+<font color='green'>绿色文本</font>
+<font color='red'>红色文本</font>
+<font color='grey'>灰色文本</font>
+特殊字符原样展示：&#42; &#126; &gt; &lt;
+
+--center--
+居中文本第一行
+<font color='green'>居中彩色文本</font>
+--center-end--
+
+## 2. 链接
+[普通链接](https://example.com)
+[侧边栏打开](https://example.com/sidebar sidebar)
+[新窗口打开](https://example.com/window window)
+[工作台 Tab 打开](https://example.com/tab tab)
+[拨打电话](tel://12345678900)
+[多端链接](default: https://example.com pc: https://example.com/pc android: https://example.com/android ios: https://example.com/ios)
+
+## 3. 彩色标签
+短标签：<red:P0><orange:待确认><green:已完成>
+长写法：!tag:blue[蓝色标签]() !t:purple[紫色标签]()
+
+## 4. 按钮
+!b[普通按钮](https://example.com/normal)
+!b:p[主按钮](https://example.com/primary)
+!b:d[警示按钮](https://example.com/danger)
+!b:text[文本按钮](https://example.com/text)
+!b:pt[主文本按钮](https://example.com/primary-text)
+!b:dt[警示文本按钮](https://example.com/danger-text)
+!b:laser[镭射按钮](https://example.com/laser)
+!b:pf[主填充按钮](https://example.com/primary-filled)
+!b:df[警示填充按钮](https://example.com/danger-filled)
+!b:p,small[小按钮](https://example.com/small)
+!b:p,large[大按钮](https://example.com/large)
+!b:p,medium,fill[整行主按钮](https://example.com/fill)
+!b:p,medium,200px[固定宽度按钮](https://example.com/fixed-width)
+!b:,,fill[普通按钮，中尺寸，全宽](https://example.com/default-fill)
+
+---
+
+## 5. 右侧按钮
+右侧按钮应显示在本小节右侧。
+!extra:b:p[查看详情](https://example.com/detail)
+
+## 6. 备注
+--note--
+这里是备注区域，适合放补充说明、风险提示或验收口径。
+--note-end--
+
+## 7. 生成检查
+预期结果：标题颜色和标签正常，文本样式正常，链接可点击，按钮样式完整，分隔符单独成线，备注区域独立展示。
