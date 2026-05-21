@@ -134,6 +134,15 @@
       "skillFolderHash": "",
       "installedAt": "2026-04-30T08:48:23.881Z",
       "updatedAt": "2026-05-06T07:00:34.585Z"
+    },
+    "bits": {
+      "source": "search/local_service_ios",
+      "sourceType": "byted",
+      "sourceUrl": "https://skills.byted.org/search/local_service_ios",
+      "skillPath": "bits/SKILL.md",
+      "skillFolderHash": "",
+      "installedAt": "2026-05-21T02:25:25.673Z",
+      "updatedAt": "2026-05-21T02:25:25.673Z"
     }
   },
   "dismissed": {
@@ -141,12 +150,23 @@
   },
   "lastSelectedAgents": [
     "amp",
+    "antigravity",
     "cline",
     "codex",
     "cursor",
+    "deepagents",
+    "firebender",
     "gemini-cli",
     "github-copilot",
     "kimi-cli",
-    "opencode"
+    "opencode",
+    "warp"
+  ],
+  "knownDefaultAgents": [
+    "trae",
+    "trae-solo",
+    "trae-cn",
+    "trae-cli",
+    "coco"
   ]
 }
