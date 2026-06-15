@@ -1,0 +1,619 @@
+-- UI plugin configurations
+local util = require("config.util")
+
+-- ===================================================================
+-- Snacks
+-- ===================================================================
+local header = [[
+███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
+████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
+██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
+██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
+██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
+╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
+]]
+
+local function pad_str(str, length, pad_char, is_to_start)
+  local len = length - #str
+  if len <= 0 then
+    return str
+  end
+  local rep_str = string.rep(pad_char, len)
+  if is_to_start then
+    return rep_str .. str
+  end
+  return str .. rep_str
+end
+
+local align = "center"
+-- Use vim.system with timeout to avoid unbounded startup blocking.
+-- io.popen has no timeout and uses Lua IO instead of libuv.
+if vim.fn.executable("fortune") == 1 then
+  local result = vim.system({ "fortune" }, { text = true, timeout = 200 }):wait()
+  if result.code == 0 and result.stdout and result.stdout ~= "" then
+    align = "left"
+    header = result.stdout
+    local max_length = 0
+    local lines = vim.split(header, "\n", { trimempty = true })
+    for index, line in ipairs(lines) do
+      local new_line = line:gsub("\t", "")
+      lines[index] = new_line
+      if #new_line > max_length then
+        max_length = #new_line
+      end
+    end
+    local total_rows = #lines
+    for index, line in ipairs(lines) do
+      local is_author_line = index > 1 and index == total_rows
+      lines[index] = pad_str(line, max_length, " ", is_author_line)
+    end
+    header = table.concat(lines, "\n")
+  end
+end
+
+local exclude = {
+  "**/.git/*",
+  ".vscode",
+  ".DS_Store",
+  "thumbs.db",
+}
+
+-- picker (files / grep) exclude: additionally skip heavy dirs
+local picker_exclude = vim.list_extend({
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/log/**",
+}, exclude)
+
+local function gen_get_todo(global)
+  return function()
+    local todopath = vim.g.todopath
+    if not global then
+      todopath = util.git_root() .. "/.todo.md"
+    end
+    local root = vim.fs.dirname(todopath)
+    if vim.fn.filereadable(todopath) == 0 then
+      vim.fn.mkdir(root, "p")
+    end
+    Snacks.scratch.open({ ft = "markdown", file = todopath })
+  end
+end
+
+-- Quit the dashboard without killing neovim when real files are still open.
+-- snacks' default `q` action is `:qa`, which discards open buffers when the
+-- dashboard coexists with file/quickfix windows (e.g. opened from the qflist).
+local function dashboard_quit()
+  local has_files = false
+  for _, b in ipairs(vim.api.nvim_list_bufs()) do
+    if
+      vim.api.nvim_buf_is_loaded(b)
+      and vim.bo[b].buflisted
+      and vim.bo[b].buftype == ""
+      and vim.api.nvim_buf_get_name(b) ~= ""
+    then
+      has_files = true
+      break
+    end
+  end
+  if not has_files then
+    vim.cmd("qa")
+    return
+  end
+  -- files still open: never quit neovim, just dismiss the dashboard
+  if #vim.api.nvim_tabpage_list_wins(0) > 1 then
+    pcall(vim.api.nvim_win_close, 0, false)
+  else
+    vim.cmd("bdelete")
+  end
+end
+
+require("snacks").setup({
+  dashboard = {
+    preset = {
+      header = header,
+      -- stylua: ignore
+      keys = {
+        { icon = " ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
+        { icon = " ", key = "n", desc = "New File", action = ":ene | startinsert" },
+        { icon = " ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
+        { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
+        { icon = " ", key = "c", desc = "Config", action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
+        { icon = " ", key = "s", desc = "Restore Session", section = "session" },
+        { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+        { icon = " ", key = "q", desc = "Quit", action = dashboard_quit },
+      },
+    },
+    formats = { header = { align = align } },
+    sections = {
+      { section = "header" },
+      { section = "keys", gap = 1, padding = 1 },
+    },
+  },
+  animate = { enabled = vim.g.snacks_animate, fps = 120 },
+  scope = { debounce = 45 },
+  bigfile = { enabled = true },
+  quickfile = { enabled = true },
+  scroll = {
+    enabled = true,
+    animate_repeat = { delay = 50, duration = { step = 2, total = 20 }, easing = "linear" },
+    filter = function(buf)
+      -- Preserve stock escape hatches: :lua vim.g.snacks_scroll = false / vim.b.snacks_scroll = false
+      if vim.g.snacks_scroll == false or vim.b[buf].snacks_scroll == false then
+        return false
+      end
+      if vim.b[buf].bigfile then
+        return false
+      end
+      if vim.api.nvim_buf_line_count(buf) > 5000 then
+        return false
+      end
+      return vim.bo[buf].buftype ~= "terminal"
+    end,
+  },
+  indent = { enabled = true },
+  input = { enabled = true },
+  notifier = { enabled = true },
+  statuscolumn = { enabled = true },
+  words = { enabled = true },
+  lazygit = { enabled = true },
+  styles = {
+    notification = { wo = { wrap = true } },
+    terminal = { wo = { winbar = "" }, border = "rounded" },
+    scratch = { width = 0.88, height = 0.88 },
+  },
+  dim = { enabled = true },
+  image = { enabled = true },
+  explorer = { replace_netrw = true },
+  picker = {
+    hidden = true,
+    ignored = true,
+    exclude = picker_exclude,
+    actions = {
+      toggle_cwd = function(p)
+        local root = vim.fs.normalize(require("config.util").root())
+        local cwd = vim.fs.normalize(vim.uv.cwd() or ".")
+        local current = p:cwd()
+        p:set_cwd(current == root and cwd or root)
+        p:find()
+      end,
+      explorer_confirm = function(picker, item, action)
+        local explorer_actions = require("snacks.explorer.actions").actions
+        if item and item.dir and vim.fs.normalize(item.file) == vim.fs.normalize(picker:cwd()) then
+          return explorer_actions.explorer_up(picker)
+        end
+        return explorer_actions.confirm(picker, item, action)
+      end,
+      explorer_set_root = function(picker)
+        local dir = picker:dir()
+        if dir and vim.fs.normalize(dir) ~= vim.fs.normalize(picker:cwd()) then
+          picker:set_cwd(dir)
+          picker:find()
+        end
+      end,
+    },
+    icons = {
+      git = {
+        added = " + ",
+        modified = "  ",
+        deleted = " 󰗨 ",
+        renamed = " 󰹳 ",
+        untracked = "  ",
+        ignored = "  ",
+        staged = " 󰆺 ",
+        unmerged = " 󰆑 ",
+      },
+    },
+    layout = {
+      preset = "vertical",
+      layout = { width = 0.88, height = 0.88 },
+    },
+    formatters = { file = { truncate = "center", min_width = 9999 } },
+    sources = {
+      files = { hidden = true, ignored = true, exclude = picker_exclude },
+      explorer = {
+        ignored = true,
+        exclude = exclude,
+        watch = true,
+        follow_file = true,
+        diagnostics = false,
+        title = "",
+        layout = {
+          hidden = { "input" },
+          layout = { width = 50, position = "right" },
+        },
+        win = {
+          list = {
+            keys = {
+              ["-"] = { "explorer_set_root", mode = { "n" } },
+              ["<CR>"] = { "explorer_confirm", mode = { "n" } },
+              ["/"] = { "focus_input", mode = { "n" } },
+            },
+          },
+          input = {
+            keys = {
+              ["<Esc>"] = { "focus_list", mode = { "n", "i" } },
+            },
+          },
+        },
+      },
+    },
+    win = {
+      input = {
+        keys = {
+          ["<a-c>"] = { "toggle_cwd", mode = { "i", "n" } },
+          ["<c-e>"] = { "toggle_hidden", mode = { "i", "n" } },
+          ["<c-r>"] = { "toggle_ignored", mode = { "i", "n" } },
+        },
+      },
+      list = {
+        wo = { wrap = true },
+        keys = {
+          ["<c-e>"] = "toggle_hidden",
+          ["<c-r>"] = "toggle_ignored",
+        },
+      },
+    },
+  },
+})
+
+-- Auto-close the snacks dashboard as soon as a real file buffer is shown
+-- (e.g. opening an entry from the quickfix list). Avoids dashboard coexisting
+-- with edited files.
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  group = vim.api.nvim_create_augroup("dashboard_autoclose", { clear = true }),
+  callback = function(ev)
+    if vim.bo[ev.buf].buftype ~= "" or vim.api.nvim_buf_get_name(ev.buf) == "" then
+      return
+    end
+    local dash = vim.tbl_filter(function(b)
+      return vim.bo[b].filetype == "snacks_dashboard"
+    end, vim.api.nvim_list_bufs())
+    if #dash == 0 then
+      return
+    end
+    -- Tear down snacks' own dashboard augroup first. Otherwise its
+    -- WinResized/VimResized callbacks fire against the now-invalid dashboard
+    -- window and raise "Invalid window id" while we delete the buffer.
+    pcall(vim.api.nvim_del_augroup_by_name, "snacks_dashboard")
+    -- Defer the delete so the current BufWinEnter/resize cascade settles first.
+    vim.schedule(function()
+      for _, b in ipairs(dash) do
+        if vim.api.nvim_buf_is_valid(b) then
+          pcall(vim.api.nvim_buf_delete, b, { force = true })
+        end
+      end
+    end)
+  end,
+})
+
+-- Set statuscolumn after snacks is loaded (must not be in options.lua,
+-- otherwise first-launch vim.pack install triggers redraw before snacks exists)
+vim.opt.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]
+
+-- Snacks keymaps for todos
+vim.keymap.set("n", "<leader>T.", gen_get_todo(true), { desc = "Toggle Scratch Todo" })
+vim.keymap.set("n", "<leader>Tl", gen_get_todo(false), { desc = "Toggle Local Scratch Todo" })
+
+-- ===================================================================
+-- Noice
+-- ===================================================================
+require("noice").setup({
+  lsp = {
+    override = {
+      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+      ["vim.lsp.util.stylize_markdown"] = true,
+    },
+  },
+  presets = {
+    bottom_search = true,
+    command_palette = true,
+    long_message_to_split = true,
+  },
+  routes = {
+    {
+      filter = {
+        event = "msg_show",
+        any = {
+          { find = "; after #%d+" },
+          { find = "; before #%d+" },
+          { find = "%d fewer lines" },
+          { find = "%d more lines" },
+          { find = "%d+L, %d+B" },
+          { find = "%d+ lines " },
+          { find = "Installed %d+/%d+ languages" },
+          { find = "Parser not available for language" },
+          { find = "Pattern not found:" },
+          { find = "E211: File" },
+          { find = "Check log for errors:" },
+        },
+      },
+    },
+    {
+      filter = {
+        event = "notify",
+        any = {
+          { find = "No information available" },
+          { find = "This command may require a client extension" },
+          { find = "vim/shared.lua:0: invalid" },
+          { find = "shared.lua:0" },
+          { find = "ENOENT" },
+        },
+      },
+    },
+  },
+  views = {
+    hover = {
+      scrollbar = true,
+      border = { style = "rounded", padding = { 0, 1 } },
+      size = { width = "auto", max_width = vim.o.columns - 4 },
+      position = { row = 2, col = 2 },
+    },
+    cmdline_popup = {
+      size = { width = "auto", max_width = vim.o.columns - 4 },
+    },
+  },
+  messages = { view_search = false },
+  throttle = 1000 / 120,
+})
+
+-- Noice keymaps
+vim.keymap.set("c", "<S-Enter>", function()
+  require("noice").redirect(vim.fn.getcmdline())
+end, { desc = "Redirect Cmdline" })
+vim.keymap.set("n", "<leader>snl", function()
+  require("noice").cmd("last")
+end, { desc = "Noice Last Message" })
+vim.keymap.set("n", "<leader>snh", function()
+  require("noice").cmd("history")
+end, { desc = "Noice History" })
+vim.keymap.set("n", "<leader>sna", function()
+  require("noice").cmd("all")
+end, { desc = "Noice All" })
+vim.keymap.set("n", "<leader>snd", function()
+  require("noice").cmd("dismiss")
+end, { desc = "Dismiss All" })
+vim.keymap.set("n", "<leader>snt", function()
+  if Snacks and Snacks.picker then
+    Snacks.picker.notifications()
+  else
+    require("noice").cmd("history")
+  end
+end, { desc = "Noice Picker" })
+vim.keymap.set({ "i", "n", "s" }, "<c-f>", function()
+  if not require("noice.lsp").scroll(4) then
+    return "<c-f>"
+  end
+end, { silent = true, expr = true, desc = "Scroll Forward" })
+vim.keymap.set({ "i", "n", "s" }, "<c-b>", function()
+  if not require("noice.lsp").scroll(-4) then
+    return "<c-b>"
+  end
+end, { silent = true, expr = true, desc = "Scroll Backward" })
+
+-- ===================================================================
+-- Lualine
+-- ===================================================================
+local icons = util.icons
+
+local function lsp_names()
+  local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
+  local names = {}
+  for _, client in pairs(clients) do
+    names[#names + 1] = client.name:match("([^_]+)")
+  end
+  return names
+end
+
+local function lsp_info()
+  local names = lsp_names()
+  local result = table.concat(names, "•")
+  if result == "" then
+    return ""
+  end
+  return "󱓞 " .. result
+end
+
+local function file_cond()
+  if vim.bo.buftype == "nofile" then
+    return false
+  end
+  local bufname = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+  return string.match(bufname, "^/.*[%a]+$") ~= nil
+end
+
+local function root_dir_component()
+  local root = util.root()
+  if not root then
+    return ""
+  end
+  return " " .. vim.fn.fnamemodify(root, ":t")
+end
+
+local filename = {
+  "filename",
+  file_status = false,
+  newfile_status = true,
+  path = 3,
+  shorting_target = 0,
+  symbols = { modified = "", readonly = "󰌾", unnamed = "[No Name]", newfile = "[New]" },
+  color = function()
+    return { fg = util.hl_fg("Special"), italic = true }
+  end,
+  cond = file_cond,
+  padding = 0,
+}
+
+-- Cache price-ticker color; recompute only on colorscheme change.
+local price_color_cache = nil
+local function compute_price_color()
+  local normal = vim.api.nvim_get_hl(0, { name = "Normal" })
+  local bg = normal.bg
+  if not bg then
+    bg = vim.o.background == "dark" and 0x24283b or 0xe1e2e7
+  end
+  local contrast = vim.o.background == "dark" and 0xFFFFFF or 0x000000
+  local r = math.floor(math.floor(bg / 65536) * 0.8 + math.floor(contrast / 65536) * 0.2)
+  local g = math.floor(math.floor(bg / 256) % 256 * 0.8 + math.floor(contrast / 256) % 256 * 0.2)
+  local b = math.floor(bg % 256 * 0.8 + contrast % 256 * 0.2)
+  price_color_cache = { fg = string.format("#%02x%02x%02x", r, g, b) }
+end
+compute_price_color()
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("price_color_cache", { clear = true }),
+  callback = compute_price_color,
+})
+
+vim.o.laststatus = 3
+require("lualine").setup({
+  options = {
+    theme = "auto",
+    ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion" },
+    component_separators = { left = " ▎", right = " ▎" },
+  },
+  sections = {
+    lualine_a = { "mode" },
+    lualine_b = { { "branch" } },
+    lualine_c = {
+      { root_dir_component, padding = { left = 0, right = 0 } },
+      { lsp_info, padding = 0 },
+      {
+        "diagnostics",
+        update_in_insert = false,
+        cond = function()
+          return vim.diagnostic.is_enabled({ bufnr = vim.api.nvim_get_current_buf() })
+        end,
+        symbols = {
+          error = icons.diagnostics.Error,
+          warn = icons.diagnostics.Warn,
+          info = icons.diagnostics.Info,
+          hint = icons.diagnostics.Hint,
+        },
+        padding = 0,
+      },
+    },
+    lualine_x = {
+      {
+        require("config.price").get_display_text,
+        color = function()
+          return price_color_cache
+        end,
+        padding = { left = 0, right = 1 },
+      },
+    },
+    lualine_y = {
+      { "filetype", colored = false, icon_only = false, padding = 0 },
+      {
+        "selectioncount",
+        fmt = function(val)
+          return "󰆐 " .. val .. " selected"
+        end,
+        cond = function()
+          local mode = vim.api.nvim_get_mode().mode
+          return vim.list_contains({ "v", "V", "\x16" }, mode)
+        end,
+        padding = 0,
+      },
+      {
+        function()
+          return "󱁐:" .. vim.bo.shiftwidth
+        end,
+        padding = 0,
+      },
+      { "encoding", padding = { left = 0, right = 1 } },
+    },
+    lualine_z = {
+      { "progress", separator = " ", padding = { left = 1, right = 0 } },
+      { "location", padding = { left = 0, right = 1 } },
+    },
+  },
+  winbar = {
+    lualine_c = {
+      filename,
+      {
+        function()
+          local search_info = vim.fn.searchcount()
+          local content = vim.fn.getreg("/")
+          content = content:gsub("\\[<>V]", "")
+          if search_info.total == 0 then
+            return " " .. content .. ": no result"
+          end
+          return " " .. content .. ": " .. search_info.current .. "󰿟" .. search_info.total
+        end,
+        cond = function()
+          return vim.v.hlsearch > 0 and file_cond()
+        end,
+        color = function()
+          return { fg = util.hl_fg("Constant") }
+        end,
+        padding = 0,
+      },
+    },
+  },
+  inactive_winbar = {
+    lualine_c = { filename },
+  },
+})
+
+-- ===================================================================
+-- Bufferline
+-- ===================================================================
+-- Bufferline keymaps
+vim.keymap.set("n", "<leader>bp", "<cmd>BufferLineTogglePin<cr>", { desc = "Toggle Pin" })
+vim.keymap.set("n", "<leader>bP", "<cmd>BufferLineGroupClose ungrouped<cr>", { desc = "Delete Non-Pinned Buffers" })
+vim.keymap.set("n", "<leader>br", "<cmd>BufferLineCloseRight<cr>", { desc = "Delete Buffers to the Right" })
+vim.keymap.set("n", "<leader>bl", "<cmd>BufferLineCloseLeft<cr>", { desc = "Delete Buffers to the Left" })
+vim.keymap.set("n", "<leader>bj", "<cmd>BufferLinePick<cr>", { desc = "Pick Buffer" })
+vim.keymap.set("n", "[B", "<cmd>BufferLineMovePrev<cr>", { desc = "Move buffer prev" })
+vim.keymap.set("n", "]B", "<cmd>BufferLineMoveNext<cr>", { desc = "Move buffer next" })
+
+require("bufferline").setup({
+  options = {
+    diagnostics = false,
+    show_buffer_icons = false,
+    always_show_bufferline = false,
+    truncate_names = false,
+    max_prefix_length = 30,
+    name_formatter = function(bufinfo)
+      local name = bufinfo.name or ""
+      if name:match("^index$") or name:match("^index%..+") then
+        local path = bufinfo.path or ""
+        local parent = vim.fn.fnamemodify(path, ":h:t")
+        if parent == "" or parent == "." then
+          return name
+        end
+        return parent .. "/" .. name
+      end
+      return name
+    end,
+  },
+})
+
+-- ===================================================================
+-- Vimade
+-- ===================================================================
+require("vimade").setup({
+  fadelevel = 0.7,
+  recipe = { "duo", { animate = true } },
+  tint = function()
+    local is_dark = vim.o.background == "dark"
+    local rgb = is_dark and { 255, 255, 255 } or { 0, 0, 0 }
+    return {
+      bg = { rgb = rgb, intensity = 0.2 },
+      fg = { rgb = rgb, intensity = 0.2 },
+    }
+  end,
+  blocklist = {
+    custom = {
+      buf_opts = {
+        filetype = { "snacks_terminal", "opencode_terminal" },
+        buftype = { "terminal" },
+      },
+    },
+  },
+})
+
+vim.defer_fn(function()
+  pcall(vim.cmd.VimadeFadeActive)
+end, 500)
+
+vim.keymap.set("n", "<leader>uv", "<cmd>VimadeToggle<cr>", { desc = "Vimade: Toggle" })

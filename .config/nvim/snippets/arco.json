@@ -1,0 +1,54 @@
+{
+  "Button:Basic": {
+    "prefix": "acbtn-basic",
+    "description": "基本用法: 按钮分为 主要按钮、次要按钮、虚线按钮、线形按钮和文本按钮五种",
+    "body": [
+      "<Button type='${1:primary,secondary,dashed,outline,text}'>$2</Button>"
+    ]
+  },
+  "Button:Icon": {
+    "prefix": "acbtn-icon",
+    "description": "Button 可以嵌入图标，在只设置图标而没有 children 时，按钮的高宽相等。",
+    "body": [
+      "<Button type='${1:primary,secondary,dashed,outline,text}' icon={${2:<IconDelete />}}>",
+      "  ${3:Delete}",
+      "</Button>"
+    ]
+  },
+  "Button:shape": {
+    "prefix": "acbtn-shape",
+    "description": "Button 有多种形状，square - 长方形 (默认), circle - 圆形, round - 全圆角。",
+    "body": [
+      "<Button type='${1:primary,secondary,dashed,outline,text}' shape='${2:square,circle,round}'>",
+      "  ${3:Circle}",
+      "</Button>"
+    ]
+  },
+  "Button:size": {
+    "prefix": "acbtn-size",
+    "description": "按钮分为：迷你、小、中、大，四种尺寸。高度分别为：24px/28px/32px/36px。推荐及默认为尺寸「中」。可在不同场景及不同业务需求选择适合尺寸。",
+    "body": [
+      "<Button type='${1:primary,secondary,dashed,outline,text}' size='${2:mini,small,default,large}'>",
+      "  ${3:Small}",
+      "</Button>"
+    ]
+  },
+  "Button:status": {
+    "prefix": "acbtn-status",
+    "description": "按钮状态分为 警告，危险，成功 三种，可以与按钮类型同时生效，优先级高于按钮类型。",
+    "body": [
+      "<Button type='${1:primary,secondary,dashed,outline,text}' status='${2:warning,danger,success}'>",
+      "  ${3:Success}",
+      "</Button>"
+    ]
+  },
+  "Button:disabled": {
+    "prefix": "acbtn-disabled",
+    "description": "按钮的禁用状态。",
+    "body": [
+      "<Button disabled type='${1:primary,secondary,dashed,outline,text}' status='${2:warning,danger,success}'>",
+      "  ${3:Disabled}",
+      "</Button>"
+    ]
+  }
+}

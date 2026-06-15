@@ -1,0 +1,10 @@
+{
+  "trustedformulae": [
+    "cormacrelf/tap/dark-notify",
+    "oven-sh/bun/bun"
+  ],
+  "trustedtaps": [
+    "cormacrelf/tap",
+    "oven-sh/bun"
+  ]
+}

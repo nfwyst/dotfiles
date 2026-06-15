@@ -1,0 +1,202 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "hashline_edit": true,
+  "model_fallback": true,
+  "runtime_fallback": { "enabled": true },
+  "team_mode": { "enabled": true },
+  "agents": {
+    "sisyphus": {
+      "model": "opencode-go/qwen3.7-max",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "hephaestus": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "oracle": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "librarian": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "explore": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "multimodal-looker": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "prometheus": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "metis": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "momus": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "atlas": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "sisyphus-junior": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "ultrabrain": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "deep": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "artistry": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "quick": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "unspecified-low": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "unspecified-high": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    },
+    "writing": {
+      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
+      "fallback_models": [
+        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
+        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
+        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
+        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
+        "ai_agent_proxy_chat/glm-5"
+      ]
+    }
+  }
+}

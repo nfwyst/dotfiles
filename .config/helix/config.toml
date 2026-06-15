@@ -1,0 +1,271 @@
+# Helix Editor Configuration
+# 基于 Neovim 配置 + 最佳实践优化
+# 配置文件: ~/.config/helix/config.toml
+
+# 主题设置 - 使用自定义透明主题
+theme = "monokai-pro-transparent"
+
+# =============================================================================
+# 编辑器基础设置
+# =============================================================================
+[editor]
+line-number = "relative"           # 相对行号 (Neovim: relativenumber)
+mouse = true                        # 启用鼠标支持
+scrolloff = 8                       # 滚动偏移 (最佳实践推荐)
+cursorline = true                   # 高亮当前行
+bufferline = "multiple"             # 多 buffer 时显示标签栏
+color-modes = true                  # 状态栏模式着色
+rulers = [80, 120]                  # 标尺列
+true-color = true                   # 真彩色支持
+undercurl = true                    # 下划线卷曲样式 (诊断)
+idle-timeout = 50                   # 补全延迟 (快速响应)
+completion-replace = true           # 补全替换模式
+completion-trigger-len = 1          # 输入 1 字符触发补全
+trim-trailing-whitespace = true     # 删除行尾空白
+insert-final-newline = true         # 文件末尾插入换行
+popup-border = "all"                # 弹窗边框
+end-of-line-diagnostics = "hint"    # 行尾显示 hint 级别诊断
+
+# 光标形状设置
+[editor.cursor-shape]
+insert = "bar"                      # 插入模式: 条形光标
+normal = "block"                    # 普通模式: 块状光标
+select = "underline"                # 选择模式: 下划线光标
+
+# =============================================================================
+# Git 和诊断 Gutter
+# =============================================================================
+[editor.gutters]
+layout = ["diagnostics", "spacer", "line-numbers", "spacer", "diff"]
+
+[editor.gutters.line-numbers]
+min-width = 3
+
+# =============================================================================
+# 状态栏 - 显示 Git 分支和诊断
+# =============================================================================
+[editor.statusline]
+left = ["mode", "spinner", "version-control", "separator", "file-name", "read-only-indicator", "file-modification-indicator"]
+center = []
+right = ["diagnostics", "workspace-diagnostics", "separator", "selections", "position", "position-percentage", "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+
+mode.normal = "NOR"
+mode.insert = "INS"
+mode.select = "SEL"
+
+# =============================================================================
+# LSP 设置
+# =============================================================================
+[editor.lsp]
+enable = true
+display-messages = true             # 显示 LSP 消息
+display-inlay-hints = false         # 关闭 inlay hints (与 Neovim 一致)
+auto-signature-help = true          # 自动签名帮助
+display-signature-help-docs = true
+snippets = true                     # 启用代码片段
+goto-reference-include-declaration = true
+
+# 内联诊断设置
+[editor.inline-diagnostics]
+cursor-line = "warning"             # 当前行显示 warning+
+other-lines = "error"               # 其他行只显示 error
+
+# =============================================================================
+# 文件选择器设置
+# =============================================================================
+[editor.file-picker]
+hidden = false                      # 显示隐藏文件
+git-ignore = true                   # 遵循 gitignore
+git-global = true                   # 遵循全局 gitignore
+git-exclude = true                  # 遵循 .git/info/exclude
+follow-symlinks = true              # 跟随符号链接
+deduplicate-links = true
+max-depth = 10
+
+# =============================================================================
+# 缩进指示器
+# =============================================================================
+[editor.indent-guides]
+render = true
+character = "│"
+skip-levels = 1
+
+# =============================================================================
+# 自动保存
+# =============================================================================
+[editor.auto-save]
+focus-lost = false
+after-delay.enable = false          # 禁用自动保存，手动保存
+
+# =============================================================================
+# 软换行 (Markdown 等长文件)
+# =============================================================================
+[editor.soft-wrap]
+enable = false
+
+# =============================================================================
+# 搜索设置
+# =============================================================================
+[editor.search]
+smart-case = true                   # 智能大小写
+wrap-around = true                  # 循环搜索
+
+# =============================================================================
+# 空白字符渲染
+# =============================================================================
+[editor.whitespace.render]
+space = "none"
+tab = "all"
+newline = "none"
+
+[editor.whitespace.characters]
+tab = "→"
+tabpad = "·"
+
+# =============================================================================
+# 键位映射 - 基于 Neovim 配置 + 最佳实践
+# =============================================================================
+
+[keys.normal]
+# 保存和退出
+C-s = ":write"
+C-w = ":buffer-close"
+C-q = ":quit"
+
+# 行移动 (类似 Neovim 的 S-j 和 S-k)
+A-j = ["extend_to_line_bounds", "yank", "paste_after"]
+A-k = ["extend_to_line_bounds", "yank", "move_line_up", "paste_before"]
+
+# 窗口导航
+C-h = "jump_view_left"
+C-j = "jump_view_down"
+C-k = "jump_view_up"
+C-l = "jump_view_right"
+
+# Buffer 导航
+S-l = ":buffer-next"
+S-h = ":buffer-previous"
+
+# 快速跳转到行首/尾
+"0" = "goto_line_start"
+"$" = "goto_line_end"
+"^" = "goto_first_nonwhitespace"
+
+# 行选择
+V = ["select_mode", "extend_to_line_bounds"]
+
+# 删除不复制到剪贴板 (类似 Vim black hole)
+"x" = "delete_selection_noyank"
+
+# 取消选择
+esc = ["collapse_selection", "keep_primary_selection"]
+
+# 快速跳转标签 (类似 easymotion)
+# gw = "goto_word"  # 需要在 [keys.normal.g] 中定义
+# =============================================================================
+# Space 主菜单 (类似 Neovim 的 <leader>)
+# =============================================================================
+[keys.normal.space]
+# 文件操作
+w = ":write"
+W = ":write-all"
+q = ":buffer-close"
+Q = ":quit"
+x = ":write-quit"
+
+# 文件选择器
+f = "file_picker"
+F = "file_picker_in_current_buffer_directory"
+b = "buffer_picker"
+s = "symbol_picker"
+S = "workspace_symbol_picker"
+d = "diagnostics_picker"
+D = "workspace_diagnostics_picker"
+a = "code_action"
+k = "hover"
+R = ":lsp-restart"
+"/" = "global_search"
+o = ":config-open"
+r = ":config-reload"
+
+# 注释 (使用 gc 或 space+c.f)
+# c = "toggle_comments"  # 移除以避免与子菜单冲突
+C = "toggle_block_comments"
+
+# 格式化
+[keys.normal.space.c]
+f = ":format"
+
+# Git 操作 (Helix 内置 git gutter 支持)
+[keys.normal.space.g]
+g = "changed_file_picker"
+# b = ":sh git blame %"  # 在终端运行 git blame
+# 窗口操作 (使用默认 C-w 键位)
+# [keys.normal.space.w]
+# h = "jump_view_left"
+# j = "jump_view_down"
+# k = "jump_view_up"
+# l = "jump_view_right"
+# v = "vsplit"
+# s = "hsplit"
+# q = ":quit"
+# d 小模式 (删除操作)
+[keys.normal.d]
+d = ["extend_to_line_bounds", "delete_selection"]
+x = "delete_selection_noyank"
+
+# y 小模式 (复制操作)
+[keys.normal.y]
+y = ["extend_to_line_bounds", "yank"]
+
+# g 小模式 (跳转操作)
+[keys.normal.g]
+d = "goto_definition"
+r = "goto_reference"
+t = "goto_type_definition"
+i = "goto_implementation"
+D = "goto_declaration"
+s = "goto_first_nonwhitespace"
+h = "goto_line_start"
+e = "goto_file_end"
+
+# z 小模式 (折叠和滚动)
+[keys.normal.z]
+j = "scroll_up"
+k = "scroll_down"
+c = "toggle_comments"
+
+# =============================================================================
+# 选择模式键位
+# =============================================================================
+[keys.select]
+# 行选择
+k = ["extend_line_up", "extend_to_line_bounds"]
+j = ["extend_line_down", "extend_to_line_bounds"]
+
+# 行尾操作
+D = ["extend_to_line_bounds", "delete_selection", "normal_mode"]
+C = ["extend_to_line_bounds", "change_selection", "normal_mode"]
+
+# 行首/尾
+"0" = "goto_line_start"
+"$" = "goto_line_end"
+
+# =============================================================================
+# 插入模式键位
+# =============================================================================
+[keys.insert]
+# jk 退出插入模式 (类似 Neovim)
+j = { k = "normal_mode" }
+C-c = "normal_mode"
+
+# 插入模式下的导航
+C-h = "move_char_left"
+C-l = "move_char_right"
+C-j = "move_line_down"
+C-k = "move_line_up"
+C-b = "move_char_left"
+C-f = "move_char_right"
+C-a = "goto_line_start"
+C-e = "goto_line_end"

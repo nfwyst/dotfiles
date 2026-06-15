@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Design Review"
+  short_description: "前端架构与交互设计评审清单，编码前后都要执行检查项"
+  default_prompt: "Use $frontend-design-review-gate to run architecture and interaction review checks before coding and before merge."

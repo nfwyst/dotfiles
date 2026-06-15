@@ -1,0 +1,96 @@
+{
+  "$schema": "./risk-config.schema.json",
+  "version": "1.0.0",
+  "description": "Quant Algo 风控参数配置",
+  
+  "stopLoss": {
+    "defaultPercent": 0.015,
+    "minPercent": 0.005,
+    "maxPercent": 0.05,
+    "atrMultiplier": 1.5,
+    "adaptiveEnabled": true
+  },
+  
+  "takeProfit": {
+    "defaultPercent": 0.03,
+    "minPercent": 0.01,
+    "maxPercent": 0.1,
+    "atrMultiplier": 3.0,
+    "useMultipleTP": true,
+    "tp1": {
+      "percent": 0.015,
+      "closeRatio": 0.3
+    },
+    "tp2": {
+      "percent": 0.03,
+      "closeRatio": 0.4
+    },
+    "tp3": {
+      "percent": 0.05,
+      "closeRatio": 0.3
+    }
+  },
+  
+  "trailingStop": {
+    "enabled": true,
+    "activationPercent": 0.01,
+    "trailingPercent": 0.01,
+    "minProfitPercent": 0.005
+  },
+  
+  "positionSizing": {
+    "maxRiskPerTrade": 0.02,
+    "maxPositionSize": 0.5,
+    "minPositionSize": 0.01,
+    "kellyFraction": 0.25,
+    "useVolatilityAdjustment": true
+  },
+  
+  "dailyLimits": {
+    "maxDailyLoss": 0.1,
+    "maxDailyTrades": 50,
+    "maxDailyDrawdown": 0.15,
+    "tradingHours": {
+      "start": "00:00",
+      "end": "23:59",
+      "timezone": "Asia/Shanghai"
+    }
+  },
+  
+  "cooldown": {
+    "defaultMinutes": 5,
+    "afterWin": 2,
+    "afterLoss": 10,
+    "afterConsecutiveLosses": {
+      "threshold": 3,
+      "minutes": 30
+    }
+  },
+  
+  "volatility": {
+    "filterEnabled": true,
+    "minVolatility": 0.002,
+    "maxVolatility": 0.02,
+    "lookbackPeriod": 20,
+    "highVolatilityAction": "reduce_size",
+    "lowVolatilityAction": "skip"
+  },
+  
+  "leverage": {
+    "default": 50,
+    "max": 125,
+    "adaptive": {
+      "enabled": true,
+      "lowVolatility": 30,
+      "mediumVolatility": 50,
+      "highVolatility": 20
+    }
+  },
+  
+  "emergencyRules": {
+    "liquidationBuffer": 0.1,
+    "marginCallThreshold": 0.2,
+    "autoCloseOnDisconnect": true,
+    "maxUnrealizedLoss": 0.3
+  }
+}

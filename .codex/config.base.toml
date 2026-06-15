@@ -1,0 +1,52 @@
+model = "gpt-5.5-paygo"
+model_reasoning_effort = "xhigh"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+network_access = "enabled"
+suppress_unstable_features_warning = true
+
+[features]
+goals = true
+unified_exec = true
+child_agents_md = true
+multi_agent = true
+plugin_hooks = true
+plugins = true
+hooks = true
+
+[features.multi_agent_v2]
+max_concurrent_threads_per_session = 10_000
+
+[notice]
+hide_world_writable_warning = true
+hide_full_access_warning = true
+
+[plugins."omo@sisyphuslabs"]
+enabled = true
+
+[plugins."omo@sisyphuslabs".mcp_servers.context7]
+enabled = true
+
+[plugins."omo@sisyphuslabs".mcp_servers.git_bash]
+enabled = false
+
+[agents.codex-ultrawork-reviewer]
+config_file = "./agents/codex-ultrawork-reviewer.toml"
+
+[agents.explorer]
+config_file = "./agents/explorer.toml"
+
+[agents.librarian]
+config_file = "./agents/librarian.toml"
+
+[agents.metis]
+config_file = "./agents/metis.toml"
+
+[agents.momus]
+config_file = "./agents/momus.toml"
+
+[agents.plan]
+config_file = "./agents/plan.toml"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"

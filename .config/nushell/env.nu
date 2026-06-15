@@ -1,0 +1,235 @@
+# Nushell Environment Config File
+#
+# version = "0.93.0"
+
+def create_left_prompt [] {
+    let dir = match (do --ignore-errors { $env.PWD | path relative-to $nu.home-path }) {
+        null => $env.PWD
+        '' => '~'
+        $relative_pwd => ([~ $relative_pwd] | path join)
+    }
+
+    let path_color = (if (is-admin) { ansi red_bold } else { ansi green_bold })
+    let separator_color = (if (is-admin) { ansi light_red_bold } else { ansi light_green_bold })
+    let path_segment = $"($path_color)($dir)"
+
+    $path_segment | str replace --all (char path_sep) $"($separator_color)(char path_sep)($path_color)"
+}
+
+def create_right_prompt [] {
+    # create a right prompt in magenta with green separators and am/pm underlined
+    let time_segment = ([
+        (ansi reset)
+        (ansi magenta)
+        (date now | format date '%x %X') # try to respect user's locale
+    ] | str join | str replace --regex --all "([/:])" $"(ansi green)${1}(ansi magenta)" |
+        str replace --regex --all "([AP]M)" $"(ansi magenta_underline)${1}")
+
+    let last_exit_code = if ($env.LAST_EXIT_CODE != 0) {([
+        (ansi rb)
+        ($env.LAST_EXIT_CODE)
+    ] | str join)
+    } else { "" }
+
+    ([$last_exit_code, (char space), $time_segment] | str join)
+}
+
+# Use nushell functions to define your right and left prompt
+$env.PROMPT_COMMAND = {|| create_left_prompt }
+# FIXME: This default is not implemented in rust code as of 2023-09-08.
+$env.PROMPT_COMMAND_RIGHT = {|| create_right_prompt }
+
+# The prompt indicators are environmental variables that represent
+# the state of the prompt
+$env.PROMPT_INDICATOR = {|| "> " }
+$env.PROMPT_INDICATOR_VI_INSERT = {|| " " }
+$env.PROMPT_INDICATOR_VI_NORMAL = {|| " " }
+$env.PROMPT_MULTILINE_INDICATOR = {|| "::: " }
+
+# If you want previously entered commands to have a different prompt from the usual one,
+# you can uncomment one or more of the following lines.
+# This can be useful if you have a 2-line prompt and it's taking up a lot of space
+# because every command entered takes up 2 lines instead of 1. You can then uncomment
+# the line below so that previously entered commands show with a single `🚀`.
+# $env.TRANSIENT_PROMPT_COMMAND = {|| "🚀 " }
+# $env.TRANSIENT_PROMPT_INDICATOR = {|| "" }
+# $env.TRANSIENT_PROMPT_INDICATOR_VI_INSERT = {|| " " }
+# $env.TRANSIENT_PROMPT_INDICATOR_VI_NORMAL = {|| " " }
+# $env.TRANSIENT_PROMPT_MULTILINE_INDICATOR = {|| "" }
+# $env.TRANSIENT_PROMPT_COMMAND_RIGHT = {|| "" }
+
+# Specifies how environment variables are:
+# - converted from a string to a value on Nushell startup (from_string)
+# - converted from a value back to a string when running external commands (to_string)
+# Note: The conversions happen *after* config.nu is loaded
+$env.ENV_CONVERSIONS = {
+    "PATH": {
+        from_string: { |s| $s | split row (char esep) | path expand --no-symlink }
+        to_string: { |v| $v | path expand --no-symlink | str join (char esep) }
+    }
+    "Path": {
+        from_string: { |s| $s | split row (char esep) | path expand --no-symlink }
+        to_string: { |v| $v | path expand --no-symlink | str join (char esep) }
+    }
+}
+
+# Directories to search for scripts when calling source or use
+# The default for this is $nu.default-config-dir/scripts
+$env.NU_LIB_DIRS = [
+    ($nu.default-config-dir | path join 'scripts') # add <nushell-config-dir>/scripts
+]
+
+# Directories to search for plugin binaries when calling register
+# The default for this is $nu.default-config-dir/plugins
+$env.NU_PLUGIN_DIRS = [
+    ($nu.default-config-dir | path join 'plugins') # add <nushell-config-dir>/plugins
+]
+
+# To add entries to PATH (on Windows you might use Path), you can use the following pattern:
+$env.PATH = ($env.PATH | split row (char esep))
+$env.UNAME = (uname | get kernel-name)
+$env.GOPATH = ($env.HOME | path join "go")
+$env.CARGO_HOME = ($env.HOME | path join ".cargo")
+$env.XDG_CONFIG_HOME = ($env.HOME | path join ".config")
+$env.XDG_BIN_HOME = ($env.HOME | path join ".local/bin")
+$env.XDG_DATA_HOME = ($env.HOME | path join ".local/share")
+$env.GIT_CONFIG_GLOBAL = ($env.HOME | path join ".config/.gitconfig")
+$env.BOB_CONFIG = ($env.HOME | path join ".config/bob/config.json")
+
+use std "path add"
+path add ($env.GOPATH | path join "bin")
+path add ($env.CARGO_HOME | path join "bin")
+path add ($env.HOME | path join ".local/bin")
+path add ($env.HOME | path join ".local/share/bob/nvim-bin")
+path add ($env.HOME | path join ".bun/bin")
+path add "/usr/local/bin"
+
+if $env.UNAME == "Darwin" {
+  let brew = "/opt/homebrew"
+  let brew_bin = $"($brew)/bin"
+  let brew_sbin = $"($brew)/sbin"
+  let path_exists = $brew_bin | path exists
+  if $path_exists {
+    path add $brew_bin
+    path add $brew_sbin
+  }
+  $env.SSL_CERT_FILE = "/etc/ssl/cert.pem"
+}
+
+if $env.UNAME == "Linux" {
+  $env.PKG_CONFIG_PATH = "/usr/lib64/pkgconfig"
+  $env.OPENSSL_DIR = "/usr"
+}
+
+$env.LANG = "en_US.UTF-8"
+let nvim_path = which nvim
+if ($nvim_path | is-not-empty) {
+  $env.EDITOR = ($nvim_path | get path | first)
+}
+$env.SHELL = (which nu | get path | first)
+
+# To load env from custom file
+source ($nu.default-config-dir | path join 'custom-env.nu')
+
+# 各 init 缓存化: 缓存文件已存在则跳过, 减少每次启动 nu 时 fork 的子进程数量。
+# 升级对应工具后手动: rm -rf ~/.config/nushell/cache/{starship,zoxide,carapace,atuin}
+let _cache = ($nu.default-config-dir | path join 'cache')
+
+# prepare for starship
+let _starship_cache = ($_cache | path join 'starship/init.nu')
+if not ($_starship_cache | path exists) {
+    mkdir ($_starship_cache | path dirname)
+    starship init nu | save -f $_starship_cache
+}
+
+# prepare for zoxide
+let _zoxide_cache = ($_cache | path join 'zoxide/init.nu')
+if not ($_zoxide_cache | path exists) {
+    mkdir ($_zoxide_cache | path dirname)
+    zoxide init nushell | save -f $_zoxide_cache
+}
+
+# prepare for carapace
+$env.CARAPACE_BRIDGES = 'zsh,bash'
+let _carapace_cache = ($_cache | path join 'carapace/init.nu')
+if not ($_carapace_cache | path exists) {
+    mkdir ($_carapace_cache | path dirname)
+    carapace _carapace nushell | save -f $_carapace_cache
+}
+
+# prepare for atuin
+let _atuin_cache = ($_cache | path join 'atuin/init.nu')
+if not ($_atuin_cache | path exists) {
+    mkdir ($_atuin_cache | path dirname)
+    atuin init nu | save -f $_atuin_cache
+}
+
+# load fnm env
+if (which fnm | is-not-empty) {
+  fnm env --json | from json | load-env
+  path add ($env.FNM_MULTISHELL_PATH | path join "bin")
+}
+
+# llm
+$env.OLLAMA_API_BASE = "http://127.0.0.1:11434"
+
+# uniq path
+$env.PATH = ($env.PATH | uniq)
+
+$env.NODE_OPTIONS = "--no-warnings=ExperimentalWarning"
+
+# settings for qwen agent
+$env.QWEN_AGENT_DEFAULT_MAX_INPUT_TOKENS = 134144
+$env.QWEN_AGENT_DEFAULT_MAX_REF_TOKEN = 89429
+
+# settings for go
+$env.CGO_ENABLED = "1"
+
+$env.NODE_OPTIONS = "--openssl-legacy-provider"
+# 为当前 shell 启用 web search
+$env.OPENCODE_ENABLE_EXA = "1"
+$env.OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX = 1048576
+$env.METRICS_LOG_LEVEL = "error"
+$env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
+
+# self-heal: ensure macOS default config dir links to dotfiles (link-self-heal.nu)
+source ($nu.default-config-dir | path join 'link-self-heal.nu')
+
+# auto-install dev tool dependencies (defined in auto-install.nu)
+source ($nu.default-config-dir | path join 'auto-install.nu')
+
+# Set LS_COLORS based on system theme (requires vivid: brew install vivid)
+if (which vivid | is-not-empty) {
+    let theme_file = ($env.HOME | path join ".local/state/theme/mode")
+    let mode = (if ($theme_file | path exists) { (open $theme_file | str trim) } else { "dark" })
+    let vivid_theme = (if $mode == "light" { "tokyonight-day" } else { "tokyonight-storm" })
+    $env.LS_COLORS = (vivid generate $vivid_theme)
+    $env.__THEME_MODE = $mode
+}
+
+let plist = $'<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.als-theme</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>($env.HOME)/.config/als_reader</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ALS_THRESHOLD_DARK</key>
+        <string>100</string>
+        <key>ALS_THRESHOLD_LIGHT</key>
+        <string>200</string>
+    </dict>
+    <key>StartInterval</key>
+    <integer>30</integer>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>'
+
+$plist | save -f ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")

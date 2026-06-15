@@ -1,0 +1,240 @@
+# Helix Languages Configuration
+# 基于 Neovim 配置 + 最佳实践优化
+# 配置文件: ~/.config/helix/languages.toml
+
+# =============================================================================
+# 自定义语言服务器
+# =============================================================================
+
+# TypeScript/JavaScript - 使用 vtsls (与 Neovim 一致)
+[language-server.vtsls]
+command = "vtsls"
+args = ["--stdio"]
+
+[language-server.vtsls.config.typescript]
+npm = "/opt/homebrew/bin/bun"
+
+[language-server.vtsls.config.vtsls.experimental]
+maxInlayHintLength = 25
+[language-server.vtsls.config.vtsls.experimental.completion]
+enableServerSideFuzzyMatch = true
+
+# ESLint 集成由 vtsls 内置提供
+# [language-server.eslint]
+# command = "eslint_d"
+# args = ["--stdio"]
+
+# Emmet (HTML/JSX 快速编写)
+# 注: emmet-language-server 可能需要额外配置
+# [language-server.emmet-language-server]
+# command = "emmet-language-server"
+# args = ["--stdio"]
+
+# TailwindCSS
+# 注: tailwindcss-language-server 作为辅助 LSP
+# [language-server.tailwindcss-ls]
+# command = "tailwindcss-language-server"
+# args = ["--stdio"]
+
+# =============================================================================
+# 语言配置
+# =============================================================================
+
+# TypeScript
+[[language]]
+name = "typescript"
+language-servers = ["vtsls"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.ts"] }
+indent = { tab-width = 2, unit = "  " }
+
+# TSX (React)
+[[language]]
+name = "tsx"
+language-servers = ["vtsls"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.tsx"] }
+indent = { tab-width = 2, unit = "  " }
+# JavaScript
+[[language]]
+name = "javascript"
+language-servers = ["vtsls"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.js"] }
+indent = { tab-width = 2, unit = "  " }
+
+# JSX
+[[language]]
+name = "jsx"
+language-servers = ["vtsls"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.jsx"] }
+indent = { tab-width = 2, unit = "  " }
+# JSON
+[[language]]
+name = "json"
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.json"] }
+indent = { tab-width = 2, unit = "  " }
+
+# JSONC (带注释的 JSON)
+[[language]]
+name = "jsonc"
+auto-format = true
+formatter = { command = "prettierd", args = ["--stdin-file-path", "a.jsonc"] }
+indent = { tab-width = 2, unit = "  " }
+
+# CSS
+[[language]]
+name = "css"
+language-servers = ["vscode-css-language-server"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "css"] }
+indent = { tab-width = 2, unit = "  " }
+# SCSS
+[[language]]
+name = "scss"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "scss"] }
+indent = { tab-width = 2, unit = "  " }
+
+# HTML
+[[language]]
+name = "html"
+language-servers = ["vscode-html-language-server"]
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "html"] }
+indent = { tab-width = 2, unit = "  " }
+# Lua - 匹配 Neovim stylua 配置
+[[language]]
+name = "lua"
+auto-format = true
+formatter = { command = "stylua", args = ["--indent-type", "Spaces", "--indent-width", "2", "-"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Python - 使用 ruff
+[[language]]
+name = "python"
+auto-format = true
+formatter = { command = "ruff", args = ["format", "--quiet", "-"] }
+indent = { tab-width = 4, unit = "    " }
+
+# Rust
+[[language]]
+name = "rust"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+
+# Go
+[[language]]
+name = "go"
+auto-format = true
+formatter = { command = "goimports" }
+indent = { tab-width = 4, unit = "\t" }
+
+# YAML
+[[language]]
+name = "yaml"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "yaml"] }
+indent = { tab-width = 2, unit = "  " }
+
+# TOML
+[[language]]
+name = "toml"
+auto-format = true
+formatter = { command = "taplo", args = ["fmt", "-"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Markdown - 启用软换行
+[[language]]
+name = "markdown"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "markdown"] }
+indent = { tab-width = 2, unit = "  " }
+soft-wrap.enable = true
+
+# Shell (Bash)
+[[language]]
+name = "bash"
+auto-format = true
+formatter = { command = "shfmt", args = ["-i", "2", "-"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Zsh (自定义语言，需要 scope)
+[[language]]
+name = "zsh"
+scope = "source.zsh"
+file-types = ["zsh", ".zshrc", ".zprofile", ".zshenv"]
+auto-format = true
+formatter = { command = "beautysh", args = ["-"] }
+indent = { tab-width = 2, unit = "  " }
+
+# SQL
+[[language]]
+name = "sql"
+auto-format = true
+formatter = { command = "sqruff", args = ["format", "-"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Svelte
+[[language]]
+name = "svelte"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "svelte"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Vue
+[[language]]
+name = "vue"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "vue"] }
+indent = { tab-width = 2, unit = "  " }
+
+# GraphQL
+[[language]]
+name = "graphql"
+auto-format = true
+formatter = { command = "prettierd", args = ["--parser", "graphql"] }
+indent = { tab-width = 2, unit = "  " }
+
+# Nginx
+[[language]]
+name = "nginx"
+auto-format = true
+formatter = { command = "nginxfmt", args = ["-"] }
+indent = { tab-width = 4, unit = "    " }
+
+# Dockerfile
+[[language]]
+name = "dockerfile"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+
+# Protocol Buffers
+[[language]]
+name = "protobuf"
+auto-format = true
+indent = { tab-width = 2, unit = "  " }
+
+# Solidity
+[[language]]
+name = "solidity"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+
+# Nushell
+[[language]]
+name = "nu"
+auto-format = true
+formatter = { command = "nufmt", args = ["-"] }
+indent = { tab-width = 4, unit = "    " }
+
+# HTTP (REST client) - 需要定义 scope 因为是自定义语言
+# [[language]]
+# name = "http"
+# scope = "text.http"
+# file-types = ["http"]
+# auto-format = true
+# formatter = { command = "kulala-fmt", args = ["-"] }
+# indent = { tab-width = 2, unit = "  " }
