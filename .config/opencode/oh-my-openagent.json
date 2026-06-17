@@ -6,7 +6,7 @@
   "team_mode": { "enabled": true },
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/qwen3.7-max",
+      "model": "opencode-go/glm-5.2",
       "fallback_models": [
         "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
         "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
