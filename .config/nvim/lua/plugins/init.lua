@@ -129,7 +129,7 @@ vim.api.nvim_create_autocmd("PackChanged", {
     if name == "blink.cmp" and (kind == "install" or kind == "update") then
       sync_notify("Building blink.cmp native library...")
       vim.schedule(function()
-        local repo = d.spec and d.spec.path
+        local repo = d.path
         if not repo then
           sync_notify("blink.cmp build skipped: missing plugin path", vim.log.levels.ERROR)
           return

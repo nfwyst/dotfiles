@@ -976,7 +976,18 @@ alias pip = python3 -m pip
 alias cat = bat
 alias find = fd
 alias openclaw = bun run ($env.HOME | path join .bun install global node_modules openclaw dist index.js)
-alias bun = bun --bun --trust
+# bun 包装: 仅在安装族子命令 (install/add/update/remove/link...) 自动追加 --trust,
+# 其余子命令 (upgrade/run/x/...) 原样透传,避免 --trust/--bun 被错误注入触发解析错误。
+def --wrapped bun [...args] {
+    let sub = ($args | get -o 0 | default "")
+    if $sub in [install i add update remove rm link unlink] {
+        ^bun ...$args --trust
+    } else if $sub == "run" {
+        ^bun --bun ...$args
+    } else {
+        ^bun ...$args
+    }
+}
 
 
 def create_worktree [target_dir, branch_name] {

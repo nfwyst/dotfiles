@@ -1,6 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": false,
+  "compaction": { "auto": false },
   "permission": {
     "read": "allow",
     "edit": "allow",
@@ -18,7 +19,11 @@
     "doom_loop": "ask"
   },
   "instructions": ["../../.agents/skills/caveman/SKILL.md"],
-  "plugin": ["opencode-plugin-openspec@latest", "oh-my-openagent@latest"],
+  "plugin": [
+    "@tarquinen/opencode-dcp@latest",
+    "oh-my-openagent@latest",
+    "opencode-plugin-openspec@latest"
+  ],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",
