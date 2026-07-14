@@ -1,221 +1,400 @@
-# LSP Configuration
+# LSP Configuration Reference
 
-Neovim has two parallel ways to configure LSP servers in 2025+. Pick based on
-what the user's config already does; don't mix unless asked.
+Complete guide for configuring Language Server Protocol in this Neovim setup.
 
-## Path A — Native (0.11+, recommended for new configs)
-
-Since 0.11, Neovim exposes `vim.lsp.config()` and `vim.lsp.enable()` with an
-implicit loader: any file under a `lsp/` directory in `runtimepath` whose
-name matches an enabled server is auto-loaded and merged into the config.
+## LSP Stack Overview
 
 ```
-~/.config/nvim/
-├── lsp/
-│   ├── lua_ls.lua      -- returns { cmd = {...}, root_markers = {...}, settings = {...} }
-│   ├── tsgo.lua
-│   └── jsonls.lua
-└── lua/config/lsp.lua  -- vim.lsp.enable({ "lua_ls", "tsgo", "jsonls" })
+mason.nvim (Package Manager)
+├── mason-lspconfig.nvim → nvim-lspconfig (LSP servers)
+├── mason-tool-installer.nvim (Auto-install tools)
+└── mason-nvim-dap.nvim → nvim-dap (Debug adapters)
+
+nvim-lspconfig (LSP Client)
+├── blink.cmp / nvim-cmp (Completion)
+├── conform.nvim (Formatting)
+├── nvim-lint (Linting)
+└── trouble.nvim (Diagnostics UI)
 ```
 
-Each `lsp/<name>.lua` returns a plain table. Example:
+## Installing LSP Servers
+
+### Via Mason (Recommended)
+
+```vim
+:Mason
+```
+
+Then search and install servers interactively, or:
+
+### Via Configuration
 
 ```lua
--- lsp/lua_ls.lua
-return {
-  cmd = { "lua-language-server" },
-  filetypes = { "lua" },
-  root_markers = { ".luarc.json", ".luarc.jsonc", ".git" },
-  settings = {
-    Lua = {
-      workspace = { checkThirdParty = false },
-      telemetry = { enable = false },
+-- In lua/plugins/specs/lsp.lua
+{
+  "WhoIsSethDaniel/mason-tool-installer.nvim",
+  opts = {
+    ensure_installed = {
+      -- LSP Servers
+      "lua_ls",
+      "pyright",
+      "tsserver",
+      "gopls",
+      "rust_analyzer",
+      "yamlls",
+      "jsonls",
+
+      -- Formatters
+      "stylua",
+      "prettierd",
+      "ruff",
+      "gofumpt",
+
+      -- Linters
+      "eslint_d",
+      "luacheck",
+      "shellcheck",
     },
   },
 }
 ```
 
-Activation, anywhere in your startup (typical: `lua/config/lsp.lua`):
+## Configuring LSP Servers
+
+### Basic Server Configuration
 
 ```lua
-vim.lsp.enable({ "lua_ls", "tsgo", "jsonls" })
+-- In lua/plugins/specs/lsp.lua
+local servers = {
+  lua_ls = {
+    settings = {
+      Lua = {
+        workspace = { checkThirdParty = false },
+        telemetry = { enable = false },
+        diagnostics = {
+          globals = { "vim" },
+        },
+      },
+    },
+  },
+
+  pyright = {
+    settings = {
+      python = {
+        analysis = {
+          typeCheckingMode = "basic",
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+        },
+      },
+    },
+  },
+
+  gopls = {
+    settings = {
+      gopls = {
+        analyses = {
+          unusedparams = true,
+        },
+        staticcheck = true,
+        gofumpt = true,
+      },
+    },
+  },
+
+  tsserver = {},
+  jsonls = {},
+  yamlls = {},
+}
 ```
 
-Global defaults (capabilities, on_attach) go via `vim.lsp.config("*", {...})`:
+### Server with Custom on_attach
 
 ```lua
-vim.lsp.config("*", {
-  capabilities = vim.tbl_deep_extend("force",
-    vim.lsp.protocol.make_client_capabilities(),
-    require("blink.cmp").get_lsp_capabilities()),
-  on_attach = function(client, bufnr)
-    -- buffer-local keymaps, disable semanticTokens, etc.
-  end,
-})
-```
+{
+  "neovim/nvim-lspconfig",
+  config = function()
+    local lspconfig = require("lspconfig")
+    local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-### When to prefer this path
-- Neovim 0.11+ only.
-- You don't need nvim-lspconfig's ~200 preset server configs, or you're happy
-  writing each `lsp/<name>.lua` yourself.
-- You want fewer dependencies.
+    local on_attach = function(client, bufnr)
+      -- Buffer-local keymaps
+      local map = function(keys, func, desc)
+        vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+      end
 
----
+      map("gd", vim.lsp.buf.definition, "[G]oto [D]efinition")
+      map("gr", vim.lsp.buf.references, "[G]oto [R]eferences")
+      map("gI", vim.lsp.buf.implementation, "[G]oto [I]mplementation")
+      map("<leader>D", vim.lsp.buf.type_definition, "Type [D]efinition")
+      map("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+      map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
+      map("K", vim.lsp.buf.hover, "Hover Documentation")
 
-## Path B — nvim-lspconfig (classic)
+      -- Highlight references under cursor
+      if client.server_capabilities.documentHighlightProvider then
+        vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+          buffer = bufnr,
+          callback = vim.lsp.buf.document_highlight,
+        })
+        vim.api.nvim_create_autocmd("CursorMoved", {
+          buffer = bufnr,
+          callback = vim.lsp.buf.clear_references,
+        })
+      end
+    end
 
-`neovim/nvim-lspconfig` ships curated defaults for most servers. Call
-`.setup{}` per server:
-
-```lua
-local lspconfig = require("lspconfig")
-local caps = require("blink.cmp").get_lsp_capabilities()
-
-lspconfig.lua_ls.setup({
-  capabilities = caps,
-  settings = { Lua = { workspace = { checkThirdParty = false } } },
-})
-lspconfig.tsserver.setup({ capabilities = caps })
-```
-
-Starting with Neovim 0.11 / nvim-lspconfig's newer versions, setup internally
-uses `vim.lsp.config` + `vim.lsp.enable`, so the two paths coexist. If the
-user is on an older version, stick to `.setup{}`.
-
----
-
-## Common tasks
-
-### Add a new server
-
-**Native path:**
-1. Create `lsp/<server>.lua` returning `{ cmd, filetypes, root_markers, settings }`.
-2. Add the server name to the `vim.lsp.enable({...})` list.
-3. Install the server binary (Mason, system package manager, or npm global).
-
-**Classic path:**
-1. Check `:h lspconfig-all` for a preset.
-2. Call `lspconfig.<name>.setup({ capabilities, settings })`.
-3. Install the binary.
-
-### Root directory
-
-`root_dir` / `root_markers` controls where the server starts. Two mental
-models:
-- **Marker-based** (native, simpler): `root_markers = { "package.json", ".git" }`.
-- **Callback-based** (lspconfig, flexible): `root_dir = function(fname) ... end`.
-
-For gating one server vs. another on the same filetype (e.g. `tsgo` vs.
-`vtsls` vs. `denols`), use a callback that returns `nil` to decline the
-buffer — a `nil` root means the server doesn't start for that file.
-
-### Capabilities and completion
-
-Completion plugins provide extra capabilities (snippet support,
-resolveSupport, etc.). Always merge them in:
-
-```lua
--- blink.cmp
-local caps = require("blink.cmp").get_lsp_capabilities()
-
--- nvim-cmp
-local caps = require("cmp_nvim_lsp").default_capabilities()
-```
-
-Pass `caps` into every `.setup{}` call (classic) or into `vim.lsp.config("*")`
-(native).
-
-### on_attach and keymaps
-
-As of 0.10+ many classic LSP keymaps have Neovim built-in defaults:
-
-| Default key | Action |
-|---|---|
-| `grn` | `vim.lsp.buf.rename` |
-| `gra` | `vim.lsp.buf.code_action` |
-| `grr` | `vim.lsp.buf.references` |
-| `gri` | `vim.lsp.buf.implementation` |
-| `gO` | `vim.lsp.buf.document_symbol` |
-| `K` | `vim.lsp.buf.hover` (already default for years) |
-| `<C-s>` (insert) | `vim.lsp.buf.signature_help` |
-
-If the user wants the old `gd`/`gr`/`gi` style, they set those explicitly in
-`on_attach` or a `LspAttach` autocmd.
-
-```lua
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local bufnr = args.buf
-    vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr, desc = "Go to definition" })
-  end,
-})
-```
-
-### Diagnostics
-
-Configured via `vim.diagnostic.config`:
-
-```lua
-vim.diagnostic.config({
-  virtual_text = { prefix = "●" },
-  signs = true,
-  underline = true,
-  severity_sort = true,
-  float = { border = "rounded", source = true },
-})
-```
-
-Filtering specific diagnostic codes (e.g. suppress TS 7016 "Could not find
-declaration file"): the cleanest place is a `LspAttach` autocmd that
-post-filters the handler, or a wrapper around `vim.diagnostic.set`.
-
-### Format on save
-
-Don't use `vim.lsp.buf.format` if you have a dedicated formatter engine;
-prefer conform.nvim — see `formatting-linting.md`.
-
-If you do use LSP formatting:
-
-```lua
-vim.api.nvim_create_autocmd("BufWritePre", {
-  callback = function() vim.lsp.buf.format({ async = false }) end,
-})
-```
-
----
-
-## Debugging LSP
-
-- `:LspInfo` / `:checkhealth vim.lsp` — is the server attached? What root?
-- `:LspLog` — opens the log file. Set level with
-  `vim.lsp.set_log_level("debug")` (noisy).
-- Server not starting: check `cmd[1]` is on `$PATH` inside Neovim's env, not
-  just your shell's. `:lua =vim.env.PATH`.
-- Attaches to wrong root: check `root_markers` or `root_dir`.
-- Multiple servers for one filetype: verify `root_dir` callbacks return
-  `nil` for the server that should decline.
-
----
-
-## Mixing servers for one language (e.g. TypeScript)
-
-Common real-world case: `tsgo` (fast, Go-native) for plain TS, `vtsls` for
-Vue projects or baseUrl-heavy tsconfigs, `denols` for Deno. Keep them
-mutually exclusive via `root_dir`:
-
-```lua
--- lsp/tsgo.lua (sketch)
-return {
-  cmd = { "tsgo", "--lsp", "--stdio" },
-  filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
-  root_dir = function(bufnr, on_dir)
-    local root = vim.fs.root(bufnr, { "tsconfig.json", "package.json", ".git" })
-    if not root then return end
-    if is_deno_project(root) or is_vue_project(root) or needs_baseurl(root) then return end
-    on_dir(root)
+    for server, config in pairs(servers) do
+      config.capabilities = capabilities
+      config.on_attach = on_attach
+      lspconfig[server].setup(config)
+    end
   end,
 }
 ```
 
-Put the shared detection helpers in `lua/config/ts_util.lua` and require
-from each `lsp/<name>.lua`.
+## LSP Keybindings
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `gd` | `vim.lsp.buf.definition` | Go to definition |
+| `gr` | `vim.lsp.buf.references` | List references |
+| `gI` | `vim.lsp.buf.implementation` | Go to implementation |
+| `gD` | `vim.lsp.buf.declaration` | Go to declaration |
+| `K` | `vim.lsp.buf.hover` | Hover documentation |
+| `<C-k>` | `vim.lsp.buf.signature_help` | Signature help (insert) |
+| `<leader>D` | `vim.lsp.buf.type_definition` | Type definition |
+| `<leader>rn` | `vim.lsp.buf.rename` | Rename symbol |
+| `<leader>ca` | `vim.lsp.buf.code_action` | Code actions |
+| `<leader>ds` | `vim.lsp.buf.document_symbol` | Document symbols |
+| `<leader>ws` | `vim.lsp.buf.workspace_symbol` | Workspace symbols |
+| `[d` | `vim.diagnostic.goto_prev` | Previous diagnostic |
+| `]d` | `vim.diagnostic.goto_next` | Next diagnostic |
+
+## Completion (blink.cmp)
+
+### Keymap Presets
+
+blink.cmp provides keymap presets for common configurations:
+
+| Preset | Navigation | Description |
+|--------|------------|-------------|
+| `default` | `<C-n>`/`<C-p>` | Classic Vim-style navigation |
+| `super-tab` | `<Tab>`/`<S-Tab>` | Tab navigates items and snippet placeholders |
+| `enter` | `<C-n>`/`<C-p>` | Enter confirms, Tab for snippets only |
+
+### Current Configuration (super-tab)
+
+```lua
+{
+  "saghen/blink.cmp",
+  version = "*",
+  event = "InsertEnter",
+  dependencies = { "rafamadriz/friendly-snippets" },
+  opts = {
+    keymap = { preset = "super-tab" },  -- Tab/S-Tab navigation
+    sources = {
+      default = { "lsp", "path", "snippets", "buffer" },
+    },
+    completion = {
+      menu = { auto_show = true },
+      documentation = { auto_show = true },
+    },
+  },
+}
+```
+
+### super-tab Preset Keybindings
+
+| Key | Action |
+|-----|--------|
+| `<Tab>` | Select next item / Jump to next snippet placeholder |
+| `<S-Tab>` | Select previous item / Jump to previous snippet placeholder |
+| `<CR>` | Accept completion |
+| `<C-Space>` | Show/toggle completion menu |
+| `<C-e>` | Hide completion menu |
+| `<C-b>` | Scroll documentation up |
+| `<C-f>` | Scroll documentation down |
+
+### Custom Keymap Configuration
+
+For custom keymaps instead of a preset:
+
+```lua
+opts = {
+  keymap = {
+    ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+    ["<C-e>"] = { "hide" },
+    ["<CR>"] = { "accept", "fallback" },
+    ["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
+    ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+    ["<C-b>"] = { "scroll_documentation_up", "fallback" },
+    ["<C-f>"] = { "scroll_documentation_down", "fallback" },
+  },
+}
+```
+
+## Formatting (conform.nvim)
+
+```lua
+{
+  "stevearc/conform.nvim",
+  event = "BufWritePre",
+  cmd = { "ConformInfo" },
+  opts = {
+    formatters_by_ft = {
+      lua = { "stylua" },
+      python = { "ruff_format" },
+      javascript = { "prettierd", "prettier" },
+      typescript = { "prettierd", "prettier" },
+      javascriptreact = { "prettierd", "prettier" },
+      typescriptreact = { "prettierd", "prettier" },
+      json = { "prettierd" },
+      yaml = { "prettierd" },
+      markdown = { "prettierd" },
+      go = { "gofumpt", "goimports" },
+      rust = { "rustfmt" },
+      sh = { "shfmt" },
+    },
+    format_on_save = {
+      timeout_ms = 500,
+      lsp_fallback = true,
+    },
+  },
+  keys = {
+    {
+      "<leader>cf",
+      function()
+        require("conform").format({ async = true, lsp_fallback = true })
+      end,
+      desc = "[C]ode [F]ormat",
+    },
+  },
+}
+```
+
+## Linting (nvim-lint)
+
+```lua
+{
+  "mfussenegger/nvim-lint",
+  event = { "BufReadPre", "BufNewFile" },
+  config = function()
+    local lint = require("lint")
+
+    lint.linters_by_ft = {
+      javascript = { "eslint_d" },
+      typescript = { "eslint_d" },
+      python = { "ruff" },
+      lua = { "luacheck" },
+      sh = { "shellcheck" },
+      markdown = { "markdownlint" },
+    }
+
+    vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+      callback = function()
+        lint.try_lint()
+      end,
+    })
+  end,
+}
+```
+
+## Diagnostics Configuration
+
+```lua
+vim.diagnostic.config({
+  virtual_text = {
+    prefix = "●",
+    severity = { min = vim.diagnostic.severity.WARN },
+  },
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = " ",
+      [vim.diagnostic.severity.WARN] = " ",
+      [vim.diagnostic.severity.INFO] = " ",
+      [vim.diagnostic.severity.HINT] = " ",
+    },
+  },
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+  float = {
+    focusable = true,
+    border = "rounded",
+    source = "always",
+  },
+})
+```
+
+## Trouble.nvim (Diagnostics Viewer)
+
+```lua
+{
+  "folke/trouble.nvim",
+  cmd = { "Trouble" },
+  opts = {},
+  keys = {
+    { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics" },
+    { "<leader>xX", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics" },
+    { "<leader>cs", "<cmd>Trouble symbols toggle<cr>", desc = "Symbols" },
+    { "<leader>xL", "<cmd>Trouble loclist toggle<cr>", desc = "Location List" },
+    { "<leader>xQ", "<cmd>Trouble qflist toggle<cr>", desc = "Quickfix List" },
+  },
+}
+```
+
+## Adding a New LSP Server
+
+1. **Install via Mason:**
+   ```vim
+   :Mason
+   " Search for and install the server
+   ```
+
+2. **Add to auto-install list:**
+   ```lua
+   -- In mason-tool-installer opts
+   ensure_installed = {
+     "your_server",
+   }
+   ```
+
+3. **Configure the server:**
+   ```lua
+   local servers = {
+     your_server = {
+       settings = {
+         -- Server-specific settings
+       },
+       filetypes = { "your_filetype" },
+       root_dir = lspconfig.util.root_pattern(".git", "package.json"),
+     },
+   }
+   ```
+
+4. **Restart Neovim or run:**
+   ```vim
+   :LspRestart
+   ```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| LSP not starting | `:LspInfo`, check server is installed via `:Mason` |
+| No completions | Check `:LspInfo` for active clients |
+| Formatting not working | `:ConformInfo`, verify formatter installed |
+| Diagnostics not showing | `:lua vim.diagnostic.setloclist()` |
+| Wrong root directory | Check `root_dir` in server config |
+
+### Debug Commands
+
+```vim
+:LspInfo                      " Show active LSP clients
+:LspLog                       " Open LSP log file
+:LspRestart                   " Restart LSP clients
+:Mason                        " Open Mason installer
+:ConformInfo                  " Show formatter info
+:lua vim.lsp.set_log_level("debug")  " Enable debug logging
+```

@@ -1,175 +1,376 @@
 ---
 name: neovim
-description: |
-  Expert help for a user's Neovim config: Lua setup, plugins, LSP servers,
-  completion, formatters, linters, Treesitter, keymaps, autocmds, UI, and
-  startup/runtime debugging on modern Neovim 0.10+. Covers both LSP paths:
-  native `vim.lsp.config`/`vim.lsp.enable` and classic nvim-lspconfig.
-
-  Use for requests like "fix my nvim config", "add an LSP", "why is
-  completion broken", "migrate packer to lazy.nvim", "convert to native 0.11
-  LSP", "format on save", "Treesitter highlight issue", "slow startup",
-  "remap keys", or "explain this lua snippet". Trigger on: neovim, nvim,
-  init.lua, init.vim, LSP, lazy.nvim, vim.pack, packer, pckr, nvim-lspconfig,
-  vim.lsp, blink.cmp, nvim-cmp, conform, nvim-lint, mason, Treesitter,
-  keymaps, autocmd, autocmds, formatters, linters, colorschemes, and files
-  under `~/.config/nvim/` or `~/dotfiles/.config/nvim/`.
+description: Comprehensive guide for this Neovim configuration - a modular, performance-optimized Lua-based IDE. Use when configuring plugins, adding keybindings, setting up LSP servers, debugging, or extending the configuration. Covers lazy.nvim, 82+ plugins across 9 categories, DAP debugging, AI integrations, and performance optimization.
 ---
 
-# Neovim Configuration Assistant
+# Neovim Configuration Skill
 
-A skill for helping users work on **their own** Neovim configurations. Covers
-the patterns, plugin choices, and debugging moves you'll reach for most often
-on modern Neovim (0.10+).
+A comprehensive guide for working with this modular, performance-optimized Neovim configuration built on lazy.nvim.
 
-This skill is intentionally configuration-agnostic. The user's repo on disk is
-the source of truth — read it first, *then* advise. A concrete example config
-ships under `example-config/` for cases where you want to see one full working
-setup.
+## Quick Reference
 
----
+| Metric | Value |
+|--------|-------|
+| Plugin Manager | lazy.nvim |
+| Total Plugins | 82 |
+| Target Startup | <50ms |
+| Module Pattern | `M.setup()` |
+| Leader Key | `<Space>` |
 
-## How to approach a Neovim task
-
-Neovim configurations are deeply personal and the ecosystem has several
-competing "right answers" (lazy.nvim vs. vim.pack, blink.cmp vs. nvim-cmp,
-native LSP vs. nvim-lspconfig). Before changing anything:
-
-1. **Locate the config root.** Usually `~/.config/nvim/`, often a symlink into
-   a dotfiles repo. Check both. Read `init.lua` (or `init.vim`) first — it
-   reveals the load order and which subsystems are in play.
-
-2. **Identify the plugin manager.** This determines how plugins are added and
-   whether load order is lazy or eager. Quick signals:
-   - `vim.pack.add({...})` → native vim.pack (0.12+)
-   - `require("lazy").setup(...)` or a `lazy-lock.json` → lazy.nvim
-   - `require("packer").startup(...)` → packer.nvim
-   - `require("pckr").add(...)` → pckr.nvim
-   - `plug#begin` → vim-plug (rare in Lua-first configs)
-
-3. **Identify the LSP path.** Modern configs split into two camps:
-   - **Native** (0.11+): per-server files in `lsp/<name>.lua` returning a
-     config table, activated via `vim.lsp.enable({...})` in a central place.
-     No nvim-lspconfig dependency.
-   - **Classic**: `require("lspconfig").<server>.setup({...})` via
-     nvim-lspconfig. Still widespread.
-   See `references/lsp.md`.
-
-4. **Read before you write.** Users usually have a reason for their current
-   structure. Respect it. If their config uses `safe_require` or some
-   bespoke loader, keep using it. If they split plugins across
-   `lua/plugins/*.lua`, add new plugins to the same style, not a new style.
-
-5. **Prefer minimal edits.** A three-line change to a working config beats a
-   rewrite. Neovim configs accumulate muscle memory; surprise costs the user.
-
----
-
-## Where to look in a typical config
+## Architecture Overview
 
 ```
 ~/.config/nvim/
-├── init.lua                 # entry: sets leader, requires submodules
+├── init.lua                  # Entry point
 ├── lua/
-│   ├── config/              # non-plugin: options, keymaps, autocmds, lsp glue
-│   └── plugins/             # plugin specs (one file per domain is common)
-├── lsp/                     # native LSP config (one file per server) — 0.11+
-├── after/                   # late-loaded overrides (runs after plugin loads)
-│   ├── ftplugin/            # per-filetype tweaks
-│   └── plugin/              # per-plugin late patches
-├── snippets/                # user snippets (friendly-snippets-compatible)
-└── spell/                   # spell files
+│   ├── config/               # Core configuration (11 modules)
+│   │   ├── lazy.lua          # Plugin manager bootstrap
+│   │   ├── options.lua       # Vim options
+│   │   ├── keymaps.lua       # Key bindings
+│   │   ├── autocmds.lua      # Autocommands
+│   │   └── performance.lua   # Startup optimization
+│   ├── plugins/specs/        # Plugin specs (9 categories)
+│   │   ├── core.lua          # Foundation (plenary, nui, devicons)
+│   │   ├── ui.lua            # UI (lualine, bufferline, noice)
+│   │   ├── editor.lua        # Editor (autopairs, flash, harpoon)
+│   │   ├── lsp.lua           # LSP (lspconfig, mason, conform)
+│   │   ├── git.lua           # Git (fugitive, gitsigns, diffview)
+│   │   ├── ai.lua            # AI (copilot, ChatGPT)
+│   │   ├── debug.lua         # DAP (nvim-dap, dap-ui)
+│   │   ├── tools.lua         # Tools (telescope, neo-tree)
+│   │   └── treesitter.lua    # Syntax (treesitter, textobjects)
+│   ├── kickstart/            # Kickstart-derived modules
+│   └── utils/                # Utility functions
+└── lazy-lock.json            # Plugin version lock
 ```
 
-Not every config has every directory. Absence is signal too: no `lsp/`
-usually means classic nvim-lspconfig; no `after/` means no late overrides.
+## Standard Module Pattern
+
+All configuration modules follow the `M.setup()` pattern:
+
+```lua
+local M = {}
+
+M.setup = function()
+  -- Configuration logic here
+end
+
+return M
+```
+
+## Plugin Management (lazy.nvim)
+
+### Adding a New Plugin
+
+Add to the appropriate category file in `lua/plugins/specs/`:
+
+```lua
+-- lua/plugins/specs/tools.lua
+return {
+  -- Existing plugins...
+
+  {
+    "author/plugin-name",
+    event = "VeryLazy",           -- Loading strategy
+    dependencies = { "dep/name" }, -- Required plugins
+    opts = {
+      -- Plugin options
+    },
+    config = function(_, opts)
+      require("plugin-name").setup(opts)
+    end,
+  },
+}
+```
+
+### Loading Strategies
+
+| Strategy | When to Use | Example |
+|----------|-------------|---------|
+| `lazy = true` | Default, load on demand | Most plugins |
+| `event = "VeryLazy"` | After UI loads | UI enhancements |
+| `event = "BufReadPre"` | When opening files | Treesitter, gitsigns |
+| `event = "InsertEnter"` | When typing | Completion, autopairs |
+| `cmd = "CommandName"` | On command invocation | Heavy tools |
+| `ft = "filetype"` | For specific filetypes | Language plugins |
+| `keys = {...}` | On keypress | Motion plugins |
+
+### Plugin Commands
+
+| Command | Description |
+|---------|-------------|
+| `:Lazy` | Open lazy.nvim dashboard |
+| `:Lazy sync` | Update and install plugins |
+| `:Lazy profile` | Show startup time analysis |
+| `:Lazy clean` | Remove unused plugins |
+| `:Lazy health` | Check plugin health |
+
+## LSP Configuration
+
+See [references/lsp.md](references/lsp.md) for complete LSP reference.
+
+### LSP Stack
+
+```
+mason.nvim (installer)
+    ├── mason-lspconfig.nvim → nvim-lspconfig
+    ├── mason-tool-installer.nvim (auto-install)
+    └── mason-nvim-dap.nvim → nvim-dap
+
+nvim-lspconfig
+    ├── blink.cmp (completion)
+    ├── conform.nvim (formatting)
+    ├── nvim-lint (linting)
+    └── trouble.nvim (diagnostics)
+```
+
+### Adding an LSP Server
+
+```lua
+-- In lua/plugins/specs/lsp.lua, add to mason-tool-installer list:
+ensure_installed = {
+  "lua_ls",
+  "pyright",
+  "your_new_server",  -- Add here
+}
+
+-- Configure in lspconfig setup:
+servers = {
+  your_new_server = {
+    settings = {
+      -- Server-specific settings
+    },
+  },
+}
+```
+
+### LSP Keybindings
+
+| Key | Action |
+|-----|--------|
+| `gd` | Go to definition |
+| `gr` | Go to references |
+| `gI` | Go to implementation |
+| `gD` | Go to declaration |
+| `K` | Hover documentation |
+| `<leader>rn` | Rename symbol |
+| `<leader>ca` | Code action |
+| `<leader>D` | Type definition |
+| `<leader>ds` | Document symbols |
+| `<leader>ws` | Workspace symbols |
+
+## Keybindings
+
+See [references/keybindings.md](references/keybindings.md) for complete reference.
+
+### Core Navigation
+
+| Key | Action |
+|-----|--------|
+| `<C-h/j/k/l>` | Window navigation |
+| `<S-h>` / `<S-l>` | Previous/next buffer |
+| `<leader>sf` | Search files |
+| `<leader>sg` | Search by grep |
+| `<leader><space>` | Search buffers |
+| `\\` | Toggle Neo-tree |
+
+### Adding Keybindings
+
+```lua
+-- In lua/config/keymaps.lua M.setup():
+vim.keymap.set('n', '<leader>xx', function()
+  -- Your action
+end, { desc = 'Description for which-key' })
+
+-- Or in a plugin spec:
+keys = {
+  { "<leader>xx", "<cmd>Command<CR>", desc = "Description" },
+}
+```
+
+## Debugging (DAP)
+
+See [references/debugging.md](references/debugging.md) for complete reference.
+
+### DAP Keybindings
+
+| Key | Action |
+|-----|--------|
+| `<F5>` | Continue/Start debugging |
+| `<F10>` | Step over |
+| `<F11>` | Step into |
+| `<F12>` | Step out |
+| `<leader>b` | Toggle breakpoint |
+| `<leader>B` | Conditional breakpoint |
+
+### Adding a Debug Adapter
+
+```lua
+-- In lua/plugins/specs/debug.lua
+local dap = require("dap")
+
+dap.adapters.your_adapter = {
+  type = "executable",
+  command = "path/to/adapter",
+}
+
+dap.configurations.your_filetype = {
+  {
+    type = "your_adapter",
+    request = "launch",
+    name = "Launch",
+    program = "${file}",
+  },
+}
+```
+
+## Performance Optimization
+
+### Startup Optimization Layers
+
+| Layer | Technique | Savings |
+|-------|-----------|---------|
+| 1 | `vim.loader.enable()` | ~50ms |
+| 2 | Skip `vim._defaults` | ~180ms |
+| 3 | Disable providers | ~10ms |
+| 4 | Disable builtins | ~20ms |
+| 5 | Deferred config | ~30ms |
+| 6 | Event-based loading | Variable |
+
+### Profiling Startup
+
+```vim
+:Lazy profile
+```
+
+### Deferred Loading Pattern
+
+```lua
+-- In init.lua
+vim.defer_fn(function()
+  require('config.options').setup()
+  require('config.keymaps').setup()
+  require('config.autocmds').setup()
+end, 0)
+```
+
+## Common Tasks
+
+### Adding an Autocommand
+
+```lua
+-- In lua/config/autocmds.lua M.setup():
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "markdown", "text" },
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.spell = true
+  end,
+})
+```
+
+### Adding Vim Options
+
+```lua
+-- In lua/config/options.lua M.setup():
+vim.opt.your_option = value
+```
+
+### Creating a Utility Function
+
+```lua
+-- In lua/utils/init.lua
+local M = {}
+
+M.your_function = function(args)
+  -- Implementation
+end
+
+return M
+
+-- Usage: require('utils').your_function(args)
+```
+
+## Plugin Categories
+
+### Core (4 plugins)
+`plenary.nvim`, `nui.nvim`, `nvim-web-devicons`, `lazy.nvim`
+
+### UI (11 plugins)
+`tokyonight`, `alpha-nvim`, `lualine`, `bufferline`, `noice`, `nvim-notify`, `which-key`, `indent-blankline`, `mini.indentscope`, `fidget`, `nvim-scrollbar`
+
+### Editor (13 plugins)
+`nvim-autopairs`, `flash.nvim`, `clever-f`, `nvim-spectre`, `grug-far`, `harpoon`, `persistence`, `smartyank`, `vim-sleuth`, `vim-illuminate`, `tabular`, `todo-comments`, `toggleterm`
+
+### LSP (12 plugins)
+`nvim-lspconfig`, `mason`, `mason-lspconfig`, `mason-tool-installer`, `lazydev`, `luvit-meta`, `SchemaStore`, `conform`, `nvim-lint`, `trouble`, `blink.cmp`/`nvim-cmp`, `LuaSnip`
+
+### Git (7 plugins)
+`vim-fugitive`, `vim-rhubarb`, `gitsigns`, `diffview`, `vim-flog`, `git-conflict`, `octo`
+
+### AI (3 plugins)
+`copilot.vim`, `ChatGPT.nvim`, `mcphub.nvim`
+
+### Debug (8 plugins)
+`nvim-dap`, `nvim-dap-ui`, `nvim-dap-virtual-text`, `nvim-dap-python`, `nvim-dap-go`, `mason-nvim-dap`, `telescope-dap`, `nvim-nio`
+
+### Tools (14 plugins)
+`telescope`, `telescope-fzf-native`, `telescope-ui-select`, `neo-tree`, `oil.nvim`, `nvim-bqf`, `rest.nvim`, `vim-dadbod`, `vim-dadbod-ui`, `vim-dadbod-completion`, `iron.nvim`, `markdown-preview`, `nvim-puppeteer`, `obsidian.nvim`
+
+### Treesitter (3 plugins)
+`nvim-treesitter`, `nvim-treesitter-context`, `nvim-treesitter-textobjects`
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Plugins not loading | `:Lazy sync` |
+| LSP not starting | `:LspInfo`, `:Mason` |
+| Icons missing | Install a Nerd Font |
+| Slow startup | `:Lazy profile` |
+| Treesitter errors | `:TSUpdate` |
+| Keybinding conflicts | `:verbose map <key>` |
+
+### Health Check
+
+```vim
+:checkhealth
+```
+
+### Debug Logging
+
+```lua
+-- Temporarily add to plugin config:
+log_level = vim.log.levels.DEBUG,
+```
+
+## Resources
+
+- [lazy.nvim](https://github.com/folke/lazy.nvim)
+- [Mason.nvim](https://github.com/williamboman/mason.nvim)
+- [Neovim Documentation](https://neovim.io/doc/)
+- [Kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)
+
+## References
+
+- [references/configuration.md](references/configuration.md) - Core configuration options
+- [references/plugins.md](references/plugins.md) - All 82 plugins detailed
+- [references/plugin-deepdives.md](references/plugin-deepdives.md) - In-depth plugin guides
+- [references/lsp.md](references/lsp.md) - LSP server configuration
+- [references/keybindings.md](references/keybindings.md) - Complete keybinding reference
+- [references/debugging.md](references/debugging.md) - DAP debugging guide
+- [references/performance.md](references/performance.md) - Optimization techniques
+- [references/tools.md](references/tools.md) - CLI tools, utilities, and workflows
+- [references/troubleshooting.md](references/troubleshooting.md) - Common issues and solutions
+- [references/migration-0.11.md](references/migration-0.11.md) - Neovim 0.11 migration guide
 
 ---
 
-## Reference index
+## Gotchas
 
-Read the file matching the user's task. Don't preload everything.
-
-| If the task is about… | Read |
-|---|---|
-| Adding/removing plugins, choosing a plugin manager, lazy-loading | `references/plugin-managers.md` |
-| Adding or configuring an LSP server, native vs. lspconfig, root_dir | `references/lsp.md` |
-| Completion engine setup, sources, keymaps | `references/completion.md` |
-| Treesitter parsers, highlight, textobjects, main vs. master | `references/treesitter.md` |
-| Formatters on save, linters, conform/nvim-lint/none-ls | `references/formatting-linting.md` |
-| Keymaps, `<leader>`, `vim.keymap.set`, `which-key`, autocmds | `references/keymaps-autocmds.md` |
-| Statusline, bufferline, notifications, file explorer, picker | `references/ui-stack.md` |
-| Options, diagnostics config, colorscheme, filetype | `references/options-diagnostics.md` |
-| Startup is slow, a plugin broke, `:checkhealth`, LSP won't attach | `references/debugging.md` |
-| Migrating from 0.10 → 0.11 → 0.12, deprecation warnings | `references/migration.md` |
-| A full working 0.12+ config to imitate | `example-config/README.md` |
-
----
-
-## Working style
-
-- **Prefer the user's existing idioms.** If they wrap requires in
-  `safe_require`, use it. If they use `vim.keymap.set` with table `desc`,
-  match that. Don't introduce `lazy.nvim` patterns into a `vim.pack` config.
-- **Small diffs win.** Edit in place; avoid wholesale file rewrites unless
-  explicitly asked.
-- **Surface the "why".** When you suggest a plugin or option, briefly say why
-  (one line). Users keep configs for years; they deserve to know.
-- **Check for deprecations before writing 0.12+ APIs.** See
-  `references/migration.md`. Common traps: `vim.tbl_islist` →
-  `vim.islist`, `vim.validate` signature change,
-  `vim.treesitter.query.get` → `get_query`,
-  `vim.lsp.buf_get_clients` → `vim.lsp.get_clients`.
-- **Don't invent keybindings silently.** If suggesting a mapping, point out
-  if it collides with common defaults or the user's existing map.
-- **Respect ecosystem splits.** Don't tell a `blink.cmp` user to add an
-  `nvim-cmp` source, or an `nvim-lspconfig` user to rewrite against native
-  LSP, unless they asked.
-
----
-
-## Example configuration
-
-The `example-config/` directory is a pointer to a concrete, fully-working
-Neovim 0.12+ setup you can refer to when you need to see how a full stack
-fits together — plugin manager choice (vim.pack), native LSP with per-server
-files, blink.cmp, snacks.nvim, conform + nvim-lint, and dual TypeScript
-servers (tsgo + vtsls) with root-directory gating.
-
-Treat it as *one* opinionated example, not the ground truth. When helping a
-user, their config is the ground truth.
-
-See `example-config/README.md` for the pointer and highlights.
-
----
-
-## Quick mental model: what lives where
-
-For fast orientation when dropped into an unfamiliar config:
-
-- **Options** (`vim.opt.*`, `vim.g.*`) — usually in `lua/config/options.lua`.
-  Sets tab width, relative numbers, clipboard, etc.
-- **Keymaps** (`vim.keymap.set`) — `lua/config/keymaps.lua` or scattered
-  inside plugin specs.
-- **Autocmds** (`vim.api.nvim_create_autocmd`) — `lua/config/autocmds.lua`.
-  Common ones: highlight yank, restore cursor position, trim whitespace.
-- **LSP server activation** — either `lua/config/lsp.lua` with
-  `vim.lsp.enable(...)`, or inside a plugin spec that sets up
-  nvim-lspconfig.
-- **Plugin specs** — `lua/plugins/*.lua` (lazy.nvim convention) or one big
-  `lua/plugins/init.lua` (vim.pack convention).
-- **Per-server LSP configs** — `lsp/<name>.lua` for native, or inline
-  `lspconfig[name].setup{}` for classic.
-- **Filetype overrides** — `after/ftplugin/<ft>.lua`.
-
----
-
-## When the user asks "is my config good?"
-
-Resist the urge to rewrite. Instead:
-
-1. Run (or ask them to run) `:checkhealth` and `:Lazy profile` /
-   `nvim --startuptime /tmp/nvim.log` to get data.
-2. Read `references/debugging.md` for what a healthy startup looks like.
-3. Point out concrete wins (a deprecated API here, a missing `desc =` on a
-   keymap there) rather than style preferences.
+- **LSP attaches on FileType, not BufRead:** Buffers opened before plugin spec evaluation get no LSP. `:LspInfo` shows nothing — open a new buffer of the same filetype or `:edit` to retrigger the autocommand.
+- **`lazy-lock.json` silently pins everything:** `:Lazy sync` will not update plugins unless the lock entry is removed or `:Lazy update` is run explicitly. Sync only installs missing plugins and removes orphans.
+- **`vim.defer_fn(..., 0)` runs after UIEnter but before FileType:** Config loaded this way misses the first buffer's filetype event. Move keymaps and options out of `defer_fn` if first-buffer integrations break.
+- **Mason installs to `~/.local/share/nvim/mason/bin/`, not `$PATH`:** External tools that invoke formatters or linters from the shell will not find Mason-installed binaries unless you prepend that path explicitly.
+- **`event = "VeryLazy"` defers until after UI is ready:** Plugins that intercept startup behavior (sessions, dashboards, colorschemes) must use `lazy = false` with `priority = 1000` — VeryLazy is too late.
+- **Treesitter parsers compile against the installed Neovim ABI:** After a Neovim upgrade, `:TSUpdate` is mandatory or you will see "Impossible pattern" errors with no obvious cause.

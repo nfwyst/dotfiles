@@ -1,136 +1,450 @@
-# Debugging a Neovim config
+# Debugging Reference
 
-When something's wrong — a plugin won't load, the LSP is silent, startup is slow — a short list of tools covers 90% of cases.
+Complete guide for debugging with DAP (Debug Adapter Protocol) in this Neovim configuration.
 
-## First stop: `:checkhealth`
+## DAP Stack Overview
 
-```vim
-:checkhealth           " everything
-:checkhealth nvim      " core
-:checkhealth lsp       " LSP clients / configs
-:checkhealth vim.treesitter
-:checkhealth mason
-:checkhealth <plugin>  " many plugins register health checks
+```
+nvim-dap (Core DAP client)
+├── nvim-dap-ui (UI panels)
+├── nvim-dap-virtual-text (Inline variable values)
+├── nvim-nio (Async IO for dap-ui)
+└── Language-specific adapters
+    ├── nvim-dap-python
+    ├── nvim-dap-go
+    └── mason-nvim-dap (Adapter installer)
 ```
 
-Read the output carefully — it surfaces missing binaries, deprecated APIs, misconfigured providers, missing parsers. Start here every time.
+## Keybindings
 
-## LSP debugging
+| Key | Action | Description |
+|-----|--------|-------------|
+| `<F5>` | Continue | Start/continue debugging |
+| `<F10>` | Step Over | Execute current line |
+| `<F11>` | Step Into | Step into function |
+| `<F12>` | Step Out | Step out of function |
+| `<leader>b` | Toggle Breakpoint | Set/remove breakpoint |
+| `<leader>B` | Conditional Breakpoint | Breakpoint with condition |
+| `<leader>lp` | Log Point | Set log point message |
+| `<leader>dr` | REPL | Open DAP REPL |
+| `<leader>dl` | Run Last | Repeat last debug session |
+| `<leader>dh` | Hover | Show variable value |
+| `<leader>dp` | Preview | Preview variable in popup |
+| `<leader>df` | Frames | List stack frames |
+| `<leader>ds` | Scopes | List variable scopes |
 
-### Is the server attached?
+## DAP UI Layout
 
-```vim
-:LspInfo          " nvim-lspconfig command (legacy but still useful)
-:lua =vim.lsp.get_clients()
-:lua =vim.lsp.get_clients({ bufnr = 0 })  " clients on this buffer
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Scopes (Variables)  │  Breakpoints   │  Stacks  │  Watches  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│                      Source Code                            │
+│                   (with virtual text)                       │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                         REPL                                │
+│                       Console                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-If the server isn't attached:
-1. Is the binary on `$PATH`? Run `which <server>` in your shell.
-2. Did `root_dir` resolve? Servers usually don't attach if no project root is found. Check with `:lua =vim.fs.root(0, {'package.json', '.git'})`.
-3. Is the filetype correct? `:set ft?`. Filetype mismatches are a common silent failure.
-4. Is the server gated by a `root_dir` callback that returned nil? (Common with dual-server setups for one language.)
+## Python Debugging
 
-### Server running but not working
-
-```vim
-:LspLog            " opens the log file
-:lua vim.lsp.set_log_level("debug")  " increase verbosity, reproduce, then read :LspLog
-```
-
-Things to look for: initialization errors, capability negotiation, workspace folders, unresponsive `textDocument/*` requests.
-
-### Capabilities
-
-```vim
-:lua =vim.lsp.get_clients({bufnr=0})[1].server_capabilities
-```
-
-If a feature (hover, rename, format) doesn't work, check whether the server actually advertises it.
-
-## Plugin not loading
-
-1. `:Lazy` (or equivalent) — check that the plugin is listed and has no errors.
-2. For lazy.nvim: `:Lazy profile` shows what loaded when. If a plugin is meant to lazy-load on an event/command that never fires, it'll just sit there.
-3. `:lua =package.loaded["plugin-name"]` — returns the module if it's loaded, `nil` if not.
-4. `:messages` — past error messages.
-5. `:Notifications` (if `noice.nvim` or `snacks.notifier` is installed) — persistent notification history.
-
-## Lua errors
-
-- `:messages` — last errors.
-- `vim.print(obj)` or `=obj` in `:lua` — pretty-print tables. Replaces the need for `vim.inspect()`.
-- `:lua require("mod")` and watch for errors reloading.
-- For a clean reload during iteration:
-  ```lua
-  package.loaded["mymodule"] = nil
-  require("mymodule")
-  ```
-
-## Startup profiling
-
-### Built-in
+### Prerequisites
 
 ```bash
-nvim --startuptime /tmp/start.log
+# Install debugpy via Mason
+:Mason
+# Search for "debugpy" and install
+
+# Or via pip
+pip install debugpy
 ```
 
-Open the log; big numbers are slow steps. This tells you file-load time, not runtime overhead.
+### Configuration
 
-### lazy.nvim profile
-
-```vim
-:Lazy profile
+```lua
+-- lua/plugins/specs/debug.lua
+{
+  "mfussenegger/nvim-dap-python",
+  ft = "python",
+  dependencies = { "mfussenegger/nvim-dap" },
+  config = function()
+    require("dap-python").setup("python")
+  end,
+}
 ```
 
-Shows per-plugin load time with a threshold slider. Best tool for hunting plugin-induced slowdowns.
+### Debug Configurations
 
-### Runtime profiling
+```lua
+-- Automatically provided by dap-python:
+-- 1. Launch file
+-- 2. Launch file with arguments
+-- 3. Attach remote
+-- 4. Run doctests in file
 
-```vim
-:profile start /tmp/profile.log
-:profile func *
-:profile file *
-" ... do the slow thing ...
-:profile pause
-:noautocmd qa!
+-- Add custom configuration:
+require("dap").configurations.python = {
+  {
+    type = "python",
+    request = "launch",
+    name = "Django",
+    program = "${workspaceFolder}/manage.py",
+    args = { "runserver", "--noreload" },
+    django = true,
+  },
+  {
+    type = "python",
+    request = "launch",
+    name = "Flask",
+    module = "flask",
+    args = { "run", "--no-debugger" },
+    env = { FLASK_APP = "app.py" },
+  },
+}
 ```
 
-Then read `/tmp/profile.log`. Heavy — only for specific "action X is slow" investigations.
+### Usage
 
-## Common problem patterns
+1. Open Python file
+2. Set breakpoints with `<leader>b`
+3. Press `<F5>` to start debugging
+4. Select configuration from menu
 
-**"Icons show as `?`"** — terminal isn't using a Nerd Font. Fix the terminal, not the plugin.
+## Go Debugging
 
-**"Treesitter highlighting gone for filetype X"** — parser not installed (`:TSInstall x`) or main branch users need `vim.treesitter.start()` enabled. See `references/treesitter.md`.
-
-**"Clipboard doesn't work"** — `vim.opt.clipboard = "unnamedplus"` requires an external provider: `xclip`, `xsel`, `wl-clipboard`, or `pbcopy` (macOS, built-in). `:checkhealth provider` tells you which are available.
-
-**"Python/Node/Ruby provider warnings in checkhealth"** — these only matter if you use Python/Node/Ruby plugins (rare today). Silence with `vim.g.loaded_python3_provider = 0` etc. if you don't need them.
-
-**"Config works on one machine, not another"** — differences in: Neovim version (`nvim --version`), plugin versions (lockfile committed?), installed binaries, terminal, locale, shell.
-
-**"Mysterious lag when typing"** — `updatetime` too high, `CursorHold` autocmd doing expensive work, `incsearch` with huge files, or a lagging LSP. Try `:set eventignore=CursorHold,CursorMoved` temporarily to isolate.
-
-## Bisecting
-
-Comment out half the plugin list, restart, see if issue persists. Binary search. Crude but effective when you can't pinpoint the culprit.
-
-With lazy.nvim: `enabled = false` on a spec disables it for the session.
-
-## Safe config editing
-
-- Keep a git commit before any big refactor. `cd ~/.config/nvim && git diff` after each iteration.
-- Use `:source %` to reload the current Lua file (some changes need a full restart — options, pack setup, etc.).
-- `nvim -u NORC` starts with no user config — handy for reproducing "is this Neovim or my config?"
-- `nvim --clean` is even stricter: no config, no plugins, no rtp.
-
-## Version-specific oddities
-
-When the user reports something that works in the docs but not for them, first check:
+### Prerequisites
 
 ```bash
-nvim --version | head -1
+# Install delve via Mason
+:Mason
+# Search for "delve" and install
+
+# Or via go
+go install github.com/go-delve/delve/cmd/dlv@latest
 ```
 
-Some APIs moved between 0.10 and 0.11, and 0.12 brings vim.pack. See `references/migration.md`.
+### Configuration
+
+```lua
+-- lua/plugins/specs/debug.lua
+{
+  "leoluz/nvim-dap-go",
+  ft = "go",
+  dependencies = { "mfussenegger/nvim-dap" },
+  opts = {
+    dap_configurations = {
+      {
+        type = "go",
+        name = "Attach remote",
+        mode = "remote",
+        request = "attach",
+      },
+    },
+    delve = {
+      build_flags = "",
+    },
+  },
+}
+```
+
+### Debug Configurations
+
+```lua
+-- Automatically provided:
+-- 1. Debug (compile and run)
+-- 2. Debug test (current file)
+-- 3. Debug test (current function)
+
+-- Add custom:
+require("dap").configurations.go = {
+  {
+    type = "go",
+    name = "Debug Package",
+    request = "launch",
+    program = "${fileDirname}",
+  },
+  {
+    type = "go",
+    name = "Debug with Args",
+    request = "launch",
+    program = "${file}",
+    args = function()
+      return vim.split(vim.fn.input("Args: "), " ")
+    end,
+  },
+}
+```
+
+## JavaScript/TypeScript Debugging
+
+### Prerequisites
+
+```bash
+# Install js-debug-adapter via Mason
+:Mason
+# Search for "js-debug-adapter"
+```
+
+### Configuration
+
+```lua
+require("dap").adapters["pwa-node"] = {
+  type = "server",
+  host = "localhost",
+  port = "${port}",
+  executable = {
+    command = "node",
+    args = {
+      require("mason-registry").get_package("js-debug-adapter"):get_install_path()
+        .. "/js-debug/src/dapDebugServer.js",
+      "${port}",
+    },
+  },
+}
+
+require("dap").configurations.javascript = {
+  {
+    type = "pwa-node",
+    request = "launch",
+    name = "Launch file",
+    program = "${file}",
+    cwd = "${workspaceFolder}",
+  },
+  {
+    type = "pwa-node",
+    request = "attach",
+    name = "Attach",
+    processId = require("dap.utils").pick_process,
+    cwd = "${workspaceFolder}",
+  },
+}
+
+require("dap").configurations.typescript = require("dap").configurations.javascript
+```
+
+## Adding Custom Debug Adapters
+
+### Step 1: Define Adapter
+
+```lua
+local dap = require("dap")
+
+dap.adapters.my_adapter = {
+  type = "executable",  -- or "server"
+  command = "/path/to/adapter",
+  args = { "--port", "${port}" },
+}
+
+-- For server adapters:
+dap.adapters.my_server_adapter = {
+  type = "server",
+  host = "127.0.0.1",
+  port = "${port}",
+  executable = {
+    command = "/path/to/adapter",
+    args = { "${port}" },
+  },
+}
+```
+
+### Step 2: Define Configurations
+
+```lua
+dap.configurations.my_filetype = {
+  {
+    type = "my_adapter",
+    request = "launch",  -- or "attach"
+    name = "Launch Program",
+    program = "${file}",
+    cwd = "${workspaceFolder}",
+    args = {},
+    env = {},
+    stopOnEntry = false,
+  },
+}
+```
+
+### Step 3: Set Filetype
+
+```lua
+-- In ftplugin/my_filetype.lua or via autocmd
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "my_filetype",
+  callback = function()
+    -- Filetype-specific debug config
+  end,
+})
+```
+
+## DAP UI Configuration
+
+```lua
+{
+  "rcarriga/nvim-dap-ui",
+  dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
+  opts = {
+    icons = { expanded = "▾", collapsed = "▸", current_frame = "→" },
+    mappings = {
+      expand = { "<CR>", "<2-LeftMouse>" },
+      open = "o",
+      remove = "d",
+      edit = "e",
+      repl = "r",
+      toggle = "t",
+    },
+    layouts = {
+      {
+        elements = {
+          { id = "scopes", size = 0.25 },
+          { id = "breakpoints", size = 0.25 },
+          { id = "stacks", size = 0.25 },
+          { id = "watches", size = 0.25 },
+        },
+        position = "left",
+        size = 40,
+      },
+      {
+        elements = {
+          { id = "repl", size = 0.5 },
+          { id = "console", size = 0.5 },
+        },
+        position = "bottom",
+        size = 10,
+      },
+    },
+    floating = {
+      border = "rounded",
+      mappings = { close = { "q", "<Esc>" } },
+    },
+  },
+  config = function(_, opts)
+    local dap, dapui = require("dap"), require("dapui")
+    dapui.setup(opts)
+
+    -- Auto open/close UI
+    dap.listeners.after.event_initialized["dapui_config"] = function()
+      dapui.open()
+    end
+    dap.listeners.before.event_terminated["dapui_config"] = function()
+      dapui.close()
+    end
+    dap.listeners.before.event_exited["dapui_config"] = function()
+      dapui.close()
+    end
+  end,
+}
+```
+
+## Virtual Text Configuration
+
+```lua
+{
+  "theHamsta/nvim-dap-virtual-text",
+  opts = {
+    enabled = true,
+    enabled_commands = true,
+    highlight_changed_variables = true,
+    highlight_new_as_changed = false,
+    show_stop_reason = true,
+    commented = false,
+    virt_text_pos = "eol",  -- or "inline"
+    all_frames = false,
+    virt_lines = false,
+    virt_text_win_col = nil,
+  },
+}
+```
+
+## Breakpoints
+
+### Types of Breakpoints
+
+```lua
+local dap = require("dap")
+
+-- Regular breakpoint
+dap.toggle_breakpoint()
+
+-- Conditional breakpoint
+dap.set_breakpoint(vim.fn.input("Condition: "))
+
+-- Log point (prints message without stopping)
+dap.set_breakpoint(nil, nil, vim.fn.input("Log message: "))
+
+-- Hit count breakpoint
+dap.set_breakpoint(nil, vim.fn.input("Hit count: "))
+```
+
+### Breakpoint Signs
+
+```lua
+vim.fn.sign_define("DapBreakpoint", {
+  text = "●",
+  texthl = "DapBreakpoint",
+  linehl = "",
+  numhl = "",
+})
+vim.fn.sign_define("DapBreakpointCondition", {
+  text = "◆",
+  texthl = "DapBreakpointCondition",
+})
+vim.fn.sign_define("DapLogPoint", {
+  text = "◆",
+  texthl = "DapLogPoint",
+})
+vim.fn.sign_define("DapStopped", {
+  text = "→",
+  texthl = "DapStopped",
+  linehl = "DapStoppedLine",
+})
+```
+
+## REPL Commands
+
+Inside the DAP REPL:
+
+| Command | Description |
+|---------|-------------|
+| `.exit` | Close REPL |
+| `.c` | Continue |
+| `.n` | Step over |
+| `.s` | Step into |
+| `.o` | Step out |
+| `.up` | Go up stack frame |
+| `.down` | Go down stack frame |
+| `.scopes` | Print scopes |
+| `.threads` | Print threads |
+| `.frames` | Print frames |
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Adapter not found | Check Mason installation, verify path |
+| Breakpoint not hit | Ensure source maps, check file paths |
+| UI not opening | Check dap listeners are configured |
+| Variables not showing | Ensure stopped at breakpoint, check scopes |
+| Can't attach | Verify process is running with debug flag |
+
+### Debug Logging
+
+```lua
+-- Enable DAP logging
+require("dap").set_log_level("TRACE")
+
+-- View log
+:lua print(vim.fn.stdpath("cache") .. "/dap.log")
+```
+
+### Check DAP Status
+
+```lua
+-- Show current session info
+:lua print(vim.inspect(require("dap").session()))
+
+-- List breakpoints
+:lua print(vim.inspect(require("dap.breakpoints").get()))
+```
