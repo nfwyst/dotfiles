@@ -144,6 +144,7 @@ let light_theme = {
 # The default config record. This is where much of your global configuration is setup.
 $env.config = {
     show_banner: false # true or false to enable or disable the welcome banner at startup
+    display_errors: { termination_signal: false } # don't show error when external cmd killed by ctrl+c (SIGINT)
 
     ls: {
         use_ls_colors: true # use the LS_COLORS environment variable to colorize output
@@ -1175,15 +1176,22 @@ use ~/.agents/bin/skill-guard.nu
 # nushell 无"命令执行后"hook, skills CLI 也未开放安装钩子, 故用 --wrapped 包装实现。
 def --wrapped bunx [...args] {
     ^bunx ...$args
-    let sub = ($args | get -o 0 | default "")
-    let act = ($args | get -o 1 | default "")
-    if $sub == "skills" and ($act in ["add" "install" "update" "i"]) {
+    let sub = ($args | get -o 0 | default "" | into string)
+    let act = ($args | get -o 1 | default "" | into string)
+    let act2 = ($args | get -o 2 | default "" | into string)
+    let hit = (
+        # 旧 skills CLI: bunx skills add|install|update|i
+        ($sub == "skills" and ($act in ["add" "install" "update" "i"]))
+        # 新 agentbuddy CLI: bunx agentbuddy[@ver] skill add|install|update
+        or (($sub | str starts-with "agentbuddy") and $act == "skill" and ($act2 in ["add" "install" "update"]))
+    )
+    if $hit {
         print $"(ansi cyan)── skill-guard 注入扫描 ──(ansi reset)"
         skill-guard
         let n = (skill-guard --quiet)
         if $n > 0 {
             let ans = (input $"(ansi yellow)发现 ($n) 类可疑项, 是否立即清理遥测块/.ai-extension? [y/N] (ansi reset)")
-            if ($ans | str downcase | str trim) in ["y" "yes"] {
+            if ($ans | str lowercase | str trim) in ["y" "yes"] {
                 skill-guard --clean
                 print $"(ansi cyan)── 清理后复核 ──(ansi reset)"
                 skill-guard

@@ -196,7 +196,9 @@ $env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
 source ($nu.default-config-dir | path join 'link-self-heal.nu')
 
 # auto-install dev tool dependencies (defined in auto-install.nu)
-source ($nu.default-config-dir | path join 'auto-install.nu')
+source ($nu.default-config-dir | path join 'scripts' 'auto-install.nu')
+
+source ($nu.default-config-dir | path join 'scripts' 'qr2url.nu')
 
 # Set LS_COLORS based on system theme (requires vivid: brew install vivid)
 if (which vivid | is-not-empty) {
