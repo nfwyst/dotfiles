@@ -109,12 +109,55 @@ vim.filetype.add({
   },
 })
 
--- Guard paste handler: skip nvim_put in non-modifiable buffers (E21 fix)
--- Nvim 0.12 still needs this for E21 in non-modifiable buffers
+-- Guard paste handler:
+--   1. E21 fix: skip nvim_put in non-modifiable buffers (Nvim 0.12 still needs this).
+--   2. Large-paste perf ("paste mode" equivalent): modern Nvim has no useful
+--      `:set paste` — bracketed paste is automatic via vim.paste(). The real
+--      freeze on big pastes comes from `foldmethod=expr` + treesitter foldexpr
+--      recomputing folds on every inserted chunk (O(chunks) full-buffer parses).
+--      So for the duration of a paste we switch to manual folds + lazyredraw and
+--      restore afterwards, collapsing it to a single fold recompute at the end.
 local original_paste = vim.paste
+local paste_guard = nil
+
+local function paste_guard_enter()
+  if paste_guard then
+    return
+  end
+  paste_guard = {
+    foldmethod = vim.wo.foldmethod,
+    lazyredraw = vim.o.lazyredraw,
+  }
+  vim.wo.foldmethod = "manual"
+  vim.o.lazyredraw = true
+end
+
+local function paste_guard_leave()
+  if not paste_guard then
+    return
+  end
+  vim.wo.foldmethod = paste_guard.foldmethod
+  vim.o.lazyredraw = paste_guard.lazyredraw
+  paste_guard = nil
+  vim.schedule(function()
+    pcall(vim.cmd.redraw)
+  end)
+end
+
 vim.paste = function(lines, phase)
   if not vim.bo.modifiable then
     return false
   end
-  return original_paste(lines, phase)
+  -- phase: -1 = single call; 1 = start; 2 = continue; 3 = end.
+  if phase == 1 or phase == -1 then
+    paste_guard_enter()
+  end
+  local ok, result = pcall(original_paste, lines, phase)
+  if phase == 3 or phase == -1 or not ok then
+    paste_guard_leave()
+  end
+  if not ok then
+    error(result)
+  end
+  return result
 end

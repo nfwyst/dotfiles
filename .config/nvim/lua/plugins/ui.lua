@@ -56,6 +56,7 @@ local exclude = {
   ".vscode",
   ".DS_Store",
   "thumbs.db",
+  ".conform.*",
 }
 
 -- picker (files / grep) exclude: additionally skip heavy dirs
@@ -463,12 +464,26 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   callback = compute_price_color,
 })
 
+-- Macro recording indicator. reg_recording() is "" when not recording.
+-- No autocmd needed: lualine's poll timer (and mode/cursor events) refresh it.
+local function macro_recording()
+  local reg = vim.fn.reg_recording()
+  if reg == "" then
+    return ""
+  end
+  return "󰑊 REC @" .. reg
+end
+
 vim.o.laststatus = 3
 require("lualine").setup({
   options = {
     theme = "auto",
     ignore_focus = { "neo-tree", "Avante", "AvanteInput", "codecompanion" },
     component_separators = { left = " ▎", right = " ▎" },
+    -- Slow the fallback poll timer to save resources. Most updates are
+    -- event-driven (CursorMoved/ModeChanged/BufEnter/...); this timer only
+    -- governs idle refresh, e.g. how fast the macro REC indicator lights up.
+    refresh = { statusline = 3000 },
   },
   sections = {
     lualine_a = { "mode" },
@@ -492,6 +507,11 @@ require("lualine").setup({
       },
     },
     lualine_x = {
+      {
+        macro_recording,
+        color = { fg = "#ff5555", gui = "bold" },
+        padding = { left = 1, right = 1 },
+      },
       {
         require("config.price").get_display_text,
         color = function()

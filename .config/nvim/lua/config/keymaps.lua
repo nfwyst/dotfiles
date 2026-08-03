@@ -542,22 +542,79 @@ map("n", "gd", function()
     return nil
   end
 
+  local impl_all = {} ---@type table[]
+
+  -- Self-reference filter: textDocument/implementation includes the use site
+  -- (e.g. the destructure line the cursor sits on). Drop it so a single real
+  -- implementation collapses to one jump target instead of a picker.
+  local cur_file = vim.api.nvim_buf_get_name(bufnr)
+  local cur_line0 = vim.api.nvim_win_get_cursor(win)[1] - 1
+
+  local function loc_file_line(loc)
+    local uri = loc.uri or loc.targetUri or ""
+    local ok, fn = pcall(vim.uri_to_fname, uri)
+    local range = loc.range or loc.targetSelectionRange or loc.targetRange or {}
+    local st = range.start or {}
+    return (ok and fn or uri), (st.line or 0)
+  end
+
+  local function remove_self(locs)
+    local out = {}
+    for _, loc in ipairs(locs) do
+      local f, l = loc_file_line(loc)
+      if not (f == cur_file and l == cur_line0) then
+        table.insert(out, loc)
+      end
+    end
+    return out
+  end
+
+  local function prefer_source(locs)
+    local nd = vim.tbl_filter(function(loc)
+      return not is_declaration(loc.uri or loc.targetUri or "")
+    end, locs)
+    return (#nd > 0) and nd or locs
+  end
+
   local function on_done()
     if pending > 0 then
       return
     end
+
+    -- Prefer real implementations over the type-declaration that
+    -- textDocument/definition returns for a symbol destructured from a
+    -- function/hook whose return type is an explicit interface. tsgo answers
+    -- `definition` with the interface member (e.g. typings/hooks.ts), while
+    -- `implementation` points at the actual value (the hook body). When an
+    -- implementation exists elsewhere, use it; a single hit jumps, multiple
+    -- hits (e.g. an interface with several implementors) open a picker.
+    local impls = prefer_source(remove_self(dedupe(impl_all)))
+    if #impls > 0 then
+      if #impls == 1 then
+        jump(impls[1])
+      else
+        show_list(impls)
+      end
+      return
+    end
+
+    -- No usable implementation: fall back to plain definition behavior.
     local unique = dedupe(all)
     if #unique == 0 then
       vim.notify("No definition found", vim.log.levels.INFO)
       return
     end
-    local preferred = vim.tbl_filter(function(loc)
-      return not is_declaration(loc.uri or loc.targetUri or "")
-    end, unique)
-    -- All targets are declaration stubs: try the CSS-module asset shortcut
-    -- before falling back to the stub itself (bare `lodash` types still work
-    -- because their specifier is not a relative style asset).
-    if #preferred == 0 then
+    local preferred = prefer_source(unique)
+    -- All targets are .d.ts stubs: try the CSS-module asset shortcut before
+    -- falling back to the stub itself.
+    local all_decl = true
+    for _, loc in ipairs(unique) do
+      if not is_declaration(loc.uri or loc.targetUri or "") then
+        all_decl = false
+        break
+      end
+    end
+    if all_decl then
       local asset = cursor_line_style_asset()
       if asset then
         return jump({
@@ -566,21 +623,19 @@ map("n", "gd", function()
         })
       end
     end
-    local use = (#preferred > 0) and preferred or unique
-    if #use == 1 then
-      jump(use[1])
+    if #preferred == 1 then
+      jump(preferred[1])
     else
-      show_list(use)
+      show_list(preferred)
     end
   end
 
-  -- Pure Goto Definition: one definition request per client. We deliberately do
-  -- NOT issue textDocument/implementation here — that is `gri`'s job, and mixing
-  -- it in turns `gd` on an interface into a list of every implementor.
-  pending = #clients
-  for _, client in ipairs(clients) do
-    local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
-    client:request("textDocument/definition", params, function(err, result)
+  -- Goto Definition, implementation-aware. We issue BOTH definition and
+  -- implementation per client (implementation only when the server supports
+  -- it). This lets `gd` reach the real value behind a typed interface member;
+  -- `gri` remains the dedicated implementations picker.
+  local function collect(into)
+    return function(err, result)
       pending = pending - 1
       if not err and result then
         local list = vim.islist(result) and result or { result }
@@ -592,12 +647,28 @@ map("n", "gd", function()
             loc.targetUri = normalize_uri(loc.targetUri)
           end
           if loc.uri or loc.targetUri then
-            table.insert(all, loc)
+            table.insert(into, loc)
           end
         end
       end
       on_done()
-    end, bufnr)
+    end
+  end
+
+  local reqs = {}
+  for _, client in ipairs(clients) do
+    local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+    table.insert(reqs, { client = client, method = "textDocument/definition", into = all, params = params })
+    if client:supports_method("textDocument/implementation") then
+      table.insert(reqs, { client = client, method = "textDocument/implementation", into = impl_all, params = params })
+    end
+  end
+  pending = #reqs
+  if pending == 0 then
+    return Snacks.picker.lsp_definitions()
+  end
+  for _, r in ipairs(reqs) do
+    r.client:request(r.method, r.params, collect(r.into), bufnr)
   end
 end, { desc = "Goto Definition" })
 map("n", "grr", function()
