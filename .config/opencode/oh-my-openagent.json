@@ -12,80 +12,99 @@
   "agents": {
     "sisyphus": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "hephaestus": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "oracle": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "librarian": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "explore": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "multimodal-looker": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "prometheus": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "metis": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "momus": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "atlas": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "sisyphus-junior": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     }
   },
   "categories": {
     "visual-engineering": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "ultrabrain": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "deep": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "artistry": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "quick": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "unspecified-low": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "unspecified-high": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     },
     "writing": {
       "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
       "reasoning": "max"
     }
   },
