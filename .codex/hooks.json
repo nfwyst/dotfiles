@@ -13,7 +13,7 @@
       {
         "hooks": [
           {
-            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.26@0.4.3 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex sessionStart",
+            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.27@0.4.5 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex sessionStart",
             "type": "command",
             "timeout": 30
           }
@@ -45,7 +45,7 @@
         "matcher": ".*",
         "hooks": [
           {
-            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.26@0.4.3 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex preToolUse",
+            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.27@0.4.5 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex preToolUse",
             "type": "command",
             "timeout": 30
           }
@@ -78,7 +78,7 @@
         "matcher": ".*",
         "hooks": [
           {
-            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.26@0.4.3 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex postToolUse",
+            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.27@0.4.5 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex postToolUse",
             "type": "command",
             "timeout": 30
           }
@@ -98,7 +98,7 @@
       {
         "hooks": [
           {
-            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.26@0.4.3 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex stop",
+            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.27@0.4.5 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex stop",
             "type": "command",
             "timeout": 30
           }
@@ -118,7 +118,7 @@
       {
         "hooks": [
           {
-            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.26@0.4.3 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex subagentStop",
+            "command": "[ -e '/Applications/Flux Island.app/Contents/MacOS/Flux Island' ] || exit 0; TEA_APP_ID=1013111 TEA_CHANNEL=cn TEA_APP_NAME_FOR_BITS=@fluxisland@0.1.27@0.4.5 ELECTRON_RUN_AS_NODE=1 '/Applications/Flux Island.app/Contents/MacOS/Flux Island' '/Applications/Flux Island.app/Contents/Resources/bin/flux-bits-report' codex subagentStop",
             "type": "command",
             "timeout": 30
           }

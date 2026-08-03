@@ -88,3 +88,5 @@ tea-reporter.config.json
 .agents/.skill-lock.json
 .config/opencode/package-lock.json
 .openclaw/credentials/
+.codegraph
+.qr_decode_helper

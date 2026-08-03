@@ -11,7 +11,8 @@
 - 任务完成后清理本次引入的无用代码、文件和残留进程
 - 禁删已有注释;仅可删本轮刚加且立即发现错误的注释
 - 独立子任务优先并行
-- 派发子任务/子代理时, 强制启用 caveman skill 精简输出模式
+- 每次回复必须使用 caveman ultra 模式精简输出
+- 派发子任务/子代理时, 强制为子任务/子代理启用 caveman skill 精简输出模式
 - 解析图片优先调用具备多模态视觉能力的代理或工具
 
 ## 工具链
@@ -22,6 +23,7 @@
 - 执行 openspec 命令时, 对于需要确认的命令, 请始终添加 `-y` 参数
 - Skill 缺失时用 `bunx skills find <name>` 查找; 仅安装名称完全匹配且最可信的条目,并先征得用户确认
 - 启动进程前检查同类进程;只清理本次任务相关进程
+- opencode 会话 `node` 可能是 bun shim(`/private/tmp/bun-node-*`),致 `pnpm`/`npm` 隐式 `exec node` 撞 `node:sqlite` 崩溃;执行前 `command -v node` 命中 `bun-node` 时,须 `PATH=/opt/homebrew/bin:$PATH <cmd>` 显式修 PATH
 
 ## 编码风格
 
@@ -46,3 +48,12 @@
 - 高风险操作需用户确认:删除非本轮生成的文件、批量重构、修改依赖、创建备份文件、改动 CI/CD、数据库破坏性变更、发送外部消息
 - Git 高风险操作需用户确认:`commit` / `push` / `checkout` / `restore` / `reset` / `--force` / `--force-with-lease` / 改写历史 / 创建或关闭 PR
 - `push` 前先 `git pull --rebase`
+
+## CodeGraph
+
+在 CodeGraph 索引的仓库中（仓库根目录下存在 `.codegraph/` 目录），当您需要理解或定位代码时，请先使用 CodeGraph，然后再使用 grep/find 或读取文件：
+
+- **MCP 工具**（如果可用）：`codegraph_explore` 一次调用即可解答大多数代码问题——返回相关符号的源代码以及它们之间的调用路径。`codegraph_node` 返回单个符号的源代码及其调用者，或者读取包含行号的整个文件。如果工具已列出但未启用，请通过工具搜索按名称加载它们。
+- **Shell**（始终有效）：`codegraph explore "<符号名称或问题>"` 和 `codegraph node <符号或文件>` 的输出相同。
+
+如果没有 `.codegraph/` 目录，则完全跳过 CodeGraph——是否使用索引由用户决定。

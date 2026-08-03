@@ -4,6 +4,7 @@
     "oven-sh/bun/bun"
   ],
   "trustedtaps": [
+    "anomalyco/tap",
     "cormacrelf/tap",
     "oven-sh/bun"
   ]
