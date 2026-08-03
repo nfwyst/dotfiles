@@ -1,16 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
-  // 压缩策略:尽量晚压、压得保守、保护关键信息
   "compress": {
-    // 低于 70% 完全不催压, 到/超过 70% 才开始提醒
-    "minContextLimit": "70%",
-    // 超过 90% 持续强力催压, 留空间给压缩过程和续写
-    "maxContextLimit": "90%",
-    // 催压节奏放缓 -> 更晚、更少压
-    "nudgeFrequency": 6,
-    "iterationNudgeThreshold": 20,
-    // 关键信息保护
-    "protectedTools": ["task", "skill", "todowrite", "todoread"],
-    "protectTags": true
+    "minContextLimit": "90%",
+    "maxContextLimit": "95%",
+    // 基本禁用按轮次催压，主要依赖 context 百分比触发
+    "iterationNudgeThreshold": 9999999
   }
 }
