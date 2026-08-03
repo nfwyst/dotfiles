@@ -1,7 +1,9 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "autoupdate": false,
-  "compaction": { "auto": false },
+  "compaction": {
+    "auto": false
+  },
   "permission": {
     "read": "allow",
     "edit": "allow",
@@ -21,8 +23,8 @@
   "instructions": ["../../.agents/skills/caveman/SKILL.md"],
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
-    "oh-my-openagent@latest",
-    "opencode-plugin-openspec@latest"
+    "opencode-plugin-openspec@latest",
+    "oh-my-openagent@latest"
   ],
   "mcp": {
     "codin-d2c-mcp": {
@@ -78,6 +80,11 @@
       "type": "remote",
       "url": "https://server.smithery.ai/@openags/paper-search-mcp/mcp",
       "timeout": 120000,
+      "enabled": true
+    },
+    "codegraph": {
+      "type": "local",
+      "command": ["codegraph", "serve", "--mcp"],
       "enabled": true
     }
   },
@@ -135,7 +142,15 @@
         "north-mini-code-free",
         "deepseek-v4-pro",
         "claude-opus-4-8",
-        "gemini-3.5-flash"
+        "gemini-3.5-flash",
+        "claude-sonnet-5",
+        "kimi-k2.7-code",
+        "glm-5.2",
+        "hy3-free",
+        "gpt-5.6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "grok-4.5"
       ]
     },
     "opencode-go": {
@@ -147,26 +162,18 @@
         "kimi-k2.5",
         "mimo-v2-pro",
         "mimo-v2.5",
-        "deepseek-v4-flash",
         "glm-5.1",
         "kimi-k2.6",
         "minimax-m2.7",
         "qwen3.6-plus",
         "qwen3.7-plus",
-        "minimax-m3",
-        "deepseek-v4-pro",
         "mimo-v2.5-pro",
         "kimi-k2.7-code",
         "qwen3.7-max"
       ]
     },
     "deepseek": {
-      "blacklist": [
-        "deepseek-chat",
-        "deepseek-reasoner",
-        "deepseek-v4-flash",
-        "deepseek-v4-pro"
-      ]
+      "blacklist": ["deepseek-chat", "deepseek-reasoner"]
     },
     "kimi-for-coding": {
       "blacklist": ["k2p5", "kimi-k2-thinking", "k2p6", "k2p7"]

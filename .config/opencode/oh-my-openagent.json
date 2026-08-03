@@ -2,201 +2,98 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
   "hashline_edit": true,
   "model_fallback": true,
-  "runtime_fallback": { "enabled": true },
-  "team_mode": { "enabled": true },
+  "runtime_fallback": {
+    "enabled": true
+  },
+  "team_mode": {
+    "enabled": true,
+    "tmux_visualization": true
+  },
   "agents": {
     "sisyphus": {
-      "model": "opencode-go/glm-5.2",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "hephaestus": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "oracle": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "librarian": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "explore": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "multimodal-looker": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "prometheus": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "metis": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "momus": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "atlas": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "sisyphus-junior": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "ultrabrain": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "deep": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "artistry": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "quick": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "unspecified-low": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "unspecified-high": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     },
     "writing": {
-      "model": "ai_agent_proxy_responses/gpt-5.5-2026-04-24",
-      "fallback_models": [
-        "ai_agent_proxy_responses/gpt-5.4-pro-2026-03-05",
-        "ai_agent_proxy_responses/gpt-5.4-2026-03-05",
-        "ai_agent_proxy_chat/gpt-5.4-2026-03-05",
-        "ttadk_anthropic_llmbox_global_byteintl_net/glm-5.1",
-        "ai_agent_proxy_chat/glm-5"
-      ]
+      "model": "opencode-go/deepseek-v4-flash",
+      "reasoning": "max"
     }
+  },
+  "codegraph": {
+    "enabled": true,
+    "auto_provision": true,
+    "daemon": true,
+    "telemetry": false,
+    "auto_init": true
   }
 }
