@@ -21,6 +21,7 @@
 - 文件检索优先 `rg` / `fd` / `bat`
 - 在 nushell 中使用 `cat` 时, 请在前面添加 `^`, 用 `^cat` 命令执行
 - 执行 openspec 命令时, 对于需要确认的命令, 请始终添加 `-y` 参数
+- 调用 team_create 工具时, 请使用 inline_spec 而不是直接使用 members 参数
 - Skill 缺失时用 `bunx skills find <name>` 查找; 仅安装名称完全匹配且最可信的条目,并先征得用户确认
 - 启动进程前检查同类进程;只清理本次任务相关进程
 - opencode 会话 `node` 可能是 bun shim(`/private/tmp/bun-node-*`),致 `pnpm`/`npm` 隐式 `exec node` 撞 `node:sqlite` 崩溃;执行前 `command -v node` 命中 `bun-node` 时,须 `PATH=/opt/homebrew/bin:$PATH <cmd>` 显式修 PATH

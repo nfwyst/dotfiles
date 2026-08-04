@@ -1,0 +1,106 @@
+// OMO configuration
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
+  "[opencode]": {
+    "hashline_edit": true,
+    "model_fallback": true,
+    "runtime_fallback": {
+      "enabled": true,
+    },
+    "team_mode": {
+      "enabled": true,
+      "tmux_visualization": true,
+    },
+    "agents": {
+      "sisyphus": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "hephaestus": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "oracle": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "librarian": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "explore": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "multimodal-looker": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "prometheus": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "metis": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "momus": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "atlas": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "sisyphus-junior": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+    },
+    "categories": {
+      "visual-engineering": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "ultrabrain": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "deep": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "artistry": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "quick": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "unspecified-low": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "unspecified-high": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+      "writing": {
+        "model": "deepseek/deepseek-v4-flash",
+        "reasoning": "max",
+      },
+    },
+    "codegraph": {
+      "enabled": true,
+      "auto_provision": true,
+      "daemon": true,
+      "telemetry": false,
+      "auto_init": true,
+    },
+  },
+  "_migrations": [
+    "2026-07-opencode-config-unification",
+    "2026-08-reasoning-unification",
+  ],
+}
