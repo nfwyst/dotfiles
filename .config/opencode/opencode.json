@@ -23,7 +23,6 @@
   "instructions": ["../../.agents/skills/caveman/SKILL.md"],
   "plugin": [
     "@tarquinen/opencode-dcp@latest",
-    "opencode-plugin-openspec@latest",
     "oh-my-openagent@latest"
   ],
   "mcp": {
