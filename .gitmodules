@@ -4,6 +4,20 @@
 [submodule ".config/zellij/plugins/zjstatus"]
 	path = .config/zellij/plugins/zjstatus
 	url = https://github.com/dj95/zjstatus.git
-[submodule ".config/.config/ghostty/ghostty-shaders"]
-	path = .config/.config/ghostty/ghostty-shaders
+[submodule ".config/ghostty/shaders"]
+	path = .config/ghostty/shaders
 	url = https://github.com/hackr-sh/ghostty-shaders.git
+
+[submodule ".config/tmux/plugins/tpm"]
+	path = .config/tmux/plugins/tpm
+	url = https://github.com/tmux-plugins/tpm
+[submodule ".config/tmux/plugins/tmux-power"]
+	path = .config/tmux/plugins/tmux-power
+	url = https://github.com/wfxr/tmux-power
+[submodule ".config/tmux/plugins/tmux-which-key"]
+	path = .config/tmux/plugins/tmux-which-key
+	url = https://github.com/alexwforsythe/tmux-which-key
+
+[submodule ".config/tmux/plugins/tmux-dark-notify"]
+	path = .config/tmux/plugins/tmux-dark-notify
+	url = https://github.com/erikw/tmux-dark-notify

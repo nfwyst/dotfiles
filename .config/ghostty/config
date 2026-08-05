@@ -23,7 +23,7 @@ background-opacity = 0.95
 unfocused-split-opacity = 0.9
 custom-shader-animation = always
 # custom-shader = ~/.config/ghostty/shaders/cursor_blaze_no_trail.glsl
-custom-shader = ~/.config/ghostty/shaders/cursor_smear.glsl
+custom-shader = ~/.config/ghostty/shaders/smear_cursor_blocks.glsl
 # other
 clipboard-paste-protection = true
 clipboard-trim-trailing-spaces = true
