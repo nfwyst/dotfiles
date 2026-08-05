@@ -191,6 +191,7 @@
     "google-vertex-anthropic",
     "google-vertex",
     "opencode",
-    "kimi-for-coding"
+    "kimi-for-coding",
+    "deepseek"
   ]
 }
