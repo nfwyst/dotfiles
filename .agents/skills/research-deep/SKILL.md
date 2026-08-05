@@ -62,10 +62,10 @@ python ~/.agents/skills/research/validate_json.py -f {fields_path} -j {output_pa
 ## 任务
 调研 name: GitHub Copilot
 category: 国际产品
-description: Microsoft/GitHub开发，首个主流AI编程助手，市场份额约40%，输出结构化JSON到 /home/weizhena/AIcoding/aicoding-history/results/GitHub_Copilot.json
+description: Microsoft/GitHub开发，首个主流AI编程助手，市场份额约40%，输出结构化JSON到 {output_path}
 
 ## 字段定义
-读取 /home/weizhena/AIcoding/aicoding-history/fields.yaml 获取所有字段定义
+读取 {fields_path} 获取所有字段定义
 
 ## 输出要求
 1. 按fields.yaml定义的字段输出JSON
@@ -74,11 +74,11 @@ description: Microsoft/GitHub开发，首个主流AI编程助手，市场份额�
 4. 所有字段值必须使用中文输出（调研过程可用英文，但最终JSON值为中文）
 
 ## 输出路径
-/home/weizhena/AIcoding/aicoding-history/results/GitHub_Copilot.json
+{output_path}
 
 ## 验证
 完成JSON输出后，运行验证脚本确保字段完整覆盖：
-python ~/.agents/skills/research/validate_json.py -f /home/weizhena/AIcoding/aicoding-history/fields.yaml -j /home/weizhena/AIcoding/aicoding-history/results/GitHub_Copilot.json
+python ~/.agents/skills/research/validate_json.py -f {fields_path} -j {output_path}
 验证通过后才算完成任务。
 ```
 

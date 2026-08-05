@@ -6,12 +6,6 @@ description: >-
   to an MCP, install a skill, or wants to interact with an external service
   (email, Slack, Discord, GitHub, Jira, Notion, databases, cloud APIs,
   monitoring, etc.).
-metadata:
-  openclaw:
-    requires:
-      bins:
-        - smithery
-    homepage: 'https://smithery.ai'
 ---
 # Smithery
 
