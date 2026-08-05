@@ -21,10 +21,7 @@
     "doom_loop": "ask"
   },
   "instructions": ["../../.agents/skills/caveman/SKILL.md"],
-  "plugin": [
-    "@tarquinen/opencode-dcp@latest",
-    "oh-my-openagent@latest"
-  ],
+  "plugin": ["@tarquinen/opencode-dcp@latest", "oh-my-openagent@latest"],
   "mcp": {
     "codin-d2c-mcp": {
       "type": "local",

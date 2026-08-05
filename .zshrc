@@ -120,6 +120,7 @@ export CGO_ENABLED="1"
 # 为当前 shell 启用 web search
 export OPENCODE_ENABLE_EXA=1
 export METRICS_LOG_LEVEL="error"
+export OPENCODE_LOG_LEVEL="WARN"
 
 # Shell integrations
 source <(starship init zsh)

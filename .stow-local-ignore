@@ -9,3 +9,4 @@ LICENSE
 .aider.tags.cache.v3
 legacy
 custom-env.zsh
+\.codegraph

@@ -64,7 +64,8 @@ tests/
 graphify-out/
 .config/opencode/skills
 .agents/_agents.mount_config
-.omo
+.omo/*
+!.omo/omo.jsonc
 
 # Codex: keep runtime state/cache local; track only portable config.
 .codex/*

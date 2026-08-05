@@ -189,6 +189,7 @@ $env.NODE_OPTIONS = "--openssl-legacy-provider"
 # 为当前 shell 启用 web search
 $env.OPENCODE_ENABLE_EXA = "1"
 $env.METRICS_LOG_LEVEL = "error"
+$env.OPENCODE_LOG_LEVEL = "WARN"
 $env.BUN_FEATURE_FLAG_DISABLE_IGNORE_SCRIPTS = "1"
 
 # self-heal: ensure macOS default config dir links to dotfiles (link-self-heal.nu)
