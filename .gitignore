@@ -86,6 +86,10 @@ tea-reporter.config.json
 .agents/skills/bits/
 .agents/skills/bits-code-guard/
 .agents/.skill-lock.json
+.agents/skills/codebase-to-course/
+.agents/skills/frontend-design-review-gate/
+.agents/skills/travel-guide/
+.agents/auth.json
 .config/opencode/package-lock.json
 .openclaw/credentials/
 .codegraph
