@@ -15,3 +15,7 @@ def --wrapped ttadk [...args] {
         bun --bun run ttadk opencode ...$args
     }
 }
+
+def --wrapped oclean [...args] {
+    nu ~/.config/nushell/scripts/opencode-cleanup.nu ...$args
+}

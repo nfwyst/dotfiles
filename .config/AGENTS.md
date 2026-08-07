@@ -57,3 +57,9 @@
 - **Shell**（始终有效）：`codegraph explore "<符号名称或问题>"` 和 `codegraph node <符号或文件>` 的输出相同。
 
 如果没有 `.codegraph/` 目录，则完全跳过 CodeGraph——是否使用索引由用户决定。
+
+## Boulder 续推防护
+
+- 计划任务行用 `- [x] 1.`；`- [~]` = blocked（不计任务 → 不续推）
+- 钩子仅对 `active`/`paused` work 续推（`session_ids` + `updated_at` 最新）；**cancelled 不防续推，须标 `abandoned`**
+- 完成收尾三件套：work `completed` + 顶层 `status=completed` + `active_work_id=null`

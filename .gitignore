@@ -12,6 +12,7 @@ history.*
 todo.md
 .gp.md
 cache
+.cache/
 configstore
 zjframes.rs
 **/zjstatus/target/
@@ -90,8 +91,9 @@ tea-reporter.config.json
 .agents/skills/codebase-to-course/
 .agents/skills/frontend-design-review-gate/
 .agents/skills/travel-guide/
+.agents/skills/traex-guide
 .agents/auth.json
 .config/opencode/package-lock.json
 .openclaw/credentials/
 .codegraph
-.qr_decode_helper
+docs/superpowers/plans/

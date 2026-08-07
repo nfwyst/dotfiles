@@ -218,7 +218,7 @@ let plist = $'<?xml version="1.0" encoding="UTF-8"?>
     <string>com.user.als-theme</string>
     <key>ProgramArguments</key>
     <array>
-        <string>($env.HOME)/.config/als_reader</string>
+        <string>($env.HOME)/.local/bin/als_reader</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
@@ -231,7 +231,37 @@ let plist = $'<?xml version="1.0" encoding="UTF-8"?>
     <integer>30</integer>
     <key>RunAtLoad</key>
     <true/>
+    <key>StandardOutPath</key>
+    <string>($env.HOME)/.local/state/theme/als_reader.log</string>
+    <key>StandardErrorPath</key>
+    <string>($env.HOME)/.local/state/theme/als_reader.log</string>
 </dict>
 </plist>'
 
-$plist | save -f ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")
+if $env.UNAME == "Darwin" {
+    let plist_path = ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")
+    # launchd 不自建日志目录, 写 plist 前先建
+    mkdir ($env.HOME | path join ".local" "state" "theme")
+
+    # 内容 diff: 仅当文件缺失或内容变化时才写盘
+    let plist_changed = (not ($plist_path | path exists)) or ((open --raw $plist_path) != $plist)
+    if $plist_changed {
+        $plist | save -f $plist_path
+    }
+
+    let bin_path = ($env.HOME | path join ".local" "bin" "als_reader")
+    let registered = (launchctl list | lines | any {|l| $l =~ "com.user.als-theme" })
+
+    if not ($bin_path | path exists) {
+        # 二进制缺失: 不注册; 已注册则卸载, 防止 spawn 循环
+        if $registered {
+            launchctl unload $plist_path
+        }
+    } else if $registered and $plist_changed {
+        # 内容变化: 卸载重载使新配置生效
+        launchctl unload $plist_path
+        launchctl load $plist_path
+    } else if not $registered {
+        launchctl load $plist_path
+    }
+}

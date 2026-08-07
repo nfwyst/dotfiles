@@ -12,7 +12,19 @@
 def link-self-heal [] {
     if ($env.UNAME? | default "") != "Darwin" { return }
 
-    let src = ($env.HOME | path join "dotfiles/.config/nushell")
+    # repo root derived from the running config path: cfg = <repo>/.config/nushell/
+    # config.nu → 3× dirname → <repo>
+    let cfg = ($nu.config-path | path expand)
+    let repo = (
+        if ($cfg | path exists) {
+            $cfg | path dirname | path dirname | path dirname
+        } else {
+            null
+        }
+    )
+    if $repo == null { return }
+
+    let src = ($repo | path join ".config" "nushell")
     let link = ($env.HOME | path join "Library/Application Support/nushell")
 
     # started from the fallback dir itself — nothing to link
