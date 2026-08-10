@@ -73,8 +73,8 @@ local function get_macos_bg()
   return (obj.code == 0 and obj.stdout:match("Dark")) and "dark" or "light"
 end
 
--- Parse dark-notify state file to determine mode
-local function parse_dark_notify_mode(path)
+-- Parse theme state file to determine mode
+local function parse_theme_mode(path)
   local ok, lines = pcall(vim.fn.readfile, path)
   if not ok then return nil end
   for _, line in ipairs(lines) do
@@ -92,7 +92,7 @@ if vim.fn.has("mac") == 1 then
   local state_file = vim.fn.expand("~/.local/state/theme/mode")
 
   if vim.env.TMUX and vim.uv.fs_stat(state_file) then
-    -- Event-driven: watch dark-notify state file (kqueue, zero polling)
+    -- Event-driven: watch theme state file (kqueue, zero polling)
     local function watch()
       if not vim.uv.fs_stat(state_file) then
         vim.defer_fn(watch, 1000)
@@ -103,7 +103,7 @@ if vim.fn.has("mac") == 1 then
         handle:stop()
         handle:close()
         if not err then
-          local mode = parse_dark_notify_mode(state_file)
+          local mode = parse_theme_mode(state_file)
           if mode then
             apply_theme(mode)
           end
@@ -114,7 +114,7 @@ if vim.fn.has("mac") == 1 then
     end
     watch()
   else
-    -- Fallback: poll every 15s (outside tmux or dark-notify not installed)
+    -- Fallback: poll every 15s (outside tmux or theme file not available)
     local last_system_appearance = appearance
     local timer = vim.uv.new_timer()
     timer:start(15000, 15000, vim.schedule_wrap(function()

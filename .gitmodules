@@ -17,7 +17,3 @@
 [submodule ".config/tmux/plugins/tmux-which-key"]
 	path = .config/tmux/plugins/tmux-which-key
 	url = https://github.com/alexwforsythe/tmux-which-key
-
-[submodule ".config/tmux/plugins/tmux-dark-notify"]
-	path = .config/tmux/plugins/tmux-dark-notify
-	url = https://github.com/erikw/tmux-dark-notify
