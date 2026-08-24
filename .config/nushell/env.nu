@@ -209,7 +209,8 @@ if (which vivid | is-not-empty) {
     $env.__THEME_MODE = $mode
 }
 
-let plist = $'<?xml version="1.0" encoding="UTF-8"?>
+let generation_placeholder = "__ALS_CONFIG_GENERATION__"
+let plist_template = $'<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -222,6 +223,8 @@ let plist = $'<?xml version="1.0" encoding="UTF-8"?>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
+        <key>ALS_CONFIG_GENERATION</key>
+        <string>($generation_placeholder)</string>
         <key>ALS_THRESHOLD_DARK</key>
         <string>100</string>
         <key>ALS_THRESHOLD_LIGHT</key>
@@ -237,9 +240,14 @@ let plist = $'<?xml version="1.0" encoding="UTF-8"?>
     <string>($env.HOME)/.local/state/theme/als_reader.log</string>
 </dict>
 </plist>'
+let config_generation = ($plist_template | hash sha256)
+let plist = ($plist_template | str replace $generation_placeholder $config_generation)
 
 if $env.UNAME == "Darwin" {
     let plist_path = ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")
+    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    let service_target = $"gui/(^/usr/bin/id -u | str trim)/com.user.als-theme"
+    let domain_target = $"gui/(^/usr/bin/id -u | str trim)"
     # launchd 不自建日志目录, 写 plist 前先建
     mkdir ($env.HOME | path join ".local" "state" "theme")
 
@@ -250,18 +258,61 @@ if $env.UNAME == "Darwin" {
     }
 
     let bin_path = ($env.HOME | path join ".local" "bin" "als_reader")
-    let registered = (launchctl list | lines | any {|l| $l =~ "com.user.als-theme" })
+    let job = (do { ^$launchctl print $service_target } | complete)
+    let job_missing = ($job.exit_code == 113 or ($job.stderr | str contains "Could not find service"))
+    if $job.exit_code != 0 and not $job_missing {
+        error make { msg: $"als-theme startup status failed: ($job.stderr | str trim)" }
+    }
+    let registered = ($job.exit_code == 0)
+    let last_exit = ($job.stdout | parse --regex 'last exit code = (?<code>\d+)' | get -o 0.code | default "0" | into int)
+    let has_job_identity = {|candidate: record|
+        let lines = ($candidate.stdout | lines | each {|line| $line | str trim })
+        (($lines | any {|line| $line == $"path = ($plist_path)" }) and
+            ($lines | any {|line| $line == $"program = ($bin_path)" }) and
+            ($lines | any {|line| $line == $"ALS_CONFIG_GENERATION => ($config_generation)" }))
+    }
+    let healthy = ($registered and (not $plist_changed) and $last_exit == 0 and (do $has_job_identity $job))
+    let launchctl_or_fail = {|action: string, ...args: string|
+        let result = (do { ^$launchctl ...$args } | complete)
+        if $result.exit_code != 0 {
+            let detail = ($result.stderr | str trim)
+            error make { msg: $"als-theme startup ($action) failed: ($detail)" }
+        }
+    }
 
     if not ($bin_path | path exists) {
         # 二进制缺失: 不注册; 已注册则卸载, 防止 spawn 循环
         if $registered {
-            launchctl unload $plist_path
+            do $launchctl_or_fail bootout bootout $service_target
         }
-    } else if $registered and $plist_changed {
-        # 内容变化: 卸载重载使新配置生效
-        launchctl unload $plist_path
-        launchctl load $plist_path
-    } else if not $registered {
-        launchctl load $plist_path
+    } else if not $healthy {
+        # 内容变化或旧路径残留: 按精确 service target 清理后注册当前 plist
+        mut bootstrap_needed = true
+        if $registered {
+            let bootout = (do { ^$launchctl bootout $service_target } | complete)
+            if $bootout.exit_code != 0 {
+                let raced_job = (do { ^$launchctl print $service_target } | complete)
+                let raced_missing = ($raced_job.exit_code == 113 or ($raced_job.stderr | str contains "Could not find service"))
+                let raced_last_exit = ($raced_job.stdout | parse --regex 'last exit code = (?<code>\d+)' | get -o 0.code | default "0" | into int)
+                let race_converged = ($raced_job.exit_code == 0 and $raced_last_exit == 0 and (do $has_job_identity $raced_job))
+                if $race_converged {
+                    $bootstrap_needed = false
+                } else if not $raced_missing {
+                    error make { msg: $"als-theme startup bootout failed: ($bootout.stderr | str trim)" }
+                }
+            }
+        }
+        if $bootstrap_needed {
+            let bootstrap = (do { ^$launchctl bootstrap $domain_target $plist_path } | complete)
+            if $bootstrap.exit_code != 0 {
+                # 并发启动可能已由另一进程完成注册; 仅精确健康的当前 job 可收敛成功
+                let raced_job = (do { ^$launchctl print $service_target } | complete)
+                let raced_last_exit = ($raced_job.stdout | parse --regex 'last exit code = (?<code>\d+)' | get -o 0.code | default "0" | into int)
+                let race_converged = ($raced_job.exit_code == 0 and $raced_last_exit == 0 and (do $has_job_identity $raced_job))
+                if not $race_converged {
+                    error make { msg: $"als-theme startup bootstrap failed: ($bootstrap.stderr | str trim)" }
+                }
+            }
+        }
     }
 }

@@ -1073,12 +1073,76 @@ if not ($custom_env_path | path exists) {
   exit
 }
 
-# set delta as diff view
-git config --global core.pager delta
-git config --global interactive.diffFilter 'delta --color-only'
-git config --global delta.navigate true
-git config --global merge.conflictStyle zdiff3
-git config --global merge.tool nvimdiff
+def git-config-read [git: string, key: string] {
+    let result = (do { ^$git config --global --get-all $key } | complete)
+    if $result.exit_code == 0 { return ($result.stdout | lines) }
+
+    let detail = ($result.stderr | str trim)
+    if $result.exit_code == 1 and ($detail | is-empty) { return [] }
+    let reason = (if ($detail | is-empty) { $"exit code ($result.exit_code)" } else { $detail })
+    error make { msg: $"Git config read failed for ($key): ($reason)" }
+}
+
+def git-config-write-with-retry [git: string, key: string, args: list<string>] {
+    for attempt in 1..5 {
+        let write = (do { ^$git ...$args } | complete)
+        if $write.exit_code == 0 { return { ok: true, detail: "" } }
+
+        let detail = ($write.stderr | str trim)
+        if not ($detail | str contains "could not lock config file") {
+            error make { msg: $"Git config setup failed for ($key): ($detail)" }
+        }
+        if $attempt == 5 { return { ok: false, detail: $detail } }
+        sleep 20ms
+    }
+}
+
+# Set only missing or changed values. Writes retry only Git config-lock contention.
+def ensure-git-config [key: string, value: string, --path] {
+    let expected = (if $path { $value | path expand } else { $value })
+    let git = "/usr/bin/git"
+    if (git-config-read $git $key) == [$expected] { return }
+    let write = (git-config-write-with-retry $git $key ["config" "--global" "--replace-all" $key $expected])
+    if not $write.ok and (git-config-read $git $key) != [$expected] {
+        error make { msg: $"Git config setup failed for ($key): ($write.detail)" }
+    }
+}
+
+def ensure-git-include [value: string] {
+    let canonical = ($value | path expand)
+    let legacy = '~/.config/delta/themes.gitconfig'
+    let git = "/usr/bin/git"
+    for transition in 1..5 {
+        let current = (git-config-read $git include.path)
+        let managed = ($current | where {|include| $include == $legacy or $include == $canonical })
+        if $managed == [$canonical] { return }
+
+        let managed_value = (if ($managed | any {|include| $include == $legacy }) { $legacy } else { $canonical })
+        let write = (git-config-write-with-retry $git include.path [
+            "config" "--global" "--fixed-value" "--replace-all"
+            "include.path" $canonical $managed_value
+        ])
+        if not $write.ok {
+            let after = (git-config-read $git include.path)
+            let after_managed = ($after | where {|include| $include == $legacy or $include == $canonical })
+            if $after_managed == [$canonical] { return }
+            if $after_managed == $managed {
+                error make { msg: $"Git config setup failed for include.path: ($write.detail)" }
+            }
+        }
+    }
+    let current = (git-config-read $git include.path)
+    let managed = ($current | where {|include| $include == $legacy or $include == $canonical })
+    if $managed == [$canonical] { return }
+    error make { msg: "Git config setup failed for include.path: did not converge" }
+}
+
+ensure-git-config core.pager delta
+ensure-git-config interactive.diffFilter 'delta --color-only'
+ensure-git-config delta.navigate "true"
+ensure-git-config merge.conflictStyle zdiff3
+ensure-git-config merge.tool nvimdiff
+ensure-git-include ($env.HOME | path join ".config/delta/themes.gitconfig")
 
 # ─── ALS Theme Monitor ───
 const ALS_LABEL = "com.user.als-theme"
@@ -1087,28 +1151,109 @@ def als-plist-path [] {
     $env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist"
 }
 
+def als-domain-target [] {
+    $"gui/(^/usr/bin/id -u | str trim)"
+}
+
+def als-service-target [] {
+    $"(als-domain-target)/($ALS_LABEL)"
+}
+
+def launchctl-or-fail [action: string, ...args: string] {
+    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    let result = (do { ^$launchctl ...$args } | complete)
+    if $result.exit_code != 0 {
+        let detail = ($result.stderr | str trim)
+        error make { msg: $"als ($action) failed: ($detail)" }
+    }
+}
+
+def als-job [] {
+    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    do { ^$launchctl print (als-service-target) } | complete
+}
+
+def als-job-missing [job: record] {
+    let detail = ($job.stderr | str trim)
+    $job.exit_code == 113 or ($detail | str contains "Could not find service")
+}
+
+def als-plist-generation [] {
+    if not (als-plist-path | path exists) { return null }
+
+    open --raw (als-plist-path) |
+        parse --regex '<key>ALS_CONFIG_GENERATION</key>\s*<string>(?<generation>[^<]+)</string>' |
+        get -o 0.generation
+}
+
+def als-job-has-identity [job: record] {
+    let expected_plist = $"path = (als-plist-path)"
+    let expected_program = $"program = ($env.HOME | path join '.local' 'bin' 'als_reader')"
+    let generation = (als-plist-generation)
+    let lines = ($job.stdout | lines | each {|line| $line | str trim })
+    (($lines | any {|line| $line == $expected_plist }) and
+        ($lines | any {|line| $line == $expected_program }) and
+        ($generation != null) and
+        ($lines | any {|line| $line == $"ALS_CONFIG_GENERATION => ($generation)" }))
+}
+
+def als-job-state [job: record] {
+    if $job.exit_code != 0 { return "unregistered" }
+
+    if not (als-job-has-identity $job) {
+        "stale"
+    } else if ($job.stdout | parse --regex 'last exit code = (?<code>\d+)' | get -o 0.code | default "0" | into int) != 0 {
+        "failed"
+    } else {
+        "healthy"
+    }
+}
+
 def "als start" [] {
-    ^launchctl load (als-plist-path)
+    let job = (als-job)
+    if $job.exit_code == 0 {
+        let state = (als-job-state $job)
+        if $state == "healthy" {
+            print "als-theme already loaded"
+            return
+        }
+        error make { msg: $"als start failed: existing job is ($state); use `als reload`" }
+    } else if not (als-job-missing $job) {
+        error make { msg: $"als start failed: ($job.stderr | str trim)" }
+    }
+    launchctl-or-fail start bootstrap (als-domain-target) (als-plist-path)
     print "als-theme loaded"
 }
 
 def "als stop" [] {
-    ^launchctl unload (als-plist-path)
+    launchctl-or-fail stop bootout (als-service-target)
     print "als-theme unloaded"
 }
 
 def "als status" [] {
-    let result = (^launchctl list | lines | where { $in =~ $ALS_LABEL })
-    if ($result | is-empty) {
-        print "not running"
-    } else {
-        print ($result | first)
+    let job = (als-job)
+    if $job.exit_code != 0 {
+        if (als-job-missing $job) {
+            print "unregistered"
+            return
+        }
+        error make { msg: $"als status failed: ($job.stderr | str trim)" }
     }
+    print (als-job-state $job)
 }
 
 def "als reload" [] {
-    ^launchctl unload (als-plist-path)
-    ^launchctl load (als-plist-path)
+    let job = (als-job)
+    if $job.exit_code != 0 {
+        if not (als-job-missing $job) {
+            error make { msg: $"als reload failed: ($job.stderr | str trim)" }
+        }
+        launchctl-or-fail reload bootstrap (als-domain-target) (als-plist-path)
+        print "als-theme loaded"
+        return
+    }
+    launchctl-or-fail reload bootout (als-service-target)
+    launchctl-or-fail reload bootstrap (als-domain-target) (als-plist-path)
     print "als-theme reloaded"
 }
 

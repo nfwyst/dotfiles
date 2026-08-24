@@ -76,11 +76,9 @@ end
 -- Parse theme state file to determine mode
 local function parse_theme_mode(path)
   local ok, lines = pcall(vim.fn.readfile, path)
-  if not ok then return nil end
-  for _, line in ipairs(lines) do
-    if line:match("light") then return "light" end
-    if line:match("dark") then return "dark" end
-  end
+  if not ok or #lines ~= 1 then return nil end
+  local mode = vim.trim(lines[1])
+  if mode == "light" or mode == "dark" then return mode end
   return nil
 end
 

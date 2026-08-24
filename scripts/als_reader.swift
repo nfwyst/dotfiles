@@ -9,9 +9,6 @@ func IOHIDEventSystemClientCreateWithType(
     _ allocator: CFAllocator?, _ clientType: Int32, _ attributes: CFDictionary?
 ) -> IOHIDEventSystemClientRef
 
-@_silgen_name("IOHIDEventSystemClientSetMatching")
-func IOHIDEventSystemClientSetMatching(_ client: IOHIDEventSystemClientRef, _ matching: CFDictionary)
-
 @_silgen_name("IOHIDEventSystemClientCopyServices")
 func IOHIDEventSystemClientCopyServices(_ client: IOHIDEventSystemClientRef) -> CFArray?
 
@@ -24,6 +21,9 @@ func IOHIDServiceClientCopyEvent(
 @_silgen_name("IOHIDEventGetFloatValue")
 func IOHIDEventGetFloatValue(_ event: IOHIDEventRef, _ field: UInt32) -> Double
 
+@_silgen_name("IOHIDServiceClientCopyProperty")
+func IOHIDServiceClientCopyProperty(_ service: IOHIDServiceClientRef, _ key: CFString) -> CFTypeRef?
+
 // MARK: - Config
 
 struct Config {
@@ -31,37 +31,74 @@ struct Config {
     let thresholdLight: Double
     let dryRun: Bool
 
-    init() {
-        self.thresholdDark  = Self.double("ALS_THRESHOLD_DARK",  default: 50.0)
-        self.thresholdLight = Self.double("ALS_THRESHOLD_LIGHT", default: 200.0)
-        self.dryRun         = Self.bool("ALS_DRY_RUN",           default: false)
+    init(environment: [String: String] = ProcessInfo.processInfo.environment) throws {
+        let thresholds = try parseThresholds(environment)
+        self.thresholdDark = thresholds.dark
+        self.thresholdLight = thresholds.light
+        self.dryRun = Self.bool("ALS_DRY_RUN", default: false, environment: environment)
     }
 
-    private static func double(_ key: String, default fallback: Double) -> Double {
-        ProcessInfo.processInfo.environment[key]
-            .flatMap(Double.init) ?? fallback
-    }
-
-    private static func bool(_ key: String, default fallback: Bool) -> Bool {
-        guard let raw = ProcessInfo.processInfo.environment[key] else { return fallback }
+    private static func bool(
+        _ key: String, default fallback: Bool, environment: [String: String]
+    ) -> Bool {
+        guard let raw = environment[key] else { return fallback }
         return ["1", "true", "yes"].contains(raw.lowercased())
     }
 }
 
+struct Thresholds {
+    let dark: Double
+    let light: Double
+}
+
+private let defaultDarkThreshold = 50.0
+private let defaultLightThreshold = 200.0
+
+enum ConfigError: Error, CustomStringConvertible {
+    case invalidThreshold(key: String, value: String)
+    case invalidOrder(dark: Double, light: Double)
+
+    var description: String {
+        switch self {
+        case let .invalidThreshold(key, value):
+            return "invalid \(key)=\(value); expected a finite non-negative number"
+        case let .invalidOrder(dark, light):
+            return "ALS_THRESHOLD_DARK (\(dark)) must be less than ALS_THRESHOLD_LIGHT (\(light))"
+        }
+    }
+}
+
+func parseThresholds(_ environment: [String: String]) throws -> Thresholds {
+    func parse(_ key: String, fallback: Double) throws -> Double {
+        guard let raw = environment[key] else { return fallback }
+        guard let value = Double(raw), value.isFinite, value >= 0 else {
+            throw ConfigError.invalidThreshold(key: key, value: raw)
+        }
+        return value
+    }
+
+    let dark = try parse("ALS_THRESHOLD_DARK", fallback: defaultDarkThreshold)
+    let light = try parse("ALS_THRESHOLD_LIGHT", fallback: defaultLightThreshold)
+    guard dark < light else { throw ConfigError.invalidOrder(dark: dark, light: light) }
+    return Thresholds(dark: dark, light: light)
+}
+
 // MARK: - Read ALS
 
-func readALS() -> (lux: Double, level: Double)? {
+func readALS() -> Double? {
     // Apple Silicon: ALS registered under vendor-defined usage page
     let client = IOHIDEventSystemClientCreateWithType(kCFAllocatorDefault, 1, nil)
 
-    let matching: [String: Int] = [
-        "PrimaryUsagePage": 65280,  // 0xFF00
-        "PrimaryUsage":     4,
-    ]
-    IOHIDEventSystemClientSetMatching(client, matching as CFDictionary)
-
-    guard let services = IOHIDEventSystemClientCopyServices(client) as? [AnyObject],
-          let service = services.first else {
+    // 注意:不用 SetMatching 过滤后同步 CopyServices — launchd 环境下会拿不到服务;
+    // 全量枚举 + 手动过滤(实测两种环境均可靠,lux 可读)
+    guard let services = IOHIDEventSystemClientCopyServices(client) as? [AnyObject] else {
+        return nil
+    }
+    guard let service = services.first(where: {
+        let page = IOHIDServiceClientCopyProperty($0, "PrimaryUsagePage" as CFString) as? NSNumber
+        let usage = IOHIDServiceClientCopyProperty($0, "PrimaryUsage" as CFString) as? NSNumber
+        return page?.intValue == 0xFF00 && usage?.intValue == 4
+    }) else {
         return nil
     }
 
@@ -69,9 +106,7 @@ func readALS() -> (lux: Double, level: Double)? {
         return nil
     }
 
-    let lux   = IOHIDEventGetFloatValue(event, 0x000C_0004)
-    let level = IOHIDEventGetFloatValue(event, 0x000C_0001)
-    return (lux: lux, level: level)
+    return IOHIDEventGetFloatValue(event, 0x000C_0004)
 }
 
 // MARK: - Theme
@@ -101,96 +136,50 @@ func isDarkMode() -> Bool {
     return proc.terminationStatus == 0
 }
 
-// MARK: - Theme state sync
+func run(
+    config: Config,
+    readLux: () -> Double?,
+    currentDarkMode: () -> Bool,
+    changeDarkMode: (Bool) -> Bool,
+    sync: (Bool, Bool) throws -> Void
+) throws {
+    guard let lux = readLux() else {
+        try sync(currentDarkMode(), config.dryRun)
+        return
+    }
 
-func atomicWrite(_ content: String, to url: URL) throws {
-    let dir = url.deletingLastPathComponent()
-    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    let tmp = dir.appendingPathComponent(".\(url.lastPathComponent).tmp-\(getpid())")
-    try Data(content.utf8).write(to: tmp, options: [.atomic])
-    _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
-}
-
-func syncTheme(_ dark: Bool) {
-    let fm = FileManager.default
-    let home = fm.homeDirectoryForCurrentUser
-    let state = home.appendingPathComponent(".local/state", isDirectory: true)
-    let themeDir = state.appendingPathComponent("theme", isDirectory: true)
-    let deltaDir = state.appendingPathComponent("delta", isDirectory: true)
-    let modeURL = themeDir.appendingPathComponent("mode")
-    let deltaURL = deltaDir.appendingPathComponent("theme.gitconfig")
-
-    let modeContent = dark ? "dark\n" : "light\n"
-    let features = dark ? "woolly-mammoth" : "hoopoe"
-    let deltaContent = "[delta]\n    features = \(features)\n"
-
-    let themePath = home.appendingPathComponent(
-        dark ? ".config/tmux/tmux-dark.conf" : ".config/tmux/tmux-light.conf"
-    ).path
-    let socket = "/private/tmp/tmux-\(getuid())/default"
-    let socketExists = fm.fileExists(atPath: socket)
-
-    if config.dryRun {
-        print("[dry-run] write mode '\(modeContent.trimmingCharacters(in: .newlines))' -> \(modeURL.path)")
-        print("[dry-run] write delta 'features = \(features)' -> \(deltaURL.path)")
-        if socketExists {
-            print("[dry-run] run tmux -S \(socket) source-file \(themePath)")
-        } else {
-            print("[dry-run] tmux: skip (no socket \(socket))")
+    let dark = currentDarkMode()
+    var effectiveDark = dark
+    if !config.dryRun {
+        if lux < config.thresholdDark && !dark {
+            effectiveDark = changeDarkMode(true) ? true : dark
+        } else if lux > config.thresholdLight && dark {
+            effectiveDark = changeDarkMode(false) ? false : dark
         }
-        print("[dry-run] plist: untouched (env.nu owns ~/Library/LaunchAgents/com.user.als-theme.plist)")
-        return
     }
-
-    // Content-compare guard: skip writes + tmux source when state already matches.
-    // (External edits still heal: content differs → reconcile. No last-mode state:
-    //  als_reader is a fresh process each poll, disk is the source of truth.)
-    let existingMode = (try? String(contentsOf: modeURL, encoding: .utf8)) ?? ""
-    let existingDelta = (try? String(contentsOf: deltaURL, encoding: .utf8)) ?? ""
-    if existingMode == modeContent && existingDelta == deltaContent {
-        return
-    }
-
-    do {
-        try fm.createDirectory(at: themeDir, withIntermediateDirectories: true)
-        try fm.createDirectory(at: deltaDir, withIntermediateDirectories: true)
-        try atomicWrite(modeContent, to: modeURL)
-        try atomicWrite(deltaContent, to: deltaURL)
-    } catch {
-        FileHandle.standardError.write(Data("als_reader: theme state write failed: \(error)\n".utf8))
-    }
-
-    guard socketExists else { return }
-    let proc = Process()
-    proc.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/tmux")
-    proc.arguments = ["-S", socket, "source-file", themePath]
-    proc.standardOutput = FileHandle.nullDevice
-    proc.standardError = FileHandle.nullDevice
-    do {
-        try proc.run()
-        proc.waitUntilExit()
-    } catch {
-        FileHandle.standardError.write(Data("als_reader: tmux source failed: \(error)\n".utf8))
-    }
+    try sync(effectiveDark, config.dryRun)
 }
 
-let config = Config()
-
-guard let als = readALS() else {
-    FileHandle.standardError.write(Data("als_reader: sensor unavailable, syncing from system appearance\n".utf8))
-    syncTheme(isDarkMode())
-    exit(0)
+func run() throws {
+    try run(
+        config: Config(),
+        readLux: readALS,
+        currentDarkMode: isDarkMode,
+        changeDarkMode: setDarkMode,
+        sync: { try syncTheme($0, dryRun: $1) }
+    )
 }
 
-let dark = isDarkMode()
-var effectiveDark = dark
-
-if !config.dryRun {
-    if als.lux < config.thresholdDark && !dark {
-        effectiveDark = setDarkMode(true) ? true : dark
-    } else if als.lux > config.thresholdLight && dark {
-        effectiveDark = setDarkMode(false) ? false : dark
+#if !ALS_TESTING
+@main
+struct ALSReader {
+    static func main() {
+        do {
+            try run()
+        } catch {
+            FileHandle.standardError.write(Data("als_reader: \(error)\n".utf8))
+            exit(64)
+        }
     }
 }
-
-syncTheme(effectiveDark)
+#endif
