@@ -47,15 +47,31 @@ SH
   done
 }
 
+make_launchctl_env_config() {
+  local home=$1 launchctl_bin=$2
+  local source="$ROOT/.config/nushell/env.nu"
+  local fixture="$home/env-launchctl.nu"
+  if [ "$(grep -Fc '"/bin/launchctl"' "$source")" -ne 1 ]; then
+    echo 'expected exactly one trusted launchctl path literal in env.nu source' >&2
+    return 1
+  fi
+  /usr/bin/sed "s|\"/bin/launchctl\"|\"$launchctl_bin\"|g" "$source" >"$fixture"
+  if [ "$(grep -Fc "let launchctl = \"$launchctl_bin\"" "$fixture")" -ne 1 ] || grep -Fq '"/bin/launchctl"' "$fixture"; then
+    echo 'failed to create isolated launchctl env fixture' >&2
+    return 1
+  fi
+  printf '%s\n' "$fixture"
+}
+
 run_env() {
-  local home=$1 mode=$2 output=$3
+  local home=$1 mode=$2 output=$3 env_config
+  env_config=$(make_launchctl_env_config "$home" "$home/.local/bin/launchctl") || return 1
   HOME="$home" \
     PATH="$home/.local/bin:/opt/homebrew/bin:/usr/bin:/bin" \
     FAKE_LAUNCHCTL_MODE="$mode" \
     FAKE_LAUNCHCTL_TRACE="$home/launchctl.trace" \
     FAKE_LAUNCHCTL_STATE="$home/launchctl.state" \
-    DOTFILES_LAUNCHCTL="$home/.local/bin/launchctl" \
-    "$NU_BIN" --env-config "$ROOT/.config/nushell/env.nu" --config /dev/null -c 'null' \
+    "$NU_BIN" --env-config "$env_config" --config /dev/null -c 'null' \
     >"$output" 2>&1
 }
 
@@ -88,6 +104,11 @@ prepare_config_home() {
   done
   ln -s "$config_root" "$home/.config"
   cp "$ROOT/.config/nushell/config.nu" "$config_root/nushell/config.nu"
+  if [ "$(grep -Fc '"/bin/launchctl"' "$config_root/nushell/config.nu")" -ne 2 ]; then
+    echo 'expected exactly two trusted launchctl path literals in config.nu source' >&2
+    return 1
+  fi
+  /usr/bin/sed -i '' "s|\"/bin/launchctl\"|\"$home/.local/bin/launchctl\"|g" "$config_root/nushell/config.nu"
   cp -R "$ROOT/.config/nushell/aliases" "$config_root/nushell/aliases"
   : >"$config_root/nushell/custom-env.nu"
   ln -s "$ROOT/.agents/bin" "$home/.agents/bin"
@@ -123,7 +144,6 @@ run_config_command() {
     GIT_CONFIG_GLOBAL="$home/active.gitconfig" \
     FAKE_LAUNCHCTL_MODE="$mode" \
     FAKE_LAUNCHCTL_TRACE="$home/launchctl.trace" \
-    DOTFILES_LAUNCHCTL="$home/.local/bin/launchctl" \
     "$NU_BIN" --env-config "$home/test-env.nu" --config "$config_path" -c "$command" \
     >"$output" 2>&1
 }

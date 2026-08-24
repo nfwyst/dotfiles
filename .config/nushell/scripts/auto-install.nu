@@ -77,7 +77,7 @@ def manager-available [dep] {
     let command = (match $dep.manager {
         "brew" => "brew"
         "cargo-git" => "cargo"
-        "swift" => ($env.DOTFILES_XCRUN? | default "/usr/bin/xcrun")
+        "swift" => "/usr/bin/xcrun"
         _ => null
     })
     if $command == null or (which $command | is-not-empty) { return true }
@@ -94,7 +94,7 @@ def install-swift-dep [dep] {
     }
 
     let bin_dir = ($env.HOME | path join ".local" "bin")
-    let xcrun = ($env.DOTFILES_XCRUN? | default "/usr/bin/xcrun")
+    let xcrun = "/usr/bin/xcrun"
     mkdir $bin_dir
     if ($sources | all { |source| $source | path exists }) {
         let tmp = (mktemp -p $bin_dir $"($dep.tool).tmp-XXXXXXXX")

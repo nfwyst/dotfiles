@@ -1160,7 +1160,7 @@ def als-service-target [] {
 }
 
 def launchctl-or-fail [action: string, ...args: string] {
-    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    let launchctl = "/bin/launchctl"
     let result = (do { ^$launchctl ...$args } | complete)
     if $result.exit_code != 0 {
         let detail = ($result.stderr | str trim)
@@ -1169,7 +1169,7 @@ def launchctl-or-fail [action: string, ...args: string] {
 }
 
 def als-job [] {
-    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    let launchctl = "/bin/launchctl"
     do { ^$launchctl print (als-service-target) } | complete
 }
 

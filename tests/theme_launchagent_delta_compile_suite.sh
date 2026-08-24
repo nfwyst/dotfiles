@@ -426,6 +426,11 @@ prepare_compile_case() {
   local home="$TMP_ROOT/compile-$name"
   mkdir -p "$home/dotfiles/.config/nushell/scripts" "$home/dotfiles/scripts" "$home/.local/bin"
   cp "$ROOT/.config/nushell/scripts/auto-install.nu" "$home/dotfiles/.config/nushell/scripts/auto-install.nu"
+  if [ "$(grep -Fc '"/usr/bin/xcrun"' "$home/dotfiles/.config/nushell/scripts/auto-install.nu")" -ne 2 ]; then
+    echo 'expected exactly two trusted xcrun path literals in auto-install.nu source' >&2
+    return 1
+  fi
+  /usr/bin/sed -i '' "s|\"/usr/bin/xcrun\"|\"$home/.local/bin/xcrun\"|g" "$home/dotfiles/.config/nushell/scripts/auto-install.nu"
   cp "$ROOT/scripts/als_reader.swift" "$ROOT/scripts/theme_sync.swift" "$home/dotfiles/scripts/"
   printf 'old binary\n' >"$home/.local/bin/als_reader"
   chmod +x "$home/.local/bin/als_reader"
@@ -445,7 +450,7 @@ SH
 
 run_compile_case() {
   local home=$1 output=$2
-  HOME="$home" PATH="$home/.local/bin:/usr/bin:/bin" DOTFILES_XCRUN="$home/.local/bin/xcrun" \
+  HOME="$home" PATH="$home/.local/bin:/usr/bin:/bin" \
     "$NU_BIN" --env-config "$home/test-env.nu" \
     --config "$home/dotfiles/.config/nushell/scripts/auto-install.nu" -c null \
     >"$output" 2>&1

@@ -253,7 +253,7 @@ let plist = ($plist_template | str replace $generation_placeholder $config_gener
 
 if $env.UNAME == "Darwin" {
     let plist_path = ($env.HOME | path join "Library/LaunchAgents/com.user.als-theme.plist")
-    let launchctl = ($env.DOTFILES_LAUNCHCTL? | default "/bin/launchctl")
+    let launchctl = "/bin/launchctl"
     let service_target = $"gui/(^/usr/bin/id -u | str trim)/com.user.als-theme"
     let domain_target = $"gui/(^/usr/bin/id -u | str trim)"
     # launchd 不自建日志目录, 写 plist 前先建
