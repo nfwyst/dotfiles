@@ -1335,8 +1335,8 @@ def --wrapped bunx [...args] {
         skill-guard
         let n = (skill-guard --quiet)
         if $n > 0 {
-            let ans = (input $"(ansi yellow)发现 ($n) 类可疑项, 是否立即清理遥测块/.ai-extension? [y/N] (ansi reset)")
-            if ($ans | str lowercase | str trim) in ["y" "yes"] {
+            let answer = (input $"(ansi yellow)发现 ($n) 类可疑项, 是否立即清理遥测块/.ai-extension? [y/N] (ansi reset)")
+            if ($answer | str lowercase | str trim) in ["y" "yes"] {
                 skill-guard --clean
                 print $"(ansi cyan)── 清理后复核 ──(ansi reset)"
                 skill-guard

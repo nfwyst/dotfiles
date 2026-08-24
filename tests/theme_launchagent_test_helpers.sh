@@ -81,9 +81,13 @@ prepare_config_home() {
   local home=$1
   local config_root="$home/dotfiles/.config"
   mkdir -p "$config_root/delta" "$config_root/nushell" "$home/.local/state/delta" "$home/.agents" "$home/.local/bin"
+  local cache
+  for cache in starship zoxide carapace atuin; do
+    mkdir -p "$config_root/nushell/cache/$cache"
+    : >"$config_root/nushell/cache/$cache/init.nu"
+  done
   ln -s "$config_root" "$home/.config"
   cp "$ROOT/.config/nushell/config.nu" "$config_root/nushell/config.nu"
-  cp -R "$ROOT/.config/nushell/cache" "$config_root/nushell/cache"
   cp -R "$ROOT/.config/nushell/aliases" "$config_root/nushell/aliases"
   : >"$config_root/nushell/custom-env.nu"
   ln -s "$ROOT/.agents/bin" "$home/.agents/bin"
