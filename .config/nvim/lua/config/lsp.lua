@@ -93,9 +93,9 @@ vim.lsp.commands["editor.action.showReferences"] = function(command, ctx)
 end
 
 -- ===================================================================
--- TS server selection: tsgo vs vtsls
+-- TS server selection: tsc vs vtsls
 -- ===================================================================
--- tsgo handles plain TS/JS/React by default.
+-- tsc handles plain TS/JS/React by default.
 -- vtsls is enabled only for Vue projects that need @vue/typescript-plugin.
 -- Deno projects are skipped by both and handled by Deno LSP.
 -- ===================================================================
@@ -104,7 +104,7 @@ end
 -- Server configs are in lsp/*.lua files (native 0.12 convention)
 vim.lsp.enable({
   "lua_ls",
-  "tsgo",
+  "tsc",
   "vtsls",
   "html",
   "cssls",

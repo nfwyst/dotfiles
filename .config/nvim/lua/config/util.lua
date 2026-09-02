@@ -129,11 +129,13 @@ function M.hl_fg(group)
   return nil
 end
 
---- Resolve prettierrc config path based on current buffer's shiftwidth.
+--- Resolve prettierrc config path based on a buffer's shiftwidth.
+--- @param bufnr? number buffer to read shiftwidth from (defaults to current)
 --- @return string absolute path to prettierrc config
-function M.prettierrc_config()
+function M.prettierrc_config(bufnr)
+  local shiftwidth = bufnr and vim.bo[bufnr].shiftwidth or vim.bo.shiftwidth
   local name = ".prettierrc.json"
-  if vim.bo.shiftwidth == 4 then
+  if shiftwidth == 4 then
     name = ".prettierrc_tab.json"
   end
   return vim.env.HOME .. "/.config/" .. name

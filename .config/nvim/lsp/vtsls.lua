@@ -1,6 +1,6 @@
 --- @type vim.lsp.Config
 --- vtsls: TypeScript/JavaScript LSP (via vtsls wrapping tsserver).
---- Vue-only fallback because tsgo lacks @vue/typescript-plugin support.
+--- Vue-only fallback because tsc (TS 7) lacks @vue/typescript-plugin support.
 local ts_util = require("config.ts_util")
 
 local tsdk = ts_util.mason_tsdk()
@@ -51,7 +51,7 @@ return {
       return
     end
 
-    -- vtsls is only needed for Vue projects. Plain TS/JS is handled by tsgo.
+    -- vtsls is only needed for Vue projects. Plain TS/JS is handled by tsc.
     if ts_util.is_vue_project(root) then
       cb(root)
     end

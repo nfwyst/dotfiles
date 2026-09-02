@@ -10,7 +10,7 @@ require("mason").setup({
   ensure_installed = {
     "lua-language-server",
     "vtsls",
-    "tsgo",
+    "tsc",
     "html-lsp",
     "css-lsp",
     "css-variables-language-server",
@@ -58,6 +58,14 @@ vim.defer_fn(function()
     if not ok or not pkg:is_installed() then
       table.insert(pending, name)
     end
+  end
+
+  -- Legacy cleanup: Mason's tsgo package is deprecated (2026-08-13) — TS 7
+  -- ships `tsc` instead. Uninstall it so the deprecation notice no longer
+  -- shows in the Mason panel.
+  local ok_legacy, legacy = pcall(mr.get_package, "tsgo")
+  if ok_legacy and legacy:is_installed() then
+    legacy:uninstall()
   end
 
   if #pending == 0 then return end
@@ -115,6 +123,18 @@ require("conform").setup({
     ["_"] = { "trim_whitespace" },
   },
   formatters = {
+    -- prettierd reads its base config from $PRETTIERD_DEFAULT_CONFIG when the
+    -- project has no local .prettierrc.*. Without it, prettier 3.x defaults to
+    -- `trailingComma: "all"` and appends trailing commas to json/jsonc on save
+    -- — which jsonls then flags (jsonc 519 "Trailing comma"). Point every
+    -- prettierd run (save, manual, injected) at ~/.config/.prettierrc*.json
+    -- (trailingComma: none) so the saved file stays valid and diagnostic-free.
+    prettierd = {
+      env = function(_, ctx)
+        return { PRETTIERD_DEFAULT_CONFIG = util.prettierrc_config(ctx.buf) }
+      end,
+    },
+
     beautysh = function()
       local shiftwidth = vim.bo.shiftwidth
       return {

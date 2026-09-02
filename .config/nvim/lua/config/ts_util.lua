@@ -1,5 +1,5 @@
 -- Shared TypeScript/LSP utilities
--- Used by tsgo.lua, vtsls.lua, lsp.lua, and keymaps.lua
+-- Used by tsc.lua, vtsls.lua, lsp.lua, and keymaps.lua
 local M = {}
 
 local vue_config_markers = {
@@ -230,7 +230,7 @@ end
 --- Check if a project needs vtsls fallback due to non-trivial baseUrl usage.
 --- Returns true only when baseUrl is set to something other than "." or "./"
 --- (meaning bare module specifiers and paths resolution depend on it).
---- "baseUrl": "." is safe because it equals the tsconfig location — tsgo
+--- "baseUrl": "." is safe because it equals the tsconfig location — tsc
 --- resolves paths relative to tsconfig by default, so the behavior is identical.
 --- @param root string absolute path to project root
 --- @return boolean
@@ -277,7 +277,7 @@ end
 --     command (vtsls: typescript.findAllFileReferences, vue_ls:
 --     vue.findAllFileReferences), execute it. Results come straight from the
 --     TS project graph, so path aliases, barrel re-exports and dynamic
---     imports are all counted exactly. tsgo (typescript-go preview) does NOT
+--     imports are all counted exactly. tsc (TypeScript 7) does NOT
 --     advertise this yet, hence the runtime capability probe rather than a
 --     hardcoded server name.
 --   Tier 2 (fallback): resolution-verified ripgrep. rg gives broad recall
@@ -494,7 +494,7 @@ function M.find_file_references()
     end
   end
 
-  -- Tier 2: resolution-verified ripgrep fallback (tsgo / no LSP).
+  -- Tier 2: resolution-verified ripgrep fallback (tsc / no LSP).
   grep_file_references(current_file)
 end
 
@@ -544,9 +544,9 @@ end
 
 
 -- ===================================================================
--- Shared TS server settings (tsgo + vtsls)
+-- Shared TS server settings (tsc + vtsls)
 -- ===================================================================
--- These capability/preference blocks are identical between tsgo.lua and
+-- These capability/preference blocks are identical between tsc.lua and
 -- vtsls.lua; centralize them here so drift between the two servers is
 -- impossible by construction.
 M.ts_common = {

@@ -359,12 +359,12 @@ end, { desc = "Visual selection or word (Root Dir)" })
 -- `gd`: pure Goto Definition (definition only; implementations live under `gri`).
 -- Two reliability fixes are baked in:
 --   1. CSS Modules: `import styles from './x.module.less'` is handled by a
---      deterministic short-circuit (see below). tsgo answers such imports with
+--      deterministic short-circuit (see below). tsc answers such imports with
 --      the ambient `declare module '*.less'` .d.ts stub, while cssmodules_ls
 --      only responds on PART of the identifier's character range — so plain LSP
 --      `gd` jumped to the stub on some columns and to the .less on others. We
 --      bypass both by resolving the stylesheet path ourselves and jumping to it.
---   2. "prefer source over .d.ts": when multiple clients respond (e.g. tsgo +
+--   2. "prefer source over .d.ts": when multiple clients respond (e.g. tsc +
 --      cssmodules_ls), drop .d.ts/.d.mts/.d.cts shadows if any non-declaration
 --      result exists; fall back to declarations only when nothing else is found.
 -- Result handling: 1 unique target -> jump; >1 -> snacks qflist picker.
@@ -373,32 +373,40 @@ map("n", "gd", function()
   local win = vim.api.nvim_get_current_win()
 
   -- CSS Modules short-circuit (deterministic, column-independent).
-  -- For `import styles from './x.module.less'`, jump straight to the stylesheet
-  -- when the cursor is on the default-import identifier, instead of relying on
-  -- LSP whose answer differs per cursor column (tsgo -> .d.ts stub,
-  -- cssmodules_ls -> .less but only on some chars). Member uses like
-  -- `styles.foo` are unaffected: the cursor is on the member, not this line.
+  -- A CSS-module default import (`import styles from './x.module.less'`) has no
+  -- real semantic definition: tsc resolves the identifier ONLY to the ambient
+  -- `declare module '*.less'` stub in a .d.ts (e.g. @edenx/module-tools), which
+  -- is never the intended target; cssmodules_ls answers with the real asset but
+  -- only for some cursor columns. So whenever the cursor sits on the imported
+  -- style identifier -- on the import line itself OR any usage site like
+  -- `styles['permission-wrap']` -- resolve its import specifier to the
+  -- stylesheet on disk and jump straight there. Identical target for every
+  -- column, no LSP round trip. Member/key positions (the `.foo` or
+  -- `'permission-wrap'` part) are unaffected: <cword> there is not the import
+  -- identifier, so we fall through to LSP.
   local css_target = (function()
     local STYLE_EXT = { less = true, css = true, scss = true, sass = true, styl = true }
-    local ident, _, spec = vim.api.nvim_get_current_line():match(
-      "^%s*import%s+([%w_$]+)%s+from%s+(['\"])([^'\"]+)['\"]"
-    )
-    if not ident or not spec or spec:sub(1, 1) ~= "." then
+    local ident = vim.fn.expand("<cword>")
+    if type(ident) ~= "string" or not ident:match("^[%w_$]+$") then
       return nil
     end
-    local ext = spec:match("%.([%w]+)$")
-    if not ext or not STYLE_EXT[ext] then
-      return nil
+    local dir = vim.fn.expand("%:p:h")
+    for _, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
+      -- default import (`import styles from '...'`) or namespace import
+      -- (`import * as styles from '...'`).
+      local spec = line:match("^%s*import%s+" .. ident .. "%s+from%s+['\"]([^'\"]+)['\"]")
+        or line:match("^%s*import%s+%*%s+as%s+" .. ident .. "%s+from%s+['\"]([^'\"]+)['\"]")
+      if spec and spec:sub(1, 1) == "." then
+        local ext = spec:match("%.([%w]+)$")
+        if ext and STYLE_EXT[ext:lower()] then
+          local path = vim.fs.normalize(dir .. "/" .. spec)
+          if vim.uv.fs_stat(path) then
+            return path
+          end
+        end
+      end
     end
-    -- cursor (0-indexed col) must sit on the identifier
-    local line = vim.api.nvim_get_current_line()
-    local istart = line:find(ident, 1, true)
-    local col = vim.api.nvim_win_get_cursor(win)[2]
-    if not istart or col < (istart - 1) or col > (istart - 1 + #ident - 1) then
-      return nil
-    end
-    local path = vim.fs.normalize(vim.fn.expand("%:p:h") .. "/" .. spec)
-    return vim.uv.fs_stat(path) and path or nil
+    return nil
   end)()
 
   if css_target then
@@ -474,7 +482,7 @@ map("n", "gd", function()
   end
 
   -- Dedupe across clients (different clients often return the same Location;
-  -- e.g. tsgo + cssmodules-ls both point to the same `.less` file for a
+  -- e.g. tsc + cssmodules-ls both point to the same `.less` file for a
   -- `./x.module.less` import path).
   local function key_of(loc)
     local uri = loc.uri or loc.targetUri or ""
@@ -519,7 +527,7 @@ map("n", "gd", function()
   end
 
   -- CSS Modules determinism. A `*.less`/`*.css` default import resolves (via
-  -- tsgo) only to the ambient `declare module '*.less'` stub inside a .d.ts,
+  -- tsc) only to the ambient `declare module '*.less'` stub inside a .d.ts,
   -- which is never the intended target. cssmodules-language-server returns the
   -- real asset file, but only for some cursor columns on the identifier (an
   -- upstream quirk), so `gd` lands differently depending on where the cursor
@@ -583,7 +591,7 @@ map("n", "gd", function()
 
     -- Prefer real implementations over the type-declaration that
     -- textDocument/definition returns for a symbol destructured from a
-    -- function/hook whose return type is an explicit interface. tsgo answers
+    -- function/hook whose return type is an explicit interface. tsc answers
     -- `definition` with the interface member (e.g. typings/hooks.ts), while
     -- `implementation` points at the actual value (the hook body). When an
     -- implementation exists elsewhere, use it; a single hit jumps, multiple
@@ -655,11 +663,52 @@ map("n", "gd", function()
     end
   end
 
+  -- Type-position gate for the implementation probe.
+  -- tsserver's textDocument/implementation on an interface/type returns every
+  -- site that is annotated with it (object literals, `x as T`, test fixtures,
+  -- ...), never the definition — e.g. `gd` on a type used as `[] as MenuDto[]`
+  -- yields ~30 usage sites and hijacks the clean single definition into a
+  -- qflist. Finding those belongs to `gri`, not `gd`. So when the cursor sits
+  -- on a type identifier (or an import/export specifier, whose target is also
+  -- resolved by definition), skip implementation entirely and let plain
+  -- textDocument/definition win. Value positions (hooks, functions,
+  -- destructured members) keep the probe so `gd` can still reach the real
+  -- value behind a typed interface member. Treesitter-less buffers report no
+  -- node -> probe stays on (unchanged behavior).
+  local function cursor_is_type_context()
+    local ok, node = pcall(vim.treesitter.get_node, { bufnr = bufnr })
+    if not ok or not node then
+      return false
+    end
+    local TYPE_NODES = { type_identifier = true, predefined_type = true }
+    local CONTEXT_NODES = {
+      import_specifier = true,
+      import_clause = true,
+      namespace_import = true,
+      export_specifier = true,
+    }
+    if TYPE_NODES[node:type()] then
+      return true
+    end
+    local n = node:parent()
+    for _ = 1, 6 do
+      if not n then
+        break
+      end
+      if CONTEXT_NODES[n:type()] then
+        return true
+      end
+      n = n:parent()
+    end
+    return false
+  end
+  local skip_implementation = cursor_is_type_context()
+
   local reqs = {}
   for _, client in ipairs(clients) do
     local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
     table.insert(reqs, { client = client, method = "textDocument/definition", into = all, params = params })
-    if client:supports_method("textDocument/implementation") then
+    if not skip_implementation and client:supports_method("textDocument/implementation") then
       table.insert(reqs, { client = client, method = "textDocument/implementation", into = impl_all, params = params })
     end
   end
@@ -834,18 +883,18 @@ map("n", "gao", function()
 end, { desc = "Outgoing Calls" })
 
 -- File References (gR) — find all files that import the current file.
--- Tier1: LSP file-references command (vtsls/vue_ls). Tier2: resolution-verified ripgrep (tsgo / no LSP).
+-- Tier1: LSP file-references command (vtsls/vue_ls). Tier2: resolution-verified ripgrep (tsc / no LSP).
 map("n", "gR", function()
   require("config.ts_util").find_file_references()
 end, { desc = "File References" })
 
 -- Go to Source Definition (gD) — jump to .ts source instead of .d.ts
--- tsgo: uses custom/sourceDefinition request
+-- tsc: uses custom/sourceDefinition request
 -- vtsls: uses typescript.goToSourceDefinition command
 map("n", "gD", function()
   local clients = vim.lsp.get_clients({ bufnr = 0 })
   for _, client in ipairs(clients) do
-    if client.name == "tsgo" then
+    if client.name == "tsc" then
       local win = vim.api.nvim_get_current_win()
       local params = vim.lsp.util.make_position_params(win, "utf-16")
       client:request("custom/sourceDefinition", params, function(err, result)
@@ -877,7 +926,7 @@ map("n", "gD", function()
   Snacks.picker.lsp_definitions()
 end, { desc = "Goto Source Definition" })
 
--- Add Missing Imports (<leader>cM) — via source code action (works with both tsgo and vtsls)
+-- Add Missing Imports (<leader>cM) — via source code action (works with both tsc and vtsls)
 map("n", "<leader>cM", function()
   vim.lsp.buf.code_action({
     context = { only = { "source.addMissingImports.ts" }, diagnostics = {} },
@@ -892,7 +941,7 @@ map("n", "<leader>co", function()
   })
 end, { desc = "Organize Imports" })
 
--- Fix All Diagnostics (<leader>cD) — via source code action (works with both tsgo and vtsls)
+-- Fix All Diagnostics (<leader>cD) — via source code action (works with both tsc and vtsls)
 map("n", "<leader>cD", function()
   vim.lsp.buf.code_action({
     context = { only = { "source.fixAll.ts" }, diagnostics = {} },
