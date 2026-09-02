@@ -33,7 +33,6 @@ foo.*
 *.log
 data
 AGENTS.md
-!.config/opencode/AGENTS.md
 !.config/AGENTS.md
 !.openclaw/workspace/AGENTS.md
 .todo.md
@@ -93,8 +92,11 @@ tea-reporter.config.json
 .agents/skills/frontend-design-review-gate/
 .agents/skills/travel-guide/
 .agents/skills/traex-guide
+.agents/skills/bytedance-*
 .agents/auth.json
 .config/opencode/package-lock.json
 .openclaw/credentials/
 .codegraph
 docs/superpowers/plans/
+flux/changes/**/test_report.html
+flux/changes/**/test_plan.html

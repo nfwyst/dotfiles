@@ -1,6 +1,6 @@
 # AGENTS.md
 
-全局默认协作规范项目内 `AGENTS.md` 或用户当前指令优先
+全局默认规范；用户当前指令及更具体的项目规则优先
 
 ## 通用规则
 
@@ -8,58 +8,62 @@
 - 做最小必要改动;不盲改、不顺手重构无关代码
 - 优先复用现有实现;非必要不新增抽象、兼容层或回退逻辑
 - 遇阻塞先定位根因;禁止跳过校验、绕过钩子等捷径
-- 任务完成后清理本次引入的无用代码、文件和残留进程
-- 禁删已有注释;仅可删本轮刚加且立即发现错误的注释
-- 独立子任务优先并行
-- 每次回复必须使用 caveman ultra 模式精简输出
-- 派发子任务/子代理时, 强制为子任务/子代理启用 caveman skill 精简输出模式
-- 解析图片优先调用具备多模态视觉能力的代理或工具
+- 启动前检查同类进程；任务完成后仅清理本次启动的进程及本次生成的临时产物
+- 不删除与本次改动无关的已有注释；实现变化使注释失真时，同步更新或删除
+- 优先并行无副作用、互不依赖的工具调用；仅当当前运行时允许、范围可隔离且能显著提升速度或质量时派发子代理，同一文件、顺序依赖或外部状态写入任务串行
+- 每次回复使用中文精简表达并保留关键技术事实；caveman skill 可见时使用 ultra 强度，派发子任务时传递相同输出要求
+- 解析图片时，可用则优先调用具备多模态视觉能力的代理或工具；不可用时说明限制
 
 ## 工具链
 
-- 包管理优先级:`bun` > `npm`,`bunx` > `npx`,`uv` > `pip`;不可用再降级
-- 文件检索优先 `rg` / `fd` / `bat`
+- 尊重仓库声明的包管理器、`packageManager`、锁文件、脚本和 CI；仅在仓库无既有约定时使用 `bun` > `npm`、`bunx` > `npx`、`uv` > `pip`
+- 文件检索优先 `rg` / `fd`，文件查看优先 `bat`
 - 在 nushell 中使用 `cat` 时, 请在前面添加 `^`, 用 `^cat` 命令执行
-- 执行 openspec 命令时, 对于需要确认的命令, 请始终添加 `-y` 参数
-- Skill 缺失时用 `bunx skills find <name>` 查找; 仅安装名称完全匹配且最可信的条目,并先征得用户确认
-- 启动进程前检查同类进程;只清理本次任务相关进程
-- opencode 会话 `node` 可能是 bun shim(`/private/tmp/bun-node-*`),致 `pnpm`/`npm` 隐式 `exec node` 撞 `node:sqlite` 崩溃;执行前 `command -v node` 命中 `bun-node` 时,须 `PATH=/opt/homebrew/bin:$PATH <cmd>` 显式修 PATH
+- 执行 OpenSpec 命令时，仅对需要确认、明确支持 `-y` 且操作已获授权的子命令添加 `-y`；`-y` 不替代高风险操作确认
+- Skill 缺失时用 `bunx skills find <name>` 查找；仅考虑名称完全匹配、来源可信且维护状态明确的条目，安装前征得用户确认
+- 执行 `pnpm`/`npm` 前检查 `command -v node`；若其路径匹配 `/private/tmp/bun-node-*`，从当前 `PATH` 查找首个不匹配该模式且可执行的 `node`，仅为本条命令前置其目录；不得硬编码安装路径、修改全局 `PATH`，找不到则报告
 
 ## 编码风格
 
 - JS/TS:优先数据不可变,用新对象/数组而非原地修改,优先 spread / map / filter,避免 `push` / `splice` / `delete`
 - 其它语言:遵循目标语言惯用风格
-- 文件 ≤ 800 行、函数 ≤ 50 行、嵌套 ≤ 4 层,超出主动拆分.豁免:自动生成代码、测试 fixture、数据表、schema 定义
-- 禁硬编码魔法数字、URL、密钥,提取为常量或配置
-- 系统边界(API 入口、外部数据、用户输入)执行 schema 校验并快速失败
+- 文件 ≤ 800 行、函数 ≤ 50 行、嵌套 ≤ 4 层；仅检查本轮新建或实质修改部分，已有超限代码不因小改被强制重构。豁免：自动生成代码、测试 fixture、数据表、schema 定义
+- 魔法数字提取为命名常量；环境相关的服务 URL 使用配置；公开协议/Schema 常量和测试 fixture 可保留字面量
+- 系统边界(API 入口、外部数据、用户输入)优先复用现有 schema、parser 或类型守卫校验并快速失败；无现成设施时使用语言惯用的显式校验
 - 显式处理错误;禁静默吞异常
 
 ## 验证
 
-- TS/JS/前端改动后,仓库有配置时执行相关 ESLint 与 TypeScript 检查
-- 仓库有测试能力时,执行与改动直接相关的最小测试集
-- 无法验证时明确说明原因与未验证范围
+- 修改后优先自动执行范围最小、与改动直接相关的验证
+- TS/JS/前端改动后，仓库有配置时执行相关 ESLint 与 TypeScript 检查
+- 仓库有测试能力时，执行与改动直接相关的最小测试集
+- 浏览器、全量、长耗时或依赖外部环境的验证放在最后；仅在环境、权限或成本阻止自动执行时交由用户，并说明阻塞原因、精确命令、已验证范围与未验证范围
 
 ## 安全与高风险
 
 - 禁硬编码密钥、Token、密码,一律走环境变量或密钥管理服务
 - 新增依赖前检查已知漏洞,优先维护活跃、许可证明确的包
-- 不生成、不扩散、不提交敏感信息
+- 不在输出、日志、仓库或提交中暴露、持久化敏感值；确需生成时使用安全工具和密钥存储
 - 高风险操作需用户确认:删除非本轮生成的文件、批量重构、修改依赖、创建备份文件、改动 CI/CD、数据库破坏性变更、发送外部消息
-- Git 高风险操作需用户确认:`commit` / `push` / `checkout` / `restore` / `reset` / `--force` / `--force-with-lease` / 改写历史 / 创建或关闭 PR
-- `push` 前先 `git pull --rebase`
+- Git 高风险操作需用户确认：`add` / `commit` / `push` / `checkout` / `restore` / `reset` / `pull --rebase` / `rebase` / `--force` / `--force-with-lease` / 改写历史 / 创建或关闭 PR
+- 获得 `git add` 授权后仅暂存本任务文件，不得包含无关变更
+- 当前用户消息明确点名具体高风险动作及目标时视为已确认；授权不扩展到未点名目标或后续新增范围
+- 用户授权 `push` 不等于授权 `pull --rebase`；`push` 前先检查 upstream 与分叉状态，需要刷新远端状态时执行 `git fetch`，确需变基同步时另获确认
 
 ## CodeGraph
 
-在 CodeGraph 索引的仓库中（仓库根目录下存在 `.codegraph/` 目录），当您需要理解或定位代码时，请先使用 CodeGraph，然后再使用 grep/find 或读取文件：
+仓库根目录存在 `.codegraph/` 且需要理解或定位代码时，先确认当前会话有可用的 CodeGraph 能力：
 
-- **MCP 工具**（如果可用）：`codegraph_explore` 一次调用即可解答大多数代码问题——返回相关符号的源代码以及它们之间的调用路径。`codegraph_node` 返回单个符号的源代码及其调用者，或者读取包含行号的整个文件。如果工具已列出但未启用，请通过工具搜索按名称加载它们。
-- **Shell**（始终有效）：`codegraph explore "<符号名称或问题>"` 和 `codegraph node <符号或文件>` 的输出相同。
+- 当前工具列表包含 `codegraph_explore` 或 `codegraph_node` 时，优先使用对应 MCP 工具
+- 否则先用 `command -v codegraph` 检查 CLI，并以 `codegraph status <repo-root>` 确认索引可读；可用时使用 `codegraph explore "<符号名称或问题>"` 或 `codegraph node <符号或文件>`
+- 没有 `.codegraph/`，或 MCP/CLI 不可用、索引不可读时，跳过 CodeGraph，改用 `rg`、`fd` 和文件读取
 
-如果没有 `.codegraph/` 目录，则完全跳过 CodeGraph——是否使用索引由用户决定。
+是否保留 `.codegraph/` 由用户决定；目录存在时默认使用，除非用户另有指示。
 
 ## Boulder 续推防护
 
-- 计划任务行用 `- [x] 1.`；`- [~]` = blocked（不计任务 → 不续推）
-- 钩子仅对 `active`/`paused` work 续推（`session_ids` + `updated_at` 最新）；**cancelled 不防续推，须标 `abandoned`**
-- 完成收尾三件套：work `completed` + 顶层 `status=completed` + `active_work_id=null`
+- 仅在仓库已有 `.omo/boulder.json` 且当前任务明确执行或恢复 Boulder 计划时应用本节；普通任务不得创建或修改 Boulder 状态，按适用 Skill 的流程更新已有状态
+- `## TODOs` 仅使用顶层 `- [ ] 1. ...` / `- [x] 1. ...`，`## Final Verification Wave` 仅使用顶层 `- [ ] F1. ...` / `- [x] F1. ...`；不使用解析器不识别的 `[~]`
+- 钩子仅续推与当前 session 绑定且状态为 `active`/`paused` 的最新 work；终止设为 `abandoned`，完成设为 `completed`
+- `session_ids` 使用平台前缀；存在多个匹配 work 时按 `updated_at`、缺失时 `started_at` 选择最新项，`active_work_id` 不参与 session 匹配
+- 完成时勾选所有受支持的顶层任务，将对应 work 设为 `completed` 并刷新 `updated_at`；通过适用工作流核对状态，不把顶层镜像字段或 `active_work_id` 当作唯一完成依据

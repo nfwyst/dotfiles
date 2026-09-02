@@ -2,9 +2,8 @@
   "packageManager": "bun",
   "type": "module",
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.14",
-    "oh-my-openagent": "https://registry.npmjs.org/oh-my-openagent/-/oh-my-openagent-4.19.4.tgz",
-    "oh-my-openagent-darwin-arm64": "https://registry.npmjs.org/oh-my-openagent-darwin-arm64/-/oh-my-openagent-darwin-arm64-4.19.4.tgz"
+    "@opencode-ai/plugin": "^1.18.26",
+    "oh-my-openagent": "^5.0.0-beta.33"
   },
   "trustedDependencies": [
     "@code-yeongyu/comment-checker",

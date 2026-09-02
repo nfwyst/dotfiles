@@ -3,12 +3,11 @@ local M = {}
 local cache = {
   price = nil,
   timestamp = 0,
-  last_api_index = 0,
   enabled = false,
 }
 
 local config = {
-  refresh_interval = 6000,
+  refresh_interval = 60000,
   timeout = 10000,
 }
 
@@ -16,34 +15,11 @@ local timer_id = nil
 
 local api_endpoints = {
   {
-    url = vim.base64.decode("aHR0cHM6Ly9hcGkuYmluYW5jZS5jb20vYXBpL3YzL3RpY2tlci9wcmljZT9zeW1ib2w9RVRIVVNEVA=="),
+    url = vim.base64.decode("aHR0cHM6Ly9hcGkuYmluYW5jZS5jb20vYXBpL3YzL3RpY2tlci9wcmljZT9zeW1ib2w9QlRDVVNEVA=="),
     parser = function(body)
       local ok, data = pcall(vim.json.decode, body)
       if ok and data then
         return tonumber(data.price)
-      end
-    end,
-  },
-  {
-    url = vim.base64.decode(
-      "aHR0cHM6Ly9hcGkuY29pbmdlY2tvLmNvbS9hcGkvdjMvc2ltcGxlL3ByaWNlP2lkcz1ldGhlcmV1bSZ2c19jdXJyZW5jaWVzPXVzZA=="
-    ),
-    parser = function(body)
-      local ok, data = pcall(vim.json.decode, body)
-      if ok and data and data.ethereum then
-        return tonumber(data.ethereum.usd)
-      end
-    end,
-  },
-  {
-    url = vim.base64.decode("aHR0cHM6Ly9hcGkua3Jha2VuLmNvbS8wL3B1YmxpYy9UaWNrZXI/cGFpcj1FVEhVU0Q="),
-    parser = function(body)
-      local ok, data = pcall(vim.json.decode, body)
-      if ok and data and data.result then
-        local first_key = next(data.result)
-        if first_key and data.result[first_key] then
-          return tonumber(data.result[first_key].c[1])
-        end
       end
     end,
   },
@@ -63,7 +39,7 @@ local function update_cache(price)
 end
 
 local function format_price(price)
-  return price and string.format("Ξ %.2f", price) or ""
+  return price and string.format("₿ %.0f", price) or ""
 end
 
 -- Prefer vim.net.request (Neovim 0.12+ built-in async HTTP GET).
@@ -71,8 +47,7 @@ end
 local has_net = vim.net and type(vim.net.request) == "function"
 
 local function fetch_price(callback)
-  cache.last_api_index = (cache.last_api_index % #api_endpoints) + 1
-  local api = api_endpoints[cache.last_api_index]
+  local api = api_endpoints[1]
   local user_agent = user_agents[math.random(#user_agents)]
 
   local done = false
@@ -86,7 +61,7 @@ local function fetch_price(callback)
 
   if has_net then
     local job = vim.net.request(api.url, {
-      retry = 0, -- we rotate endpoints ourselves; built-in retry would slow rotation
+      retry = 0, -- single endpoint: fail fast, next refresh tick retries
       headers = { ["User-Agent"] = user_agent },
     }, function(err, res)
       if err or not res then
@@ -161,6 +136,11 @@ end
 
 function M.toggle()
   cache.enabled = not cache.enabled
+  if cache.enabled then
+    M.setup()
+  else
+    M.stop()
+  end
   vim.notify("Price display " .. (cache.enabled and "enabled" or "disabled"))
 end
 
@@ -173,6 +153,9 @@ function M.stop()
 end
 
 function M.setup()
+  if not cache.enabled or timer_id then
+    return
+  end
   fetch_price(update_cache)
   timer_id = vim.uv.new_timer()
   timer_id:start(

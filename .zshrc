@@ -91,6 +91,7 @@ export XDG_BIN_HOME="$HOME/.local/bin"
 export XDG_DATA_HOME="$HOME/.local/share"
 export GIT_CONFIG_GLOBAL="$HOME/.config/.gitconfig"
 export BOB_CONFIG="$HOME/.config/bob/config.json"
+export BYTEDCLI_NO_AUTO_UPGRADE=1
 
 export PATH="$PATH:$GOPATH/bin"
 export PATH="$PATH:$CARGO_HOME/bin"
@@ -218,3 +219,6 @@ git config --global merge.tool nvimdiff
 
 # 禁用 zsh 邮件检查功能
 unset MAILCHECK
+
+# pnpm 11 在 bun run 脚本前会自动 install 并因 ignored builds 失败，关闭该检查（仓库依赖用 emo i 管理）
+export pnpm_config_verify_deps_before_run=false

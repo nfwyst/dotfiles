@@ -10,3 +10,5 @@ LICENSE
 legacy
 custom-env.zsh
 \.codegraph
+
+\.omo/(?!omo\.jsonc$).+

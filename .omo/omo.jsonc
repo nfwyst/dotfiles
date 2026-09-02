@@ -2,107 +2,114 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
   "[opencode]": {
+    "default_mode": {
+      "ultrawork": true,
+      "goal": true
+    },
     "hashline_edit": true,
     "model_fallback": true,
     "runtime_fallback": {
-      "enabled": true,
+      "enabled": true
     },
     "team_mode": {
       "enabled": true,
-      "tmux_visualization": true,
+      "tmux_visualization": true
     },
     "agents": {
       "sisyphus": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3",
+        "reasoning": "max"
       },
       "hephaestus": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "oracle": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "max"
       },
       "librarian": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k"
       },
       "explore": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k"
       },
       "multimodal-looker": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "low"
       },
       "prometheus": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "metis": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "momus": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "max"
+      },
+      "omo-senpi-code-reviewer": {
+        "model": "kimi-for-coding/k3-256k"
+      },
+      "omo-senpi-qa-executor": {
+        "model": "kimi-for-coding/k3-256k"
+      },
+      "omo-senpi-gate-reviewer": {
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "max"
       },
       "atlas": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k"
       },
       "sisyphus-junior": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
-      },
+        "model": "kimi-for-coding/k3-256k"
+      }
     },
     "categories": {
       "visual-engineering": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "max"
       },
       "ultrabrain": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "max"
       },
       "deep": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "artistry": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "quick": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/kimi-for-coding-highspeed"
       },
       "unspecified-low": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "unspecified-high": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
+        "model": "kimi-for-coding/k3-256k",
+        "reasoning": "high"
       },
       "writing": {
-        "model": "opencode-go/deepseek-v4-flash",
-        "reasoning": "max",
-      },
+        "model": "kimi-for-coding/k3-256k"
+      }
     },
     "codegraph": {
-      "auto_init": true,
-    },
+      "auto_init": true
+    }
   },
   "codegraph": {
     "enabled": true,
     "auto_provision": true,
     "daemon": true,
-    "telemetry": false,
+    "telemetry": false
   },
   "_migrations": [
-    "2026-07-opencode-config-unification",
-    "2026-08-reasoning-unification",
-  ],
+    "2026-08-reasoning-unification"
+  ]
 }
