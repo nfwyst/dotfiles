@@ -5,94 +5,94 @@
     "hashline_edit": true,
     "model_fallback": true,
     "runtime_fallback": {
-      "enabled": true,
+      "enabled": true
     },
     "team_mode": {
-      "enabled": true,
+      "enabled": true
     },
     "agents": {
       "sisyphus": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "hephaestus": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "oracle": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "librarian": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "explore": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "multimodal-looker": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "prometheus": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "metis": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "momus": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "atlas": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "sisyphus-junior": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
-      },
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
+      }
     },
     "categories": {
       "visual-engineering": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "ultrabrain": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "deep": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "artistry": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "quick": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "unspecified-low": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "unspecified-high": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
       },
       "writing": {
-        "model": "opencode/x-preview-f-free",
-        "reasoning": "high",
-      },
-    },
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "reasoning": "xhigh"
+      }
+    }
   },
   "_migrations": [
     "2026-07-opencode-config-unification",
-    "2026-08-reasoning-unification",
-  ],
+    "2026-08-reasoning-unification"
+  ]
 }
