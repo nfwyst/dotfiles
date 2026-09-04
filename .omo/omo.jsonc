@@ -2,114 +2,97 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/omo.schema.json",
   "[opencode]": {
-    "default_mode": {
-      "ultrawork": true,
-      "goal": true
-    },
     "hashline_edit": true,
     "model_fallback": true,
     "runtime_fallback": {
-      "enabled": true
+      "enabled": true,
     },
     "team_mode": {
       "enabled": true,
-      "tmux_visualization": true
     },
     "agents": {
       "sisyphus": {
-        "model": "kimi-for-coding/k3",
-        "reasoning": "max"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "hephaestus": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "oracle": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "max"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "librarian": {
-        "model": "kimi-for-coding/k3-256k"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "explore": {
-        "model": "kimi-for-coding/k3-256k"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "multimodal-looker": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "low"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "prometheus": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "metis": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "momus": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "max"
-      },
-      "omo-senpi-code-reviewer": {
-        "model": "kimi-for-coding/k3-256k"
-      },
-      "omo-senpi-qa-executor": {
-        "model": "kimi-for-coding/k3-256k"
-      },
-      "omo-senpi-gate-reviewer": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "max"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "atlas": {
-        "model": "kimi-for-coding/k3-256k"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "sisyphus-junior": {
-        "model": "kimi-for-coding/k3-256k"
-      }
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
+      },
     },
     "categories": {
       "visual-engineering": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "max"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "ultrabrain": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "max"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "deep": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "artistry": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "quick": {
-        "model": "kimi-for-coding/kimi-for-coding-highspeed"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "unspecified-low": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "unspecified-high": {
-        "model": "kimi-for-coding/k3-256k",
-        "reasoning": "high"
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
       },
       "writing": {
-        "model": "kimi-for-coding/k3-256k"
-      }
+        "model": "opencode/x-preview-f-free",
+        "reasoning": "high",
+      },
     },
-    "codegraph": {
-      "auto_init": true
-    }
-  },
-  "codegraph": {
-    "enabled": true,
-    "auto_provision": true,
-    "daemon": true,
-    "telemetry": false
   },
   "_migrations": [
-    "2026-08-reasoning-unification"
-  ]
+    "2026-07-opencode-config-unification",
+    "2026-08-reasoning-unification",
+  ],
 }
