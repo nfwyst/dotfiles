@@ -4,8 +4,8 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "@opencode-ai/plugin": "^1.18.26",
-        "oh-my-openagent": "^5.0.0-beta.33",
+        "@opencode-ai/plugin": "^1.18.27",
+        "oh-my-openagent": "^5.0.0-beta.39",
       },
     },
   },
@@ -105,9 +105,9 @@
 
     "@msgpackr-extract/msgpackr-extract-win32-x64": ["@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4", "https://bnpm.byted.org/@msgpackr-extract/msgpackr-extract-win32-x64/-/msgpackr-extract-win32-x64-3.0.4.tgz", { "os": "win32", "cpu": "x64" }, "sha512-CmCXPQrkbwExx3j946/PtHWHbYJiCRBRDl4BlkRQcJB/YOwQxJRTpoo7aTsortjgoJ1x7opzTSxn7C+ASSLVjQ=="],
 
-    "@opencode-ai/plugin": ["@opencode-ai/plugin@1.18.26", "https://bnpm.byted.org/@opencode-ai/plugin/-/plugin-1.18.26.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@opencode-ai/sdk": "1.18.26", "effect": "4.0.0-beta.83", "zod": "4.1.8" }, "peerDependencies": { "@opentui/core": ">=0.4.5", "@opentui/keymap": ">=0.4.5", "@opentui/solid": ">=0.4.5" }, "optionalPeers": ["@opentui/core", "@opentui/keymap", "@opentui/solid"] }, "sha512-frk7el3wQnIjoJ9ESuuS+wEhZ7wLz73enReuJ8ynRAf3akKtwy/DA7MxjUXhG2se5y9nXbypn3FJLkvm3RR2Lw=="],
+    "@opencode-ai/plugin": ["@opencode-ai/plugin@1.18.27", "https://bnpm.byted.org/@opencode-ai/plugin/-/plugin-1.18.27.tgz", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@opencode-ai/sdk": "1.18.27", "effect": "4.0.0-beta.83", "zod": "4.1.8" }, "peerDependencies": { "@opentui/core": ">=0.4.5", "@opentui/keymap": ">=0.4.5", "@opentui/solid": ">=0.4.5" }, "optionalPeers": ["@opentui/core", "@opentui/keymap", "@opentui/solid"] }, "sha512-/sQbDUVz/VlfTPjEEQ+fZ70Z9AwtVVwOMKYuGEjjSOpRvlQEC16+jnC3GO4w05VeyffAlghDbM/3p38fMEAhfw=="],
 
-    "@opencode-ai/sdk": ["@opencode-ai/sdk@1.18.26", "https://bnpm.byted.org/@opencode-ai/sdk/-/sdk-1.18.26.tgz", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-1TnlEZty7V2NTIZHbJOt2O+v6YsJ/Bt2pSYgXb98G/RkSVOjlDd/35+ewfYtM4fmMroaa6cEG6S58FihKO4K0w=="],
+    "@opencode-ai/sdk": ["@opencode-ai/sdk@1.18.27", "https://bnpm.byted.org/@opencode-ai/sdk/-/sdk-1.18.27.tgz", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-VTfAB9SWaGiMtI2L9rf2xl+0fTYDMHB2pHYKCquWG5OIX3rHvth9oM915d9Z38IuPZUZkmdNMVz2iAdxG4IR+A=="],
 
     "@opentui/core": ["@opentui/core@0.5.10", "https://bnpm.byted.org/@opentui/core/-/core-0.5.10.tgz", { "dependencies": { "bun-ffi-structs": "0.3.1", "diff": "9.0.0", "marked": "17.0.1", "string-width": "7.2.0", "strip-ansi": "7.1.2" }, "optionalDependencies": { "@opentui/core-darwin-arm64": "0.5.10", "@opentui/core-darwin-x64": "0.5.10", "@opentui/core-linux-arm64": "0.5.10", "@opentui/core-linux-arm64-musl": "0.5.10", "@opentui/core-linux-x64": "0.5.10", "@opentui/core-linux-x64-musl": "0.5.10", "@opentui/core-win32-arm64": "0.5.10", "@opentui/core-win32-x64": "0.5.10" }, "peerDependencies": { "web-tree-sitter": "0.25.10" } }, "sha512-C3a2UbmefeAjIxAgm4BqjuSxKT4oqutfvYFwVvUgMxmGRHkNbBc/s7sukV0JgwcxFcV3uMFrXxo+E+BQtvuOiw=="],
 
@@ -131,9 +131,9 @@
 
     "@opentui/solid": ["@opentui/solid@0.5.10", "https://bnpm.byted.org/@opentui/solid/-/solid-0.5.10.tgz", { "dependencies": { "@babel/core": "7.28.0", "@babel/preset-typescript": "7.27.1", "@opentui/core": "0.5.10", "babel-plugin-module-resolver": "5.0.2", "babel-preset-solid": "1.9.12", "entities": "7.0.1", "s-js": "^0.4.9" }, "peerDependencies": { "solid-js": "1.9.12" } }, "sha512-KrmMIsHiKBHOABTC0brOwqWm+sGq1ZX2sGCAx6WgtBbE3STMup9n8TAy/6gUYhwcjC9zugT53ytfSVwCwVWZUg=="],
 
-    "@posthog/core": ["@posthog/core@1.50.2", "https://bnpm.byted.org/@posthog/core/-/core-1.50.2.tgz", { "dependencies": { "@posthog/types": "^1.407.1" } }, "sha512-El7y/ipZ45OFBRTN/+ixat9Nw21bW+pKKnX0G+rG4rWxBtDA47Ub/ZUnHvZNhAufNInQr4AYCUeWQsuJsTcoKg=="],
+    "@posthog/core": ["@posthog/core@1.50.4", "https://bnpm.byted.org/@posthog/core/-/core-1.50.4.tgz", { "dependencies": { "@posthog/types": "^1.408.1" } }, "sha512-4iuCMbPJgy+w8xiFlSM/zapchVSzkba6Nb+iZEo+4DsAplNFj38pXE1htGx2GU8Fac70PPOwvNv4uHsZjYDbzA=="],
 
-    "@posthog/types": ["@posthog/types@1.407.2", "https://bnpm.byted.org/@posthog/types/-/types-1.407.2.tgz", {}, "sha512-F/x/qlZSGiianCEZlZ9XRYHUYffH07Zv+1oOllxAw15ifObagxSZzc2IneZE01eFqPl2OmoNuY86ER5Uyvy8Zw=="],
+    "@posthog/types": ["@posthog/types@1.408.1", "https://bnpm.byted.org/@posthog/types/-/types-1.408.1.tgz", {}, "sha512-zcQ3rdAbWDWegL/TA3OiC+Wc8qquNtFj2Q2RPc3QuJas3D6FYsNhR9xYmZgLWEm+GDN/zhGlOHijG3nPMEiCbw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "https://bnpm.byted.org/@standard-schema/spec/-/spec-1.1.0.tgz", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
@@ -155,7 +155,7 @@
 
     "balanced-match": ["balanced-match@1.0.2", "https://bnpm.byted.org/balanced-match/-/balanced-match-1.0.2.tgz", {}, "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="],
 
-    "baseline-browser-mapping": ["baseline-browser-mapping@2.11.20", "https://bnpm.byted.org/baseline-browser-mapping/-/baseline-browser-mapping-2.11.20.tgz", { "bin": { "baseline-browser-mapping": "dist/cli.cjs" } }, "sha512-H0ulySigv6icDJ1F7SjtdCD6PrhTpdYCmP0CactWy1+ekh0AFd0o1Wn5T8b+hnTmdBx19u9yhL6wvCylXMY7zw=="],
+    "baseline-browser-mapping": ["baseline-browser-mapping@2.11.21", "https://bnpm.byted.org/baseline-browser-mapping/-/baseline-browser-mapping-2.11.21.tgz", { "bin": { "baseline-browser-mapping": "dist/cli.cjs" } }, "sha512-uh8vpY/1/YyFkunIDFH/12p7/7VdPKA1hejMVEbdkEaWnUz0Hesvx5EbiU6XxjyHZIOju+ZMbQJkRh+es3/spQ=="],
 
     "body-parser": ["body-parser@2.3.0", "https://bnpm.byted.org/body-parser/-/body-parser-2.3.0.tgz", { "dependencies": { "bytes": "^3.1.2", "content-type": "^2.0.0", "debug": "^4.4.3", "http-errors": "^2.0.1", "iconv-lite": "^0.7.2", "on-finished": "^2.4.1", "qs": "^6.15.2", "raw-body": "^3.0.2", "type-is": "^2.1.0" } }, "sha512-2cGmJupaNgg+QUwVLAucDuWuoMZ6EX9iHDRswZ5lsNYEmwPaRknMPCLZz07yTzVq/83p4o/wzbDZbBrTvGGTIw=="],
 
@@ -205,7 +205,7 @@
 
     "effect": ["effect@4.0.0-beta.83", "https://bnpm.byted.org/effect/-/effect-4.0.0-beta.83.tgz", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.8.0", "find-my-way-ts": "^0.1.6", "ini": "^7.0.0", "kubernetes-types": "^1.30.0", "msgpackr": "^2.0.1", "multipasta": "^0.2.7", "toml": "^4.1.1", "uuid": "^14.0.0", "yaml": "^2.9.0" } }, "sha512-0wsak8RtgGAr9UWSbVDgJHZcUqMSvicHcvaZv1MbMM7MCGgW4Rn/137J1MHQbwYPcwYGxT/IqehFd+UbYuj78w=="],
 
-    "electron-to-chromium": ["electron-to-chromium@1.5.420", "https://bnpm.byted.org/electron-to-chromium/-/electron-to-chromium-1.5.420.tgz", {}, "sha512-2yD6XreGusOfNV+dUcvipJEXc3n/n7fgr7996aszTG+YY5E4mqM4tOq/3uhP129cazL9YHbVWSpc79ePotWtPA=="],
+    "electron-to-chromium": ["electron-to-chromium@1.5.421", "https://bnpm.byted.org/electron-to-chromium/-/electron-to-chromium-1.5.421.tgz", {}, "sha512-cUhfpHQy+PGbt+X90DMcAVazDCziIZr73hpxD4LRs4BGQoJCifPzTfQWa7S6c+uhokTOBe8tot09GBSEO6c9LA=="],
 
     "emoji-regex": ["emoji-regex@10.6.0", "https://bnpm.byted.org/emoji-regex/-/emoji-regex-10.6.0.tgz", {}, "sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A=="],
 
@@ -241,7 +241,7 @@
 
     "fast-string-width": ["fast-string-width@3.0.2", "https://bnpm.byted.org/fast-string-width/-/fast-string-width-3.0.2.tgz", { "dependencies": { "fast-string-truncated-width": "^3.0.2" } }, "sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg=="],
 
-    "fast-uri": ["fast-uri@3.1.6", "https://bnpm.byted.org/fast-uri/-/fast-uri-3.1.6.tgz", {}, "sha512-7Ical1vFEMr0onbVzEDIreM22I4khW+fzyQPwvAFWBp1iwdshSZRsL4jjRvPG9JP1uiqMHRto+YU6R2/CzDz5Q=="],
+    "fast-uri": ["fast-uri@3.1.7", "https://bnpm.byted.org/fast-uri/-/fast-uri-3.1.7.tgz", {}, "sha512-dOvZVzjdZdz7phd9v6jCbwxrBW3fK6n8Rc0CtdmM4bumzMnxywBYhuph6J819RRw/ku+rLbelwfMunktuzVVHg=="],
 
     "fast-wrap-ansi": ["fast-wrap-ansi@0.2.2", "https://bnpm.byted.org/fast-wrap-ansi/-/fast-wrap-ansi-0.2.2.tgz", { "dependencies": { "fast-string-width": "^3.0.2" } }, "sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q=="],
 
@@ -357,31 +357,31 @@
 
     "object-inspect": ["object-inspect@1.13.4", "https://bnpm.byted.org/object-inspect/-/object-inspect-1.13.4.tgz", {}, "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew=="],
 
-    "oh-my-openagent": ["oh-my-openagent@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent/-/oh-my-openagent-5.0.0-beta.33.tgz", { "dependencies": { "@clack/prompts": "^1.7.0", "@code-yeongyu/comment-checker": "^0.8.0", "@modelcontextprotocol/sdk": "^1.30.0", "@opencode-ai/plugin": "1.18.22", "@opencode-ai/sdk": "1.18.22", "@opentui/core": "^0.5.8", "@opentui/keymap": "^0.5.8", "@opentui/solid": "^0.5.8", "commander": "^15.0.0", "detect-libc": "^2.1.2", "diff": "^9.0.0", "js-yaml": "^5.0.0", "jsonc-parser": "^3.3.1", "picocolors": "^1.1.1", "picomatch": "^4.0.7", "posthog-node": "^5.51.1", "zod": "^4.4.3" }, "optionalDependencies": { "oh-my-openagent-darwin-arm64": "5.0.0-beta.33", "oh-my-openagent-darwin-x64": "5.0.0-beta.33", "oh-my-openagent-darwin-x64-baseline": "5.0.0-beta.33", "oh-my-openagent-linux-arm64": "5.0.0-beta.33", "oh-my-openagent-linux-arm64-musl": "5.0.0-beta.33", "oh-my-openagent-linux-x64": "5.0.0-beta.33", "oh-my-openagent-linux-x64-baseline": "5.0.0-beta.33", "oh-my-openagent-linux-x64-musl": "5.0.0-beta.33", "oh-my-openagent-linux-x64-musl-baseline": "5.0.0-beta.33", "oh-my-openagent-windows-arm64": "5.0.0-beta.33", "oh-my-openagent-windows-x64": "5.0.0-beta.33", "oh-my-openagent-windows-x64-baseline": "5.0.0-beta.33" }, "bin": { "oh-my-opencode": "bin/oh-my-opencode.js", "oh-my-openagent": "bin/oh-my-opencode.js", "omo-agent-toolkit": "bin/oh-my-opencode.js", "lazycodex": "bin/oh-my-opencode.js", "lazycodex-ai": "bin/oh-my-opencode.js" } }, "sha512-viI4Kt0vtJ0xLtD98Gsl8+ivhRrUTi7CL0S/BQH2JGjfl3oYgTIez8b2P46Y0K+rwY3jtO/IHyWyj4bXNIqsTA=="],
+    "oh-my-openagent": ["oh-my-openagent@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent/-/oh-my-openagent-5.0.0-beta.39.tgz", { "dependencies": { "@clack/prompts": "^1.7.0", "@code-yeongyu/comment-checker": "^0.8.0", "@modelcontextprotocol/sdk": "^1.30.0", "@opencode-ai/plugin": "1.18.22", "@opencode-ai/sdk": "1.18.22", "@opentui/core": "^0.5.8", "@opentui/keymap": "^0.5.8", "@opentui/solid": "^0.5.8", "commander": "^15.0.0", "detect-libc": "^2.1.2", "diff": "^9.0.0", "js-yaml": "^5.0.0", "jsonc-parser": "^3.3.1", "picocolors": "^1.1.1", "picomatch": "^4.0.7", "posthog-node": "^5.51.1", "zod": "^4.4.3" }, "optionalDependencies": { "oh-my-openagent-darwin-arm64": "5.0.0-beta.39", "oh-my-openagent-darwin-x64": "5.0.0-beta.39", "oh-my-openagent-darwin-x64-baseline": "5.0.0-beta.39", "oh-my-openagent-linux-arm64": "5.0.0-beta.39", "oh-my-openagent-linux-arm64-musl": "5.0.0-beta.39", "oh-my-openagent-linux-x64": "5.0.0-beta.39", "oh-my-openagent-linux-x64-baseline": "5.0.0-beta.39", "oh-my-openagent-linux-x64-musl": "5.0.0-beta.39", "oh-my-openagent-linux-x64-musl-baseline": "5.0.0-beta.39", "oh-my-openagent-windows-arm64": "5.0.0-beta.39", "oh-my-openagent-windows-x64": "5.0.0-beta.39", "oh-my-openagent-windows-x64-baseline": "5.0.0-beta.39" }, "bin": { "oh-my-opencode": "bin/oh-my-opencode.js", "oh-my-openagent": "bin/oh-my-opencode.js", "omo-agent-toolkit": "bin/oh-my-opencode.js", "lazycodex": "bin/oh-my-opencode.js", "lazycodex-ai": "bin/oh-my-opencode.js" } }, "sha512-JOTeyH6M2kBXH4PmVtexYn9UtBHGZriokjWrZH1TVH6hw4jO2Fkh2Wje1P4CfxL9Z5Q+Rm6Rh+iECYWGbdqFJg=="],
 
-    "oh-my-openagent-darwin-arm64": ["oh-my-openagent-darwin-arm64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-darwin-arm64/-/oh-my-openagent-darwin-arm64-5.0.0-beta.33.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-rgPC/KMP/L7/W3Pp5RzivbistTPFIyru3Ua2GvBOd/6bmu+QQybh8O9Np8PWQx+ubhyxSfXG0ix29Fq63pZkwQ=="],
+    "oh-my-openagent-darwin-arm64": ["oh-my-openagent-darwin-arm64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-darwin-arm64/-/oh-my-openagent-darwin-arm64-5.0.0-beta.39.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-2HZfl/4KiYlNzaMpUaygdochowbADqwpZBPHI+nZSwE1PBOP6id1Wx7lbBUeXI551iVG7eEywVCii2amZVZBDQ=="],
 
-    "oh-my-openagent-darwin-x64": ["oh-my-openagent-darwin-x64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-darwin-x64/-/oh-my-openagent-darwin-x64-5.0.0-beta.33.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-SZRGxELuNn973us56d/q+Z51wmN4DBiUIsFOy674FH0y81lceh28gJ82pUcg6hTCU4P8dJ4bmuFohXTjccdC8w=="],
+    "oh-my-openagent-darwin-x64": ["oh-my-openagent-darwin-x64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-darwin-x64/-/oh-my-openagent-darwin-x64-5.0.0-beta.39.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-LQsS0VwjBqlklUpYs0w64X6u00A54390ZvQjz9CQeVyKpCHpb0N1iufzusmP1mzdjRUNjiq4tSNqGWo2c1kXkw=="],
 
-    "oh-my-openagent-darwin-x64-baseline": ["oh-my-openagent-darwin-x64-baseline@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-darwin-x64-baseline/-/oh-my-openagent-darwin-x64-baseline-5.0.0-beta.33.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-Qe6dviU03zkOHdR6H/IwHNG5RQNcmPdP2RWSQgtAHLx5EPF7rsDJga50E0GUKRtu2i5NGMQtSA3Hf3PD9cSNug=="],
+    "oh-my-openagent-darwin-x64-baseline": ["oh-my-openagent-darwin-x64-baseline@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-darwin-x64-baseline/-/oh-my-openagent-darwin-x64-baseline-5.0.0-beta.39.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-C+JBfCVT69TaSBpnXPpTvbjKA6mS9tm+1+9ZxO2CK3u+JJWjQxtaH6sqJ/8IDsF8H2LP+4B+0ehn2uvgAR4pVA=="],
 
-    "oh-my-openagent-linux-arm64": ["oh-my-openagent-linux-arm64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-arm64/-/oh-my-openagent-linux-arm64-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-KK7u+lchSHKr9xuGhq2Bpv5nLCFiDeCjmgD2FGnvxhw3LszHWBIkDoR2/f6nSMvn22WS4YhscvAnHpJ5+6KYHA=="],
+    "oh-my-openagent-linux-arm64": ["oh-my-openagent-linux-arm64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-arm64/-/oh-my-openagent-linux-arm64-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-rfe0lqRgMaVSkr8mZuwznvDF2LakK0f8mrsdGg2tDq1/3o/xNLA/5tVR4YI8dezrLTZnbSQeznQuAQWtEumWNQ=="],
 
-    "oh-my-openagent-linux-arm64-musl": ["oh-my-openagent-linux-arm64-musl@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-arm64-musl/-/oh-my-openagent-linux-arm64-musl-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-KFMHlqtHR08lHhqprtQHMZhiWKwsfmg6eJnDU7x5BCsulmy1TGrMHYFEWbbXiRmtoNRGK4MURViHYDd+h3A6Rw=="],
+    "oh-my-openagent-linux-arm64-musl": ["oh-my-openagent-linux-arm64-musl@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-arm64-musl/-/oh-my-openagent-linux-arm64-musl-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-5dEl4BqPhmWXUKkRpNXlZTjj3mvuxmarJZHRAvWh+O56gGQhqRsUCZcK/8Ac97ouIjMaQwnxXezoBpdxHlZ7AA=="],
 
-    "oh-my-openagent-linux-x64": ["oh-my-openagent-linux-x64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-x64/-/oh-my-openagent-linux-x64-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "x64" }, "sha512-SijfT3PJkJMlv4OkZEZBrv81Q3SvyX1L5XJlDaZd6CEIyN8rHk4AV+gdJDiD7PNtpe4BeugunDhBfvuTvaf0XA=="],
+    "oh-my-openagent-linux-x64": ["oh-my-openagent-linux-x64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-x64/-/oh-my-openagent-linux-x64-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "x64" }, "sha512-MKgJ7wkf2Ck/lvpDP7LdqeQuWL1Td/fXU+6N/waHDy5hL8cfFBWyb6OcE74AUoDGRsA/phrAtYaAjn67iV0p2g=="],
 
-    "oh-my-openagent-linux-x64-baseline": ["oh-my-openagent-linux-x64-baseline@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-x64-baseline/-/oh-my-openagent-linux-x64-baseline-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "x64" }, "sha512-IlH6pJrA3/1x3d8/OwStL4VCOhbYShVR3gb/7Za6MAHAySId9cQvdoPV86Cd0a8WjiFp9u7yRnhXSmPaP8tnxg=="],
+    "oh-my-openagent-linux-x64-baseline": ["oh-my-openagent-linux-x64-baseline@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-x64-baseline/-/oh-my-openagent-linux-x64-baseline-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "x64" }, "sha512-gkl72nl21gqDnuDRk4zcqcPHj8OO4s5JVC4M/z/qpvfKp3DptZq93dlT15/hWap5Rk0sSfJBC/fSIglbl0dkFQ=="],
 
-    "oh-my-openagent-linux-x64-musl": ["oh-my-openagent-linux-x64-musl@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-x64-musl/-/oh-my-openagent-linux-x64-musl-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "x64" }, "sha512-xvjEOVG13pcUMF0d3lxQP86z8Zi4i0ObemjaGIvK0RzgbVwgkBqPC2g+iZl8750YPTMZtouBTDeaQjLFdeGFbg=="],
+    "oh-my-openagent-linux-x64-musl": ["oh-my-openagent-linux-x64-musl@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-x64-musl/-/oh-my-openagent-linux-x64-musl-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "x64" }, "sha512-Fnf/Kwuu8gwI4LirceAnIrUwLvULOMJGoW8DHULp/HHyZebddGsj3xFF9/bPpPs6o8i6ddTNsfzbc6Q1BBnXQA=="],
 
-    "oh-my-openagent-linux-x64-musl-baseline": ["oh-my-openagent-linux-x64-musl-baseline@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-linux-x64-musl-baseline/-/oh-my-openagent-linux-x64-musl-baseline-5.0.0-beta.33.tgz", { "os": "linux", "cpu": "x64" }, "sha512-1S9vmnMayIA0Th23E2N3wbsyQOQryW0l8q5xfib6n5dN821pDFlJADIHSjwCTy/amkYJNHTnUQBoVnaFlcTuaQ=="],
+    "oh-my-openagent-linux-x64-musl-baseline": ["oh-my-openagent-linux-x64-musl-baseline@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-linux-x64-musl-baseline/-/oh-my-openagent-linux-x64-musl-baseline-5.0.0-beta.39.tgz", { "os": "linux", "cpu": "x64" }, "sha512-Uv/MRV8zX00KUlu+MvTMccP6IcMr2HSjjSfCq3Wn3hRkXxQq4gu5weSq+Po3Ia/lWiiXfyhNJfS1CahTJjlP4g=="],
 
-    "oh-my-openagent-windows-arm64": ["oh-my-openagent-windows-arm64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-windows-arm64/-/oh-my-openagent-windows-arm64-5.0.0-beta.33.tgz", { "os": "win32", "cpu": "arm64" }, "sha512-ZzBtNMmgD+UrZryUh5XGJuQWI/zbMP8t0x1/jZKwUUyoabrJoVGCVXyM3rOK9MEStRoR5LCBD84do45vdGmkcw=="],
+    "oh-my-openagent-windows-arm64": ["oh-my-openagent-windows-arm64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-windows-arm64/-/oh-my-openagent-windows-arm64-5.0.0-beta.39.tgz", { "os": "win32", "cpu": "arm64" }, "sha512-ZniCeOQMb60JV69Osori2pXeR29I8pUyov7O1vBXBRO1WYEEhL1O1RzCpm3RV3GkwmLTSQz0yTN7YPA61iqOxQ=="],
 
-    "oh-my-openagent-windows-x64": ["oh-my-openagent-windows-x64@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-windows-x64/-/oh-my-openagent-windows-x64-5.0.0-beta.33.tgz", { "os": "win32", "cpu": "x64" }, "sha512-yiz70UPVe6R7s8qXhF+DEt9KK3W5+H5B0x6LC53M4qCr9oodhaTTbKboi1xNSXyg2FK7k/aXwOzWaGI4Jz6xnA=="],
+    "oh-my-openagent-windows-x64": ["oh-my-openagent-windows-x64@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-windows-x64/-/oh-my-openagent-windows-x64-5.0.0-beta.39.tgz", { "os": "win32", "cpu": "x64" }, "sha512-llncvr84sHGcXBqwNh1tf7isQJl/n9t/DBHNuTZe0UVRA2vdb+L2APVYimW4uTC0fRiznxuFreqJNDFje6uK0A=="],
 
-    "oh-my-openagent-windows-x64-baseline": ["oh-my-openagent-windows-x64-baseline@5.0.0-beta.33", "https://bnpm.byted.org/oh-my-openagent-windows-x64-baseline/-/oh-my-openagent-windows-x64-baseline-5.0.0-beta.33.tgz", { "os": "win32", "cpu": "x64" }, "sha512-pc88S5tX4U8X6E4i8TNteWFaD0AHUic+cWIuMXcxKeZ8eQVhes2KdFF+liOHc1MRElaUg7rVlNd/kpXGor0AhA=="],
+    "oh-my-openagent-windows-x64-baseline": ["oh-my-openagent-windows-x64-baseline@5.0.0-beta.39", "https://bnpm.byted.org/oh-my-openagent-windows-x64-baseline/-/oh-my-openagent-windows-x64-baseline-5.0.0-beta.39.tgz", { "os": "win32", "cpu": "x64" }, "sha512-HqlE91ecQ+pLwmpKIOIgc9hMZhrklwYcaSPVVQktHjQMndo9EvF3earc55K5Wt9YksRKTfqApqW8HrqVhz/SSA=="],
 
     "on-finished": ["on-finished@2.4.1", "https://bnpm.byted.org/on-finished/-/on-finished-2.4.1.tgz", { "dependencies": { "ee-first": "1.1.1" } }, "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg=="],
 

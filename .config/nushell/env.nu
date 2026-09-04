@@ -158,18 +158,21 @@ if not ($_carapace_cache | path exists) {
 }
 
 # prepare for atuin
-# atuin init nu 生成的脚本会给 ctrl-r 和 up 两个 keybinding 都命名为 atuin,
-# 新版 nushell (0.100+) 校验 shared_keybindings_name 会报警告, 这里给 up 键绑定改名 atuin_up
+# 旧版 atuin init nu 会给 ctrl-r 和 up 两个 keybinding 都命名为 atuin,
+# 新版 nushell 会报警告；生成后迁移旧缓存，避免已有缓存绕过修复。
 let _atuin_cache = ($_cache | path join 'atuin/init.nu')
 if not ($_atuin_cache | path exists) {
     mkdir ($_atuin_cache | path dirname)
-    atuin init nu
-    | str replace 'name: atuin
+    atuin init nu | save -f $_atuin_cache
+}
+let _atuin_init = open --raw $_atuin_cache
+let _atuin_init_migrated = $_atuin_init | str replace 'name: atuin
             modifier: none
-            keycode: up' 'name: atuin_up
+            keycode: up' 'name: atuin_up_arrow
             modifier: none
             keycode: up'
-    | save -f $_atuin_cache
+if $_atuin_init_migrated != $_atuin_init {
+    $_atuin_init_migrated | save -f $_atuin_cache
 }
 
 # load fnm env

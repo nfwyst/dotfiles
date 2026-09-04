@@ -2,8 +2,8 @@
   "packageManager": "bun",
   "type": "module",
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.26",
-    "oh-my-openagent": "^5.0.0-beta.33"
+    "@opencode-ai/plugin": "^1.18.27",
+    "oh-my-openagent": "^5.0.0-beta.39"
   },
   "trustedDependencies": [
     "@code-yeongyu/comment-checker",
