@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "${1:-}" == --select ]]; then
+    output_file="${2:?missing selection output path}"
+    selection_status=0
+    tmux list-commands -F '#{command_list_name}' \
+        | fzf --layout=reverse --border --prompt='tmux command: ' \
+            --color='hl:regular,hl+:regular' --select-1 --exit-0 \
+            >"$output_file" || selection_status=$?
+    [[ "$selection_status" == 0 || "$selection_status" == 130 ]] \
+        || exit "$selection_status"
+    exit
+fi
+
+client_name="${1:?missing tmux client name}"
+selection_file=$(mktemp "${TMPDIR:-/tmp}/tmux-command-palette.XXXXXX")
+trap 'rm -f "$selection_file"' EXIT
+
+popup_status=0
+tmux display-popup -c "$client_name" -E -w 50% -h 60% \
+    -T 'tmux commands' "$0" --select "$selection_file" || popup_status=$?
+[[ "$popup_status" == 0 || "$popup_status" == 129 ]] || exit "$popup_status"
+
+command_name=$(cat "$selection_file")
+[[ -n "$command_name" ]] || exit 0
+tmux command-prompt -t "$client_name" -T command -I "$command_name "
