@@ -6,7 +6,7 @@ keybindings:
 title:
   style: align=centre,bold
   prefix: tmux
-  prefix_style: fg=green,align=centre,bold
+  prefix_style: align=centre,bold
 position:
   x: R
   y: P

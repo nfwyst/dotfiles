@@ -4,10 +4,19 @@ set -euo pipefail
 
 if [[ "${1:-}" == --select ]]; then
     output_file="${2:?missing selection output path}"
+    menu_bg=$(tmux show-options -gqv @tmux_power_g0)
+    menu_muted=$(tmux show-options -gqv @tmux_power_g4)
+    menu_accent=$(tmux show-options -gqv @tmux_menu_accent)
+    : "${menu_bg:=#262626}" "${menu_muted:=#626262}" \
+        "${menu_accent:=#a7c080}"
     selection_status=0
     tmux list-commands -F '#{command_list_name}' \
         | fzf --layout=reverse --border --prompt='tmux command: ' \
-            --color='hl:regular,hl+:regular' --select-1 --exit-0 \
+            --color="fg:$menu_accent,bg:$menu_bg,hl:$menu_accent:regular,
+fg+:$menu_bg,bg+:$menu_accent,hl+:$menu_bg:regular,
+info:$menu_muted,prompt:$menu_accent,pointer:$menu_bg,
+marker:$menu_bg,spinner:$menu_accent,border:$menu_muted" \
+            --select-1 --exit-0 \
             >"$output_file" || selection_status=$?
     [[ "$selection_status" == 0 || "$selection_status" == 130 ]] \
         || exit "$selection_status"
